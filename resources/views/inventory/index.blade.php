@@ -1,0 +1,257 @@
+@extends('layouts.admin')
+
+@section('title', 'Stock Inventory – Dashboard')
+
+@section('styles')
+<style>
+.inv-page { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+.page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; }
+.page-title { font-size:1.5rem; font-weight:800; color:var(--dark); display:flex; align-items:center; gap:.65rem; }
+.page-title i { color:var(--primary); }
+.page-sub { font-size:.83rem; color:var(--muted); margin-top:.25rem; }
+.header-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+
+/* stat cards */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1.25rem; margin-bottom:2rem; }
+.stat-card { background:#fff; border-radius:16px; padding:1.25rem 1.4rem; border:1px solid var(--border); box-shadow:var(--shadow-sm); position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; right:0; width:80px; height:80px; border-radius:0 16px 0 80px; opacity:.07; }
+.stat-card.blue::before  { background:#3B82F6; }
+.stat-card.green::before { background:#16A34A; }
+.stat-card.amber::before { background:#F59E0B; }
+.stat-card.red::before   { background:#DC2626; }
+.stat-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:.9rem; }
+.stat-icon.blue  { background:#EFF6FF; color:#2563EB; }
+.stat-icon.green { background:#F0FDF4; color:#16A34A; }
+.stat-icon.amber { background:#FFFBEB; color:#D97706; }
+.stat-icon.red   { background:#FEF2F2; color:#DC2626; }
+.stat-value { font-size:1.9rem; font-weight:800; color:var(--dark); line-height:1; }
+.stat-label { font-size:.78rem; font-weight:600; color:var(--muted); margin-top:.3rem; text-transform:uppercase; letter-spacing:.04em; }
+
+/* section */
+.section-card { background:#fff; border-radius:16px; border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden; margin-bottom:2rem; }
+.section-hd { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); }
+.section-hd h2 { font-size:.95rem; font-weight:700; color:var(--dark); display:flex; align-items:center; gap:.5rem; }
+.section-hd h2 i { color:var(--primary); }
+.section-hd a { font-size:.8rem; font-weight:600; color:var(--primary); text-decoration:none; }
+.section-hd a:hover { text-decoration:underline; }
+
+/* inventory table */
+.inv-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+.inv-table th { padding:.65rem 1rem; text-align:left; font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); background:#F8FAFC; border-bottom:1px solid var(--border); }
+.inv-table td { padding:.75rem 1rem; border-bottom:1px solid #F3F4F6; color:var(--dark); vertical-align:middle; }
+.inv-table tr:last-child td { border-bottom:none; }
+.inv-table tr:hover td { background:#FAFAFA; }
+
+/* status badges */
+.badge { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .65rem; border-radius:50px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+.badge-available  { background:#DCFCE7; color:#15803D; }
+.badge-low        { background:#FEF3C7; color:#B45309; }
+.badge-out        { background:#FEE2E2; color:#B91C1C; }
+.badge-rtc        { background:#EFF6FF; color:#1D4ED8; }
+.badge-beverage   { background:#F5F3FF; color:#6D28D9; }
+
+/* recent activity */
+.activity-list { padding:.5rem 0; }
+.activity-item { display:flex; align-items:center; gap:.9rem; padding:.7rem 1.5rem; border-bottom:1px solid #F3F4F6; }
+.activity-item:last-child { border-bottom:none; }
+.activity-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.85rem; flex-shrink:0; }
+.activity-icon.green { background:#F0FDF4; color:#16A34A; }
+.activity-icon.blue  { background:#EFF6FF; color:#2563EB; }
+.activity-icon.amber { background:#FFFBEB; color:#D97706; }
+.activity-body { flex:1; min-width:0; }
+.activity-name { font-size:.83rem; font-weight:600; color:var(--dark); }
+.activity-meta { font-size:.75rem; color:var(--muted); margin-top:.1rem; }
+.activity-qty  { font-size:.83rem; font-weight:700; color:var(--primary); flex-shrink:0; }
+
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+@media(max-width:900px) { .two-col { grid-template-columns:1fr; } }
+
+.btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; border-radius:10px; font-size:.83rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all .18s; text-decoration:none; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-dk, #B91C1C); }
+.btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--dark); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+.btn-amber { background:#F59E0B; color:#fff; }
+.btn-amber:hover { background:#D97706; }
+
+.empty-row td { text-align:center; color:var(--muted); padding:1.5rem; font-size:.83rem; }
+</style>
+@endsection
+
+@section('content')
+<div class="inv-page">
+
+    {{-- ── Page Header ── --}}
+    <div class="page-header">
+        <div>
+            <div class="page-title"><i class="fas fa-boxes-stacked"></i> Stock Inventory</div>
+            <div class="page-sub">Monitor and manage RTC raw meat and beverage inventory</div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ route('inventory.restocking') }}" class="btn btn-amber">
+                <i class="fas fa-cart-shopping"></i> Repurchase List
+            </a>
+            <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Stock In
+            </a>
+        </div>
+    </div>
+
+    {{-- ── Summary Cards ── --}}
+    <div class="stat-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon blue"><i class="fas fa-drumstick-bite"></i></div>
+            <div class="stat-value">{{ $totalRtc }}</div>
+            <div class="stat-label">Total RTC Items</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon green"><i class="fas fa-bottle-water"></i></div>
+            <div class="stat-value">{{ $totalBeverage }}</div>
+            <div class="stat-label">Beverage Items</div>
+        </div>
+        <div class="stat-card amber">
+            <div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="stat-value">{{ $lowStock }}</div>
+            <div class="stat-label">Low Stock</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-icon red"><i class="fas fa-circle-xmark"></i></div>
+            <div class="stat-value">{{ $outOfStock }}</div>
+            <div class="stat-label">Out of Stock</div>
+        </div>
+    </div>
+
+    @if(session('success'))
+    <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:#166534;font-weight:500;">
+        <i class="fas fa-check-circle" style="color:#16A34A;"></i> {{ session('success') }}
+    </div>
+    @endif
+
+    {{-- ── Two column: RTC + Beverages ── --}}
+    <div class="two-col">
+        {{-- RTC Inventory --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-drumstick-bite"></i> RTC Raw Meat Inventory</h2>
+                <a href="{{ route('inventory.rtc') }}">View All →</a>
+            </div>
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Raw Stock</th>
+                        <th>RTC Servings</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($rtcItems as $item)
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">{{ $item->item_name }}</div>
+                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
+                        </td>
+                        <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>
+                        <td>{{ number_format($item->rtc_servings, 0) }} srv.</td>
+                        <td>
+                            @php $s = $item->stock_status; @endphp
+                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
+                                {{ $item->stock_status_label }}
+                            </span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="empty-row">No RTC items found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Beverage Inventory --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-bottle-water"></i> Beverage Inventory</h2>
+                <a href="{{ route('inventory.beverages') }}">View All →</a>
+            </div>
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Beverage</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($beverageItems as $item)
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">{{ $item->item_name }}</div>
+                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
+                        </td>
+                        <td>{{ number_format($item->quantity, 0) }}</td>
+                        <td>{{ $item->unit }}</td>
+                        <td>
+                            @php $s = $item->stock_status; @endphp
+                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
+                                {{ $item->stock_status_label }}
+                            </span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="empty-row">No beverages found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- ── Recent Activity ── --}}
+    <div class="two-col">
+        {{-- Recent Stock-Ins --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-arrow-down-to-bracket"></i> Recent Stock-In</h2>
+                <a href="{{ route('inventory.stock-in.index') }}">View All →</a>
+            </div>
+            <div class="activity-list">
+                @forelse($recentStockIns as $tx)
+                <div class="activity-item">
+                    <div class="activity-icon green"><i class="fas fa-plus"></i></div>
+                    <div class="activity-body">
+                        <div class="activity-name">{{ $tx->inventoryItem?->item_name ?? '—' }}</div>
+                        <div class="activity-meta">{{ $tx->purchase_date?->format('M d, Y') }} &bull; {{ $tx->recorder?->name ?? 'Admin' }}</div>
+                    </div>
+                    <div class="activity-qty">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</div>
+                </div>
+                @empty
+                <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No stock-in transactions yet.</div>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- Recent Conversions --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-arrows-rotate"></i> Recent Conversions</h2>
+                <a href="{{ route('inventory.conversions.index') }}">View All →</a>
+            </div>
+            <div class="activity-list">
+                @forelse($recentConversions as $log)
+                <div class="activity-item">
+                    <div class="activity-icon blue"><i class="fas fa-arrows-rotate"></i></div>
+                    <div class="activity-body">
+                        <div class="activity-name">{{ $log->inventoryItem?->item_name ?? '—' }}</div>
+                        <div class="activity-meta">{{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
+                    </div>
+                    <div class="activity-qty">{{ number_format($log->rtc_units_produced, 0) }} srv.</div>
+                </div>
+                @empty
+                <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No conversions yet.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+</div>
+@endsection

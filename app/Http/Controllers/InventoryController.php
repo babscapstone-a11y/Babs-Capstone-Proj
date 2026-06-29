@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ConversionLog;
+use App\Models\InventoryAdjustment;
+use App\Models\InventoryItem;
+use App\Models\PurchaseOrder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class InventoryController extends Controller
+{
+    public function index(): View
+    {
+        $totalRtc      = InventoryItem::rtc()->count();
+        $totalBeverage = InventoryItem::beverage()->count();
+        $lowStock      = InventoryItem::lowStock()->count();
+        $outOfStock    = InventoryItem::outOfStock()->count();
+
+        $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
+        $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
+
+        $recentStockIns   = PurchaseOrder::with(['inventoryItem', 'recorder'])
+            ->latest()->limit(5)->get();
+        $recentConversions = ConversionLog::with(['inventoryItem', 'converter'])
+            ->latest()->limit(5)->get();
+        $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'adjuster'])
+            ->latest()->limit(5)->get();
+
+        return view('inventory.index', compact(
+            'totalRtc', 'totalBeverage', 'lowStock', 'outOfStock',
+            'rtcItems', 'beverageItems',
+            'recentStockIns', 'recentConversions', 'recentAdjustments'
+        ));
+    }
+
+    public function rtc(Request $request): View
+    {
+        $query = InventoryItem::rtc();
+
+        if ($search = $request->input('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('item_name', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+        if ($status = $request->input('status')) {
+            match($status) {
+                'low_stock'    => $query->lowStock(),
+                'out_of_stock' => $query->outOfStock(),
+                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity > reorder_level'),
+                default        => null,
+            };
+        }
+
+        $items = $query->orderBy('category')->orderBy('item_name')->get();
+
+        $totalRtc   = InventoryItem::rtc()->count();
+        $lowStock   = InventoryItem::rtc()->lowStock()->count();
+        $outOfStock = InventoryItem::rtc()->outOfStock()->count();
+        $totalServings = InventoryItem::rtc()->sum('rtc_servings');
+
+        return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock', 'totalServings'));
+    }
+
+    public function beverages(Request $request): View
+    {
+        $query = InventoryItem::beverage();
+
+        if ($search = $request->input('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('item_name', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+        if ($status = $request->input('status')) {
+            match($status) {
+                'low_stock'    => $query->lowStock(),
+                'out_of_stock' => $query->outOfStock(),
+                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity > reorder_level'),
+                default        => null,
+            };
+        }
+
+        $items      = $query->orderBy('category')->orderBy('item_name')->get();
+        $totalBev   = InventoryItem::beverage()->count();
+        $lowStock   = InventoryItem::beverage()->lowStock()->count();
+        $outOfStock = InventoryItem::beverage()->outOfStock()->count();
+
+        return view('inventory.beverages', compact('items', 'totalBev', 'lowStock', 'outOfStock'));
+    }
+
+    public function restocking(): View
+    {
+        $outOfStockItems = InventoryItem::outOfStock()
+            ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
+
+        $lowStockItems = InventoryItem::lowStock()
+            ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
+
+        return view('inventory.restocking', compact('outOfStockItems', 'lowStockItems'));
+    }
+
+    public function edit(InventoryItem $item): View
+    {
+        return view('inventory.edit', compact('item'));
+    }
+
+    public function update(Request $request, InventoryItem $item): RedirectResponse
+    {
+        $request->validate([
+            'category'        => ['nullable', 'string', 'max:100'],
+            'supplier'        => ['nullable', 'string', 'max:255'],
+            'cost_price'      => ['nullable', 'numeric', 'min:0'],
+            'min_stock_level' => ['required', 'numeric', 'min:0'],
+            'reorder_level'   => ['required', 'numeric', 'min:0'],
+            'portion_size'    => ['nullable', 'numeric', 'min:0.001'],
+            'portion_unit'    => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $item->update($request->only([
+            'category', 'supplier', 'cost_price',
+            'min_stock_level', 'reorder_level',
+            'portion_size', 'portion_unit',
+        ]));
+
+        return back()->with('success', "{$item->item_name} thresholds updated successfully.");
+    }
+}
