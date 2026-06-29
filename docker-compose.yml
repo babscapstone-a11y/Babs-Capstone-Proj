@@ -1,0 +1,69 @@
+version: "3.9"
+
+# ── Local development only ───────────────────────────────────────────────────
+# For Railway deployment use the Dockerfile directly — do NOT push this file.
+#
+# Usage:
+#   docker compose up --build -d
+#   docker compose exec app php artisan migrate
+#   docker compose exec app php artisan db:seed  (if you have seeders)
+#   Open: http://localhost:8080
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  app:
+    build: .
+    container_name: babs-app
+    ports:
+      - "8080:80"           # localhost:8080 → Apache inside container
+    environment:
+      APP_NAME: "Bab's Resto"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: "http://localhost:8080"
+      APP_KEY: ""           # run: docker compose exec app php artisan key:generate
+
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: capstonebabs
+      DB_USERNAME: babs
+      DB_PASSWORD: babs_secret
+
+      SESSION_DRIVER: database
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      FILESYSTEM_DISK: local
+
+      LOG_CHANNEL: stack
+      LOG_LEVEL: debug
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      # Persist uploaded files across container restarts in local dev
+      - app_storage:/var/www/html/storage/app/public
+
+  mysql:
+    image: mysql:8.4
+    container_name: babs-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: capstonebabs
+      MYSQL_USER: babs
+      MYSQL_PASSWORD: babs_secret
+      MYSQL_ROOT_PASSWORD: root_secret
+    ports:
+      - "3307:3306"         # host 3307 → avoid clashing with local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "babs", "-pbabs_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  app_storage:

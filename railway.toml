@@ -1,0 +1,13 @@
+[build]
+# Railway will detect the Dockerfile automatically.
+# No nixpacks — we use our own Dockerfile.
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway injects $PORT. Our entrypoint.sh rewires Apache to listen on it.
+startCommand = ""      # entrypoint.sh + CMD handle startup
+healthcheckPath = "/up"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -1,0 +1,40 @@
+# Version control
+.git
+.github
+.gitignore
+.gitattributes
+
+# Dependencies (installed inside the image)
+node_modules
+vendor
+
+# Local environment — NEVER bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Build artifacts / logs
+storage/logs/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dev tools
+.phpunit.result.cache
+.php-cs-fixer.php
+phpstan.neon
+phpunit.xml
+
+# Tests
+tests/
+
+# Docker files themselves (not needed inside the image)
+docker-compose*.yml
+docker-compose*.yaml
+.dockerignore
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
