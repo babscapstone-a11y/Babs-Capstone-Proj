@@ -25,9 +25,12 @@ COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # ── Node.js 22 (for Vite asset build) ───────────────────────────
+# NodeSource setup re-enables mpm_event; force mpm_prefork to avoid "More than one MPM loaded"
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork
 
 WORKDIR /var/www/html
 

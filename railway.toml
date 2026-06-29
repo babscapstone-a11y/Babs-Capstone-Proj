@@ -5,8 +5,6 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Railway injects $PORT. Our entrypoint.sh rewires Apache to listen on it.
-startCommand = "apache2-foreground"
 healthcheckPath = "/up"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
