@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# ── Ensure .env exists (Railway injects vars as OS env, artisan still needs the file) ──
+if [ ! -f .env ]; then
+    cp .env.example .env
+fi
+
 # ── Railway injects $PORT; Apache must listen on that port ─────────────────
 APP_PORT="${PORT:-80}"
 
