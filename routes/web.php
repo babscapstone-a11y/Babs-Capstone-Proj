@@ -122,6 +122,8 @@ Route::middleware(['auth', 'customer'])->prefix('account')->name('account.')->gr
     Route::get('/orders/{order}', [CustomerProfileController::class, 'showOrder']) ->name('orders.show');
 });
 
+require __DIR__.'/auth.php';
+
 /* ── Digital Menu Catalog (Customer only) ────────────────────── */
 Route::middleware(['auth', 'customer'])->group(function () {
 
