@@ -38,5 +38,9 @@ if [ "${APP_ENV}" = "production" ]; then
     php artisan event:cache
 fi
 
+# ── Force mpm_prefork (NodeSource install re-enables mpm_event at build time) ──
+a2dismod mpm_event mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
+
 echo "[entrypoint] Starting Apache on port ${APP_PORT}..."
 exec "$@"
