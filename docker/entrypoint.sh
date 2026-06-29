@@ -26,8 +26,9 @@ fi
 php artisan storage:link --force 2>/dev/null || true
 
 # ── Run database migrations ─────────────────────────────────────────────────
-echo "[entrypoint] Running migrations..."
+echo "[entrypoint] Running migrations and seeders..."
 php artisan migrate --force
+php artisan db:seed --force
 
 # ── Cache config/routes/views in production ────────────────────────────────
 if [ "${APP_ENV}" = "production" ]; then
