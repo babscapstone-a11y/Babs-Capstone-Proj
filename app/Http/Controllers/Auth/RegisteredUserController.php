@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -35,23 +36,27 @@ class RegisteredUserController extends Controller
         $firstName = $nameParts[0];
         $lastName  = $nameParts[1] ?? null;
 
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'phone'    => $request->phone,
-            'password' => Hash::make($request->password),
-            'role_id'  => $customerRole->id,
-            'status'   => 'active',
-        ]);
+        $user = DB::transaction(function () use ($request, $customerRole, $firstName, $lastName) {
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'phone'    => $request->phone,
+                'password' => Hash::make($request->password),
+                'role_id'  => $customerRole->id,
+                'status'   => 'active',
+            ]);
 
-        Customer::create([
-            'user_id'    => $user->id,
-            'first_name' => $firstName,
-            'last_name'  => $lastName,
-            'email'      => $user->email,
-            'contact_no' => $request->phone,
-            'status'     => 'active',
-        ]);
+            Customer::create([
+                'user_id'    => $user->id,
+                'first_name' => $firstName,
+                'last_name'  => $lastName,
+                'email'      => $user->email,
+                'contact_no' => $request->phone,
+                'status'     => 'active',
+            ]);
+
+            return $user;
+        });
 
         event(new Registered($user));
 
