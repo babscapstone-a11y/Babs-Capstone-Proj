@@ -278,13 +278,10 @@
     .field-block:last-of-type { margin-bottom: 0; }
 
     .name-row {
-        display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+        display: flex; flex-wrap: wrap; gap: .75rem .9rem;
         margin-bottom: .9rem;
     }
-    .name-row .field-block { margin-bottom: 0; }
-    @media (max-width: 480px) {
-        .name-row { grid-template-columns: 1fr; gap: .9rem; }
-    }
+    .name-row .field-block { flex: 1 1 220px; margin-bottom: 0; }
 
     .form-label {
         font-weight: 600; color: var(--dark);
