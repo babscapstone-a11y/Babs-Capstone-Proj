@@ -277,6 +277,15 @@
     .field-block { margin-bottom: .9rem; }
     .field-block:last-of-type { margin-bottom: 0; }
 
+    .name-row {
+        display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+        margin-bottom: .9rem;
+    }
+    .name-row .field-block { margin-bottom: 0; }
+    @media (max-width: 480px) {
+        .name-row { grid-template-columns: 1fr; gap: .9rem; }
+    }
+
     .form-label {
         font-weight: 600; color: var(--dark);
         font-size: .85rem; margin-bottom: .4rem;
@@ -549,34 +558,64 @@
             <form method="POST" action="{{ route('register') }}" id="registerForm" novalidate>
                 @csrf
 
-                <!-- Full Name -->
-                <div class="field-block">
-                    <label class="form-label" for="name">
-                        <i class="fas fa-user" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Full Name
-                    </label>
-                    <div class="input-wrap @error('name') has-error @enderror">
-                        <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            value="{{ old('name') }}"
-                            required
-                            autofocus
-                            autocomplete="name"
-                            placeholder="e.g. Juan dela Cruz"
-                            class="input-field"
-                            aria-describedby="{{ $errors->has('name') ? 'name-error' : '' }}"
-                            aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
-                        >
-                    </div>
-                    @error('name')
-                        <div class="field-error" id="name-error" role="alert">
-                            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
-                            {{ $message }}
+                <!-- First / Last Name -->
+                <div class="name-row">
+                    <div class="field-block">
+                        <label class="form-label" for="first_name">
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
+                            First Name
+                        </label>
+                        <div class="input-wrap @error('first_name') has-error @enderror">
+                            <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
+                            <input
+                                id="first_name"
+                                name="first_name"
+                                type="text"
+                                value="{{ old('first_name') }}"
+                                required
+                                autofocus
+                                autocomplete="given-name"
+                                placeholder="Juan"
+                                class="input-field"
+                                aria-describedby="{{ $errors->has('first_name') ? 'first-name-error' : '' }}"
+                                aria-invalid="{{ $errors->has('first_name') ? 'true' : 'false' }}"
+                            >
                         </div>
-                    @enderror
+                        @error('first_name')
+                            <div class="field-error" id="first-name-error" role="alert">
+                                <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <div class="field-block">
+                        <label class="form-label" for="last_name">
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
+                            Last Name
+                        </label>
+                        <div class="input-wrap @error('last_name') has-error @enderror">
+                            <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
+                            <input
+                                id="last_name"
+                                name="last_name"
+                                type="text"
+                                value="{{ old('last_name') }}"
+                                required
+                                autocomplete="family-name"
+                                placeholder="dela Cruz"
+                                class="input-field"
+                                aria-describedby="{{ $errors->has('last_name') ? 'last-name-error' : '' }}"
+                                aria-invalid="{{ $errors->has('last_name') ? 'true' : 'false' }}"
+                            >
+                        </div>
+                        @error('last_name')
+                            <div class="field-error" id="last-name-error" role="alert">
+                                <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
                 </div>
 
                 <!-- Email -->

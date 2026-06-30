@@ -24,21 +24,19 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'phone'    => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name'  => ['required', 'string', 'max:100'],
+            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'phone'      => ['nullable', 'string', 'max:20'],
+            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $customerRole = Role::where('role_name', 'customer')->firstOrFail();
+        $fullName     = trim("{$request->first_name} {$request->last_name}");
 
-        $nameParts = explode(' ', trim($request->name), 2);
-        $firstName = $nameParts[0];
-        $lastName  = $nameParts[1] ?? null;
-
-        $user = DB::transaction(function () use ($request, $customerRole, $firstName, $lastName) {
+        $user = DB::transaction(function () use ($request, $customerRole, $fullName) {
             $user = User::create([
-                'name'     => $request->name,
+                'name'     => $fullName,
                 'email'    => $request->email,
                 'phone'    => $request->phone,
                 'password' => Hash::make($request->password),
@@ -48,8 +46,8 @@ class RegisteredUserController extends Controller
 
             Customer::create([
                 'user_id'    => $user->id,
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
                 'email'      => $user->email,
                 'contact_no' => $request->phone,
                 'status'     => 'active',
@@ -63,6 +61,6 @@ class RegisteredUserController extends Controller
         // Do NOT auto-login. Redirect to login with success notice.
         return redirect()->route('login')
             ->with('registration_success', true)
-            ->with('registered_name', $firstName);
+            ->with('registered_name', $request->first_name);
     }
 }
