@@ -26,5 +26,15 @@ class AdminUserSeeder extends Seeder
                 'status'   => 'active',
             ]
         );
+
+        User::firstOrCreate(
+            ['email' => 'owner@babsresto.com'],
+            [
+                'name'     => 'Owner',
+                'password' => Hash::make('Owner@1234'),
+                'role_id'  => $adminRole->id,
+                'status'   => 'active',
+            ]
+        );
     }
 }
