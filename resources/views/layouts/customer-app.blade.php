@@ -195,7 +195,7 @@
 
         <div class="nav-actions">
             {{-- Cart --}}
-            <a href="{{ route('catalog.index') }}" class="nav-cart-btn" title="View Cart">
+            <a href="{{ route('cart.index') }}" class="nav-cart-btn" title="View Cart">
                 <i class="fas fa-shopping-cart"></i>
                 @php $navCartCount = $cartCount ?? 0; @endphp
                 <span class="nav-cart-badge {{ $navCartCount > 0 ? '' : 'hidden' }}" id="navCartBadge">{{ $navCartCount > 99 ? '99+' : $navCartCount }}</span>

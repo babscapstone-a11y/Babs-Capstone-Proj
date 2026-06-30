@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -120,20 +121,24 @@ Route::middleware(['auth', 'customer'])->prefix('account')->name('account.')->gr
     Route::put('/profile',   [CustomerProfileController::class, 'updateProfile'])  ->name('profile.update');
     Route::put('/password',  [CustomerProfileController::class, 'updatePassword']) ->name('password.update');
     Route::get('/orders/{order}', [CustomerProfileController::class, 'showOrder']) ->name('orders.show');
+    Route::get('/orders/{order}/status', [CustomerProfileController::class, 'orderStatus']) ->name('orders.status');
 });
-
-require __DIR__.'/auth.php';
 
 /* ── Digital Menu Catalog (Customer only) ────────────────────── */
 Route::middleware(['auth', 'customer'])->group(function () {
 
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
 
-    // Cart AJAX endpoints
+    // Cart endpoints (JSON when AJAX, full page when browser navigation)
     Route::get('/cart',                      [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add',                 [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/{cartItem}/update',  [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cartItem}/remove', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/clear',             [CartController::class, 'clear'])->name('cart.clear');
+
+    // ── Order Module: Checkout (REQ071–REQ075) ────────────────────
+    Route::get('/checkout',  [CheckoutController::class, 'index']) ->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store']) ->name('checkout.store');
 });
 
 require __DIR__.'/auth.php';

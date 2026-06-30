@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateCustomerProfileRequest;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Order;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -102,12 +103,32 @@ class CustomerProfileController extends Controller
             abort(403, 'You are not authorized to view this order.');
         }
 
-        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder']);
+        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder', 'dineInOrder']);
 
         return view('customer.profile.order-show', [
             'order'     => $order,
             'customer'  => $customer,
             'cartCount' => $this->cartCount(),
+        ]);
+    }
+
+    public function orderStatus(Order $order): JsonResponse
+    {
+        $customer = auth()->user()->customer;
+
+        if (! $customer || $order->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $order->load('orderStatus');
+
+        return response()->json([
+            'status_name'     => $order->status_name,
+            'status_color'    => $order->status_color,
+            'customer_label'  => $order->customer_status_label,
+            'payment_status'  => $order->payment_status,
+            'is_cancelled'    => $order->isCancelled(),
+            'is_completed'    => $order->isCompleted(),
         ]);
     }
 }

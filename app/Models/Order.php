@@ -11,7 +11,7 @@ class Order extends Model
 {
     protected $fillable = [
         'order_number', 'total_amount', 'customer_id', 'order_status_id',
-        'order_type', 'payment_status', 'special_instructions',
+        'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'cancelled_at', 'cancellation_reason',
     ];
 
@@ -40,6 +40,22 @@ class Order extends Model
     public function onlineOrder(): HasOne
     {
         return $this->hasOne(OnlineOrder::class);
+    }
+
+    public function dineInOrder(): HasOne
+    {
+        return $this->hasOne(DineInOrder::class);
+    }
+
+    /* ── Order Number Generation ── */
+
+    public static function generateOrderNumber(): string
+    {
+        do {
+            $number = 'ORD-' . now()->format('ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
+        } while (self::where('order_number', $number)->exists());
+
+        return $number;
     }
 
     /* ── Computed Attributes ── */
@@ -92,6 +108,35 @@ class Order extends Model
     public function getStatusColorAttribute(): string
     {
         return $this->orderStatus?->color ?? '#6B7280';
+    }
+
+    public function getCustomerStatusLabelAttribute(): string
+    {
+        return match ($this->status_name) {
+            'Pending'    => 'Order Received',
+            'Processing' => 'Preparing',
+            'Ready'      => $this->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup',
+            'Completed'  => 'Completed',
+            'Cancelled'  => 'Cancelled',
+            default      => $this->status_name,
+        };
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return match ($this->payment_method) {
+            'cashless' => 'Cashless',
+            default    => 'Cash',
+        };
+    }
+
+    public function getEstimatedCompletionAttribute(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->isCancelled() || $this->isCompleted()) {
+            return null;
+        }
+
+        return $this->created_at?->copy()->addMinutes(30);
     }
 
     public function getItemCountAttribute(): int

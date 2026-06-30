@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\MenuItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CartController extends Controller
 {
@@ -17,34 +18,46 @@ class CartController extends Controller
         );
     }
 
-    public function index(): JsonResponse
+    private function activeCart(): ?Cart
     {
-        $cart = Cart::where('user_id', auth()->id())
+        return Cart::where('user_id', auth()->id())
             ->where('status', 'active')
-            ->with(['items.menuItem'])
+            ->with(['items.menuItem.category'])
             ->first();
+    }
 
-        if (! $cart) {
-            return response()->json(['items' => [], 'total' => 0, 'count' => 0]);
+    public function index(Request $request): JsonResponse|View
+    {
+        $cart = $this->activeCart();
+
+        if ($request->wantsJson()) {
+            if (! $cart) {
+                return response()->json(['items' => [], 'total' => 0, 'count' => 0]);
+            }
+
+            $items = $cart->items->map(function ($item) {
+                $mi = $item->menuItem;
+                return [
+                    'id'        => $item->id,
+                    'menu_item_id' => $item->menu_item_id,
+                    'name'      => $mi->menu_name,
+                    'price'     => (float) $item->unit_price,
+                    'quantity'  => $item->quantity,
+                    'subtotal'  => (float) $item->unit_price * $item->quantity,
+                    'image'     => $mi->image_url,
+                ];
+            });
+
+            return response()->json([
+                'items' => $items,
+                'total' => $cart->total,
+                'count' => $cart->item_count,
+            ]);
         }
 
-        $items = $cart->items->map(function ($item) {
-            $mi = $item->menuItem;
-            return [
-                'id'        => $item->id,
-                'menu_item_id' => $item->menu_item_id,
-                'name'      => $mi->menu_name,
-                'price'     => (float) $item->unit_price,
-                'quantity'  => $item->quantity,
-                'subtotal'  => (float) $item->unit_price * $item->quantity,
-                'image'     => $mi->image_url,
-            ];
-        });
-
-        return response()->json([
-            'items' => $items,
-            'total' => $cart->total,
-            'count' => $cart->item_count,
+        return view('cart.index', [
+            'cart'      => $cart,
+            'cartCount' => $cart?->item_count ?? 0,
         ]);
     }
 
@@ -115,6 +128,17 @@ class CartController extends Controller
             'total' => $cart->total,
             'count' => $cart->item_count,
         ]);
+    }
+
+    public function clear(): JsonResponse
+    {
+        $cart = $this->activeCart();
+
+        if ($cart) {
+            $cart->items()->delete();
+        }
+
+        return response()->json(['total' => 0, 'count' => 0]);
     }
 
     private function authorizeCartItem(CartItem $cartItem): void

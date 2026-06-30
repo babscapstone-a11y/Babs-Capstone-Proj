@@ -896,7 +896,7 @@ document.getElementById('closeCartBtn').addEventListener('click', closeCart);
 cartOverlay.addEventListener('click', closeCart);
 
 document.getElementById('checkoutBtn').addEventListener('click', () => {
-    showToast('Checkout coming soon! Your order will be placed when the feature is ready.', 'info', 4000);
+    window.location.href = '{{ route('cart.index') }}';
 });
 
 /* ══════════════════════════════════════════════

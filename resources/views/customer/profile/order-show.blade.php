@@ -257,9 +257,9 @@
             <div class="oh-total">₱{{ number_format($order->total_amount, 2) }}</div>
             <div class="oh-total-label">Grand Total</div>
             <div style="margin-top:.75rem">
-                <span class="badge" style="background:{{ $order->status_color }}25;color:{{ $order->status_color }};font-size:.78rem;padding:.3rem .9rem">
+                <span class="badge" style="background:{{ $order->status_color }}25;color:{{ $order->status_color }};font-size:.78rem;padding:.3rem .9rem" id="heroStatusBadge">
                     <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{ $order->status_color }};margin-right:.25rem"></span>
-                    {{ $order->status_name }}
+                    {{ $order->customer_status_label }}
                 </span>
             </div>
         </div>
@@ -268,19 +268,22 @@
     {{-- Status timeline --}}
     @php
         $allStatuses   = ['Pending', 'Processing', 'Ready', 'Completed'];
+        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), 'Completed' => 'Completed'];
         $cancelledRaw  = $order->isCancelled();
         $currentStatus = $order->status_name;
-        $doneStatuses  = ['Completed'];
         $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', 'Completed' => 'fa-circle-check'];
         $currentIdx    = array_search($currentStatus, $allStatuses);
     @endphp
     <div class="card fade-up">
         <div class="card-header">
             <h2><i class="fas fa-timeline"></i> Order Status</h2>
+            @if(! $cancelledRaw && ! $order->isCompleted())
+            <span style="font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.3rem"><i class="fas fa-rotate" id="refreshSpinner"></i> Auto-updating</span>
+            @endif
         </div>
         <div class="card-body">
             @if($cancelledRaw)
-                <div style="display:flex;align-items:center;gap:1.25rem">
+                <div style="display:flex;align-items:center;gap:1.25rem" id="timelineContainer">
                     <div class="tl-dot tl-step cancelled" style="width:40px;height:40px;font-size:.9rem;border-radius:50%;background:#FEE2E2;border:2px solid #DC2626;display:flex;align-items:center;justify-content:center;color:#DC2626;flex-shrink:0">
                         <i class="fas fa-xmark"></i>
                     </div>
@@ -292,7 +295,7 @@
                     </div>
                 </div>
             @else
-                <div class="timeline">
+                <div class="timeline" id="timelineContainer">
                     @foreach($allStatuses as $idx => $sName)
                     @php
                         $isDone    = $currentIdx !== false && $idx < $currentIdx;
@@ -304,10 +307,20 @@
                         <div class="tl-dot">
                             <i class="fas {{ $icon }}"></i>
                         </div>
-                        <div class="tl-label">{{ $sName }}</div>
+                        <div class="tl-label">{{ $statusLabels[$sName] ?? $sName }}</div>
+                        @if($sName === 'Pending')
+                        <div style="font-size:.66rem;color:var(--muted);margin-top:.15rem">{{ $order->created_at->format('h:i A') }}</div>
+                        @endif
                     </div>
                     @endforeach
                 </div>
+
+                @if($order->estimated_completion)
+                <div style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.45rem">
+                    <i class="fas fa-clock" style="color:var(--accent)"></i>
+                    Estimated completion: <strong style="color:var(--dark)">{{ $order->estimated_completion->format('h:i A') }}</strong>
+                </div>
+                @endif
             @endif
         </div>
     </div>
@@ -395,11 +408,21 @@
                     <span class="info-label">Order Type</span>
                     <span class="info-value">{{ $order->order_type_label }}</span>
                 </div>
+                @if($order->order_type === 'dine_in' && $order->dineInOrder?->table_number)
+                <div class="info-item">
+                    <span class="info-label">Table Number</span>
+                    <span class="info-value">{{ $order->dineInOrder->table_number }}</span>
+                </div>
+                @endif
                 <div class="info-item">
                     <span class="info-label">Order Status</span>
-                    <span class="badge" style="background:{{ $order->status_color }}1a;color:{{ $order->status_color }};width:fit-content">
-                        {{ $order->status_name }}
+                    <span class="badge" style="background:{{ $order->status_color }}1a;color:{{ $order->status_color }};width:fit-content" id="statusBadge">
+                        {{ $order->customer_status_label }}
                     </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Payment Method</span>
+                    <span class="info-value">{{ $order->payment_method_label }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Payment Status</span>
@@ -465,5 +488,30 @@
         margin-bottom: 1.25rem;
     }
 }
+#refreshSpinner { animation: spin 2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 @endsection
+
+@if(! $order->isCancelled() && ! $order->isCompleted())
+@section('scripts')
+<script>
+const orderStatusUrl = "{{ route('account.orders.status', $order) }}";
+let lastStatus = @json($order->status_name);
+
+async function pollOrderStatus() {
+    try {
+        const res = await fetch(orderStatusUrl, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (data.status_name !== lastStatus || data.is_cancelled || data.is_completed) {
+            window.location.reload();
+            return;
+        }
+    } catch (e) { /* silent — retry on next interval */ }
+}
+
+setInterval(pollOrderStatus, 15000);
+</script>
+@endsection
+@endif
