@@ -224,7 +224,7 @@
                             {{ ucfirst($user->status) }}
                         </span>
                     </td>
-                    <td style="color:var(--muted);font-size:.82rem">{{ $user->phone ?? '—' }}</td>
+                    <td style="color:var(--muted);font-size:.82rem">{{ $user->staff->contact_no ?? '—' }}</td>
                     <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->created_at->format('M d, Y') }}</td>
                     <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->updated_at->format('M d, Y') }}</td>
                     <td>

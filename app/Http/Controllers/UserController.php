@@ -70,7 +70,6 @@ class UserController extends Controller
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
                 'role_id'  => $request->role_id,
-                'phone'    => $request->phone,
                 'status'   => $request->status,
             ]);
 
@@ -122,7 +121,6 @@ class UserController extends Controller
                 'name'    => $fullName,
                 'email'   => $request->email,
                 'role_id' => $request->role_id,
-                'phone'   => $request->phone,
                 'status'  => $request->status,
             ]);
 

@@ -94,10 +94,6 @@
                     <div class="detail-icon"><i class="fas fa-id-badge"></i></div>
                     <div><div class="detail-label">Staff ID</div><div class="detail-value">#{{ $user->id }}</div></div>
                 </div>
-                <div class="detail-row">
-                    <div class="detail-icon"><i class="fas fa-phone"></i></div>
-                    <div><div class="detail-label">Phone</div><div class="detail-value">{{ $user->phone ?? '—' }}</div></div>
-                </div>
                 @if($user->staff)
                 <div class="detail-row">
                     <div class="detail-icon"><i class="fas fa-phone-flip"></i></div>

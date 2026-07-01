@@ -155,7 +155,7 @@
                         <div class="input-wrap">
                             <span class="input-icon"><i class="fas fa-mobile-screen"></i></span>
                             <input id="phone" name="phone" type="tel" class="form-input"
-                                   value="{{ old('phone', $user->phone) }}" placeholder="+63 9XX XXX XXXX">
+                                   value="{{ old('phone', $user->staff->contact_no ?? '') }}" placeholder="+63 9XX XXX XXXX">
                         </div>
                     </div>
 
