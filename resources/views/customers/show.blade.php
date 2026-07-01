@@ -134,7 +134,7 @@
                 <div class="hero-email">{{ $customer->email }}</div>
                 <div class="hero-badges">
                     <span class="badge badge-role"><i class="fas fa-user" style="font-size:.5rem"></i> Customer</span>
-                    @if($customer->status === 'active')
+                    @if($customer->user->status === 'active')
                         <span class="badge badge-active"><i class="fas fa-circle" style="font-size:.4rem"></i> Active</span>
                     @else
                         <span class="badge badge-inactive"><i class="fas fa-circle" style="font-size:.4rem"></i> Inactive</span>
@@ -165,10 +165,10 @@
             <div class="quick-actions">
                 <div class="qa-title">Account Actions</div>
                 <button type="button"
-                    class="action-btn {{ $customer->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
-                    onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
-                    <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'check' }}"></i>
-                    {{ $customer->status === 'active' ? 'Deactivate Account' : 'Activate Account' }}
+                    class="action-btn {{ $customer->user->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
+                    onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->user->status === 'active' ? 'true' : 'false' }})">
+                    <i class="fas fa-{{ $customer->user->status === 'active' ? 'ban' : 'check' }}"></i>
+                    {{ $customer->user->status === 'active' ? 'Deactivate Account' : 'Activate Account' }}
                 </button>
             </div>
             @endcan
@@ -203,8 +203,8 @@
                     </div>
                     <div style="padding:.85rem 1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.3rem">Account Status</div>
-                        <div style="font-size:.9rem;font-weight:700;color:{{ $customer->status === 'active' ? '#16A34A' : '#DC2626' }}">
-                            {{ ucfirst($customer->status) }}
+                        <div style="font-size:.9rem;font-weight:700;color:{{ $customer->user->status === 'active' ? '#16A34A' : '#DC2626' }}">
+                            {{ ucfirst($customer->user->status) }}
                         </div>
                     </div>
                 </div>

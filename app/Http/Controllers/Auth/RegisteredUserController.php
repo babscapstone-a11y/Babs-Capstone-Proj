@@ -32,11 +32,9 @@ class RegisteredUserController extends Controller
         ]);
 
         $customerRole = Role::where('role_name', 'customer')->firstOrFail();
-        $fullName     = trim("{$request->first_name} {$request->last_name}");
 
-        $user = DB::transaction(function () use ($request, $customerRole, $fullName) {
+        $user = DB::transaction(function () use ($request, $customerRole) {
             $user = User::create([
-                'name'     => $fullName,
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
                 'role_id'  => $customerRole->id,
@@ -49,7 +47,6 @@ class RegisteredUserController extends Controller
                 'last_name'  => $request->last_name,
                 'email'      => $user->email,
                 'contact_no' => $request->phone,
-                'status'     => 'active',
             ]);
 
             return $user;

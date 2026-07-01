@@ -25,7 +25,7 @@ class CustomerController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $query->whereHas('user', fn ($q) => $q->where('status', $request->input('status')));
         }
 
         $sortField = in_array($request->input('sort'), ['full_name', 'created_at'])
@@ -42,8 +42,8 @@ class CustomerController extends Controller
         $customers = $query->paginate(15)->withQueryString();
 
         $totalCustomers    = Customer::count();
-        $activeCustomers   = Customer::where('status', 'active')->count();
-        $inactiveCustomers = Customer::where('status', 'inactive')->count();
+        $activeCustomers   = Customer::whereHas('user', fn ($q) => $q->where('status', 'active'))->count();
+        $inactiveCustomers = Customer::whereHas('user', fn ($q) => $q->where('status', 'inactive'))->count();
 
         return view('customers.index', compact(
             'customers', 'totalCustomers', 'activeCustomers', 'inactiveCustomers'
@@ -63,13 +63,9 @@ class CustomerController extends Controller
     {
         $this->authorize('toggleStatus', $customer);
 
-        $newStatus = $customer->status === 'active' ? 'inactive' : 'active';
+        $newStatus = $customer->user->status === 'active' ? 'inactive' : 'active';
 
-        $customer->update(['status' => $newStatus]);
-
-        if ($customer->user) {
-            $customer->user->update(['status' => $newStatus]);
-        }
+        $customer->user->update(['status' => $newStatus]);
 
         $label = $newStatus === 'active' ? 'activated' : 'deactivated';
 

@@ -10,7 +10,7 @@ class Customer extends Model
 {
     protected $fillable = [
         'user_id', 'first_name', 'last_name', 'email',
-        'contact_no', 'status', 'address_id', 'profile_picture',
+        'contact_no', 'address_id', 'profile_picture',
     ];
 
     /* ── Relationships ───────────────────────────────────────── */
@@ -49,7 +49,7 @@ class Customer extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->user?->status === 'active';
     }
 
     public function getProfilePictureUrlAttribute(): ?string

@@ -289,7 +289,7 @@
                         @endif
                     </td>
                     <td>
-                        @if($customer->status === 'active')
+                        @if($customer->user->status === 'active')
                             <span class="badge badge-active"><i class="fas fa-circle" style="font-size:.4rem"></i> Active</span>
                         @else
                             <span class="badge badge-inactive"><i class="fas fa-circle" style="font-size:.4rem"></i> Inactive</span>
@@ -304,10 +304,10 @@
                             @endcan
                             @can('toggleStatus', $customer)
                             <button type="button"
-                                class="btn-action {{ $customer->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
-                                onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
-                                <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'check' }}"></i>
-                                {{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                class="btn-action {{ $customer->user->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
+                                onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->user->status === 'active' ? 'true' : 'false' }})">
+                                <i class="fas fa-{{ $customer->user->status === 'active' ? 'ban' : 'check' }}"></i>
+                                {{ $customer->user->status === 'active' ? 'Deactivate' : 'Activate' }}
                             </button>
                             @endcan
                         </div>

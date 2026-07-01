@@ -24,7 +24,7 @@ class DashboardController extends Controller
         $availableMenuItems = MenuItem::where('is_active', true)->where('is_available', true)->count();
 
         $totalCustomers  = Customer::count();
-        $activeCustomers = Customer::where('status', 'active')->count();
+        $activeCustomers = Customer::whereHas('user', fn ($q) => $q->where('status', 'active'))->count();
 
         return view('dashboard', compact(
             'totalStaff', 'activeStaff', 'pendingResets',

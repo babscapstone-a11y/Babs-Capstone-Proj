@@ -63,10 +63,7 @@ class UserController extends Controller
     public function store(StoreStaffRequest $request): RedirectResponse
     {
         DB::transaction(function () use ($request) {
-            $fullName = trim("{$request->first_name} {$request->last_name}");
-
             $user = User::create([
-                'name'     => $fullName,
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
                 'role_id'  => $request->role_id,
@@ -115,10 +112,7 @@ class UserController extends Controller
     public function update(UpdateStaffRequest $request, User $user): RedirectResponse
     {
         DB::transaction(function () use ($request, $user) {
-            $fullName = trim("{$request->first_name} {$request->last_name}");
-
             $user->update([
-                'name'    => $fullName,
                 'email'   => $request->email,
                 'role_id' => $request->role_id,
                 'status'  => $request->status,
