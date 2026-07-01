@@ -63,8 +63,10 @@ class UserController extends Controller
     public function store(StoreStaffRequest $request): RedirectResponse
     {
         DB::transaction(function () use ($request) {
+            $fullName = trim("{$request->first_name} {$request->last_name}");
+
             $user = User::create([
-                'name'     => $request->name,
+                'name'     => $fullName,
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
                 'role_id'  => $request->role_id,
@@ -72,13 +74,9 @@ class UserController extends Controller
                 'status'   => $request->status,
             ]);
 
-            $parts     = explode(' ', trim($request->name), 2);
-            $firstName = $parts[0];
-            $lastName  = $parts[1] ?? '';
-
             Staff::create([
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
                 'email'      => $request->email,
                 'contact_no' => $request->phone ?? '',
                 'user_id'    => $user->id,
@@ -118,29 +116,27 @@ class UserController extends Controller
     public function update(UpdateStaffRequest $request, User $user): RedirectResponse
     {
         DB::transaction(function () use ($request, $user) {
+            $fullName = trim("{$request->first_name} {$request->last_name}");
+
             $user->update([
-                'name'    => $request->name,
+                'name'    => $fullName,
                 'email'   => $request->email,
                 'role_id' => $request->role_id,
                 'phone'   => $request->phone,
                 'status'  => $request->status,
             ]);
 
-            $parts     = explode(' ', trim($request->name), 2);
-            $firstName = $parts[0];
-            $lastName  = $parts[1] ?? '';
-
             if ($user->staff) {
                 $user->staff->update([
-                    'first_name' => $firstName,
-                    'last_name'  => $lastName,
+                    'first_name' => $request->first_name,
+                    'last_name'  => $request->last_name,
                     'email'      => $request->email,
                     'contact_no' => $request->phone ?? $user->staff->contact_no,
                 ]);
             } else {
                 Staff::create([
-                    'first_name' => $firstName,
-                    'last_name'  => $lastName,
+                    'first_name' => $request->first_name,
+                    'last_name'  => $request->last_name,
                     'email'      => $request->email,
                     'contact_no' => $request->phone ?? '',
                     'user_id'    => $user->id,

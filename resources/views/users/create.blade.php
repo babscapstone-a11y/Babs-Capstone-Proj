@@ -69,18 +69,34 @@
                 <div class="section-label">Account Information</div>
                 <div class="form-grid">
 
-                    <div class="form-group span-2">
-                        <label class="form-label" for="name">
-                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> Full Name
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> First Name
                         </label>
-                        <div class="input-wrap @error('name') has-error @enderror">
+                        <div class="input-wrap @error('first_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
-                            <input id="name" name="name" type="text" class="form-input"
-                                   value="{{ old('name') }}" required autofocus
-                                   placeholder="e.g. Juan dela Cruz"
-                                   aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}">
+                            <input id="first_name" name="first_name" type="text" class="form-input"
+                                   value="{{ old('first_name') }}" required autofocus
+                                   placeholder="Juan"
+                                   aria-invalid="{{ $errors->has('first_name') ? 'true' : 'false' }}">
                         </div>
-                        @error('name')
+                        @error('first_name')
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> Last Name
+                        </label>
+                        <div class="input-wrap @error('last_name') has-error @enderror">
+                            <span class="input-icon"><i class="fas fa-user"></i></span>
+                            <input id="last_name" name="last_name" type="text" class="form-input"
+                                   value="{{ old('last_name') }}" required
+                                   placeholder="dela Cruz"
+                                   aria-invalid="{{ $errors->has('last_name') ? 'true' : 'false' }}">
+                        </div>
+                        @error('last_name')
                             <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
                         @enderror
                     </div>
