@@ -27,8 +27,10 @@ class RegisteredUserController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'last_name'  => ['required', 'string', 'max:100'],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'phone'      => ['nullable', 'string', 'max:20'],
+            'phone'      => ['nullable', 'digits:11'],
             'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'phone.digits' => 'Phone number must be exactly 11 digits.',
         ]);
 
         $customerRole = Role::where('role_name', 'customer')->firstOrFail();

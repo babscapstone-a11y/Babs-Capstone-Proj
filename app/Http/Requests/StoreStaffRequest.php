@@ -19,7 +19,7 @@ class StoreStaffRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:100'],
             'last_name'  => ['required', 'string', 'max:100'],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'phone'      => ['nullable', 'string', 'max:20'],
+            'phone'      => ['nullable', 'digits:11'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
             'status'     => ['required', 'in:active,inactive'],
             'password'   => ['required', 'confirmed', Password::defaults()],
@@ -31,6 +31,7 @@ class StoreStaffRequest extends FormRequest
         return [
             'role_id.required' => 'Please select a role for this staff member.',
             'role_id.exists'   => 'The selected role is invalid.',
+            'phone.digits'     => 'Phone number must be exactly 11 digits.',
         ];
     }
 }

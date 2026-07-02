@@ -659,8 +659,12 @@
                             type="tel"
                             value="{{ old('phone') }}"
                             autocomplete="tel"
-                            placeholder="+63 9XX XXX XXXX"
+                            placeholder="09XXXXXXXXX"
                             class="input-field"
+                            inputmode="numeric"
+                            maxlength="11"
+                            pattern="[0-9]{11}"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)"
                         >
                     </div>
                 </div>

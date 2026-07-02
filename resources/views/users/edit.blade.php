@@ -155,7 +155,9 @@
                         <div class="input-wrap">
                             <span class="input-icon"><i class="fas fa-mobile-screen"></i></span>
                             <input id="phone" name="phone" type="tel" class="form-input"
-                                   value="{{ old('phone', $user->staff->contact_no ?? '') }}" placeholder="+63 9XX XXX XXXX">
+                                   value="{{ old('phone', $user->staff->contact_no ?? '') }}" placeholder="09XXXXXXXXX"
+                                   inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                   oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
                         </div>
                     </div>
 

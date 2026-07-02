@@ -125,7 +125,9 @@
                         <div class="input-wrap">
                             <span class="input-icon"><i class="fas fa-mobile-screen"></i></span>
                             <input id="phone" name="phone" type="tel" class="form-input"
-                                   value="{{ old('phone') }}" placeholder="+63 9XX XXX XXXX">
+                                   value="{{ old('phone') }}" placeholder="09XXXXXXXXX"
+                                   inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                   oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
                         </div>
                     </div>
 
@@ -221,6 +223,28 @@
             </form>
         </div>
     </div>
+
+    {{-- Confirm-create modal --}}
+    <div class="modal-overlay" id="createConfirmModal" role="dialog" aria-modal="true" aria-labelledby="createConfirmTitle">
+        <div class="modal-box">
+            <div class="modal-icon warn"><i class="fas fa-user-plus"></i></div>
+            <h3 class="modal-title" id="createConfirmTitle">Confirm New Staff Account</h3>
+            <p class="modal-desc">Please review the details below before creating this account.</p>
+            <div style="background:var(--bg,#F8FAFC);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.83rem;display:flex;flex-direction:column;gap:.55rem">
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Name</span><strong id="confirmName" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Email</span><strong id="confirmEmail" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Phone</span><strong id="confirmPhone" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Role</span><strong id="confirmRole" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Status</span><strong id="confirmStatus" style="text-align:right"></strong></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeCreateConfirmModal()">Cancel</button>
+                <button type="button" class="btn-modal-confirm" id="confirmCreateBtn" style="flex:1">
+                    <i class="fas fa-check"></i> Confirm &amp; Create
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -254,13 +278,45 @@ conf.addEventListener('input', function() {
     confWrap.classList.toggle('has-error', !match);
 });
 
-// Loading state
-document.getElementById('createForm').addEventListener('submit', function() {
-    if (!this.checkValidity()) return;
-    if (pwd.value !== conf.value) return;
+// Intercept submit → show confirmation modal instead of posting straight away
+var createForm = document.getElementById('createForm');
+createForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!this.checkValidity()) { this.reportValidity(); return; }
+    if (pwd.value !== conf.value) {
+        matchErr.style.display = 'flex';
+        confWrap.classList.add('has-error');
+        conf.focus();
+        return;
+    }
+
+    var roleInput  = document.querySelector('input[name="role_id"]:checked');
+    var roleLabel  = roleInput ? document.querySelector('label[for="' + roleInput.id + '"] .role-name') : null;
+    var statusInput = document.querySelector('input[name="status"]:checked');
+
+    document.getElementById('confirmName').textContent   = (document.getElementById('first_name').value + ' ' + document.getElementById('last_name').value).trim();
+    document.getElementById('confirmEmail').textContent  = document.getElementById('email').value;
+    document.getElementById('confirmPhone').textContent  = document.getElementById('phone').value || '—';
+    document.getElementById('confirmRole').textContent   = roleLabel ? roleLabel.textContent : '—';
+    document.getElementById('confirmStatus').textContent = statusInput ? statusInput.value.charAt(0).toUpperCase() + statusInput.value.slice(1) : '—';
+
+    document.getElementById('createConfirmModal').classList.add('open');
+});
+
+function closeCreateConfirmModal() {
+    document.getElementById('createConfirmModal').classList.remove('open');
+}
+document.getElementById('createConfirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCreateConfirmModal();
+});
+
+document.getElementById('confirmCreateBtn').addEventListener('click', function() {
+    this.disabled = true;
     document.getElementById('btnSpinner').style.display = 'block';
     document.getElementById('btnText').textContent = ' Creating…';
     document.getElementById('submitBtn').disabled = true;
+    createForm.submit();
 });
 </script>
 @endsection
