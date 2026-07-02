@@ -1,6 +1,6 @@
 <x-guest-layout full>
 
-<!-- BAB'S RESTO – Forgot Password Page -->
+<!-- BAB'S RESTO – Set New Password Page -->
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
     :root{
@@ -166,26 +166,18 @@
     .input-wrap input::placeholder{color:rgba(17,24,39,0.28);font-weight:400}
     .input-wrap input.error{color:#DC2626}
 
+    .toggle-pwd{
+        background:transparent;border:none;outline:none;
+        color:var(--muted);cursor:pointer;
+        padding:0 .9rem;
+        display:flex;align-items:center;font-size:.95rem;
+        transition:color .2s;flex-shrink:0;
+    }
+    .toggle-pwd:hover{color:var(--primary)}
+
     .field-error{
         color:#DC2626;font-size:.82rem;margin-top:.4rem;
         display:flex;align-items:center;gap:.3rem;
-    }
-
-    /* ── Success notification ── */
-    .success-note{
-        background:linear-gradient(135deg,rgba(22,163,74,0.1),rgba(22,163,74,0.05));
-        border:1.5px solid rgba(22,163,74,0.25);
-        border-radius:14px;
-        padding:1rem 1.1rem;
-        display:flex;align-items:flex-start;gap:.7rem;
-        margin-bottom:1.25rem;
-        animation:fadeInDown .4s ease both;
-    }
-    .success-note .success-icon{
-        color:var(--success);font-size:1.1rem;flex-shrink:0;margin-top:.05rem;
-    }
-    .success-note .success-text{
-        color:#166534;font-size:.88rem;line-height:1.5;font-weight:500;
     }
 
     /* ── Button ── */
@@ -219,28 +211,6 @@
         animation:spin .8s linear infinite;
         display:none;
         flex-shrink:0;
-    }
-
-    /* ── Links ── */
-    .btn-back{
-        width:100%;
-        background:transparent;
-        border:1.5px solid rgba(17,24,39,0.1);
-        color:var(--muted);
-        padding:.72rem 1rem;
-        border-radius:14px;
-        font-weight:600;font-size:.92rem;
-        font-family:inherit;
-        cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:.5rem;
-        text-decoration:none;
-        transition:all .2s ease;
-        margin-top:.85rem;
-    }
-    .btn-back:hover{
-        border-color:var(--primary);color:var(--primary);
-        background:rgba(220,38,38,0.04);
-        transform:translateY(-1px);
     }
 
     .signin-link{
@@ -296,14 +266,14 @@
 
             <!-- Heading -->
             <div class="animated-slogan">
-                <span class="word">Forgot</span>&nbsp;
-                <span class="word">your</span>&nbsp;
-                <span class="word accent">password?</span>
+                <span class="word">Almost</span>&nbsp;
+                <span class="word">there,</span>&nbsp;
+                <span class="word accent">choose</span>
             </div>
 
             <!-- Description -->
             <p class="desc">
-                Don't worry! Enter your email address and we'll send you a 6-digit verification code so you can get back to managing your restaurant in no time.
+                Your code has been verified. Set a new password for your account below to finish resetting it.
             </p>
 
             <!-- Tagline badge -->
@@ -320,65 +290,76 @@
 
             <!-- Icon -->
             <div class="card-icon" aria-hidden="true">
-                <i class="fas fa-key"></i>
+                <i class="fas fa-lock"></i>
             </div>
 
-            <h2 id="reset-heading">Reset Your Password</h2>
-            <p class="reset-sub">Enter the email address associated with your account.</p>
+            <h2 id="reset-heading">Set New Password</h2>
+            <p class="reset-sub">Choose a strong password you haven't used before.</p>
 
             <div class="divider"></div>
 
-            <!-- ── Success status ── -->
-            @if (session('status'))
-                <div class="success-note" role="alert" aria-live="polite">
-                    <span class="success-icon"><i class="fas fa-circle-check"></i></span>
-                    <div class="success-text">{{ session('status') }}</div>
-                </div>
-            @endif
-
             <!-- ── Form ── -->
-            <form method="POST" action="{{ route('password.email') }}" id="resetForm" novalidate>
+            <form method="POST" action="{{ route('password.otp.reset.store') }}" id="resetForm" novalidate>
                 @csrf
 
-                <!-- Email -->
+                <!-- Password -->
                 <div style="margin-bottom:1.1rem">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-wrap @error('email') error @enderror">
-                        <span class="icon" aria-hidden="true"><i class="fas fa-envelope"></i></span>
+                    <label class="form-label" for="password">New Password</label>
+                    <div class="input-wrap @error('password') error @enderror">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-lock"></i></span>
                         <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
+                            id="password"
+                            type="password"
+                            name="password"
                             required
                             autofocus
-                            autocomplete="email"
-                            placeholder="you@example.com"
-                            aria-describedby="email-error"
-                            aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                            autocomplete="new-password"
+                            placeholder="Min. 8 characters"
+                            aria-describedby="password-error"
+                            aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
                         >
+                        <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password">
+                            <i class="fas fa-eye" id="togglePwdIcon"></i>
+                        </button>
                     </div>
-                    @error('email')
-                        <div class="field-error" id="email-error" role="alert">
+                    @error('password')
+                        <div class="field-error" id="password-error" role="alert">
                             <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                             {{ $message }}
                         </div>
                     @enderror
                 </div>
 
+                <!-- Confirm Password -->
+                <div style="margin-bottom:1.1rem">
+                    <label class="form-label" for="password_confirmation">Confirm New Password</label>
+                    <div class="input-wrap" id="confirmWrap">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
+                        <input
+                            id="password_confirmation"
+                            type="password"
+                            name="password_confirmation"
+                            required
+                            autocomplete="new-password"
+                            placeholder="Re-enter password"
+                        >
+                        <button type="button" class="toggle-pwd" id="toggleConfirm" aria-label="Show confirm password">
+                            <i class="fas fa-eye" id="toggleConfirmIcon"></i>
+                        </button>
+                    </div>
+                    <div class="field-error" id="matchError" style="display:none">
+                        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                        Passwords do not match
+                    </div>
+                </div>
+
                 <!-- Submit button -->
-                <button type="submit" id="submitBtn" class="btn-submit" aria-label="Send Verification Code">
+                <button type="submit" id="submitBtn" class="btn-submit" aria-label="Reset Password">
                     <span class="spinner" id="spinner" aria-hidden="true"></span>
-                    <span id="btnLabel"><i class="fas fa-paper-plane" aria-hidden="true"></i>&nbsp; Send Verification Code</span>
+                    <span id="btnLabel"><i class="fas fa-check" aria-hidden="true"></i>&nbsp; Reset Password</span>
                 </button>
 
             </form>
-
-            <!-- Back to login -->
-            <a href="{{ route('login') }}" class="btn-back" aria-label="Back to Login">
-                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                Back to Login
-            </a>
 
             <p class="signin-link">
                 Remember your password?&nbsp;<a href="{{ route('login') }}">Sign In</a>
@@ -394,6 +375,32 @@
 
 <script>
 (function(){
+    var pwd     = document.getElementById('password');
+    var pwdBtn  = document.getElementById('togglePwd');
+    var pwdIcon = document.getElementById('togglePwdIcon');
+    pwdBtn && pwdBtn.addEventListener('click', function(){
+        var show = pwd.type === 'text';
+        pwd.type = show ? 'password' : 'text';
+        pwdIcon.className = show ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+
+    var conf     = document.getElementById('password_confirmation');
+    var confBtn  = document.getElementById('toggleConfirm');
+    var confIcon = document.getElementById('toggleConfirmIcon');
+    var confWrap = document.getElementById('confirmWrap');
+    var matchErr = document.getElementById('matchError');
+    confBtn && confBtn.addEventListener('click', function(){
+        var show = conf.type === 'text';
+        conf.type = show ? 'password' : 'text';
+        confIcon.className = show ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+    conf && conf.addEventListener('input', function(){
+        if(!this.value){ matchErr.style.display='none'; confWrap.classList.remove('error'); return; }
+        var match = this.value === pwd.value;
+        matchErr.style.display = match ? 'none' : 'flex';
+        confWrap.classList.toggle('error', !match);
+    });
+
     // Loading spinner on submit
     var form = document.getElementById('resetForm');
     var btn  = document.getElementById('submitBtn');
@@ -401,8 +408,15 @@
     var lbl  = document.getElementById('btnLabel');
 
     if(form && btn){
-        form.addEventListener('submit', function(){
+        form.addEventListener('submit', function(e){
             if(!form.checkValidity()) return;
+            if(pwd.value !== conf.value){
+                e.preventDefault();
+                matchErr.style.display = 'flex';
+                confWrap.classList.add('error');
+                conf.focus();
+                return;
+            }
             spin.style.display = 'block';
             lbl.style.opacity  = '0.6';
             btn.disabled       = true;

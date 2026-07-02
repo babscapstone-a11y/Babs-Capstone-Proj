@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\PasswordResetOtp;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\PasswordResetOtpNotification;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
 test('reset password link screen can be rendered', function () {
@@ -10,50 +12,83 @@ test('reset password link screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
-test('reset password link can be requested', function () {
+test('an otp is sent when a password reset is requested', function () {
     Notification::fake();
 
     $user = User::factory()->create();
 
-    $this->post('/forgot-password', ['email' => $user->email]);
+    $response = $this->post('/forgot-password', ['email' => $user->email]);
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, PasswordResetOtpNotification::class);
+    $response->assertRedirect(route('password.otp.verify'));
 });
 
-test('reset password screen can be rendered', function () {
+test('requesting a reset for an unknown email still redirects to the otp screen', function () {
+    Notification::fake();
+
+    $response = $this->post('/forgot-password', ['email' => 'nobody@example.com']);
+
+    Notification::assertNothingSent();
+    $response->assertRedirect(route('password.otp.verify'));
+});
+
+test('otp verify screen cannot be reached without requesting a code first', function () {
+    $response = $this->get('/forgot-password/verify-otp');
+
+    $response->assertRedirect(route('password.request'));
+});
+
+test('password can be reset with a valid otp', function () {
     Notification::fake();
 
     $user = User::factory()->create();
 
     $this->post('/forgot-password', ['email' => $user->email]);
 
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-        $response = $this->get('/reset-password/'.$notification->token);
+    Notification::assertSentTo($user, PasswordResetOtpNotification::class, function ($notification) use ($user) {
+        $verifyResponse = $this->post('/forgot-password/verify-otp', ['otp' => $notification->otp]);
+        $verifyResponse->assertSessionHasNoErrors()->assertRedirect(route('password.otp.reset'));
 
-        $response->assertStatus(200);
+        $resetResponse = $this->post('/forgot-password/reset', [
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ]);
+        $resetResponse->assertSessionHasNoErrors()->assertRedirect(route('login'));
+
+        expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
 
         return true;
     });
 });
 
-test('password can be reset with valid token', function () {
+test('an incorrect otp is rejected and does not reset the password', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+    $originalPassword = $user->password;
+
+    $this->post('/forgot-password', ['email' => $user->email]);
+
+    $response = $this->post('/forgot-password/verify-otp', ['otp' => '000000']);
+
+    $response->assertSessionHasErrors('otp');
+    expect($user->fresh()->password)->toBe($originalPassword);
+});
+
+test('an expired otp is rejected', function () {
     Notification::fake();
 
     $user = User::factory()->create();
 
     $this->post('/forgot-password', ['email' => $user->email]);
 
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-        $response = $this->post('/reset-password', [
-            'token' => $notification->token,
-            'email' => $user->email,
-            'password' => 'password',
-            'password_confirmation' => 'password',
+    Notification::assertSentTo($user, PasswordResetOtpNotification::class, function ($notification) use ($user) {
+        PasswordResetOtp::where('email', $user->email)->update([
+            'expires_at' => now()->subMinute(),
         ]);
 
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect(route('login'));
+        $response = $this->post('/forgot-password/verify-otp', ['otp' => $notification->otp]);
+        $response->assertSessionHasErrors('otp');
 
         return true;
     });

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordResetOtp;
+use App\Models\User;
+use App\Notifications\PasswordResetOtpNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -20,7 +23,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Handle an incoming password reset OTP request.
      *
      * @throws ValidationException
      */
@@ -30,16 +33,28 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        if ($user) {
+            $otp = (string) random_int(100000, 999999);
+
+            PasswordResetOtp::updateOrCreate(
+                ['email' => $email],
+                [
+                    'otp' => Hash::make($otp),
+                    'attempts' => 0,
+                    'expires_at' => now()->addMinutes(10),
+                    'created_at' => now(),
+                ]
+            );
+
+            $user->notify(new PasswordResetOtpNotification($otp));
+        }
+
+        $request->session()->put('password_reset_otp_email', $email);
+
+        return redirect()->route('password.otp.verify')
+            ->with('status', 'If an account exists for that email, a 6-digit code has been sent.');
     }
 }

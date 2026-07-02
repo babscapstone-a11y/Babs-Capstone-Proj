@@ -1,6 +1,6 @@
 <x-guest-layout full>
 
-<!-- BAB'S RESTO – Forgot Password Page -->
+<!-- BAB'S RESTO – Verify OTP Page -->
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
     :root{
@@ -121,6 +121,7 @@
         margin:0;font-weight:800;color:var(--black);font-size:1.65rem;
     }
     .reset-sub{color:var(--muted);margin-top:.35rem;font-size:.92rem}
+    .reset-sub strong{color:var(--black)}
 
     /* Icon header decoration */
     .card-icon{
@@ -158,12 +159,13 @@
         flex:1;min-width:0;
         background:transparent;border:none;outline:none;
         padding:.75rem .75rem .75rem 0;
-        font-size:.95rem;color:var(--black);
-        font-family:inherit;
+        font-size:1.4rem;color:var(--black);
+        font-family:inherit;letter-spacing:8px;font-weight:700;
+        text-align:center;
     }
     .input-wrap input:focus,
     .input-wrap input:focus-visible { outline: none; box-shadow: none; }
-    .input-wrap input::placeholder{color:rgba(17,24,39,0.28);font-weight:400}
+    .input-wrap input::placeholder{color:rgba(17,24,39,0.28);font-weight:400;letter-spacing:8px}
     .input-wrap input.error{color:#DC2626}
 
     .field-error{
@@ -296,14 +298,14 @@
 
             <!-- Heading -->
             <div class="animated-slogan">
-                <span class="word">Forgot</span>&nbsp;
+                <span class="word">Check</span>&nbsp;
                 <span class="word">your</span>&nbsp;
-                <span class="word accent">password?</span>
+                <span class="word accent">inbox</span>
             </div>
 
             <!-- Description -->
             <p class="desc">
-                Don't worry! Enter your email address and we'll send you a 6-digit verification code so you can get back to managing your restaurant in no time.
+                We've sent a 6-digit verification code to your email address. Enter it below to continue resetting your password.
             </p>
 
             <!-- Tagline badge -->
@@ -320,11 +322,11 @@
 
             <!-- Icon -->
             <div class="card-icon" aria-hidden="true">
-                <i class="fas fa-key"></i>
+                <i class="fas fa-shield-halved"></i>
             </div>
 
-            <h2 id="reset-heading">Reset Your Password</h2>
-            <p class="reset-sub">Enter the email address associated with your account.</p>
+            <h2 id="reset-heading">Enter Verification Code</h2>
+            <p class="reset-sub">Sent to <strong>{{ $email }}</strong></p>
 
             <div class="divider"></div>
 
@@ -337,29 +339,31 @@
             @endif
 
             <!-- ── Form ── -->
-            <form method="POST" action="{{ route('password.email') }}" id="resetForm" novalidate>
+            <form method="POST" action="{{ route('password.otp.verify.store') }}" id="resetForm" novalidate>
                 @csrf
 
-                <!-- Email -->
+                <!-- OTP -->
                 <div style="margin-bottom:1.1rem">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-wrap @error('email') error @enderror">
-                        <span class="icon" aria-hidden="true"><i class="fas fa-envelope"></i></span>
+                    <label class="form-label" for="otp">6-Digit Code</label>
+                    <div class="input-wrap @error('otp') error @enderror">
                         <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
+                            id="otp"
+                            type="text"
+                            name="otp"
+                            inputmode="numeric"
+                            maxlength="6"
+                            pattern="[0-9]{6}"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)"
                             required
                             autofocus
-                            autocomplete="email"
-                            placeholder="you@example.com"
-                            aria-describedby="email-error"
-                            aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                            autocomplete="one-time-code"
+                            placeholder="······"
+                            aria-describedby="otp-error"
+                            aria-invalid="{{ $errors->has('otp') ? 'true' : 'false' }}"
                         >
                     </div>
-                    @error('email')
-                        <div class="field-error" id="email-error" role="alert">
+                    @error('otp')
+                        <div class="field-error" id="otp-error" role="alert">
                             <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                             {{ $message }}
                         </div>
@@ -367,17 +371,17 @@
                 </div>
 
                 <!-- Submit button -->
-                <button type="submit" id="submitBtn" class="btn-submit" aria-label="Send Verification Code">
+                <button type="submit" id="submitBtn" class="btn-submit" aria-label="Verify Code">
                     <span class="spinner" id="spinner" aria-hidden="true"></span>
-                    <span id="btnLabel"><i class="fas fa-paper-plane" aria-hidden="true"></i>&nbsp; Send Verification Code</span>
+                    <span id="btnLabel"><i class="fas fa-check" aria-hidden="true"></i>&nbsp; Verify Code</span>
                 </button>
 
             </form>
 
-            <!-- Back to login -->
-            <a href="{{ route('login') }}" class="btn-back" aria-label="Back to Login">
-                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                Back to Login
+            <!-- Back to forgot password -->
+            <a href="{{ route('password.request') }}" class="btn-back" aria-label="Request a new code">
+                <i class="fas fa-arrow-rotate-left" aria-hidden="true"></i>
+                Didn't get a code? Send again
             </a>
 
             <p class="signin-link">
