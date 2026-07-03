@@ -14,13 +14,13 @@ class CartController extends Controller
     private function getOrCreateCart(): Cart
     {
         return Cart::firstOrCreate(
-            ['user_id' => auth()->id(), 'status' => 'active']
+            ['customer_id' => auth('customer')->id(), 'status' => 'active']
         );
     }
 
     private function activeCart(): ?Cart
     {
-        return Cart::where('user_id', auth()->id())
+        return Cart::where('customer_id', auth('customer')->id())
             ->where('status', 'active')
             ->with(['items.menuItem.category'])
             ->first();
@@ -144,7 +144,7 @@ class CartController extends Controller
     private function authorizeCartItem(CartItem $cartItem): void
     {
         $cart = Cart::where('id', $cartItem->cart_id)
-            ->where('user_id', auth()->id())
+            ->where('customer_id', auth('customer')->id())
             ->firstOrFail();
     }
 }

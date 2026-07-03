@@ -13,7 +13,7 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
-        $query = Customer::with(['user', 'address']);
+        $query = Customer::with('address');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -25,7 +25,7 @@ class CustomerController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->whereHas('user', fn ($q) => $q->where('status', $request->input('status')));
+            $query->where('status', $request->input('status'));
         }
 
         $sortField = in_array($request->input('sort'), ['full_name', 'created_at'])
@@ -42,8 +42,8 @@ class CustomerController extends Controller
         $customers = $query->paginate(15)->withQueryString();
 
         $totalCustomers    = Customer::count();
-        $activeCustomers   = Customer::whereHas('user', fn ($q) => $q->where('status', 'active'))->count();
-        $inactiveCustomers = Customer::whereHas('user', fn ($q) => $q->where('status', 'inactive'))->count();
+        $activeCustomers   = Customer::where('status', 'active')->count();
+        $inactiveCustomers = Customer::where('status', 'inactive')->count();
 
         return view('customers.index', compact(
             'customers', 'totalCustomers', 'activeCustomers', 'inactiveCustomers'
@@ -54,7 +54,7 @@ class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
 
-        $customer->load(['user', 'address']);
+        $customer->load('address');
 
         return view('customers.show', compact('customer'));
     }
@@ -63,9 +63,9 @@ class CustomerController extends Controller
     {
         $this->authorize('toggleStatus', $customer);
 
-        $newStatus = $customer->user->status === 'active' ? 'inactive' : 'active';
+        $newStatus = $customer->status === 'active' ? 'inactive' : 'active';
 
-        $customer->user->update(['status' => $newStatus]);
+        $customer->update(['status' => $newStatus]);
 
         $label = $newStatus === 'active' ? 'activated' : 'deactivated';
 

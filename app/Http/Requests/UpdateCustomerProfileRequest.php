@@ -8,7 +8,7 @@ class UpdateCustomerProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->isCustomer();
+        return auth('customer')->check();
     }
 
     public function rules(): array

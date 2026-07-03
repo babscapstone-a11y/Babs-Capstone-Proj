@@ -14,7 +14,6 @@ class RoleSeeder extends Seeder
             ['role_name' => 'cashier',       'display_name' => 'Cashier'],
             ['role_name' => 'kitchen_staff', 'display_name' => 'Kitchen Staff'],
             ['role_name' => 'table_server',  'display_name' => 'Table Server'],
-            ['role_name' => 'customer',      'display_name' => 'Customer'],
         ];
 
         foreach ($roles as $role) {

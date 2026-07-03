@@ -22,8 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // When an already-authenticated user hits a guest-only route (/login, /register),
         // redirect them based on their role instead of blindly sending everyone to /dashboard.
         $middleware->redirectUsersTo(function (Request $request) {
-            $user = Auth::user();
-            if ($user && $user->isCustomer()) {
+            if (Auth::guard('customer')->check()) {
                 return route('catalog.index');
             }
             return route('dashboard');

@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -26,35 +25,27 @@ class RegisteredUserController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
             'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'email'      => [
+                'required', 'string', 'lowercase', 'email', 'max:255',
+                Rule::unique(Customer::class),
+                Rule::unique(User::class),
+            ],
             'phone'      => ['nullable', 'digits:11'],
             'password'   => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'phone.digits' => 'Phone number must be exactly 11 digits.',
         ]);
 
-        $customerRole = Role::where('role_name', 'customer')->firstOrFail();
+        $customer = Customer::create([
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'contact_no' => $request->phone,
+            'status'     => 'active',
+        ]);
 
-        $user = DB::transaction(function () use ($request, $customerRole) {
-            $user = User::create([
-                'email'    => $request->email,
-                'password' => Hash::make($request->password),
-                'role_id'  => $customerRole->id,
-                'status'   => 'active',
-            ]);
-
-            Customer::create([
-                'user_id'    => $user->id,
-                'first_name' => $request->first_name,
-                'last_name'  => $request->last_name,
-                'email'      => $user->email,
-                'contact_no' => $request->phone,
-            ]);
-
-            return $user;
-        });
-
-        event(new Registered($user));
+        event(new Registered($customer));
 
         // Do NOT auto-login. Redirect to login with success notice.
         return redirect()->route('login')

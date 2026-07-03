@@ -22,13 +22,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
-
         // Role-based hard redirect — clear stored intended URL so login never
         // bounces a customer to /dashboard (admin-only) or vice versa.
         $request->session()->forget('url.intended');
 
-        if ($user->isCustomer()) {
+        if (Auth::guard('customer')->check()) {
             return redirect()->route('catalog.index');
         }
 
@@ -37,7 +35,11 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        if (Auth::guard('customer')->check()) {
+            Auth::guard('customer')->logout();
+        } else {
+            Auth::guard('staff')->logout();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

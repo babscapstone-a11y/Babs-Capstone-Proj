@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
 use App\Notifications\PasswordResetOtpNotification;
@@ -34,7 +35,8 @@ class PasswordResetLinkController extends Controller
         ]);
 
         $email = $request->email;
-        $user = User::where('email', $email)->first();
+        $user = User::where('email', $email)->first()
+            ?? Customer::where('email', $email)->first();
 
         if ($user) {
             $otp = (string) random_int(100000, 999999);

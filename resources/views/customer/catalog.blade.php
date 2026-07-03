@@ -543,15 +543,16 @@
 
             {{-- Profile dropdown --}}
             <div class="profile-menu">
+                @php $navCustomer = auth('customer')->user(); @endphp
                 <button class="profile-btn" id="profileBtn" aria-expanded="false">
-                    <div class="profile-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                    <span class="profile-name">{{ auth()->user()->name }}</span>
+                    <div class="profile-avatar">{{ $navCustomer->initials }}</div>
+                    <span class="profile-name">{{ $navCustomer->first_name }}</span>
                     <i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--muted);"></i>
                 </button>
                 <div class="profile-dropdown" id="profileDropdown">
                     <div class="dropdown-header">
-                        <div class="dropdown-header-name">{{ auth()->user()->customer?->full_name ?? auth()->user()->name }}</div>
-                        <div class="dropdown-header-email">{{ auth()->user()->email }}</div>
+                        <div class="dropdown-header-name">{{ $navCustomer->full_name }}</div>
+                        <div class="dropdown-header-email">{{ $navCustomer->email }}</div>
                     </div>
                     <a href="{{ route('account.index') }}" class="dropdown-item">
                         <i class="fas fa-user"></i> My Profile

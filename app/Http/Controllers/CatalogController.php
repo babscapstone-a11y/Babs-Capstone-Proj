@@ -38,8 +38,8 @@ class CatalogController extends Controller
         // Group by category for section display
         $itemsByCategory = $menuItems->groupBy('category_id');
 
-        // Load active cart for current user
-        $cart = Cart::where('user_id', auth()->id())
+        // Load active cart for current customer
+        $cart = Cart::where('customer_id', auth('customer')->id())
             ->where('status', 'active')
             ->with(['items.menuItem'])
             ->first();

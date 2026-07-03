@@ -49,11 +49,6 @@ class User extends Authenticatable
         return $this->hasOne(Staff::class);
     }
 
-    public function customer(): HasOne
-    {
-        return $this->hasOne(Customer::class);
-    }
-
     public function passwordResetRequests(): HasMany
     {
         return $this->hasMany(StaffPasswordResetRequest::class, 'user_id');
@@ -71,11 +66,6 @@ class User extends Authenticatable
         return $this->role?->role_name === 'admin';
     }
 
-    public function isCustomer(): bool
-    {
-        return $this->role?->role_name === 'customer';
-    }
-
     public function isActive(): bool
     {
         return $this->status === 'active';
@@ -88,7 +78,7 @@ class User extends Authenticatable
 
     public function getNameAttribute(): string
     {
-        return $this->staff?->full_name ?? $this->customer?->full_name ?? '';
+        return $this->staff?->full_name ?? '';
     }
 
     public function getInitialsAttribute(): string

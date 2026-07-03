@@ -2,23 +2,36 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Database\Factories\CustomerFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Customer extends Model
+class Customer extends Authenticatable
 {
+    /** @use HasFactory<CustomerFactory> */
+    use HasFactory, Notifiable;
+
     protected $fillable = [
-        'user_id', 'first_name', 'last_name', 'email',
-        'contact_no', 'address_id', 'profile_picture',
+        'first_name', 'last_name', 'email', 'password',
+        'contact_no', 'address_id', 'profile_picture', 'status',
     ];
 
-    /* ── Relationships ───────────────────────────────────────── */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
-    public function user(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'password' => 'hashed',
+        ];
     }
+
+    /* ── Relationships ───────────────────────────────────────── */
 
     public function address(): BelongsTo
     {
@@ -49,7 +62,7 @@ class Customer extends Model
 
     public function isActive(): bool
     {
-        return $this->user?->status === 'active';
+        return $this->status === 'active';
     }
 
     public function getProfilePictureUrlAttribute(): ?string

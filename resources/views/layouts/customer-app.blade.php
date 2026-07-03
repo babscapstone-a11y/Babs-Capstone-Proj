@@ -205,20 +205,20 @@
             <div class="nav-profile">
                 <button class="nav-profile-btn" id="profileDropBtn" onclick="toggleDropdown()">
                     <div class="nav-avatar">
-                        @php $navCustomer = auth()->user()->customer; @endphp
-                        @if($navCustomer?->profile_picture_url)
+                        @php $navCustomer = auth('customer')->user(); @endphp
+                        @if($navCustomer->profile_picture_url)
                             <img src="{{ $navCustomer->profile_picture_url }}" alt="">
                         @else
-                            {{ $navCustomer?->initials ?? auth()->user()->name[0] ?? 'U' }}
+                            {{ $navCustomer->initials }}
                         @endif
                     </div>
-                    <span class="nav-profile-name">{{ $navCustomer?->first_name ?? auth()->user()->name }}</span>
+                    <span class="nav-profile-name">{{ $navCustomer->first_name }}</span>
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div class="nav-dropdown" id="profileDropdown">
                     <div class="nav-dropdown-header">
-                        <div class="ddh-name">{{ $navCustomer?->full_name ?? auth()->user()->name }}</div>
-                        <div class="ddh-email">{{ auth()->user()->email }}</div>
+                        <div class="ddh-name">{{ $navCustomer->full_name }}</div>
+                        <div class="ddh-email">{{ $navCustomer->email }}</div>
                     </div>
                     <a href="{{ route('account.index') }}" class="nav-dropdown-item">
                         <i class="fas fa-user"></i> My Profile

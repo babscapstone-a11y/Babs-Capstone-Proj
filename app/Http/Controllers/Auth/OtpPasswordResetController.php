@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
@@ -102,7 +103,9 @@ class OtpPasswordResetController extends Controller
         ]);
 
         $email = $request->session()->get('password_reset_otp_verified_email');
-        $user = $email ? User::where('email', $email)->first() : null;
+        $user = $email
+            ? User::where('email', $email)->first() ?? Customer::where('email', $email)->first()
+            : null;
 
         if (! $user) {
             return redirect()->route('password.request');

@@ -42,7 +42,14 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('email', 'password');
+        $remember = $this->boolean('remember');
+
+        if (Auth::guard('staff')->attempt($credentials, $remember)) {
+            $guard = 'staff';
+        } elseif (Auth::guard('customer')->attempt($credentials, $remember)) {
+            $guard = 'customer';
+        } else {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -50,9 +57,9 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // REQ012: Reject inactive staff accounts immediately on login
-        if (Auth::user() && Auth::user()->status === 'inactive') {
-            Auth::logout();
+        // REQ012: Reject inactive accounts immediately on login
+        if (! Auth::guard($guard)->user()->isActive()) {
+            Auth::guard($guard)->logout();
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

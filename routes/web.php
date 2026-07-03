@@ -116,7 +116,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 });
 
 /* ── Customer Profile Module (REQ063–REQ065) ─────────────────── */
-Route::middleware(['auth', 'customer'])->prefix('account')->name('account.')->group(function () {
+Route::middleware(['auth:customer', 'customer'])->prefix('account')->name('account.')->group(function () {
     Route::get('/',          [CustomerProfileController::class, 'index'])          ->name('index');
     Route::put('/profile',   [CustomerProfileController::class, 'updateProfile'])  ->name('profile.update');
     Route::put('/password',  [CustomerProfileController::class, 'updatePassword']) ->name('password.update');
@@ -125,7 +125,7 @@ Route::middleware(['auth', 'customer'])->prefix('account')->name('account.')->gr
 });
 
 /* ── Digital Menu Catalog (Customer only) ────────────────────── */
-Route::middleware(['auth', 'customer'])->group(function () {
+Route::middleware(['auth:customer', 'customer'])->group(function () {
 
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
 

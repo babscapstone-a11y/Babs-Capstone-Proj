@@ -17,14 +17,13 @@ class CustomerProfileController extends Controller
 {
     private function cartCount(): int
     {
-        $cart = Cart::where('user_id', auth()->id())->with('items')->first();
+        $cart = Cart::where('customer_id', auth('customer')->id())->with('items')->first();
         return $cart ? $cart->item_count : 0;
     }
 
     public function index(): View
     {
-        $user     = auth()->user();
-        $customer = $user->customer()->with('address')->firstOrFail();
+        $customer = auth('customer')->user()->load('address');
 
         $orders = Order::where('customer_id', $customer->id)
             ->with(['orderStatus', 'details'])
@@ -32,7 +31,6 @@ class CustomerProfileController extends Controller
             ->paginate(8, ['*'], 'page');
 
         return view('customer.profile.index', [
-            'user'      => $user,
             'customer'  => $customer,
             'orders'    => $orders,
             'cartCount' => $this->cartCount(),
@@ -41,8 +39,7 @@ class CustomerProfileController extends Controller
 
     public function updateProfile(UpdateCustomerProfileRequest $request): RedirectResponse
     {
-        $user     = auth()->user();
-        $customer = $user->customer()->with('address')->firstOrFail();
+        $customer = auth('customer')->user()->load('address');
 
         // Handle profile picture upload
         $picturePath = $customer->profile_picture;
@@ -80,15 +77,15 @@ class CustomerProfileController extends Controller
 
     public function updatePassword(UpdateCustomerPasswordRequest $request): RedirectResponse
     {
-        $user = auth()->user();
+        $customer = auth('customer')->user();
 
-        if (! Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $customer->password)) {
             return back()
                 ->withErrors(['current_password' => 'The current password is incorrect.'])
                 ->withFragment('password');
         }
 
-        $user->update(['password' => Hash::make($request->new_password)]);
+        $customer->update(['password' => Hash::make($request->new_password)]);
 
         return redirect()->route('account.index', ['#password'])
             ->with('success', 'Password changed successfully!');
@@ -96,8 +93,7 @@ class CustomerProfileController extends Controller
 
     public function showOrder(Order $order): View
     {
-        $user     = auth()->user();
-        $customer = $user->customer;
+        $customer = auth('customer')->user();
 
         if ($order->customer_id !== $customer->id) {
             abort(403, 'You are not authorized to view this order.');
@@ -114,7 +110,7 @@ class CustomerProfileController extends Controller
 
     public function orderStatus(Order $order): JsonResponse
     {
-        $customer = auth()->user()->customer;
+        $customer = auth('customer')->user();
 
         if (! $customer || $order->customer_id !== $customer->id) {
             abort(403);

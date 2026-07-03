@@ -16,7 +16,7 @@ class CheckoutController extends Controller
 {
     private function activeCart()
     {
-        return Cart::where('user_id', auth()->id())
+        return Cart::where('customer_id', auth('customer')->id())
             ->where('status', 'active')
             ->with(['items.menuItem'])
             ->first();
@@ -31,7 +31,7 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty. Add some items before checking out.');
         }
 
-        $customer = auth()->user()->customer;
+        $customer = auth('customer')->user();
 
         return view('checkout.index', [
             'cart'      => $cart,
@@ -49,7 +49,7 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty. Add some items before checking out.');
         }
 
-        $customer = auth()->user()->customer;
+        $customer = auth('customer')->user();
 
         if (! $customer) {
             return redirect()->route('cart.index')

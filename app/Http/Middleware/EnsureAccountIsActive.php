@@ -11,10 +11,14 @@ class EnsureAccountIsActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        $guard = match (true) {
+            Auth::guard('staff')->check() => 'staff',
+            Auth::guard('customer')->check() => 'customer',
+            default => null,
+        };
 
-        if ($user && ! $user->isActive()) {
-            Auth::logout();
+        if ($guard && ! Auth::guard($guard)->user()->isActive()) {
+            Auth::guard($guard)->logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
