@@ -501,21 +501,6 @@
             <!-- Session status (Breeze) -->
             <x-auth-session-status class="mb-3" :status="session('status')" />
 
-            @if(session('registration_success'))
-            <div style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1.5px solid #86efac;border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:.75rem;">
-                <div style="width:36px;height:36px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem;">
-                    <svg style="width:18px;height:18px;fill:#fff;" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-                </div>
-                <div>
-                    <div style="font-weight:700;color:#15803d;font-size:.9rem;margin-bottom:.2rem;">Registration Successful!</div>
-                    <div style="color:#166534;font-size:.82rem;line-height:1.5;">
-                        {!! session('registered_name') ? 'Hi <strong>'.e(session('registered_name')).'</strong>, your' : 'Your' !!}
-                        account has been created successfully. Please log in using your registered email address and password.
-                    </div>
-                </div>
-            </div>
-            @endif
-
             <form method="POST" action="{{ route('login') }}" id="loginForm" novalidate>
                 @csrf
 
@@ -543,6 +528,11 @@
                             <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                             {{ $message }}
                         </div>
+                        @if(session('registration_otp_email'))
+                            <a href="{{ route('register.otp.verify') }}" style="display:inline-block;margin-top:.4rem;color:var(--primary);font-weight:600;font-size:.82rem;text-decoration:underline;">
+                                Enter verification code
+                            </a>
+                        @endif
                     @enderror
                 </div>
 

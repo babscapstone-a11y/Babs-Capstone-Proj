@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\EmailVerificationOtp;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Notifications\EmailVerificationOtpNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -45,11 +46,24 @@ class RegisteredUserController extends Controller
             'status'     => 'active',
         ]);
 
-        event(new Registered($customer));
+        $otp = (string) random_int(100000, 999999);
 
-        // Do NOT auto-login. Redirect to login with success notice.
-        return redirect()->route('login')
-            ->with('registration_success', true)
-            ->with('registered_name', $request->first_name);
+        EmailVerificationOtp::updateOrCreate(
+            ['email' => $customer->email],
+            [
+                'otp' => Hash::make($otp),
+                'attempts' => 0,
+                'expires_at' => now()->addMinutes(10),
+                'created_at' => now(),
+            ]
+        );
+
+        $customer->notify(new EmailVerificationOtpNotification($otp));
+
+        $request->session()->put('registration_otp_email', $customer->email);
+
+        // Do NOT auto-login. The customer must verify their email before they can log in.
+        return redirect()->route('register.otp.verify')
+            ->with('status', "We've sent a 6-digit verification code to your email address.");
     }
 }

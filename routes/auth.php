@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OtpPasswordResetController;
@@ -17,6 +18,17 @@ Route::middleware('guest')->group(function () {
         ->name('register');
 
     Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('register/verify-otp', [EmailVerificationOtpController::class, 'showVerifyForm'])
+        ->name('register.otp.verify');
+
+    Route::post('register/verify-otp', [EmailVerificationOtpController::class, 'verify'])
+        ->middleware('throttle:6,1')
+        ->name('register.otp.verify.store');
+
+    Route::post('register/resend-otp', [EmailVerificationOtpController::class, 'resend'])
+        ->middleware('throttle:6,1')
+        ->name('register.otp.resend');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

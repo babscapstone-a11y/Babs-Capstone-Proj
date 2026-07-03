@@ -28,6 +28,7 @@ class Customer extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
         ];
     }
 
@@ -63,6 +64,11 @@ class Customer extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return ! is_null($this->email_verified_at);
     }
 
     public function getProfilePictureUrlAttribute(): ?string

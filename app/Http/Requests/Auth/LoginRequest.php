@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\EmailVerificationOtp;
+use App\Notifications\EmailVerificationOtpNotification;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -64,6 +67,33 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => 'Your account has been deactivated. Please contact the administrator.',
+            ]);
+        }
+
+        // Customers must verify their email before they can log in.
+        if ($guard === 'customer' && ! Auth::guard($guard)->user()->isEmailVerified()) {
+            $customer = Auth::guard($guard)->user();
+            Auth::guard($guard)->logout();
+            RateLimiter::hit($this->throttleKey());
+
+            $otp = (string) random_int(100000, 999999);
+
+            EmailVerificationOtp::updateOrCreate(
+                ['email' => $customer->email],
+                [
+                    'otp' => Hash::make($otp),
+                    'attempts' => 0,
+                    'expires_at' => now()->addMinutes(10),
+                    'created_at' => now(),
+                ]
+            );
+
+            $customer->notify(new EmailVerificationOtpNotification($otp));
+
+            $this->session()->put('registration_otp_email', $customer->email);
+
+            throw ValidationException::withMessages([
+                'email' => 'Please verify your email before logging in. We\'ve sent a new verification code to your email address.',
             ]);
         }
 
