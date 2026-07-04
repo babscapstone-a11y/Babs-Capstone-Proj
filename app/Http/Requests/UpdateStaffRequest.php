@@ -25,6 +25,10 @@ class UpdateStaffRequest extends FormRequest
                 'required', 'string', 'lowercase', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
+            'username' => [
+                'required', 'string', 'max:50', 'alpha_dash',
+                Rule::unique('users', 'username')->ignore($userId),
+            ],
             'phone'   => ['nullable', 'digits:11'],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
             'status'  => ['required', 'in:active,inactive'],
@@ -34,9 +38,10 @@ class UpdateStaffRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role_id.required' => 'Please select a role for this staff member.',
-            'role_id.exists'   => 'The selected role is invalid.',
-            'phone.digits'     => 'Phone number must be exactly 11 digits.',
+            'role_id.required'    => 'Please select a role for this staff member.',
+            'role_id.exists'      => 'The selected role is invalid.',
+            'phone.digits'        => 'Phone number must be exactly 11 digits.',
+            'username.alpha_dash' => 'Username may only contain letters, numbers, dashes, and underscores.',
         ];
     }
 }

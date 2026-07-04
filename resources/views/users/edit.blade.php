@@ -148,6 +148,21 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="username">
+                            <i class="fas fa-at" style="color:var(--primary);font-size:.78rem"></i> Username
+                        </label>
+                        <div class="input-wrap @error('username') has-error @enderror">
+                            <span class="input-icon"><i class="fas fa-at"></i></span>
+                            <input id="username" name="username" type="text" class="form-input"
+                                   value="{{ old('username', $user->username) }}" required
+                                   placeholder="juan.delacruz">
+                        </div>
+                        @error('username')
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label" for="phone">
                             <i class="fas fa-phone" style="color:var(--primary);font-size:.78rem"></i> Phone
                             <span class="form-label-opt">Optional</span>

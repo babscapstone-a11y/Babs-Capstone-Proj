@@ -21,6 +21,7 @@ class AdminUserSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@babsresto.com'],
             [
+                'username' => 'admin',
                 'password' => Hash::make('Admin@1234'),
                 'role_id'  => $adminRole->id,
                 'status'   => 'active',
@@ -40,6 +41,7 @@ class AdminUserSeeder extends Seeder
         $owner = User::firstOrCreate(
             ['email' => 'owner@babsresto.com'],
             [
+                'username' => 'owner',
                 'password' => Hash::make('Owner@1234'),
                 'role_id'  => $adminRole->id,
                 'status'   => 'active',

@@ -504,27 +504,27 @@
             <form method="POST" action="{{ route('login') }}" id="loginForm" novalidate>
                 @csrf
 
-                <!-- Email -->
+                <!-- Email or Username -->
                 <div class="field-block">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-wrap @error('email') has-error @enderror">
-                        <span class="input-icon" aria-hidden="true"><i class="fas fa-envelope"></i></span>
+                    <label class="form-label" for="login">Email or Username</label>
+                    <div class="input-wrap @error('login') has-error @enderror">
+                        <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
                         <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value="{{ old('email') }}"
+                            id="login"
+                            name="login"
+                            type="text"
+                            value="{{ old('login') }}"
                             required
                             autofocus
-                            autocomplete="email"
-                            placeholder="you@example.com"
+                            autocomplete="username"
+                            placeholder="you@example.com or username"
                             class="input-field"
-                            aria-describedby="{{ $errors->has('email') ? 'email-error' : '' }}"
-                            aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                            aria-describedby="{{ $errors->has('login') ? 'login-error' : '' }}"
+                            aria-invalid="{{ $errors->has('login') ? 'true' : 'false' }}"
                         >
                     </div>
-                    @error('email')
-                        <div class="field-error" id="email-error" role="alert">
+                    @error('login')
+                        <div class="field-error" id="login-error" role="alert">
                             <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                             {{ $message }}
                         </div>

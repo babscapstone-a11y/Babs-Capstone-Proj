@@ -65,6 +65,7 @@ class UserController extends Controller
         DB::transaction(function () use ($request) {
             $user = User::create([
                 'email'    => $request->email,
+                'username' => $request->username,
                 'password' => Hash::make($request->password),
                 'role_id'  => $request->role_id,
                 'status'   => $request->status,
@@ -113,9 +114,10 @@ class UserController extends Controller
     {
         DB::transaction(function () use ($request, $user) {
             $user->update([
-                'email'   => $request->email,
-                'role_id' => $request->role_id,
-                'status'  => $request->status,
+                'email'    => $request->email,
+                'username' => $request->username,
+                'role_id'  => $request->role_id,
+                'status'   => $request->status,
             ]);
 
             if ($user->staff) {

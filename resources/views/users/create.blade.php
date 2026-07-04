@@ -118,6 +118,22 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="username">
+                            <i class="fas fa-at" style="color:var(--primary);font-size:.78rem"></i> Username
+                        </label>
+                        <div class="input-wrap @error('username') has-error @enderror">
+                            <span class="input-icon"><i class="fas fa-at"></i></span>
+                            <input id="username" name="username" type="text" class="form-input"
+                                   value="{{ old('username') }}" required
+                                   placeholder="juan.delacruz"
+                                   aria-invalid="{{ $errors->has('username') ? 'true' : 'false' }}">
+                        </div>
+                        @error('username')
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label" for="phone">
                             <i class="fas fa-phone" style="color:var(--primary);font-size:.78rem"></i> Phone
                             <span class="form-label-opt">Optional</span>
@@ -233,6 +249,7 @@
             <div style="background:var(--bg,#F8FAFC);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.83rem;display:flex;flex-direction:column;gap:.55rem">
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Name</span><strong id="confirmName" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Email</span><strong id="confirmEmail" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Username</span><strong id="confirmUsername" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Phone</span><strong id="confirmPhone" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Role</span><strong id="confirmRole" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Status</span><strong id="confirmStatus" style="text-align:right"></strong></div>
@@ -297,6 +314,7 @@ createForm.addEventListener('submit', function(e) {
 
     document.getElementById('confirmName').textContent   = (document.getElementById('first_name').value + ' ' + document.getElementById('last_name').value).trim();
     document.getElementById('confirmEmail').textContent  = document.getElementById('email').value;
+    document.getElementById('confirmUsername').textContent = document.getElementById('username').value;
     document.getElementById('confirmPhone').textContent  = document.getElementById('phone').value || '—';
     document.getElementById('confirmRole').textContent   = roleLabel ? roleLabel.textContent : '—';
     document.getElementById('confirmStatus').textContent = statusInput ? statusInput.value.charAt(0).toUpperCase() + statusInput.value.slice(1) : '—';

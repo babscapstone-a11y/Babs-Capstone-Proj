@@ -31,7 +31,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -45,18 +45,22 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $credentials = $this->only('email', 'password');
-        $remember = $this->boolean('remember');
+        $login = $this->string('login')->toString();
+        $isEmail = str_contains($login, '@');
 
-        if (Auth::guard('staff')->attempt($credentials, $remember)) {
+        // Staff/admin accounts can sign in with either their email or username;
+        // customers only ever have an email, so a bare username never matches them.
+        $staffCredentials = [$isEmail ? 'email' : 'username' => $login, 'password' => $this->password];
+
+        if (Auth::guard('staff')->attempt($staffCredentials, $this->boolean('remember'))) {
             $guard = 'staff';
-        } elseif (Auth::guard('customer')->attempt($credentials, $remember)) {
+        } elseif ($isEmail && Auth::guard('customer')->attempt(['email' => $login, 'password' => $this->password], $this->boolean('remember'))) {
             $guard = 'customer';
         } else {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
             ]);
         }
 
@@ -66,7 +70,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Your account has been deactivated. Please contact the administrator.',
+                'login' => 'Your account has been deactivated. Please contact the administrator.',
             ]);
         }
 
@@ -93,7 +97,7 @@ class LoginRequest extends FormRequest
             $this->session()->put('registration_otp_email', $customer->email);
 
             throw ValidationException::withMessages([
-                'email' => 'Please verify your email before logging in. We\'ve sent a new verification code to your email address.',
+                'login' => 'Please verify your email before logging in. We\'ve sent a new verification code to your email address.',
             ]);
         }
 
@@ -116,7 +120,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -128,6 +132,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }
