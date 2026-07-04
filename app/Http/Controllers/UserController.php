@@ -68,7 +68,7 @@ class UserController extends Controller
                 'username' => $request->username,
                 'password' => Hash::make($request->password),
                 'role_id'  => $request->role_id,
-                'status'   => $request->status,
+                'status'   => 'active',
             ]);
 
             Staff::create([

@@ -22,7 +22,6 @@ class StoreStaffRequest extends FormRequest
             'username'   => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
             'phone'      => ['nullable', 'digits:11'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
-            'status'     => ['required', 'in:active,inactive'],
             'password'   => ['required', 'confirmed', Password::defaults()],
         ];
     }

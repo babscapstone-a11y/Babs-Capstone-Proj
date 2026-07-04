@@ -36,16 +36,6 @@
         background:rgba(220,38,38,0.05);
     }
     .role-option:checked + .role-label .role-name { color:var(--primary); }
-    .status-row { display:flex; gap:.65rem; }
-    .status-option { display:none; }
-    .status-label {
-        flex:1; display:flex; align-items:center; justify-content:center; gap:.5rem;
-        padding:.65rem; border-radius:10px; border:2px solid var(--border);
-        cursor:pointer; font-size:.84rem; font-weight:600; color:var(--muted);
-        transition:all .2s; background:#fff;
-    }
-    .status-option[value="active"]:checked + .status-label   { border-color:#16A34A; background:rgba(22,163,74,0.06); color:#16A34A; }
-    .status-option[value="inactive"]:checked + .status-label { border-color:#6B7280; background:rgba(107,114,128,0.06); color:#6B7280; }
     @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2 { grid-column:auto; } }
 </style>
 @endsection
@@ -206,25 +196,6 @@
                     <div class="field-error" style="margin-top:.4rem"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
                 @enderror
 
-                {{-- Status --}}
-                <div class="section-label" style="margin-top:1.5rem">Account Status</div>
-                <div class="status-row">
-                    <input type="radio" name="status" id="status_active" value="active"
-                           class="status-option" {{ old('status','active') === 'active' ? 'checked' : '' }}>
-                    <label for="status_active" class="status-label">
-                        <i class="fas fa-circle-check"></i> Active
-                    </label>
-
-                    <input type="radio" name="status" id="status_inactive" value="inactive"
-                           class="status-option" {{ old('status') === 'inactive' ? 'checked' : '' }}>
-                    <label for="status_inactive" class="status-label">
-                        <i class="fas fa-ban"></i> Inactive
-                    </label>
-                </div>
-                @error('status')
-                    <div class="field-error" style="margin-top:.4rem"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
-                @enderror
-
                 {{-- Actions --}}
                 <div style="display:flex;gap:.75rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border)">
                     <a href="{{ route('users.index') }}" class="btn btn-secondary" style="min-width:120px;justify-content:center">
@@ -252,7 +223,6 @@
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Username</span><strong id="confirmUsername" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Phone</span><strong id="confirmPhone" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Role</span><strong id="confirmRole" style="text-align:right"></strong></div>
-                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Status</span><strong id="confirmStatus" style="text-align:right"></strong></div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-modal-cancel" onclick="closeCreateConfirmModal()">Cancel</button>
@@ -310,14 +280,12 @@ createForm.addEventListener('submit', function(e) {
 
     var roleInput  = document.querySelector('input[name="role_id"]:checked');
     var roleLabel  = roleInput ? document.querySelector('label[for="' + roleInput.id + '"] .role-name') : null;
-    var statusInput = document.querySelector('input[name="status"]:checked');
 
     document.getElementById('confirmName').textContent   = (document.getElementById('first_name').value + ' ' + document.getElementById('last_name').value).trim();
     document.getElementById('confirmEmail').textContent  = document.getElementById('email').value;
     document.getElementById('confirmUsername').textContent = document.getElementById('username').value;
     document.getElementById('confirmPhone').textContent  = document.getElementById('phone').value || '—';
     document.getElementById('confirmRole').textContent   = roleLabel ? roleLabel.textContent : '—';
-    document.getElementById('confirmStatus').textContent = statusInput ? statusInput.value.charAt(0).toUpperCase() + statusInput.value.slice(1) : '—';
 
     document.getElementById('createConfirmModal').classList.add('open');
 });
