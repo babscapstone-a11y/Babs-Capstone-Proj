@@ -30,7 +30,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('catalog.index');
         }
 
-        return redirect()->route('dashboard');
+        if (Auth::guard('staff')->user()->isAdmin()) {
+            return redirect()->route('dashboard');
+        }
+
+        return redirect()->route('profile.edit');
     }
 
     public function destroy(Request $request): RedirectResponse

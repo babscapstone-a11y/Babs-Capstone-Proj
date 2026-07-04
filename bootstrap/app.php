@@ -20,12 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // When an already-authenticated user hits a guest-only route (/login, /register),
-        // redirect them based on their role instead of blindly sending everyone to /dashboard.
+        // redirect them based on their role instead of blindly sending everyone to /dashboard
+        // (which is admin-only and would 403 for non-admin staff).
         $middleware->redirectUsersTo(function (Request $request) {
             if (Auth::guard('customer')->check()) {
                 return route('catalog.index');
             }
-            return route('dashboard');
+            if (Auth::guard('staff')->user()?->isAdmin()) {
+                return route('dashboard');
+            }
+            return route('profile.edit');
         });
 
         // Enforce active-account check on every authenticated web request
