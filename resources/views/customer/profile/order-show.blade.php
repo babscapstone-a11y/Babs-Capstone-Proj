@@ -359,6 +359,9 @@
                                     @if($detail->menuItem)
                                     <div class="item-sub">{{ $detail->menuItem->category?->category_name }}</div>
                                     @endif
+                                    @if($detail->notes)
+                                    <div class="item-sub"><i class="fas fa-note-sticky"></i> {{ $detail->notes }}</div>
+                                    @endif
                                 </td>
                                 <td style="text-align:center;font-weight:600">{{ $detail->quantity }}</td>
                                 <td style="text-align:right;color:var(--muted)">₱{{ number_format($detail->price, 2) }}</td>

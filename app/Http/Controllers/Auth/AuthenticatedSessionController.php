@@ -34,6 +34,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('dashboard');
         }
 
+        if (Auth::guard('staff')->user()->isKitchenStaff()) {
+            return redirect()->route('kitchen.index');
+        }
+
         return redirect()->route('profile.edit');
     }
 

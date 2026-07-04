@@ -43,6 +43,7 @@ class CartController extends Controller
                     'name'      => $mi->menu_name,
                     'price'     => (float) $item->unit_price,
                     'quantity'  => $item->quantity,
+                    'notes'     => $item->notes,
                     'subtotal'  => (float) $item->unit_price * $item->quantity,
                     'image'     => $mi->image_url,
                 ];
@@ -103,14 +104,18 @@ class CartController extends Controller
     {
         $this->authorizeCartItem($cartItem);
 
-        $request->validate(['quantity' => ['required', 'integer', 'min:1', 'max:99']]);
+        $request->validate([
+            'quantity' => ['sometimes', 'required', 'integer', 'min:1', 'max:99'],
+            'notes'    => ['sometimes', 'nullable', 'string', 'max:255'],
+        ]);
 
-        $cartItem->update(['quantity' => $request->quantity]);
+        $cartItem->update($request->only(['quantity', 'notes']));
 
         $cart = $cartItem->cart->load('items');
 
         return response()->json([
             'subtotal' => $cartItem->subtotal,
+            'notes'    => $cartItem->notes,
             'total'    => $cart->total,
             'count'    => $cart->item_count,
         ]);

@@ -217,6 +217,11 @@
                         <div>
                             <div class="si-name">{{ $item->menuItem->menu_name }}</div>
                             <div class="si-qty">{{ $item->quantity }} × ₱{{ number_format($item->unit_price, 2) }}</div>
+                            @if($item->notes)
+                            <div style="font-size:.72rem;color:var(--muted);font-style:italic;margin-top:.1rem">
+                                <i class="fas fa-note-sticky"></i> {{ $item->notes }}
+                            </div>
+                            @endif
                         </div>
                         <div style="font-weight:700;color:var(--dark)">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</div>
                     </div>

@@ -130,6 +130,28 @@ class Order extends Model
         };
     }
 
+    public function getKitchenStatusLabelAttribute(): string
+    {
+        return match ($this->status_name) {
+            'Pending'    => 'Order Received',
+            'Processing' => 'Preparing',
+            'Ready'      => 'Ready',
+            'Completed'  => 'Completed',
+            'Cancelled'  => 'Cancelled',
+            default      => $this->status_name,
+        };
+    }
+
+    public function getNextKitchenActionAttribute(): ?string
+    {
+        return match ($this->status_name) {
+            'Pending'    => 'Start Preparing',
+            'Processing' => 'Mark as Ready',
+            'Ready'      => 'Mark as Completed',
+            default      => null,
+        };
+    }
+
     public function getEstimatedCompletionAttribute(): ?\Illuminate\Support\Carbon
     {
         if ($this->isCancelled() || $this->isCompleted()) {

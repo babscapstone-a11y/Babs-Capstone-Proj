@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin'          => \App\Http\Middleware\EnsureIsAdmin::class,
             'customer'       => \App\Http\Middleware\EnsureIsCustomer::class,
+            'kitchen_staff'  => \App\Http\Middleware\EnsureIsKitchenStaff::class,
             'account.active' => \App\Http\Middleware\EnsureAccountIsActive::class,
         ]);
 
@@ -28,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             if (Auth::guard('staff')->user()?->isAdmin()) {
                 return route('dashboard');
+            }
+            if (Auth::guard('staff')->user()?->isKitchenStaff()) {
+                return route('kitchen.index');
             }
             return route('profile.edit');
         });

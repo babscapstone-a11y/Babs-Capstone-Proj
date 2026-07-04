@@ -76,6 +76,7 @@ class CheckoutController extends Controller
                     'menu_item_id' => $item->menu_item_id,
                     'item_name'    => $item->menuItem->menu_name,
                     'quantity'     => $item->quantity,
+                    'notes'        => $item->notes,
                     'price'        => $item->unit_price,
                     'subtotal'     => $item->unit_price * $item->quantity,
                 ]);

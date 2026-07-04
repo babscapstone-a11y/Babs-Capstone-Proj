@@ -69,6 +69,14 @@
 .cart-row-name { font-weight: 700; color: var(--dark); font-size: .95rem; }
 .cart-row-cat { font-size: .74rem; color: var(--muted); margin-top: .1rem; }
 .cart-row-price { font-size: .82rem; color: var(--muted); margin-top: .35rem; }
+.cart-row-notes {
+    display: block; width: 100%; margin-top: .5rem;
+    border: none; border-bottom: 1px dashed var(--border); background: transparent;
+    font-family: inherit; font-size: .78rem; color: var(--text); padding: .2rem 0;
+    outline: none;
+}
+.cart-row-notes:focus { border-bottom-color: var(--primary); }
+.cart-row-notes::placeholder { color: var(--muted); font-style: italic; }
 
 .cart-row-actions {
     display: flex; flex-direction: column; align-items: flex-end;
@@ -162,6 +170,11 @@
                             <div class="cart-row-name">{{ $mi->menu_name }}</div>
                             <div class="cart-row-cat">{{ $mi->category?->category_name ?? 'Uncategorized' }}</div>
                             <div class="cart-row-price">₱{{ number_format($item->unit_price, 2) }} each</div>
+                            <input type="text" class="cart-row-notes" id="notes-{{ $item->id }}"
+                                   placeholder="Add a note (e.g. no onions)"
+                                   value="{{ $item->notes }}"
+                                   maxlength="255"
+                                   onblur="saveNotes({{ $item->id }}, this.value)">
                         </div>
                         <div class="cart-row-actions">
                             <div class="cart-row-subtotal" id="subtotal-{{ $item->id }}">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</div>
@@ -256,6 +269,15 @@ async function changeQty(cartItemId, newQty) {
         updateTotals(data.total, data.count);
     } catch (e) {
         showToast('Failed to update quantity.', 'error');
+    }
+}
+
+async function saveNotes(cartItemId, notes) {
+    try {
+        await apiPatch(`/cart/${cartItemId}/update`, { notes });
+        showToast('Note saved.', 'info');
+    } catch (e) {
+        showToast('Failed to save note.', 'error');
     }
 }
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryAdjustmentController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
@@ -113,6 +114,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('discounts', DiscountController::class)->except(['destroy']);
     Route::put('discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])
          ->name('discounts.toggle-status');
+});
+
+/* ── Kitchen Display System (Kitchen Staff only) — Module 17 ──── */
+Route::middleware(['auth', 'kitchen_staff'])->prefix('kitchen')->name('kitchen.')->group(function () {
+    Route::get('/',                 [KitchenController::class, 'index'])       ->name('index');
+    Route::get('/orders',           [KitchenController::class, 'orders'])      ->name('orders');
+    Route::patch('/orders/{order}/status', [KitchenController::class, 'updateStatus']) ->name('orders.status');
 });
 
 /* ── Customer Profile Module (REQ063–REQ065) ─────────────────── */
