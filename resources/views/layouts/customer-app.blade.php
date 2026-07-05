@@ -174,6 +174,41 @@
             .nav-profile-name { display: none; }
         }
 
+        /* ── Shared confirm modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center;
+            z-index: 2000; padding: 1rem;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--white); border-radius: 20px;
+            padding: 2rem; max-width: 440px; width: 100%;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn .3s cubic-bezier(.22,.68,0,1.2) both;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: scale(.92) translateY(16px) } to { opacity: 1; transform: none } }
+        .modal-icon {
+            width: 56px; height: 56px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.1rem; font-size: 1.4rem;
+            background: rgba(245,158,11,0.12); color: var(--accent);
+        }
+        .modal-title { font-size: 1.15rem; font-weight: 700; text-align: center; margin: 0 0 .4rem; color: var(--dark); }
+        .modal-desc  { font-size: .9rem; color: var(--muted); text-align: center; line-height: 1.6; margin: 0 0 1.5rem; }
+        .modal-actions { display: flex; gap: .75rem; }
+        .modal-actions button {
+            flex: 1; padding: .7rem; border-radius: 10px;
+            font-size: .9rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; text-align: center;
+            transition: all .18s ease; border: none;
+        }
+        .btn-modal-cancel { background: rgba(17,24,39,0.07); color: var(--dark); }
+        .btn-modal-cancel:hover { background: rgba(17,24,39,0.12); }
+        .btn-modal-confirm { background: var(--primary); color: var(--white); }
+        .btn-modal-confirm:hover { background: var(--primary-dk); }
+
         @yield('layout-styles')
     </style>
     @yield('styles')
@@ -227,13 +262,17 @@
                         <i class="fas fa-utensils"></i> Browse Menu
                     </a>
                     <div class="nav-dropdown-divider"></div>
-                    <form method="POST" action="{{ route('logout') }}"
-                          onsubmit="return confirm('Are you sure you want to log out?')">
+                    <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                         @csrf
-                        <button type="submit" class="nav-dropdown-item danger">
-                            <i class="fas fa-right-from-bracket"></i> Sign Out
-                        </button>
                     </form>
+                    <button type="button" class="nav-dropdown-item danger" onclick="openConfirmModal({
+                            title: 'Log Out?',
+                            desc: 'Are you sure you want to log out of your account?',
+                            confirmText: 'Log Out',
+                            onConfirm: () => document.getElementById('logoutForm').submit(),
+                        })">
+                        <i class="fas fa-right-from-bracket"></i> Sign Out
+                    </button>
                 </div>
             </div>
         </div>
@@ -255,6 +294,19 @@
 @endif
 
 @yield('content')
+
+{{-- Shared confirm modal --}}
+<div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <h3 class="modal-title" id="modalTitle">Are you sure?</h3>
+        <p class="modal-desc" id="modalDesc"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" class="btn-modal-confirm" id="modalConfirmBtn">Confirm</button>
+        </div>
+    </div>
+</div>
 
 <script>
 function showToast(msg, type = 'success', duration = 3500) {
@@ -280,6 +332,26 @@ document.addEventListener('click', function(e) {
     if (dd && !btn.contains(e.target) && !dd.contains(e.target)) {
         dd.classList.remove('open');
     }
+});
+
+let _confirmCallback = null;
+function openConfirmModal({ title, desc, confirmText = 'Confirm', onConfirm }) {
+    document.getElementById('modalTitle').textContent = title || 'Are you sure?';
+    document.getElementById('modalDesc').textContent = desc || '';
+    const btn = document.getElementById('modalConfirmBtn');
+    btn.textContent = confirmText;
+    _confirmCallback = onConfirm;
+    document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('open');
+    _confirmCallback = null;
+}
+document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+    if (typeof _confirmCallback === 'function') _confirmCallback();
+});
+document.getElementById('confirmModal').addEventListener('click', function (e) {
+    if (e.target === this) closeConfirmModal();
 });
 </script>
 @yield('scripts')

@@ -81,7 +81,11 @@ Route::middleware('auth')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
-
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-        ->name('logout');
 });
+
+// Logout must accept either guard — customers authenticate via the 'customer' guard,
+// which the bare 'auth' middleware above (default 'staff' guard) never recognizes,
+// so a customer's session was never actually being invalidated on logout.
+Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->middleware('auth:staff,customer')
+    ->name('logout');

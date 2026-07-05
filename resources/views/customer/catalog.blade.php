@@ -561,13 +561,17 @@
                         <i class="fas fa-receipt"></i> Order History
                     </a>
                     <div style="height:1px;background:var(--border)"></div>
-                    <form method="POST" action="{{ route('logout') }}" id="logoutForm"
-                          onsubmit="return confirm('Are you sure you want to log out?')">
+                    <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                         @csrf
-                        <button type="submit" class="dropdown-item danger">
-                            <i class="fas fa-sign-out-alt"></i> Log Out
-                        </button>
                     </form>
+                    <button type="button" class="dropdown-item danger" onclick="openConfirmModal({
+                            title: 'Log Out?',
+                            desc: 'Are you sure you want to log out of your account?',
+                            confirmText: 'Log Out',
+                            onConfirm: () => document.getElementById('logoutForm').submit(),
+                        })">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
                 </div>
             </div>
         </div>
