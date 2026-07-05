@@ -72,6 +72,11 @@ class User extends Authenticatable
         return $this->role?->role_name === 'kitchen_staff';
     }
 
+    public function isTableServer(): bool
+    {
+        return $this->role?->role_name === 'table_server';
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

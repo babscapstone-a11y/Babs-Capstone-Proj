@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Order extends Model
 {
     protected $fillable = [
-        'order_number', 'total_amount', 'customer_id', 'order_status_id',
+        'order_number', 'total_amount', 'customer_id', 'placed_by', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'cancelled_at', 'cancellation_reason',
     ];
@@ -45,6 +45,11 @@ class Order extends Model
     public function dineInOrder(): HasOne
     {
         return $this->hasOne(DineInOrder::class);
+    }
+
+    public function placedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'placed_by');
     }
 
     /* ── Order Number Generation ── */

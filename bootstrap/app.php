@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'          => \App\Http\Middleware\EnsureIsAdmin::class,
             'customer'       => \App\Http\Middleware\EnsureIsCustomer::class,
             'kitchen_staff'  => \App\Http\Middleware\EnsureIsKitchenStaff::class,
+            'table_server'   => \App\Http\Middleware\EnsureIsTableServer::class,
             'account.active' => \App\Http\Middleware\EnsureAccountIsActive::class,
         ]);
 
@@ -32,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             if (Auth::guard('staff')->user()?->isKitchenStaff()) {
                 return route('kitchen.index');
+            }
+            if (Auth::guard('staff')->user()?->isTableServer()) {
+                return route('table-server.index');
             }
             return route('profile.edit');
         });

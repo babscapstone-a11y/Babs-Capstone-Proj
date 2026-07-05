@@ -16,6 +16,7 @@ use App\Http\Controllers\StaffPasswordResetController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\CustomerProfileController;
 use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\TableServerOrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -121,6 +122,13 @@ Route::middleware(['auth', 'kitchen_staff'])->prefix('kitchen')->name('kitchen.'
     Route::get('/',                 [KitchenController::class, 'index'])       ->name('index');
     Route::get('/orders',           [KitchenController::class, 'orders'])      ->name('orders');
     Route::patch('/orders/{order}/status', [KitchenController::class, 'updateStatus']) ->name('orders.status');
+});
+
+/* ── Food Server Digital Menu Catalog (Table Server only) — Module 19 ─── */
+Route::middleware(['auth', 'table_server'])->prefix('table-server')->name('table-server.')->group(function () {
+    Route::get('/',        [TableServerOrderController::class, 'index'])    ->name('index');
+    Route::post('/orders', [TableServerOrderController::class, 'store'])    ->name('orders.store');
+    Route::get('/orders',  [TableServerOrderController::class, 'myOrders']) ->name('orders.index');
 });
 
 /* ── Customer Profile Module (REQ063–REQ065) ─────────────────── */

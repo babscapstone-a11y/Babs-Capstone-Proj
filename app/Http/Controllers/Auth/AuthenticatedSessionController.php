@@ -38,6 +38,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('kitchen.index');
         }
 
+        if (Auth::guard('staff')->user()->isTableServer()) {
+            return redirect()->route('table-server.index');
+        }
+
         return redirect()->route('profile.edit');
     }
 
