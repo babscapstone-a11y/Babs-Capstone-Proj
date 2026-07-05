@@ -771,7 +771,7 @@
                 <span class="modal-badge" id="modalTypeBadge">Food</span>
             </div>
             <h2 class="modal-name" id="modalName">Item Name</h2>
-            <p class="modal-desc" id="modalDesc"></p>
+            <p class="modal-desc" id="itemModalDesc"></p>
             <div class="modal-price" id="modalPrice">₱0.00</div>
 
             <div class="modal-qty-row">
@@ -1030,7 +1030,7 @@ const modal        = document.getElementById('itemModal');
 const modalImg     = document.getElementById('modalImg');
 const modalImgPh   = document.getElementById('modalImgPlaceholder');
 const modalName    = document.getElementById('modalName');
-const modalDesc    = document.getElementById('modalDesc');
+const modalDesc    = document.getElementById('itemModalDesc');
 const modalPrice   = document.getElementById('modalPrice');
 const modalCat     = document.getElementById('modalCategory');
 const modalTypeBadge = document.getElementById('modalTypeBadge');
