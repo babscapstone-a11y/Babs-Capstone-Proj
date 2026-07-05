@@ -180,7 +180,7 @@
             </form>
             <button type="button" class="btn-logout-kds" onclick="openConfirmModal({
                     title: 'Log Out?',
-                    desc: 'Are you sure you want to log out?',
+                    desc: 'Are you sure you want to log out of your account?',
                     confirmText: 'Log Out',
                     onConfirm: () => document.getElementById('logoutForm').submit(),
                 })">

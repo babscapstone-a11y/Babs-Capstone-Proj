@@ -44,7 +44,7 @@
 
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
-                                                if (confirm('Are you sure you want to log out?')) this.closest('form').submit();">
+                                                if (confirm('Are you sure you want to log out of your account?')) this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -90,7 +90,7 @@
 
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault();
-                                        if (confirm('Are you sure you want to log out?')) this.closest('form').submit();">
+                                        if (confirm('Are you sure you want to log out of your account?')) this.closest('form').submit();">
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
