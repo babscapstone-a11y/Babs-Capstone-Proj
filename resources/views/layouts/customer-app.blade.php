@@ -227,7 +227,8 @@
                         <i class="fas fa-utensils"></i> Browse Menu
                     </a>
                     <div class="nav-dropdown-divider"></div>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}"
+                          onsubmit="return confirm('Are you sure you want to log out?')">
                         @csrf
                         <button type="submit" class="nav-dropdown-item danger">
                             <i class="fas fa-right-from-bracket"></i> Sign Out

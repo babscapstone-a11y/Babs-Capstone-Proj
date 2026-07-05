@@ -175,12 +175,17 @@
                     <div class="kds-staff-role">Food Server</div>
                 </div>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                 @csrf
-                <button type="submit" class="btn-logout-kds">
-                    <i class="fas fa-right-from-bracket"></i> Sign Out
-                </button>
             </form>
+            <button type="button" class="btn-logout-kds" onclick="openConfirmModal({
+                    title: 'Log Out?',
+                    desc: 'Are you sure you want to log out?',
+                    confirmText: 'Log Out',
+                    onConfirm: () => document.getElementById('logoutForm').submit(),
+                })">
+                <i class="fas fa-right-from-bracket"></i> Sign Out
+            </button>
         </div>
     </header>
 

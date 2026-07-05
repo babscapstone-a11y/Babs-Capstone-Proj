@@ -561,7 +561,8 @@
                         <i class="fas fa-receipt"></i> Order History
                     </a>
                     <div style="height:1px;background:var(--border)"></div>
-                    <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+                    <form method="POST" action="{{ route('logout') }}" id="logoutForm"
+                          onsubmit="return confirm('Are you sure you want to log out?')">
                         @csrf
                         <button type="submit" class="dropdown-item danger">
                             <i class="fas fa-sign-out-alt"></i> Log Out

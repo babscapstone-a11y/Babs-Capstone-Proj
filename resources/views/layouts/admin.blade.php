@@ -384,12 +384,17 @@
                     <div class="user-role">{{ auth()->user()->role_display }}</div>
                 </div>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn-logout">
-                    <i class="fas fa-right-from-bracket"></i> Sign Out
-                </button>
-            </form>
+            <button type="button" class="btn-logout" onclick="openModal({
+                    type: 'warn',
+                    iconClass: 'fas fa-right-from-bracket',
+                    title: 'Log Out?',
+                    desc: 'Are you sure you want to log out of your account?',
+                    action: '{{ route('logout') }}',
+                    method: 'POST',
+                    confirmText: 'Log Out',
+                })">
+                <i class="fas fa-right-from-bracket"></i> Sign Out
+            </button>
         </div>
     </aside>
 
