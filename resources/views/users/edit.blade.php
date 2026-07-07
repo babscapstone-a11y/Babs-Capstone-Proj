@@ -6,7 +6,7 @@
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}">Dashboard</a>
     <span class="breadcrumb-sep">/</span>
-    <a href="{{ route('users.index') }}">Staff Accounts</a>
+    <a href="{{ route('users.index') }}">User Management</a>
     <span class="breadcrumb-sep">/</span>
     <a href="{{ route('users.show', $user) }}">{{ $user->name }}</a>
     <span class="breadcrumb-sep">/</span>

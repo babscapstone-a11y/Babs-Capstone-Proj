@@ -331,7 +331,7 @@
 
             <a href="{{ route('users.index') }}"
                class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="fas fa-users"></i> Staff Accounts
+                <i class="fas fa-users"></i> User Management
                 @php $pending = \App\Models\StaffPasswordResetRequest::pending()->count() @endphp
                 @if($pending > 0)
                     <span class="nav-badge">{{ $pending }}</span>

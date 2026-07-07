@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Staff Accounts')
-@section('page-title', 'Staff Accounts')
+@section('title', 'User Management')
+@section('page-title', 'User Management')
 
 @section('breadcrumb')
     <a href="{{ route('dashboard') }}">Dashboard</a>
     <span class="breadcrumb-sep">/</span>
-    <span>Staff Accounts</span>
+    <span>User Management</span>
 @endsection
 
 @section('styles')
