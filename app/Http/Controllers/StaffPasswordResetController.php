@@ -26,40 +26,6 @@ class StaffPasswordResetController extends Controller
         return view('users.password-resets', compact('requests', 'pendingCount'));
     }
 
-    /* ── REQ010: Show confirmation to create a request ─────── */
-
-    public function create(User $user): View
-    {
-        $this->authorize('resetPassword', $user);
-
-        $hasPending = $user->passwordResetRequests()->pending()->exists();
-
-        return view('users.password-reset-confirm', compact('user', 'hasPending'));
-    }
-
-    /* ── REQ010: Store the reset request ────────────────────── */
-
-    public function store(User $user): RedirectResponse
-    {
-        $this->authorize('resetPassword', $user);
-
-        $hasPending = $user->passwordResetRequests()->pending()->exists();
-
-        if ($hasPending) {
-            return redirect()->route('users.show', $user)
-                ->with('error', 'A password reset request is already pending for this staff member.');
-        }
-
-        StaffPasswordResetRequest::create([
-            'user_id'      => $user->id,
-            'requested_by' => auth()->id(),
-            'status'       => 'pending',
-        ]);
-
-        return redirect()->route('password-reset-requests.index')
-            ->with('success', "Password reset request created for {$user->name}. Approve it to send the email.");
-    }
-
     /* ── REQ011: Approve → send Laravel reset email ─────────── */
 
     public function approve(StaffPasswordResetRequest $passwordResetRequest): RedirectResponse

@@ -55,10 +55,6 @@
                         <a href="{{ route('users.edit', $user) }}" class="btn btn-secondary btn-icon btn-sm" title="Edit">
                             <i class="fas fa-pen"></i>
                         </a>
-                        <button type="button" class="btn btn-outline btn-icon btn-sm" title="Reset Password"
-                            onclick="openResetModal('{{ route('users.password-reset.store', $user) }}', '{{ addslashes($user->name) }}')">
-                            <i class="fas fa-key"></i>
-                        </button>
                         <button type="button"
                             class="btn btn-icon btn-sm {{ $user->status === 'active' ? 'btn-danger' : 'btn-success' }}"
                             title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}"

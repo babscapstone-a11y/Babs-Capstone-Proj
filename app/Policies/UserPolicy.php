@@ -36,12 +36,6 @@ class UserPolicy
         return $currentUser->isAdmin() && $currentUser->id !== $target->id;
     }
 
-    /* Admins can request a password reset — but NOT for themselves */
-    public function resetPassword(User $currentUser, User $target): bool
-    {
-        return $currentUser->isAdmin() && $currentUser->id !== $target->id;
-    }
-
     /* Only admins can manage (approve/reject) password reset requests */
     public function managePasswordResets(User $currentUser): bool
     {

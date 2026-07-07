@@ -138,12 +138,12 @@
     <div class="card-header">
         <h2 class="card-title"><i class="fas fa-users" style="color:var(--primary);margin-right:.4rem"></i> Staff Management</h2>
         <div style="display:flex;gap:.6rem">
-            @if($pendingResetCount > 0)
-                <a href="{{ route('password-reset-requests.index') }}" class="btn btn-outline btn-sm">
-                    <i class="fas fa-key"></i> Resets
+            <a href="{{ route('password-reset-requests.index') }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-key"></i> Reset Requests
+                @if($pendingResetCount > 0)
                     <span class="badge badge-pending" style="margin-left:.2rem">{{ $pendingResetCount }}</span>
-                </a>
-            @endif
+                @endif
+            </a>
             <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus"></i> Add Staff
             </a>
@@ -200,24 +200,6 @@
     </div>
 </div>
 
-{{-- Reset-Password modal (POST form) --}}
-<div class="modal-overlay" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
-    <div class="modal-box">
-        <div class="modal-icon warn"><i class="fas fa-key"></i></div>
-        <h3 class="modal-title" id="resetModalTitle">Request Password Reset</h3>
-        <p class="modal-desc" id="resetModalDesc">Create a reset request for <strong id="resetUserName"></strong>. You will need to approve it before the email is sent.</p>
-        <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-            <form id="resetForm" method="POST" style="flex:1;display:flex">
-                @csrf
-                <button type="submit" class="btn-modal-confirm" style="flex:1">
-                    <i class="fas fa-paper-plane"></i> Create Request
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
 {{-- Toggle status modal --}}
 <div class="modal-overlay" id="toggleModal" role="dialog" aria-modal="true" aria-labelledby="toggleModalTitle">
     <div class="modal-box">
@@ -237,18 +219,6 @@
 
 @section('scripts')
 <script>
-function openResetModal(action, name) {
-    document.getElementById('resetUserName').textContent = name;
-    document.getElementById('resetForm').action = action;
-    document.getElementById('resetModal').classList.add('open');
-}
-function closeResetModal() {
-    document.getElementById('resetModal').classList.remove('open');
-}
-document.getElementById('resetModal').addEventListener('click', function(e) {
-    if (e.target === this) closeResetModal();
-});
-
 function openToggleModal(action, name, currentStatus) {
     var isActive  = currentStatus === 'active';
     var icon      = document.getElementById('toggleModalIcon');

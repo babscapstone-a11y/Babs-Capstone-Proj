@@ -93,7 +93,7 @@
 
             <div class="pwd-notice">
                 <i class="fas fa-circle-info"></i>
-                Passwords cannot be changed here. Use the <strong>Reset Password</strong> action on the staff profile.
+                Passwords cannot be changed here. Staff can reset their own password via <strong>Forgot password?</strong> on the login page.
             </div>
 
             <form method="POST" action="{{ route('users.update', $user) }}" id="editForm">

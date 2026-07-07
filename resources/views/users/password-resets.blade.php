@@ -118,7 +118,13 @@
                                 </div>
                             </div>
                         </td>
-                        <td style="font-size:.84rem;color:var(--muted)">{{ $req->requestedBy?->name ?? '—' }}</td>
+                        <td style="font-size:.84rem;color:var(--muted)">
+                            @if($req->requested_by === $req->user_id)
+                                <span style="font-style:italic">Self (Forgot Password)</span>
+                            @else
+                                {{ $req->requestedBy?->name ?? '—' }}
+                            @endif
+                        </td>
                         <td>
                             <span class="badge badge-{{ $req->status }}">
                                 @if($req->status === 'pending')   <i class="fas fa-clock"></i>

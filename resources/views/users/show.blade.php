@@ -120,12 +120,7 @@
                     <i class="fas fa-pen" style="width:16px;text-align:center"></i> Edit Staff Account
                 </a>
 
-                @if(!$pendingReset)
-                    <button type="button" class="action-btn-full reset"
-                        onclick="openResetModal('{{ route('users.password-reset.store', $user) }}', '{{ addslashes($user->name) }}')">
-                        <i class="fas fa-key" style="width:16px;text-align:center"></i> Request Password Reset
-                    </button>
-                @else
+                @if($pendingReset)
                     <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.2);font-size:.83rem;color:#D97706;display:flex;align-items:center;gap:.5rem">
                         <i class="fas fa-clock" style="width:16px;text-align:center"></i>
                         Reset request pending approval
@@ -233,24 +228,6 @@
     </div>
 </div>
 
-{{-- Reset-Password modal --}}
-<div class="modal-overlay" id="resetModal" role="dialog" aria-modal="true">
-    <div class="modal-box">
-        <div class="modal-icon warn"><i class="fas fa-key"></i></div>
-        <h3 class="modal-title">Request Password Reset</h3>
-        <p class="modal-desc" id="resetModalDesc">Create a reset request. You will need to approve it before the email is sent.</p>
-        <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeResetModal()">Cancel</button>
-            <form id="resetForm" method="POST" style="flex:1;display:flex">
-                @csrf
-                <button type="submit" class="btn-modal-confirm" style="flex:1">
-                    <i class="fas fa-paper-plane"></i> Create Request
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
 {{-- Toggle status modal --}}
 <div class="modal-overlay" id="toggleModal" role="dialog" aria-modal="true">
     <div class="modal-box">
@@ -270,13 +247,6 @@
 
 @section('scripts')
 <script>
-function openResetModal(action, name) {
-    document.getElementById('resetForm').action = action;
-    document.getElementById('resetModal').classList.add('open');
-}
-function closeResetModal() { document.getElementById('resetModal').classList.remove('open'); }
-document.getElementById('resetModal').addEventListener('click', function(e){ if(e.target===this) closeResetModal(); });
-
 function openToggleModal(action, name, currentStatus) {
     var isActive = currentStatus === 'active';
     var icon     = document.getElementById('toggleModalIcon');

@@ -330,17 +330,9 @@
             <div class="nav-label" style="margin-top:.5rem">Management</div>
 
             <a href="{{ route('users.index') }}"
-               class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+               class="nav-item {{ request()->routeIs('users.*', 'password-reset-requests.*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i> User Management
                 @php $pending = \App\Models\StaffPasswordResetRequest::pending()->count() @endphp
-                @if($pending > 0)
-                    <span class="nav-badge">{{ $pending }}</span>
-                @endif
-            </a>
-
-            <a href="{{ route('password-reset-requests.index') }}"
-               class="nav-item {{ request()->routeIs('password-reset-requests.*') ? 'active' : '' }}">
-                <i class="fas fa-key"></i> Reset Requests
                 @if($pending > 0)
                     <span class="nav-badge">{{ $pending }}</span>
                 @endif

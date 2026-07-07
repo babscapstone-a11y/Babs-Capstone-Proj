@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PasswordResetOtp;
+use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordResetOtpNotification;
 use Illuminate\Http\RedirectResponse;
@@ -35,10 +36,27 @@ class PasswordResetLinkController extends Controller
         ]);
 
         $email = $request->email;
-        $user = User::where('email', $email)->first()
-            ?? Customer::where('email', $email)->first();
 
-        if ($user) {
+        // Staff (admin/cashier/kitchen/table server) go through admin approval
+        // instead of an instant self-service reset.
+        $staffUser = User::where('email', $email)->first();
+
+        if ($staffUser) {
+            if (! $staffUser->passwordResetRequests()->pending()->exists()) {
+                StaffPasswordResetRequest::create([
+                    'user_id'      => $staffUser->id,
+                    'requested_by' => $staffUser->id,
+                    'status'       => 'pending',
+                ]);
+            }
+
+            return redirect()->route('password.request')
+                ->with('status', 'Your password reset request has been submitted. An admin will review it and email you a reset link once approved.');
+        }
+
+        $customer = Customer::where('email', $email)->first();
+
+        if ($customer) {
             $otp = (string) random_int(100000, 999999);
 
             PasswordResetOtp::updateOrCreate(
@@ -51,7 +69,7 @@ class PasswordResetLinkController extends Controller
                 ]
             );
 
-            $user->notify(new PasswordResetOtpNotification($otp));
+            $customer->notify(new PasswordResetOtpNotification($otp));
         }
 
         $request->session()->put('password_reset_otp_email', $email);
