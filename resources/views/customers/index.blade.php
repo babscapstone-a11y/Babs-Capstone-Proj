@@ -58,8 +58,7 @@
 
     /* ── Live search ── */
     .search-wrap { position:relative; flex:1; min-width:220px; }
-    .search-wrap i.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.85rem; pointer-events:none; }
-    .search-input { width:100%; height:38px; padding:0 2.3rem; border:1.5px solid var(--border); border-radius:9px; font-size:.83rem; font-family:inherit; color:var(--dark); background:var(--bg); outline:none; transition:border-color .18s; }
+    .search-input { width:100%; height:38px; padding:0 2.3rem 0 .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.83rem; font-family:inherit; color:var(--dark); background:var(--bg); outline:none; transition:border-color .18s; }
     .search-input:focus { border-color:var(--primary); }
     .search-clear { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:.25rem; display:none; }
     .search-wrap.has-value .search-clear { display:block; }
@@ -211,7 +210,6 @@
 {{-- Filter Bar --}}
 <form method="GET" action="{{ route('customers.index') }}" class="filter-bar anim-2" id="liveFilterForm">
     <div class="search-wrap">
-        <i class="fas fa-search search-icon"></i>
         <input type="text" id="search" name="search" class="search-input"
                placeholder="Search by name, email, ID, or contact number…"
                value="{{ request('search') }}" autocomplete="off">

@@ -16,8 +16,7 @@
 .stat-icon.blue{background:#EFF6FF;color:#2563EB}.stat-icon.green{background:#F0FDF4;color:#16A34A}.stat-icon.amber{background:#FFFBEB;color:#D97706}.stat-icon.red{background:#FEF2F2;color:#DC2626}
 .filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .search-wrap{position:relative;flex:1;min-width:220px}
-.search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
-.search-input{width:100%;padding:.55rem 2.3rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.search-input{width:100%;padding:.55rem 2.3rem .55rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
 .search-input:focus{border-color:var(--primary)}
 .search-clear{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--muted);cursor:pointer;padding:.25rem;display:none}
 .search-wrap.has-value .search-clear{display:block}
@@ -95,7 +94,6 @@
 
     <form method="GET" action="{{ route('inventory.beverages') }}" class="filter-bar" id="liveFilterForm">
         <div class="search-wrap">
-            <i class="fas fa-search"></i>
             <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search beverage, category…" class="search-input" autocomplete="off">
             <button type="button" class="search-clear" aria-label="Clear search"><i class="fas fa-times"></i></button>
         </div>

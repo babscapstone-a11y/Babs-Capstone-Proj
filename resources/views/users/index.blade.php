@@ -31,8 +31,7 @@
 
     /* ── Live search ── */
     .search-wrap { position:relative; min-width:240px; }
-    .search-wrap i.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.85rem; pointer-events:none; }
-    .search-input { width:100%; padding:.55rem 2.3rem; border:1.5px solid rgba(17,24,39,0.1); border-radius:10px; font-size:.855rem; font-family:inherit; color:var(--dark); outline:none; transition:border-color .2s, box-shadow .2s; }
+    .search-input { width:100%; padding:.55rem 2.3rem .55rem .85rem; border:1.5px solid rgba(17,24,39,0.1); border-radius:10px; font-size:.855rem; font-family:inherit; color:var(--dark); outline:none; transition:border-color .2s, box-shadow .2s; }
     .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
     .search-clear { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:.25rem; display:none; }
     .search-wrap.has-value .search-clear { display:block; }
@@ -158,7 +157,6 @@
                 <div class="filter-item">
                     <label for="search">Search</label>
                     <div class="search-wrap">
-                        <i class="fas fa-search search-icon"></i>
                         <input id="search" name="search" type="text" class="search-input"
                                placeholder="Search by name, email, username, or role…"
                                value="{{ request('search') }}" autocomplete="off">
