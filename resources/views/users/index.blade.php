@@ -27,8 +27,18 @@
         transition:border-color .2s, box-shadow .2s;
     }
     .filter-row input:focus, .filter-row select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
-    .filter-row .filter-search { min-width:220px; }
     .filter-row .filter-select { min-width:150px; }
+
+    /* ── Live search ── */
+    .search-wrap { position:relative; min-width:240px; }
+    .search-wrap i.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.85rem; pointer-events:none; }
+    .search-input { width:100%; padding:.55rem 2.3rem; border:1.5px solid rgba(17,24,39,0.1); border-radius:10px; font-size:.855rem; font-family:inherit; color:var(--dark); outline:none; transition:border-color .2s, box-shadow .2s; }
+    .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
+    .search-clear { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:.25rem; display:none; }
+    .search-wrap.has-value .search-clear { display:block; }
+    .search-wrap.has-value .search-clear:hover { color:var(--primary); }
+    .results-count { font-size:.8rem; color:var(--muted); padding:.85rem 1.25rem 0; }
+    #results.is-loading { opacity:.5; transition:opacity .15s; }
 
     .data-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.855rem; }
     .data-table thead th {
@@ -97,21 +107,21 @@
             <i class="fas fa-users"></i>
         </div>
         <div class="stat-label">Total Staff</div>
-        <div class="stat-value">{{ $users->total() }}</div>
+        <div class="stat-value" id="statTotal">{{ $users->total() }}</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon" style="background:rgba(22,163,74,0.1);color:#16A34A">
             <i class="fas fa-circle-check"></i>
         </div>
         <div class="stat-label">Active</div>
-        <div class="stat-value" style="color:#16A34A">{{ $users->getCollection()->where('status','active')->count() }}</div>
+        <div class="stat-value" style="color:#16A34A" id="statActive">{{ $users->getCollection()->where('status','active')->count() }}</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon" style="background:rgba(107,114,128,0.1);color:var(--muted)">
             <i class="fas fa-circle-xmark"></i>
         </div>
         <div class="stat-label">Inactive</div>
-        <div class="stat-value" style="color:var(--muted)">{{ $users->getCollection()->where('status','inactive')->count() }}</div>
+        <div class="stat-value" style="color:var(--muted)" id="statInactive">{{ $users->getCollection()->where('status','inactive')->count() }}</div>
     </div>
     @if($pendingResetCount > 0)
     <div class="stat-card">
@@ -119,7 +129,7 @@
             <i class="fas fa-key"></i>
         </div>
         <div class="stat-label">Pending Resets</div>
-        <div class="stat-value" style="color:#D97706">{{ $pendingResetCount }}</div>
+        <div class="stat-value" style="color:#D97706" id="statPendingResets">{{ $pendingResetCount }}</div>
     </div>
     @endif
 </div>
@@ -143,12 +153,19 @@
 
     {{-- Filters --}}
     <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
-        <form method="GET" action="{{ route('users.index') }}">
+        <form method="GET" action="{{ route('users.index') }}" id="liveFilterForm">
             <div class="filter-row">
                 <div class="filter-item">
                     <label for="search">Search</label>
-                    <input id="search" name="search" type="text" placeholder="Name or email…" class="filter-search"
-                           value="{{ request('search') }}">
+                    <div class="search-wrap">
+                        <i class="fas fa-search search-icon"></i>
+                        <input id="search" name="search" type="text" class="search-input"
+                               placeholder="Search by name, email, username, or role…"
+                               value="{{ request('search') }}" autocomplete="off">
+                        <button type="button" class="search-clear" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="filter-item">
                     <label for="role">Role</label>
@@ -169,121 +186,20 @@
                         <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                     </select>
                 </div>
+                @if(request()->hasAny(['search','role','status']))
                 <div class="filter-item" style="flex-direction:row;gap:.5rem;padding-bottom:.05rem">
-                    <button type="submit" class="btn btn-primary btn-sm" style="height:36px">
-                        <i class="fas fa-search"></i> Filter
-                    </button>
-                    @if(request()->hasAny(['search','role','status']))
-                        <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm" style="height:36px">
-                            <i class="fas fa-xmark"></i> Clear
-                        </a>
-                    @endif
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm" style="height:36px">
+                        <i class="fas fa-xmark"></i> Clear
+                    </a>
                 </div>
+                @endif
             </div>
         </form>
     </div>
 
-    {{-- Table --}}
-    <div style="overflow-x:auto">
-        <table class="data-table" aria-label="Staff accounts table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Staff Member</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Phone</th>
-                    <th>Created</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($users as $user)
-                <tr>
-                    <td style="color:var(--muted);font-size:.78rem;font-weight:600">#{{ $user->id }}</td>
-                    <td>
-                        <div class="staff-cell">
-                            <div class="staff-avatar">{{ $user->initials }}</div>
-                            <div>
-                                <div class="staff-name">{{ $user->name }}</div>
-                                <div class="staff-email">{{ $user->email }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        @if($user->role)
-                            <span class="badge badge-{{ $user->role->role_name }}">{{ $user->role->label }}</span>
-                        @else
-                            <span class="badge badge-inactive">Unknown</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="badge badge-{{ $user->status }}">
-                            <span class="badge-dot" style="background:{{ $user->status === 'active' ? '#16A34A' : '#6B7280' }}"></span>
-                            {{ ucfirst($user->status) }}
-                        </span>
-                    </td>
-                    <td style="color:var(--muted);font-size:.82rem">{{ $user->staff->contact_no ?? '—' }}</td>
-                    <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->created_at->format('M d, Y') }}</td>
-                    <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->updated_at->format('M d, Y') }}</td>
-                    <td>
-                        <div class="actions">
-                            <a href="{{ route('users.show', $user) }}" class="btn btn-outline btn-icon btn-sm" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            @can('update', $user)
-                            <a href="{{ route('users.edit', $user) }}" class="btn btn-secondary btn-icon btn-sm" title="Edit">
-                                <i class="fas fa-pen"></i>
-                            </a>
-                            <button type="button" class="btn btn-outline btn-icon btn-sm" title="Reset Password"
-                                onclick="openResetModal('{{ route('users.password-reset.store', $user) }}', '{{ addslashes($user->name) }}')">
-                                <i class="fas fa-key"></i>
-                            </button>
-                            <button type="button"
-                                class="btn btn-icon btn-sm {{ $user->status === 'active' ? 'btn-danger' : 'btn-success' }}"
-                                title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}"
-                                onclick="openToggleModal(
-                                    '{{ route('users.toggle-status', $user) }}',
-                                    '{{ addslashes($user->name) }}',
-                                    '{{ $user->status }}'
-                                )">
-                                <i class="fas fa-{{ $user->status === 'active' ? 'ban' : 'circle-check' }}"></i>
-                            </button>
-                            @endcan
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8">
-                        <div class="empty-state">
-                            <i class="fas fa-users-slash"></i>
-                            <p>No staff accounts found{{ request()->hasAny(['search','role','status']) ? ' matching your filters' : '' }}.</p>
-                            @can('create', \App\Models\User::class)
-                                <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm" style="margin-top:.75rem">
-                                    <i class="fas fa-plus"></i> Add First Staff
-                                </a>
-                            @endcan
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div id="results">
+        @include('users._results', ['users' => $users])
     </div>
-
-    {{-- Pagination --}}
-    @if($users->hasPages())
-    <div class="pagination-bar">
-        <div class="pagination-info">
-            Showing {{ $users->firstItem() }}–{{ $users->lastItem() }} of {{ $users->total() }} staff
-        </div>
-        <div class="pagination-links">
-            {{ $users->onEachSide(1)->links('pagination::simple-default') }}
-        </div>
-    </div>
-    @endif
 </div>
 
 {{-- Reset-Password modal (POST form) --}}
@@ -358,6 +274,20 @@ function closeToggleModal() {
 }
 document.getElementById('toggleModal').addEventListener('click', function(e) {
     if (e.target === this) closeToggleModal();
+});
+
+LiveTable.init({
+    formSelector: '#liveFilterForm',
+    resultsSelector: '#results',
+    url: '{{ route('users.index') }}',
+    searchFieldName: 'search',
+    debounceMs: 300,
+    statsSelectors: {
+        total: '#statTotal',
+        active: '#statActive',
+        inactive: '#statInactive',
+        pendingResets: '#statPendingResets',
+    },
 });
 </script>
 @endsection

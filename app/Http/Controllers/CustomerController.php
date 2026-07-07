@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Customer::class);
 
@@ -20,6 +21,7 @@ class CustomerController extends Controller
                 $q->where('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name',  'like', "%{$search}%")
                   ->orWhere('email',      'like', "%{$search}%")
+                  ->orWhere('contact_no', 'like', "%{$search}%")
                   ->orWhere('id', is_numeric($search) ? $search : 0);
             });
         }
@@ -40,6 +42,13 @@ class CustomerController extends Controller
         }
 
         $customers = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('customers._results', compact('customers'))->render(),
+                'count' => $customers->total(),
+            ]);
+        }
 
         $totalCustomers    = Customer::count();
         $activeCustomers   = Customer::where('status', 'active')->count();

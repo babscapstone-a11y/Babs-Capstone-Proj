@@ -6,6 +6,7 @@ use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\PurchaseOrder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,11 +37,11 @@ class InventoryController extends Controller
         ));
     }
 
-    public function rtc(Request $request): View
+    public function rtc(Request $request): View|JsonResponse
     {
         $query = InventoryItem::rtc();
 
-        if ($search = $request->input('q')) {
+        if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('item_name', 'like', "%{$search}%")
                   ->orWhere('category', 'like', "%{$search}%");
@@ -57,6 +58,13 @@ class InventoryController extends Controller
 
         $items = $query->orderBy('category')->orderBy('item_name')->get();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('inventory._rtc-results', compact('items'))->render(),
+                'count' => $items->count(),
+            ]);
+        }
+
         $totalRtc   = InventoryItem::rtc()->count();
         $lowStock   = InventoryItem::rtc()->lowStock()->count();
         $outOfStock = InventoryItem::rtc()->outOfStock()->count();
@@ -65,11 +73,11 @@ class InventoryController extends Controller
         return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock', 'totalServings'));
     }
 
-    public function beverages(Request $request): View
+    public function beverages(Request $request): View|JsonResponse
     {
         $query = InventoryItem::beverage();
 
-        if ($search = $request->input('q')) {
+        if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('item_name', 'like', "%{$search}%")
                   ->orWhere('category', 'like', "%{$search}%");
@@ -85,6 +93,14 @@ class InventoryController extends Controller
         }
 
         $items      = $query->orderBy('category')->orderBy('item_name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('inventory._beverages-results', compact('items'))->render(),
+                'count' => $items->count(),
+            ]);
+        }
+
         $totalBev   = InventoryItem::beverage()->count();
         $lowStock   = InventoryItem::beverage()->lowStock()->count();
         $outOfStock = InventoryItem::beverage()->outOfStock()->count();

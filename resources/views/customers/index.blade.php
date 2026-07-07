@@ -55,13 +55,18 @@
     }
     .filter-bar input:focus, .filter-bar select:focus { border-color: var(--primary); }
     .filter-bar input[type=text] { flex: 1; min-width: 180px; }
-    .btn-filter {
-        height: 38px; padding: 0 1rem;
-        background: var(--primary); color: #fff;
-        border: none; border-radius: 9px; font-size: .83rem; font-weight: 600;
-        font-family: inherit; cursor: pointer;
-        display: flex; align-items: center; gap: .4rem;
-    }
+
+    /* ── Live search ── */
+    .search-wrap { position:relative; flex:1; min-width:220px; }
+    .search-wrap i.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.85rem; pointer-events:none; }
+    .search-input { width:100%; height:38px; padding:0 2.3rem; border:1.5px solid var(--border); border-radius:9px; font-size:.83rem; font-family:inherit; color:var(--dark); background:var(--bg); outline:none; transition:border-color .18s; }
+    .search-input:focus { border-color:var(--primary); }
+    .search-clear { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:.25rem; display:none; }
+    .search-wrap.has-value .search-clear { display:block; }
+    .search-wrap.has-value .search-clear:hover { color:var(--primary); }
+    .results-count { font-size:.8rem; color:var(--muted); padding:.85rem 1.25rem 0; }
+    #results.is-loading { opacity:.5; transition:opacity .15s; }
+
     .btn-reset {
         height: 38px; padding: 0 .85rem;
         background: transparent; color: var(--muted);
@@ -204,8 +209,16 @@
 </div>
 
 {{-- Filter Bar --}}
-<form method="GET" action="{{ route('customers.index') }}" class="filter-bar anim-2">
-    <input type="text" name="search" placeholder="Search by name, email, or ID…" value="{{ request('search') }}">
+<form method="GET" action="{{ route('customers.index') }}" class="filter-bar anim-2" id="liveFilterForm">
+    <div class="search-wrap">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="search" name="search" class="search-input"
+               placeholder="Search by name, email, ID, or contact number…"
+               value="{{ request('search') }}" autocomplete="off">
+        <button type="button" class="search-clear" aria-label="Clear search">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
 
     <select name="status">
         <option value="">All Statuses</option>
@@ -223,117 +236,12 @@
         <option value="asc"  @selected(request('dir') === 'asc')>Oldest First</option>
     </select>
 
-    <button type="submit" class="btn-filter"><i class="fas fa-search"></i> Filter</button>
     <a href="{{ route('customers.index') }}" class="btn-reset"><i class="fas fa-rotate-left"></i> Reset</a>
 </form>
 
 {{-- Table --}}
-<div class="table-card anim-3">
-    <div class="table-header">
-        <h2>
-            <i class="fas fa-users" style="color:var(--primary);margin-right:.4rem"></i>
-            Customer Accounts
-            @if($customers->total())
-                <span style="font-size:.75rem;font-weight:500;color:var(--muted)">({{ $customers->total() }})</span>
-            @endif
-        </h2>
-    </div>
-
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:50px">ID</th>
-                    <th>Customer</th>
-                    <th>Contact Number</th>
-                    <th>
-                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'dir' => request('dir', 'desc') === 'desc' ? 'asc' : 'desc']) }}" class="sort-link">
-                            Registered
-                            @if(request('sort', 'created_at') === 'created_at')
-                                <i class="fas fa-sort-{{ request('dir', 'desc') === 'asc' ? 'up' : 'down' }}" style="color:var(--primary)"></i>
-                            @endif
-                        </a>
-                    </th>
-                    <th>Last Login</th>
-                    <th>Status</th>
-                    <th style="text-align:right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($customers as $customer)
-                <tr>
-                    <td style="font-size:.75rem;color:var(--muted);font-weight:600">
-                        #{{ str_pad($customer->id, 4, '0', STR_PAD_LEFT) }}
-                    </td>
-                    <td>
-                        <div class="avatar-cell">
-                            <div class="customer-avatar">{{ $customer->initials }}</div>
-                            <div>
-                                <div class="cust-name">{{ $customer->full_name }}</div>
-                                <div class="cust-email">{{ $customer->email }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td style="font-size:.82rem;color:var(--muted)">
-                        {{ $customer->contact_no ?: '—' }}
-                    </td>
-                    <td style="white-space:nowrap;font-size:.78rem;color:var(--muted)">
-                        {{ $customer->created_at->format('M d, Y') }}<br>
-                        <span style="font-size:.7rem">{{ $customer->created_at->format('h:i A') }}</span>
-                    </td>
-                    <td style="font-size:.78rem;color:var(--muted)">
-                        <span style="font-style:italic">—</span>
-                    </td>
-                    <td>
-                        @if($customer->status === 'active')
-                            <span class="badge badge-active"><i class="fas fa-circle" style="font-size:.4rem"></i> Active</span>
-                        @else
-                            <span class="badge badge-inactive"><i class="fas fa-circle" style="font-size:.4rem"></i> Inactive</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div class="action-group">
-                            @can('view', $customer)
-                            <a href="{{ route('customers.show', $customer) }}" class="btn-action btn-view">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            @endcan
-                            @can('toggleStatus', $customer)
-                            <button type="button"
-                                class="btn-action {{ $customer->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
-                                onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
-                                <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'check' }}"></i>
-                                {{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}
-                            </button>
-                            @endcan
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state">
-                            <i class="fas fa-users" style="color:var(--muted);opacity:.4"></i>
-                            <h3>No Customers Found</h3>
-                            <p style="margin:0">
-                                {{ request()->hasAny(['search','status']) ? 'Try adjusting your filters.' : 'No customers have registered yet. Customers appear here automatically after they register.' }}
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    @if($customers->hasPages())
-    <div style="padding:.85rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
-        <span style="font-size:.78rem;color:var(--muted)">
-            Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }} customers
-        </span>
-        {{ $customers->links() }}
-    </div>
-    @endif
+<div class="table-card anim-3" id="results">
+    @include('customers._results', ['customers' => $customers])
 </div>
 
 {{-- Toggle Status Modal --}}
@@ -387,6 +295,14 @@ function closeToggleModal() {
 }
 document.getElementById('toggleModal').addEventListener('click', function(e) {
     if (e.target === this) closeToggleModal();
+});
+
+LiveTable.init({
+    formSelector: '#liveFilterForm',
+    resultsSelector: '#results',
+    url: '{{ route('customers.index') }}',
+    searchFieldName: 'search',
+    debounceMs: 300,
 });
 </script>
 @endsection

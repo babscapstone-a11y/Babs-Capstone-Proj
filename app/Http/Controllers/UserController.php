@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\Staff;
 use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ class UserController extends Controller
 {
     /* ── Index ─────────────────────────────────────────────── */
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', User::class);
 
@@ -27,8 +28,12 @@ class UserController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->where('username', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('staff', fn ($s) => $s->where('first_name', 'like', "%{$search}%")
+                                                      ->orWhere('last_name', 'like', "%{$search}%"))
+                  ->orWhereHas('role', fn ($r) => $r->where('display_name', 'like', "%{$search}%")
+                                                     ->orWhere('role_name', 'like', "%{$search}%"));
             });
         }
 
@@ -43,6 +48,19 @@ class UserController extends Controller
         $users  = $query->latest()->paginate(15)->withQueryString();
         $roles  = Role::whereIn('role_name', ['admin', 'cashier', 'kitchen_staff', 'table_server'])->get();
         $pendingResetCount = StaffPasswordResetRequest::pending()->count();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('users._results', compact('users'))->render(),
+                'count' => $users->total(),
+                'stats' => [
+                    'total'         => $users->total(),
+                    'active'        => $users->getCollection()->where('status', 'active')->count(),
+                    'inactive'      => $users->getCollection()->where('status', 'inactive')->count(),
+                    'pendingResets' => $pendingResetCount,
+                ],
+            ]);
+        }
 
         return view('users.index', compact('users', 'roles', 'pendingResetCount'));
     }

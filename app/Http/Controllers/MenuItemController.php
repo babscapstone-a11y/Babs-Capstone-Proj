@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMenuItemRequest;
 use App\Models\Category;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,14 +15,18 @@ use Illuminate\View\View;
 
 class MenuItemController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', MenuItem::class);
 
         $query = MenuItem::with(['category', 'rtcItem']);
 
         if ($search = $request->input('search')) {
-            $query->where('menu_name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('menu_name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('category', fn ($c) => $c->where('category_name', 'like', "%{$search}%"));
+            });
         }
         if ($categoryId = $request->input('category_id')) {
             $query->where('category_id', $categoryId);
@@ -38,6 +43,13 @@ class MenuItemController extends Controller
 
         $menuItems  = $query->latest()->paginate(15)->withQueryString();
         $categories = Category::where('is_active', true)->orderBy('category_name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('menu._results', compact('menuItems'))->render(),
+                'count' => $menuItems->total(),
+            ]);
+        }
 
         $totalItems     = MenuItem::count();
         $activeItems    = MenuItem::where('is_active', true)->count();

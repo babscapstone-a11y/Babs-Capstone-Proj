@@ -18,8 +18,13 @@
 .filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .search-wrap{position:relative;flex:1;min-width:220px}
 .search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
-.search-input{width:100%;padding:.55rem .9rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.search-input{width:100%;padding:.55rem 2.3rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
 .search-input:focus{border-color:var(--primary)}
+.search-clear{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--muted);cursor:pointer;padding:.25rem;display:none}
+.search-wrap.has-value .search-clear{display:block}
+.search-wrap.has-value .search-clear:hover{color:var(--primary)}
+.results-count{font-size:.8rem;color:var(--muted);padding:.85rem 1.2rem 0}
+#results.is-loading{opacity:.5;transition:opacity .15s}
 .filter-select{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;cursor:pointer}
 .filter-select:focus{border-color:var(--primary)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
@@ -100,102 +105,27 @@
     @endif
 
     {{-- Filter --}}
-    <form method="GET" action="{{ route('inventory.rtc') }}" class="filter-bar">
-        <div class="search-wrap"><i class="fas fa-search"></i><input type="text" name="q" value="{{ request('q') }}" placeholder="Search item, category…" class="search-input"></div>
-        <select name="status" class="filter-select" onchange="this.form.submit()">
+    <form method="GET" action="{{ route('inventory.rtc') }}" class="filter-bar" id="liveFilterForm">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search item, category…" class="search-input" autocomplete="off">
+            <button type="button" class="search-clear" aria-label="Clear search"><i class="fas fa-times"></i></button>
+        </div>
+        <select name="status" class="filter-select">
             <option value="">All Status</option>
             <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
             <option value="low_stock" {{ request('status') === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
             <option value="out_of_stock" {{ request('status') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
         </select>
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
-        @if(request()->hasAny(['q','status']))
+        @if(request()->hasAny(['search','status']))
         <a href="{{ route('inventory.rtc') }}" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
         @endif
     </form>
 
     {{-- Table --}}
-    <div class="card">
-        <div class="table-wrap">
-            <table class="inv-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Item Name</th>
-                        <th>Category</th>
-                        <th>Raw Stock</th>
-                        <th>RTC Servings</th>
-                        <th>Portion Rule</th>
-                        <th>Reorder Level</th>
-                        <th>Stock Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($items as $i => $item)
-                    <tr>
-                        <td style="color:var(--muted);font-size:.78rem">{{ $i + 1 }}</td>
-                        <td>
-                            <div style="font-weight:700;color:var(--dark)">{{ $item->item_name }}</div>
-                            @if($item->supplier)
-                            <div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>
-                            @endif
-                        </td>
-                        <td><span style="font-size:.8rem;padding:.2rem .55rem;border-radius:6px;background:#F3F4F6;font-weight:600;">{{ $item->category ?? '—' }}</span></td>
-                        <td>
-                            <div style="font-weight:700">{{ number_format($item->quantity, 2) }} {{ $item->unit }}</div>
-                            @php
-                                $pct = $item->reorder_level > 0 ? min(100, ($item->quantity / ($item->reorder_level * 2)) * 100) : 100;
-                                $color = $item->stock_status === 'available' ? 'progress-green' : ($item->stock_status === 'low_stock' ? 'progress-amber' : 'progress-red');
-                            @endphp
-                            <div class="progress-bar"><div class="progress-fill {{ $color }}" style="width:{{ $pct }}%"></div></div>
-                        </td>
-                        <td>
-                            @if($item->rtc_servings > 0)
-                            <span style="font-weight:700;color:#1D4ED8">{{ number_format($item->rtc_servings, 0) }}</span>
-                            <span style="font-size:.75rem;color:var(--muted)"> servings</span>
-                            @else
-                            <span style="color:var(--muted);font-size:.8rem">—</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($item->portion_size)
-                            <span style="font-size:.8rem">{{ number_format($item->portion_size, 3) }} {{ $item->portion_unit ?? $item->unit }}/serving</span>
-                            @else
-                            <span style="color:var(--muted);font-size:.8rem">Not set</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div style="font-size:.82rem">{{ number_format($item->reorder_level, 2) }} {{ $item->unit }}</div>
-                            <div style="font-size:.73rem;color:var(--muted)">Min: {{ number_format($item->min_stock_level, 2) }}</div>
-                        </td>
-                        <td>
-                            @php $s = $item->stock_status; @endphp
-                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
-                                @if($s === 'low_stock')<i class="fas fa-triangle-exclamation"></i>@elseif($s === 'out_of_stock')<i class="fas fa-circle-xmark"></i>@else<i class="fas fa-circle-check"></i>@endif
-                                {{ $item->stock_status_label }}
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                                <button class="btn btn-outline btn-sm" onclick="openStockInFor({{ $item->id }}, '{{ addslashes($item->item_name) }}', '{{ $item->unit }}')">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                                <button class="btn btn-outline btn-sm" style="color:#2563EB;border-color:#BFDBFE" onclick="openConvertFor({{ $item->id }}, '{{ addslashes($item->item_name) }}', '{{ $item->unit }}', {{ $item->quantity }}, {{ $item->portion_size ?? 0.25 }}, '{{ $item->portion_unit ?? $item->unit }}')">
-                                    <i class="fas fa-arrows-rotate"></i>
-                                </button>
-                                <a href="{{ route('inventory.edit', $item) }}" class="btn btn-outline btn-sm">
-                                    <i class="fas fa-sliders"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="9" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No RTC items found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <div class="card" id="results">
+        @include('inventory._rtc-results', ['items' => $items])
     </div>
 
     {{-- Links --}}
@@ -317,6 +247,14 @@
 function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
 document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); }));
+
+LiveTable.init({
+    formSelector: '#liveFilterForm',
+    resultsSelector: '#results',
+    url: '{{ route('inventory.rtc') }}',
+    searchFieldName: 'search',
+    debounceMs: 300,
+});
 
 function openStockInFor(id, name, unit) {
     const sel = document.getElementById('siItemId');
