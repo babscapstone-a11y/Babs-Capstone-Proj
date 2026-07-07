@@ -349,12 +349,14 @@ document.getElementById('toggleModal').addEventListener('click', function(e) {
     if (e.target === this) closeToggleModal();
 });
 
-LiveTable.init({
-    formSelector: '#liveFilterForm',
-    resultsSelector: '#results',
-    url: '{{ route('menu.index') }}',
-    searchFieldName: 'search',
-    debounceMs: 300,
+document.addEventListener('DOMContentLoaded', function () {
+    LiveTable.init({
+        formSelector: '#liveFilterForm',
+        resultsSelector: '#results',
+        url: '{{ route('menu.index') }}',
+        searchFieldName: 'search',
+        debounceMs: 300,
+    });
 });
 </script>
 @endsection

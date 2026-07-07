@@ -232,12 +232,14 @@ function openModal(id) { document.getElementById(id).classList.add('open'); docu
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
 document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); }));
 
-LiveTable.init({
-    formSelector: '#liveFilterForm',
-    resultsSelector: '#results',
-    url: '{{ route('inventory.beverages') }}',
-    searchFieldName: 'search',
-    debounceMs: 300,
+document.addEventListener('DOMContentLoaded', function () {
+    LiveTable.init({
+        formSelector: '#liveFilterForm',
+        resultsSelector: '#results',
+        url: '{{ route('inventory.beverages') }}',
+        searchFieldName: 'search',
+        debounceMs: 300,
+    });
 });
 
 function setAdjType(type, btn) {

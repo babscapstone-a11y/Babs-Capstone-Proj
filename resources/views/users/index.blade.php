@@ -276,18 +276,20 @@ document.getElementById('toggleModal').addEventListener('click', function(e) {
     if (e.target === this) closeToggleModal();
 });
 
-LiveTable.init({
-    formSelector: '#liveFilterForm',
-    resultsSelector: '#results',
-    url: '{{ route('users.index') }}',
-    searchFieldName: 'search',
-    debounceMs: 300,
-    statsSelectors: {
-        total: '#statTotal',
-        active: '#statActive',
-        inactive: '#statInactive',
-        pendingResets: '#statPendingResets',
-    },
+document.addEventListener('DOMContentLoaded', function () {
+    LiveTable.init({
+        formSelector: '#liveFilterForm',
+        resultsSelector: '#results',
+        url: '{{ route('users.index') }}',
+        searchFieldName: 'search',
+        debounceMs: 300,
+        statsSelectors: {
+            total: '#statTotal',
+            active: '#statActive',
+            inactive: '#statInactive',
+            pendingResets: '#statPendingResets',
+        },
+    });
 });
 </script>
 @endsection
