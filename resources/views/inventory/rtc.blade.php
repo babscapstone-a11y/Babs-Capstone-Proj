@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Raw Meat Inventory')
+@section('title', 'Raw Meats')
 
 @section('styles')
 <style>

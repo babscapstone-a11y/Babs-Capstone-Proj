@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'RTC Inventory')
+@section('title', 'RTC Units')
 
 @section('styles')
 <style>
