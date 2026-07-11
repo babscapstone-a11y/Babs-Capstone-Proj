@@ -75,6 +75,32 @@
 .btn-amber:hover { background:#D97706; }
 
 .empty-row td { text-align:center; color:var(--muted); padding:1.5rem; font-size:.83rem; }
+
+/* Add Item modal */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(3px); z-index:1000; display:none; align-items:center; justify-content:center; padding:1rem; }
+.modal-backdrop.open { display:flex; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal { background:#fff; border-radius:20px; width:100%; max-width:460px; box-shadow:0 24px 64px rgba(0,0,0,.18); animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes slideUp { from{opacity:0;transform:scale(.9) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-hd { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
+.modal-hd h3 { font-size:1rem; font-weight:800; color:var(--dark); display:flex; align-items:center; gap:.5rem; margin:0; }
+.modal-hd h3 i { color:var(--primary); }
+.modal-close-btn { width:32px; height:32px; border-radius:8px; border:none; background:#F8FAFC; cursor:pointer; font-size:.9rem; color:var(--muted); display:flex; align-items:center; justify-content:center; }
+.modal-close-btn:hover { background:#fee2e2; color:var(--primary); }
+.modal-body { padding:1.5rem; }
+.modal-footer { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; gap:.6rem; justify-content:flex-end; }
+.field { margin-bottom:1.1rem; }
+.field label { display:block; font-size:.8rem; font-weight:600; color:var(--dark); margin-bottom:.35rem; }
+.field input, .field select { width:100%; padding:.6rem .9rem; border:1.5px solid var(--border); border-radius:10px; font-size:.84rem; font-family:inherit; color:var(--dark); outline:none; background:#fff; transition:border-color .18s; box-sizing:border-box; }
+.field input:focus, .field select:focus { border-color:var(--primary); }
+.type-toggle { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; margin-bottom:1.25rem; }
+.type-option { display:flex; align-items:center; gap:.6rem; padding:.75rem .9rem; border:1.5px solid var(--border); border-radius:12px; cursor:pointer; transition:all .18s; }
+.type-option i { font-size:1.05rem; color:var(--muted); }
+.type-option .label { font-weight:700; font-size:.85rem; color:var(--dark); }
+.type-option input[type=radio] { accent-color:var(--primary); }
+.type-option.active { border-color:var(--primary); background:rgba(220,38,38,0.04); }
+.type-option.active i { color:var(--primary); }
+.error-msg { background:#FEF2F2; border:1.5px solid #FECACA; color:#B91C1C; border-radius:10px; padding:.7rem 1rem; font-size:.82rem; margin-bottom:1.1rem; }
 </style>
 @endsection
 
@@ -91,6 +117,9 @@
             <a href="{{ route('inventory.restocking') }}" class="btn btn-amber">
                 <i class="fas fa-cart-shopping"></i> Repurchase List
             </a>
+            <button type="button" class="btn btn-outline" onclick="openModal('addItemModal')">
+                <i class="fas fa-plus"></i> Add Item
+            </button>
             <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Stock In
             </a>
@@ -254,4 +283,74 @@
     </div>
 
 </div>
+
+{{-- Add Item modal --}}
+<div class="modal-backdrop" id="addItemModal">
+    <div class="modal">
+        <div class="modal-hd">
+            <h3><i class="fas fa-plus"></i> Add Inventory Item</h3>
+            <button class="modal-close-btn" onclick="closeModal('addItemModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST" action="{{ route('inventory.store') }}">
+            @csrf
+            <div class="modal-body">
+                @if($errors->any())
+                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
+                @endif
+
+                <div class="type-toggle">
+                    <label class="type-option {{ old('item_type', 'rtc') === 'rtc' ? 'active' : '' }}" data-type="rtc">
+                        <input type="radio" name="item_type" value="rtc" {{ old('item_type', 'rtc') === 'rtc' ? 'checked' : '' }}>
+                        <i class="fas fa-drumstick-bite"></i>
+                        <span class="label">RTC Raw Meat</span>
+                    </label>
+                    <label class="type-option {{ old('item_type') === 'beverage' ? 'active' : '' }}" data-type="beverage">
+                        <input type="radio" name="item_type" value="beverage" {{ old('item_type') === 'beverage' ? 'checked' : '' }}>
+                        <i class="fas fa-bottle-water"></i>
+                        <span class="label">Beverage</span>
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label>Item Name *</label>
+                    <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork Belly">
+                </div>
+                <div class="field">
+                    <label>Category</label>
+                    <input type="text" name="category" value="{{ old('category') }}" placeholder="e.g. Pork, Chicken…">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>Min Stock Level *</label>
+                    <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level') }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('addItemModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); }));
+
+(function(){
+    var options = document.querySelectorAll('#addItemModal .type-option');
+    options.forEach(function(opt){
+        opt.addEventListener('click', function(){
+            opt.querySelector('input[type=radio]').checked = true;
+            options.forEach(o => o.classList.toggle('active', o === opt));
+        });
+    });
+})();
+
+@if($errors->any())
+openModal('addItemModal');
+@endif
+</script>
 @endsection

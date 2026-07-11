@@ -71,8 +71,8 @@
             </div>
             <div class="field-grid">
                 <div class="field">
-                    <label>Unit</label>
-                    <input type="text" value="{{ $item->unit }}" readonly>
+                    <label>Unit *</label>
+                    <input type="text" name="unit" required value="{{ old('unit', $item->unit) }}" placeholder="e.g. kg, pcs, liters">
                 </div>
                 <div class="field">
                     <label>Supplier</label>
