@@ -68,9 +68,44 @@ class InventoryController extends Controller
         $totalRtc   = InventoryItem::rtc()->count();
         $lowStock   = InventoryItem::rtc()->lowStock()->count();
         $outOfStock = InventoryItem::rtc()->outOfStock()->count();
+
+        return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock'));
+    }
+
+    public function rtcInventory(Request $request): View|JsonResponse
+    {
+        $query = InventoryItem::rtc();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('item_name', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+        if ($status = $request->input('status')) {
+            match($status) {
+                'low_stock'    => $query->servingsLowStock(),
+                'out_of_stock' => $query->servingsOutOfStock(),
+                'available'    => $query->where('rtc_servings', '>', 10),
+                default        => null,
+            };
+        }
+
+        $items = $query->orderBy('category')->orderBy('item_name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('inventory._rtc-inventory-results', compact('items'))->render(),
+                'count' => $items->count(),
+            ]);
+        }
+
+        $totalRtc      = InventoryItem::rtc()->count();
+        $lowServings   = InventoryItem::rtc()->servingsLowStock()->count();
+        $outOfServings = InventoryItem::rtc()->servingsOutOfStock()->count();
         $totalServings = InventoryItem::rtc()->sum('rtc_servings');
 
-        return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock', 'totalServings'));
+        return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings'));
     }
 
     public function beverages(Request $request): View|JsonResponse

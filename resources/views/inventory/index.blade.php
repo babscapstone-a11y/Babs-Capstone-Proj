@@ -164,7 +164,7 @@
         {{-- RTC Inventory --}}
         <div class="section-card">
             <div class="section-hd">
-                <h2><i class="fas fa-drumstick-bite"></i> RTC Raw Meat Inventory</h2>
+                <h2><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</h2>
                 <a href="{{ route('inventory.rtc') }}">View All →</a>
             </div>
             <table class="inv-table">
@@ -305,7 +305,7 @@
                     <label class="type-option {{ old('item_type', 'rtc') === 'rtc' ? 'active' : '' }}" data-type="rtc">
                         <input type="radio" name="item_type" value="rtc" {{ old('item_type', 'rtc') === 'rtc' ? 'checked' : '' }}>
                         <i class="fas fa-drumstick-bite"></i>
-                        <span class="label">RTC Raw Meat</span>
+                        <span class="label">Raw Meat</span>
                     </label>
                     <label class="type-option {{ old('item_type') === 'beverage' ? 'active' : '' }}" data-type="beverage">
                         <input type="radio" name="item_type" value="beverage" {{ old('item_type') === 'beverage' ? 'checked' : '' }}>
@@ -353,7 +353,7 @@
                     <label>Inventory Item *</label>
                     <select name="inventory_item_id" id="siItemId" required onchange="updateSIPreview()">
                         <option value="">Select item…</option>
-                        <optgroup label="RTC Raw Meat">
+                        <optgroup label="Raw Meat">
                         @foreach($rtcItems as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
                         @endforeach

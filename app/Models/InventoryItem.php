@@ -48,6 +48,17 @@ class InventoryItem extends Model
         return $q->where('quantity', '<=', 0);
     }
 
+    public function scopeServingsLowStock(Builder $q): Builder
+    {
+        return $q->where('rtc_servings', '>', 0)
+                 ->where('rtc_servings', '<=', 10);
+    }
+
+    public function scopeServingsOutOfStock(Builder $q): Builder
+    {
+        return $q->where('rtc_servings', '<=', 0);
+    }
+
     /* ── Computed status ── */
     public function getStockStatusAttribute(): string
     {

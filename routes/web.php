@@ -78,6 +78,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/',           [InventoryController::class, 'index'])      ->name('index');
         Route::get('/rtc',        [InventoryController::class, 'rtc'])        ->name('rtc');
+        Route::get('/rtc-inventory', [InventoryController::class, 'rtcInventory']) ->name('rtc-inventory');
         Route::get('/beverages',  [InventoryController::class, 'beverages'])  ->name('beverages');
         Route::get('/restocking', [InventoryController::class, 'restocking']) ->name('restocking');
         Route::post('/',         [InventoryController::class, 'store'])      ->name('store');

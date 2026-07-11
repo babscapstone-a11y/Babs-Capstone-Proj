@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'RTC Raw Meat Inventory')
+@section('title', 'Raw Meat Inventory')
 
 @section('styles')
 <style>
@@ -46,32 +46,6 @@
 .progress-fill{height:100%;border-radius:3px;transition:width .3s}
 .progress-green{background:#16A34A}.progress-amber{background:#F59E0B}.progress-red{background:#DC2626}
 .empty-row td{text-align:center;color:var(--muted);padding:2rem;font-size:.84rem}
-
-/* Modals */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
-.modal-backdrop.open{display:flex;animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal{background:#fff;border-radius:20px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both}
-@keyframes slideUp{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
-.modal-hd h3{font-size:1rem;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:.5rem}
-.modal-hd h3 i{color:var(--primary)}
-.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg,#F8FAFC);cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
-.modal-close-btn:hover{background:#fee2e2;color:var(--primary)}
-.modal-body{padding:1.5rem}
-.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end}
-.field{margin-bottom:1.1rem}
-.field label{display:block;font-size:.8rem;font-weight:600;color:var(--dark);margin-bottom:.35rem}
-.field input,.field select,.field textarea{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;transition:border-color .18s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
-.field .help{font-size:.75rem;color:var(--muted);margin-top:.25rem}
-.preview-box{background:#F8FAFC;border-radius:12px;padding:1rem 1.2rem;margin:1rem 0;border:1px solid var(--border)}
-.preview-row{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem;color:var(--dark)}
-.preview-row:last-child{margin-bottom:0;font-weight:700;color:var(--primary);font-size:.9rem}
-.conv-calc{background:#EFF6FF;border-radius:12px;padding:1rem 1.2rem;margin-top:.75rem;border:1px solid #BFDBFE}
-.conv-calc .calc-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1D4ED8;margin-bottom:.4rem}
-.conv-result{font-size:1.5rem;font-weight:900;color:#1D4ED8}
-.conv-result span{font-size:.8rem;font-weight:600}
 </style>
 @endsection
 
@@ -81,12 +55,12 @@
     {{-- Header --}}
     <div class="page-header">
         <div>
-            <div class="page-title"><i class="fas fa-drumstick-bite"></i> RTC Raw Meat Inventory</div>
-            <div class="page-sub">Track raw meat stock and convert to RTC servings</div>
+            <div class="page-title"><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</div>
+            <div class="page-sub">Track raw meat stock levels and thresholds</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.rtc-inventory') }}" class="btn btn-green"><i class="fas fa-utensils"></i> RTC Inventory</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
-            <button class="btn btn-green" onclick="openModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
 
@@ -95,7 +69,6 @@
         <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-list"></i></div><div class="stat-value">{{ $totalRtc }}</div><div class="stat-label">Total RTC Items</div></div>
         <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-value">{{ $lowStock }}</div><div class="stat-label">Low Stock</div></div>
         <div class="stat-card"><div class="stat-icon red"><i class="fas fa-circle-xmark"></i></div><div class="stat-value">{{ $outOfStock }}</div><div class="stat-label">Out of Stock</div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="fas fa-utensils"></i></div><div class="stat-value">{{ number_format($totalServings, 0) }}</div><div class="stat-label">Total RTC Servings</div></div>
     </div>
 
     @if(session('success'))
@@ -127,75 +100,13 @@
 
     {{-- Links --}}
     <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem;">
-        <a href="{{ route('inventory.conversions.index') }}" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Conversion History</a>
         <a href="{{ route('inventory.stock-in.index') }}?type=rtc" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Stock-In History</a>
-    </div>
-</div>
-
-{{-- ── Convert Modal ── --}}
-<div class="modal-backdrop" id="convertModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-arrows-rotate"></i> Convert Raw Meat → RTC Servings</h3>
-            <button class="modal-close-btn" onclick="closeModal('convertModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm" onsubmit="return confirmConvert()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>RTC Item *</label>
-                    <select name="inventory_item_id" id="cvItemId" required onchange="updateConvertCalc()">
-                        <option value="">Select item…</option>
-                        @foreach($items as $item)
-                        <option value="{{ $item->id }}"
-                            data-qty="{{ $item->quantity }}"
-                            data-unit="{{ $item->unit }}"
-                            data-portion="{{ $item->portion_size ?? 0.25 }}"
-                            data-punit="{{ $item->portion_unit ?? $item->unit }}">
-                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }} available)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
-                    <div class="field">
-                        <label>Raw Quantity to Use *</label>
-                        <input type="number" name="raw_quantity_used" id="cvRawQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateConvertCalc()">
-                    </div>
-                    <div class="field">
-                        <label>Portion Size (per serving) *</label>
-                        <input type="number" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.250" oninput="updateConvertCalc()">
-                        <div class="help" id="cvPortionHelp"></div>
-                    </div>
-                </div>
-                <div class="conv-calc" id="convCalc" style="display:none">
-                    <div class="calc-label"><i class="fas fa-calculator"></i> Conversion Preview</div>
-                    <div class="conv-result"><span id="cvUnits">0</span> <span>RTC Servings</span></div>
-                    <div style="font-size:.78rem;color:#1D4ED8;margin-top:.3rem">
-                        <span id="cvRawUsed">0</span> ÷ <span id="cvPortionShow">0</span> = <span id="cvUnitsShow">0</span> servings
-                        &bull; Remaining raw: <span id="cvRemaining">0</span>
-                    </div>
-                </div>
-                <div class="field" style="margin-top:1rem">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" placeholder="Optional notes…" style="resize:none"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('convertModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Conversion</button>
-            </div>
-        </form>
     </div>
 </div>
 @endsection
 
 @section('scripts')
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); }));
-
 document.addEventListener('DOMContentLoaded', function () {
     LiveTable.init({
         formSelector: '#liveFilterForm',
@@ -205,45 +116,5 @@ document.addEventListener('DOMContentLoaded', function () {
         debounceMs: 300,
     });
 });
-
-function openConvertFor(id, name, unit, qty, portion, punit) {
-    const sel = document.getElementById('cvItemId');
-    sel.value = id;
-    document.getElementById('cvPortion').value = portion;
-    document.getElementById('cvPortionHelp').textContent = `Default: ${portion} ${punit} per serving`;
-    updateConvertCalc();
-    openModal('convertModal');
-}
-
-function updateConvertCalc() {
-    const sel = document.getElementById('cvItemId');
-    const opt = sel.selectedOptions[0];
-    const rawQty  = parseFloat(document.getElementById('cvRawQty').value) || 0;
-    const portion = parseFloat(document.getElementById('cvPortion').value) || 0;
-    const calc = document.getElementById('convCalc');
-    if (!opt || !opt.value || !rawQty || !portion) { calc.style.display='none'; return; }
-    const avail    = parseFloat(opt.dataset.qty) || 0;
-    const unit     = opt.dataset.unit;
-    const punit    = opt.dataset.punit;
-    const units    = Math.floor(rawQty / portion);
-    const remaining = avail - rawQty;
-    document.getElementById('cvUnits').textContent = units;
-    document.getElementById('cvRawUsed').textContent = rawQty.toFixed(3) + ' ' + unit;
-    document.getElementById('cvPortionShow').textContent = portion.toFixed(3) + ' ' + punit;
-    document.getElementById('cvUnitsShow').textContent = units;
-    document.getElementById('cvRemaining').textContent = remaining.toFixed(3) + ' ' + unit;
-    calc.style.display = '';
-    document.getElementById('cvPortionHelp').textContent = opt.dataset.portion ? `Default: ${opt.dataset.portion} ${punit}/serving` : '';
-}
-
-function confirmConvert() {
-    const sel = document.getElementById('cvItemId');
-    const opt = sel.selectedOptions[0];
-    const rawQty = parseFloat(document.getElementById('cvRawQty').value) || 0;
-    const portion = parseFloat(document.getElementById('cvPortion').value) || 0;
-    if (!opt || !opt.value || !rawQty || !portion) return true;
-    const units = Math.floor(rawQty / portion);
-    return confirm(`Conversion Confirmation\n\nItem: ${opt.text.split('(')[0].trim()}\nRaw Used: ${rawQty.toFixed(3)} ${opt.dataset.unit}\nPortion Size: ${portion.toFixed(3)} ${opt.dataset.punit}/serving\nRTC Servings Produced: ${units}\n\nAre you sure you want to confirm this conversion?`);
-}
 </script>
 @endsection
