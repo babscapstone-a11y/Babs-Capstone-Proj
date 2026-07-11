@@ -88,6 +88,7 @@
                         <th>Previous Qty</th>
                         <th>Purchased</th>
                         <th>New Qty</th>
+                        <th>Cost</th>
                         <th>Supplier</th>
                         <th>Date</th>
                         <th>Recorded By</th>
@@ -102,12 +103,20 @@
                         <td style="color:var(--muted)">{{ number_format($tx->previous_quantity, 2) }} {{ $tx->unit }}</td>
                         <td><span style="color:#16A34A;font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</span></td>
                         <td style="font-weight:700">{{ number_format($tx->new_quantity, 2) }} {{ $tx->unit }}</td>
+                        <td>
+                            @if($tx->unit_cost !== null)
+                                <div>₱{{ number_format($tx->total_cost, 2) }}</div>
+                                <div style="font-size:.73rem;color:var(--muted)">₱{{ number_format($tx->unit_cost, 2) }}/{{ $tx->unit }}</div>
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td>{{ $tx->supplier ?? '—' }}</td>
                         <td>{{ $tx->purchase_date?->format('M d, Y') }}</td>
                         <td>{{ $tx->recorder?->name ?? 'Admin' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="9" class="empty-row"><i class="fas fa-inbox" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No stock-in transactions found.</td></tr>
+                    <tr><td colspan="10" class="empty-row"><i class="fas fa-inbox" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No stock-in transactions found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

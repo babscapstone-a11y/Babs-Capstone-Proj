@@ -383,39 +383,52 @@
         <form method="POST" action="{{ route('inventory.stock-in.store') }}" id="stockInForm">
             @csrf
             <div class="modal-body">
-                @if($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('purchase_date'))
+                @if($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('unit_cost') || $errors->has('purchase_date'))
                 <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
                 @endif
                 <div class="error-msg" id="siClientError" style="display:none"></div>
 
                 <div class="field">
                     <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="siItemId" required onchange="updateSIPreview()">
+                    <select name="inventory_item_id" id="siItemId" required onchange="onSIItemChange()">
                         <option value="">Select item…</option>
                         <optgroup label="Raw Meat">
                         @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
                         @endforeach
                         </optgroup>
                         <optgroup label="Beverages">
                         @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
                         @endforeach
                         </optgroup>
                     </select>
                 </div>
-                <div class="field">
-                    <label>Quantity Purchased *</label>
-                    <input type="number" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+                    <div class="field">
+                        <label>Quantity Purchased *</label>
+                        <input type="number" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
+                    </div>
+                    <div class="field">
+                        <label>Unit *</label>
+                        <input type="text" name="unit" id="siUnit" maxlength="50" required placeholder="e.g. kg, Piece" oninput="updateSIPreview()">
+                    </div>
                 </div>
-                <div class="field" style="margin-bottom:0">
-                    <label>Purchase Date *</label>
-                    <input type="date" name="purchase_date" id="siDate" required value="{{ date('Y-m-d') }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+                    <div class="field">
+                        <label>Cost per Unit</label>
+                        <input type="number" name="unit_cost" id="siCost" step="0.01" min="0" placeholder="0.00" oninput="updateSIPreview()">
+                    </div>
+                    <div class="field">
+                        <label>Purchase Date *</label>
+                        <input type="date" name="purchase_date" id="siDate" required value="{{ date('Y-m-d') }}">
+                    </div>
                 </div>
                 <div class="preview-box" id="siPreview" style="display:none">
                     <div class="preview-row"><span>Previous Quantity</span><span id="siPrevQty">—</span></div>
                     <div class="preview-row"><span>Purchased</span><span id="siPurchased">—</span></div>
                     <div class="preview-row"><span>New Total</span><span id="siNewQty">—</span></div>
+                    <div class="preview-row" id="siCostRow" style="display:none"><span>Total Cost</span><span id="siTotalCost">—</span></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -439,6 +452,7 @@
                 <div class="preview-row"><span>Previous Quantity</span><span id="siConfirmPrev">—</span></div>
                 <div class="preview-row"><span>Purchased</span><span id="siConfirmPurchased">—</span></div>
                 <div class="preview-row"><span>New Total</span><span id="siConfirmNew">—</span></div>
+                <div class="preview-row" id="siConfirmCostRow" style="display:none"><span>Total Cost</span><span id="siConfirmTotalCost">—</span></div>
             </div>
             <p style="margin-top:1rem;font-size:.82rem;color:var(--muted)">Double-check the item and quantity above. This will update the live inventory count.</p>
         </div>
@@ -468,9 +482,20 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
 
 @if($errors->has('item_name') || $errors->has('min_stock_level'))
 openModal('addItemModal');
-@elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('purchase_date'))
+@elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('unit_cost') || $errors->has('purchase_date'))
 openModal('stockInModal');
 @endif
+
+function onSIItemChange() {
+    const sel = document.getElementById('siItemId');
+    const opt = sel.selectedOptions[0];
+    if (opt && opt.value) {
+        document.getElementById('siUnit').value = opt.dataset.unit || '';
+        const cost = parseFloat(opt.dataset.cost) || 0;
+        document.getElementById('siCost').value = cost > 0 ? cost : '';
+    }
+    updateSIPreview();
+}
 
 function updateSIPreview() {
     const sel = document.getElementById('siItemId');
@@ -479,11 +504,20 @@ function updateSIPreview() {
     const preview = document.getElementById('siPreview');
     if (!opt || !opt.value || !qty) { preview.style.display = 'none'; return; }
     const prev = parseFloat(opt.dataset.qty) || 0;
-    const unit = opt.dataset.unit;
+    const unit = document.getElementById('siUnit').value.trim() || opt.dataset.unit;
     const newQty = prev + qty;
     document.getElementById('siPrevQty').textContent = prev.toFixed(2) + ' ' + unit;
     document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
     document.getElementById('siNewQty').textContent = newQty.toFixed(2) + ' ' + unit;
+
+    const cost = parseFloat(document.getElementById('siCost').value);
+    const costRow = document.getElementById('siCostRow');
+    if (cost > 0) {
+        document.getElementById('siTotalCost').textContent = '₱' + (cost * qty).toFixed(2);
+        costRow.style.display = '';
+    } else {
+        costRow.style.display = 'none';
+    }
     preview.style.display = '';
 }
 
@@ -494,6 +528,8 @@ function proceedStockIn() {
     const sel = document.getElementById('siItemId');
     const opt = sel.selectedOptions[0];
     const qty = parseFloat(document.getElementById('siQty').value);
+    const unit = document.getElementById('siUnit').value.trim();
+    const cost = document.getElementById('siCost').value;
     const date = document.getElementById('siDate').value;
 
     if (!opt || !opt.value) {
@@ -506,6 +542,16 @@ function proceedStockIn() {
         errBox.style.display = '';
         return;
     }
+    if (!unit) {
+        errBox.textContent = 'Please enter a unit.';
+        errBox.style.display = '';
+        return;
+    }
+    if (cost !== '' && parseFloat(cost) < 0) {
+        errBox.textContent = 'Cost per unit cannot be negative.';
+        errBox.style.display = '';
+        return;
+    }
     if (!date) {
         errBox.textContent = 'Please select a purchase date.';
         errBox.style.display = '';
@@ -513,13 +559,21 @@ function proceedStockIn() {
     }
 
     const prev = parseFloat(opt.dataset.qty) || 0;
-    const unit = opt.dataset.unit;
     const newQty = prev + qty;
+    const costVal = parseFloat(cost);
 
     document.getElementById('siConfirmItem').textContent = opt.text.split('(')[0].trim();
     document.getElementById('siConfirmPrev').textContent = prev.toFixed(2) + ' ' + unit;
     document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
     document.getElementById('siConfirmNew').textContent = newQty.toFixed(2) + ' ' + unit;
+
+    const confirmCostRow = document.getElementById('siConfirmCostRow');
+    if (costVal > 0) {
+        document.getElementById('siConfirmTotalCost').textContent = '₱' + (costVal * qty).toFixed(2) + ' (₱' + costVal.toFixed(2) + '/' + unit + ')';
+        confirmCostRow.style.display = '';
+    } else {
+        confirmCostRow.style.display = 'none';
+    }
 
     closeModal('stockInModal');
     openModal('stockInConfirmModal');

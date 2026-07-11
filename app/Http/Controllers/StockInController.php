@@ -37,6 +37,8 @@ class StockInController extends Controller
         $request->validate([
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'quantity_purchased' => ['required', 'numeric', 'min:0.01'],
+            'unit'              => ['required', 'string', 'max:50'],
+            'unit_cost'         => ['nullable', 'numeric', 'min:0'],
             'purchase_date'     => ['required', 'date'],
         ]);
 
@@ -45,22 +47,33 @@ class StockInController extends Controller
         $previousQty = (float) $item->quantity;
         $purchased   = (float) $request->quantity_purchased;
         $newQty      = $previousQty + $purchased;
+        $unit        = $request->unit;
+        $unitCost    = $request->filled('unit_cost') ? (float) $request->unit_cost : null;
+        $totalCost   = $unitCost !== null ? round($unitCost * $purchased, 2) : null;
 
         // Record the stock-in transaction
         PurchaseOrder::create([
             'inventory_item_id' => $item->id,
             'po_type'           => $item->item_type,
             'quantity_purchased'=> $purchased,
-            'unit'              => $item->unit,
+            'unit'              => $unit,
+            'unit_cost'         => $unitCost,
+            'total_cost'        => $totalCost,
             'previous_quantity' => $previousQty,
             'new_quantity'      => $newQty,
             'purchase_date'     => $request->purchase_date,
             'recorded_by'       => auth()->id(),
         ]);
 
-        // Update inventory
-        $item->update(['quantity' => $newQty]);
+        // Update inventory — keep the item's current cost price in sync with the latest purchase
+        $itemUpdate = ['quantity' => $newQty];
+        if ($unitCost !== null) {
+            $itemUpdate['cost_price'] = $unitCost;
+        }
+        $item->update($itemUpdate);
 
-        return back()->with('success', "Stock-in recorded: +{$purchased} {$item->unit} of {$item->item_name}. New total: {$newQty} {$item->unit}.");
+        $costNote = $unitCost !== null ? " at ₱{$unitCost}/{$unit} (₱{$totalCost} total)" : '';
+
+        return back()->with('success', "Stock-in recorded: +{$purchased} {$unit} of {$item->item_name}{$costNote}. New total: {$newQty} {$unit}.");
     }
 }

@@ -10,12 +10,15 @@ class PurchaseOrder extends Model
 {
     protected $fillable = [
         'inventory_item_id', 'po_type', 'supplier',
-        'quantity_purchased', 'unit', 'previous_quantity', 'new_quantity',
+        'quantity_purchased', 'unit', 'unit_cost', 'total_cost',
+        'previous_quantity', 'new_quantity',
         'purchase_date', 'remarks', 'recorded_by',
     ];
 
     protected $casts = [
         'quantity_purchased' => 'decimal:4',
+        'unit_cost'          => 'decimal:2',
+        'total_cost'         => 'decimal:2',
         'previous_quantity'  => 'decimal:4',
         'new_quantity'       => 'decimal:4',
         'purchase_date'      => 'date',
