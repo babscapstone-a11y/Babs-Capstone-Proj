@@ -380,12 +380,13 @@
             <h3><i class="fas fa-arrow-down-to-bracket"></i> New Stock-In Transaction</h3>
             <button class="modal-close-btn" onclick="closeModal('stockInModal')"><i class="fas fa-times"></i></button>
         </div>
-        <form method="POST" action="{{ route('inventory.stock-in.store') }}" onsubmit="return confirmStockIn()">
+        <form method="POST" action="{{ route('inventory.stock-in.store') }}" id="stockInForm">
             @csrf
             <div class="modal-body">
                 @if($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('purchase_date'))
                 <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
                 @endif
+                <div class="error-msg" id="siClientError" style="display:none"></div>
 
                 <div class="field">
                     <label>Inventory Item *</label>
@@ -409,7 +410,7 @@
                 </div>
                 <div class="field" style="margin-bottom:0">
                     <label>Purchase Date *</label>
-                    <input type="date" name="purchase_date" required value="{{ date('Y-m-d') }}">
+                    <input type="date" name="purchase_date" id="siDate" required value="{{ date('Y-m-d') }}">
                 </div>
                 <div class="preview-box" id="siPreview" style="display:none">
                     <div class="preview-row"><span>Previous Quantity</span><span id="siPrevQty">—</span></div>
@@ -419,9 +420,32 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeModal('stockInModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Stock-In</button>
+                <button type="button" class="btn btn-primary" onclick="proceedStockIn()"><i class="fas fa-arrow-right"></i> Review Stock-In</button>
             </div>
         </form>
+    </div>
+</div>
+
+{{-- Stock-In Confirmation modal --}}
+<div class="modal-backdrop" id="stockInConfirmModal">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-hd">
+            <h3><i class="fas fa-clipboard-check"></i> Confirm Stock-In</h3>
+            <button class="modal-close-btn" onclick="closeModal('stockInConfirmModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="preview-box">
+                <div class="preview-row"><span>Item</span><span id="siConfirmItem">—</span></div>
+                <div class="preview-row"><span>Previous Quantity</span><span id="siConfirmPrev">—</span></div>
+                <div class="preview-row"><span>Purchased</span><span id="siConfirmPurchased">—</span></div>
+                <div class="preview-row"><span>New Total</span><span id="siConfirmNew">—</span></div>
+            </div>
+            <p style="margin-top:1rem;font-size:.82rem;color:var(--muted)">Double-check the item and quantity above. This will update the live inventory count.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="backToStockInForm()">Back</button>
+            <button type="button" class="btn btn-primary" onclick="submitStockIn()"><i class="fas fa-check"></i> Confirm &amp; Save</button>
+        </div>
     </div>
 </div>
 @endsection
@@ -463,13 +487,51 @@ function updateSIPreview() {
     preview.style.display = '';
 }
 
-function confirmStockIn() {
+function proceedStockIn() {
+    const errBox = document.getElementById('siClientError');
+    errBox.style.display = 'none';
+
     const sel = document.getElementById('siItemId');
     const opt = sel.selectedOptions[0];
-    const qty = parseFloat(document.getElementById('siQty').value) || 0;
-    if (!opt || !opt.value || !qty) return true;
+    const qty = parseFloat(document.getElementById('siQty').value);
+    const date = document.getElementById('siDate').value;
+
+    if (!opt || !opt.value) {
+        errBox.textContent = 'Please select an inventory item.';
+        errBox.style.display = '';
+        return;
+    }
+    if (!qty || qty <= 0) {
+        errBox.textContent = 'Please enter a quantity greater than 0.';
+        errBox.style.display = '';
+        return;
+    }
+    if (!date) {
+        errBox.textContent = 'Please select a purchase date.';
+        errBox.style.display = '';
+        return;
+    }
+
     const prev = parseFloat(opt.dataset.qty) || 0;
-    return confirm(`Stock-In Confirmation\n\nItem: ${opt.text.split('(')[0].trim()}\nPrevious: ${prev.toFixed(2)} ${opt.dataset.unit}\nPurchased: +${qty.toFixed(2)} ${opt.dataset.unit}\nNew Total: ${(prev+qty).toFixed(2)} ${opt.dataset.unit}\n\nAre you sure you want to confirm this stock-in transaction?`);
+    const unit = opt.dataset.unit;
+    const newQty = prev + qty;
+
+    document.getElementById('siConfirmItem').textContent = opt.text.split('(')[0].trim();
+    document.getElementById('siConfirmPrev').textContent = prev.toFixed(2) + ' ' + unit;
+    document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
+    document.getElementById('siConfirmNew').textContent = newQty.toFixed(2) + ' ' + unit;
+
+    closeModal('stockInModal');
+    openModal('stockInConfirmModal');
+}
+
+function backToStockInForm() {
+    closeModal('stockInConfirmModal');
+    openModal('stockInModal');
+}
+
+function submitStockIn() {
+    document.getElementById('stockInForm').submit();
 }
 </script>
 @endsection

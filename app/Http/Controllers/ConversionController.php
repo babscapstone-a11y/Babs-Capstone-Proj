@@ -53,6 +53,11 @@ class ConversionController extends Controller
         }
 
         $unitsProduced      = floor($rawUsed / $portion);
+
+        if ($unitsProduced < 1) {
+            return back()->withErrors(['raw_quantity_used' => "Raw quantity too small to produce at least 1 RTC serving. Need at least {$portion} {$item->unit}."]);
+        }
+
         $previousRawStock   = (float) $item->quantity;
         $remainingRawStock  = $previousRawStock - $rawUsed;
         $previousServings   = (float) $item->rtc_servings;
