@@ -78,7 +78,6 @@
             <div class="page-sub">Track ready-to-cook servings converted from raw meat stock</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-            <a href="{{ route('inventory.rtc') }}" class="btn btn-outline"><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</a>
             <button class="btn btn-green" onclick="openModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
