@@ -30,8 +30,6 @@
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
 .btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-sm{padding:.38rem .75rem;font-size:.78rem}
-.btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
-.btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
 
 .card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
 .table-wrap{overflow-x:auto}
@@ -59,7 +57,6 @@
             <div class="page-sub">Track raw meat stock levels and thresholds</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-            <a href="{{ route('inventory.rtc-inventory') }}" class="btn btn-green"><i class="fas fa-utensils"></i> RTC Inventory</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
         </div>
     </div>
