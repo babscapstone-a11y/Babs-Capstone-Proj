@@ -53,7 +53,7 @@
     {{-- Header --}}
     <div class="page-header">
         <div>
-            <div class="page-title"><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</div>
+            <div class="page-title"><i class="fas fa-drumstick-bite"></i> Raw Meats</div>
             <div class="page-sub">Track raw meat stock levels and thresholds</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">

@@ -168,7 +168,7 @@
         {{-- Raw Meat Inventory --}}
         <div class="section-card">
             <div class="section-hd">
-                <h2><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</h2>
+                <h2><i class="fas fa-drumstick-bite"></i> Raw Meats</h2>
                 <a href="{{ route('inventory.rtc') }}">View All →</a>
             </div>
             <table class="inv-table">
@@ -204,7 +204,7 @@
         {{-- RTC Inventory --}}
         <div class="section-card">
             <div class="section-hd">
-                <h2><i class="fas fa-utensils"></i> RTC Inventory</h2>
+                <h2><i class="fas fa-utensils"></i> RTC Units</h2>
                 <a href="{{ route('inventory.rtc-inventory') }}">View All →</a>
             </div>
             <table class="inv-table">
@@ -240,7 +240,7 @@
         {{-- Beverage Inventory --}}
         <div class="section-card">
             <div class="section-hd">
-                <h2><i class="fas fa-bottle-water"></i> Beverage Inventory</h2>
+                <h2><i class="fas fa-bottle-water"></i> Beverages</h2>
                 <a href="{{ route('inventory.beverages') }}">View All →</a>
             </div>
             <table class="inv-table">

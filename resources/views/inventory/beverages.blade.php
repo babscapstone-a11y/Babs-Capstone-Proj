@@ -72,7 +72,7 @@
 
     <div class="page-header">
         <div>
-            <div class="page-title"><i class="fas fa-bottle-water"></i> Beverage Inventory</div>
+            <div class="page-title"><i class="fas fa-bottle-water"></i> Beverages</div>
             <div class="page-sub">Track beverage stock and manage adjustments</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">

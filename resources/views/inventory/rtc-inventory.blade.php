@@ -74,7 +74,7 @@
     {{-- Header --}}
     <div class="page-header">
         <div>
-            <div class="page-title"><i class="fas fa-utensils"></i> RTC Inventory</div>
+            <div class="page-title"><i class="fas fa-utensils"></i> RTC Units</div>
             <div class="page-sub">Track ready-to-cook servings converted from raw meat stock</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
