@@ -66,6 +66,10 @@
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
 @media(max-width:900px) { .two-col { grid-template-columns:1fr; } }
 
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; }
+@media(max-width:1100px) { .three-col { grid-template-columns:1fr 1fr; } }
+@media(max-width:700px) { .three-col { grid-template-columns:1fr; } }
+
 .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; border-radius:10px; font-size:.83rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all .18s; text-decoration:none; }
 .btn-primary { background:var(--primary); color:#fff; }
 .btn-primary:hover { background:var(--primary-dk, #B91C1C); }
@@ -159,9 +163,9 @@
     </div>
     @endif
 
-    {{-- ── Two column: RTC + Beverages ── --}}
-    <div class="two-col">
-        {{-- RTC Inventory --}}
+    {{-- ── Three column: Raw Meat + RTC + Beverages ── --}}
+    <div class="three-col">
+        {{-- Raw Meat Inventory --}}
         <div class="section-card">
             <div class="section-hd">
                 <h2><i class="fas fa-drumstick-bite"></i> Raw Meat Inventory</h2>
@@ -172,7 +176,6 @@
                     <tr>
                         <th>Item</th>
                         <th>Raw Stock</th>
-                        <th>RTC Servings</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -184,7 +187,6 @@
                             <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
                         </td>
                         <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>
-                        <td>{{ number_format($item->rtc_servings, 0) }} srv.</td>
                         <td>
                             @php $s = $item->stock_status; @endphp
                             <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
@@ -193,7 +195,43 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="4" class="empty-row">No RTC items found.</td></tr>
+                    <tr><td colspan="3" class="empty-row">No RTC items found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- RTC Inventory --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-utensils"></i> RTC Inventory</h2>
+                <a href="{{ route('inventory.rtc-inventory') }}">View All →</a>
+            </div>
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>RTC Servings</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($rtcItems as $item)
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">{{ $item->item_name }}</div>
+                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
+                        </td>
+                        <td>{{ number_format($item->rtc_servings, 0) }} srv.</td>
+                        <td>
+                            @php $s = $item->rtc_servings_status; @endphp
+                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
+                                {{ $s === 'available' ? 'Available' : ($s === 'low_stock' ? 'Low Servings' : 'Out of Servings') }}
+                            </span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="3" class="empty-row">No RTC items found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
