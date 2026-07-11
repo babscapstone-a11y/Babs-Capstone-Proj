@@ -86,7 +86,6 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
-            <button class="btn btn-blue" onclick="openModal('stockInModal')"><i class="fas fa-plus"></i> Stock In</button>
             <button class="btn btn-green" onclick="openModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
@@ -130,55 +129,6 @@
     <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem;">
         <a href="{{ route('inventory.conversions.index') }}" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Conversion History</a>
         <a href="{{ route('inventory.stock-in.index') }}?type=rtc" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Stock-In History</a>
-    </div>
-</div>
-
-{{-- ── Stock-In Modal ── --}}
-<div class="modal-backdrop" id="stockInModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In (RTC)</h3>
-            <button class="modal-close-btn" onclick="closeModal('stockInModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.stock-in.store') }}" id="stockInForm" onsubmit="return confirmStockIn()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>RTC Item *</label>
-                    <select name="inventory_item_id" id="siItemId" required onchange="updateStockInPreview()">
-                        <option value="">Select item…</option>
-                        @foreach($items as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Quantity Purchased *</label>
-                    <input type="number" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateStockInPreview()">
-                </div>
-                <div class="field">
-                    <label>Purchase Date *</label>
-                    <input type="date" name="purchase_date" required value="{{ date('Y-m-d') }}">
-                </div>
-                <div class="field">
-                    <label>Supplier (Optional)</label>
-                    <input type="text" name="supplier" placeholder="Supplier name…">
-                </div>
-                <div class="field">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" placeholder="Optional notes…" style="resize:none"></textarea>
-                </div>
-                <div class="preview-box" id="siPreview" style="display:none">
-                    <div class="preview-row"><span>Previous Quantity</span><span id="siPrevQty">—</span></div>
-                    <div class="preview-row"><span>Purchased</span><span id="siPurchased">—</span></div>
-                    <div class="preview-row"><span>New Total</span><span id="siNewQty">—</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('stockInModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Stock-In</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -256,12 +206,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function openStockInFor(id, name, unit) {
-    const sel = document.getElementById('siItemId');
-    sel.value = id;
-    updateStockInPreview();
-    openModal('stockInModal');
-}
 function openConvertFor(id, name, unit, qty, portion, punit) {
     const sel = document.getElementById('cvItemId');
     sel.value = id;
@@ -269,21 +213,6 @@ function openConvertFor(id, name, unit, qty, portion, punit) {
     document.getElementById('cvPortionHelp').textContent = `Default: ${portion} ${punit} per serving`;
     updateConvertCalc();
     openModal('convertModal');
-}
-
-function updateStockInPreview() {
-    const sel = document.getElementById('siItemId');
-    const opt = sel.selectedOptions[0];
-    const qty = parseFloat(document.getElementById('siQty').value) || 0;
-    const preview = document.getElementById('siPreview');
-    if (!opt || !opt.value || !qty) { preview.style.display='none'; return; }
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    const unit = opt.dataset.unit;
-    const newQty = prev + qty;
-    document.getElementById('siPrevQty').textContent = prev.toFixed(2) + ' ' + unit;
-    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
-    document.getElementById('siNewQty').textContent = newQty.toFixed(2) + ' ' + unit;
-    preview.style.display = '';
 }
 
 function updateConvertCalc() {
@@ -305,15 +234,6 @@ function updateConvertCalc() {
     document.getElementById('cvRemaining').textContent = remaining.toFixed(3) + ' ' + unit;
     calc.style.display = '';
     document.getElementById('cvPortionHelp').textContent = opt.dataset.portion ? `Default: ${opt.dataset.portion} ${punit}/serving` : '';
-}
-
-function confirmStockIn() {
-    const sel = document.getElementById('siItemId');
-    const opt = sel.selectedOptions[0];
-    const qty = parseFloat(document.getElementById('siQty').value) || 0;
-    if (!opt || !opt.value || !qty) return true;
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    return confirm(`Stock-In Confirmation\n\nItem: ${opt.text.split('(')[0].trim()}\nPrevious: ${prev.toFixed(2)} ${opt.dataset.unit}\nPurchased: +${qty.toFixed(2)} ${opt.dataset.unit}\nNew Total: ${(prev+qty).toFixed(2)} ${opt.dataset.unit}\n\nAre you sure you want to confirm this stock-in transaction?`);
 }
 
 function confirmConvert() {

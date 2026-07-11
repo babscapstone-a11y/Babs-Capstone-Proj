@@ -101,6 +101,9 @@
 .type-option.active { border-color:var(--primary); background:rgba(220,38,38,0.04); }
 .type-option.active i { color:var(--primary); }
 .error-msg { background:#FEF2F2; border:1.5px solid #FECACA; color:#B91C1C; border-radius:10px; padding:.7rem 1rem; font-size:.82rem; margin-bottom:1.1rem; }
+.preview-box { background:#F8FAFC; border-radius:12px; padding:1rem 1.2rem; margin:.75rem 0 0; border:1px solid var(--border); }
+.preview-row { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.3rem; color:var(--dark); }
+.preview-row:last-child { margin-bottom:0; font-weight:700; color:var(--primary); }
 </style>
 @endsection
 
@@ -120,9 +123,9 @@
             <button type="button" class="btn btn-outline" onclick="openModal('addItemModal')">
                 <i class="fas fa-plus"></i> Add Item
             </button>
-            <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-primary">
+            <button type="button" class="btn btn-primary" onclick="openModal('stockInModal')">
                 <i class="fas fa-plus"></i> Stock In
-            </a>
+            </button>
         </div>
     </div>
 
@@ -331,6 +334,58 @@
         </form>
     </div>
 </div>
+
+{{-- Stock-In modal --}}
+<div class="modal-backdrop" id="stockInModal">
+    <div class="modal">
+        <div class="modal-hd">
+            <h3><i class="fas fa-arrow-down-to-bracket"></i> New Stock-In Transaction</h3>
+            <button class="modal-close-btn" onclick="closeModal('stockInModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST" action="{{ route('inventory.stock-in.store') }}" onsubmit="return confirmStockIn()">
+            @csrf
+            <div class="modal-body">
+                @if($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('purchase_date'))
+                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
+                @endif
+
+                <div class="field">
+                    <label>Inventory Item *</label>
+                    <select name="inventory_item_id" id="siItemId" required onchange="updateSIPreview()">
+                        <option value="">Select item…</option>
+                        <optgroup label="RTC Raw Meat">
+                        @foreach($rtcItems as $item)
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
+                        @endforeach
+                        </optgroup>
+                        <optgroup label="Beverages">
+                        @foreach($beverageItems as $item)
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
+                        @endforeach
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Quantity Purchased *</label>
+                    <input type="number" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>Purchase Date *</label>
+                    <input type="date" name="purchase_date" required value="{{ date('Y-m-d') }}">
+                </div>
+                <div class="preview-box" id="siPreview" style="display:none">
+                    <div class="preview-row"><span>Previous Quantity</span><span id="siPrevQty">—</span></div>
+                    <div class="preview-row"><span>Purchased</span><span id="siPurchased">—</span></div>
+                    <div class="preview-row"><span>New Total</span><span id="siNewQty">—</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('stockInModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Stock-In</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -349,8 +404,34 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
     });
 })();
 
-@if($errors->any())
+@if($errors->has('item_name') || $errors->has('min_stock_level'))
 openModal('addItemModal');
+@elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('purchase_date'))
+openModal('stockInModal');
 @endif
+
+function updateSIPreview() {
+    const sel = document.getElementById('siItemId');
+    const opt = sel.selectedOptions[0];
+    const qty = parseFloat(document.getElementById('siQty').value) || 0;
+    const preview = document.getElementById('siPreview');
+    if (!opt || !opt.value || !qty) { preview.style.display = 'none'; return; }
+    const prev = parseFloat(opt.dataset.qty) || 0;
+    const unit = opt.dataset.unit;
+    const newQty = prev + qty;
+    document.getElementById('siPrevQty').textContent = prev.toFixed(2) + ' ' + unit;
+    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
+    document.getElementById('siNewQty').textContent = newQty.toFixed(2) + ' ' + unit;
+    preview.style.display = '';
+}
+
+function confirmStockIn() {
+    const sel = document.getElementById('siItemId');
+    const opt = sel.selectedOptions[0];
+    const qty = parseFloat(document.getElementById('siQty').value) || 0;
+    if (!opt || !opt.value || !qty) return true;
+    const prev = parseFloat(opt.dataset.qty) || 0;
+    return confirm(`Stock-In Confirmation\n\nItem: ${opt.text.split('(')[0].trim()}\nPrevious: ${prev.toFixed(2)} ${opt.dataset.unit}\nPurchased: +${qty.toFixed(2)} ${opt.dataset.unit}\nNew Total: ${(prev+qty).toFixed(2)} ${opt.dataset.unit}\n\nAre you sure you want to confirm this stock-in transaction?`);
+}
 </script>
 @endsection

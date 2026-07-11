@@ -55,7 +55,7 @@
             <div class="page-title"><i class="fas fa-arrow-down-to-bracket"></i> Stock-In Transactions</div>
             <div class="page-sub">History of all inventory stock-in records</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('siModal')"><i class="fas fa-plus"></i> New Stock-In</button>
+        <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 
     @if(session('success'))
@@ -117,85 +117,4 @@
         @endif
     </div>
 </div>
-
-<div class="modal-backdrop" id="siModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-arrow-down-to-bracket"></i> New Stock-In Transaction</h3>
-            <button class="modal-close-btn" onclick="closeModal('siModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.stock-in.store') }}" onsubmit="return confirmSI()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="newSiItem" required onchange="updateSIPreview()">
-                        <option value="">All RTC items…</option>
-                        <optgroup label="RTC Raw Meat">
-                        @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
-                        @endforeach
-                        </optgroup>
-                        <optgroup label="Beverages">
-                        @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
-                        @endforeach
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Quantity Purchased *</label>
-                    <input type="number" name="quantity_purchased" id="newSiQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
-                </div>
-                <div class="field">
-                    <label>Purchase Date *</label>
-                    <input type="date" name="purchase_date" required value="{{ date('Y-m-d') }}">
-                </div>
-                <div class="field">
-                    <label>Supplier (Optional)</label>
-                    <input type="text" name="supplier" placeholder="Supplier name…">
-                </div>
-                <div class="field">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" style="resize:none" placeholder="Optional notes…"></textarea>
-                </div>
-                <div class="preview-box" id="newSiPreview" style="display:none">
-                    <div class="preview-row"><span>Previous Quantity</span><span id="newSiPrev">—</span></div>
-                    <div class="preview-row"><span>Purchased</span><span id="newSiPurchased">—</span></div>
-                    <div class="preview-row"><span>New Total</span><span id="newSiNew">—</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('siModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Stock-In</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endsection
-
-@section('scripts')
-<script>
-function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
-document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
-function updateSIPreview(){
-    const sel=document.getElementById('newSiItem');const opt=sel.selectedOptions[0];
-    const qty=parseFloat(document.getElementById('newSiQty').value)||0;
-    const preview=document.getElementById('newSiPreview');
-    if(!opt?.value||!qty){preview.style.display='none';return;}
-    const prev=parseFloat(opt.dataset.qty)||0;const unit=opt.dataset.unit;
-    document.getElementById('newSiPrev').textContent=prev.toFixed(2)+' '+unit;
-    document.getElementById('newSiPurchased').textContent='+'+qty.toFixed(2)+' '+unit;
-    document.getElementById('newSiNew').textContent=(prev+qty).toFixed(2)+' '+unit;
-    preview.style.display='';
-}
-function confirmSI(){
-    const sel=document.getElementById('newSiItem');const opt=sel.selectedOptions[0];
-    const qty=parseFloat(document.getElementById('newSiQty').value)||0;
-    if(!opt?.value||!qty)return true;
-    const prev=parseFloat(opt.dataset.qty)||0;
-    return confirm('Stock-In Confirmation\n\nItem: '+opt.text.split('(')[0].trim()+'\nPrevious: '+prev.toFixed(2)+' '+opt.dataset.unit+'\nPurchased: +'+qty.toFixed(2)+' '+opt.dataset.unit+'\nNew Total: '+(prev+qty).toFixed(2)+' '+opt.dataset.unit+'\n\nAre you sure you want to confirm this stock-in transaction?');
-}
-</script>
 @endsection

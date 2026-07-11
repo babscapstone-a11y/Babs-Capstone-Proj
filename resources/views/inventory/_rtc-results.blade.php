@@ -64,9 +64,6 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                            <button class="btn btn-outline btn-sm" onclick="openStockInFor({{ $item->id }}, '{{ addslashes($item->item_name) }}', '{{ $item->unit }}')">
-                                <i class="fas fa-plus"></i>
-                            </button>
                             <button class="btn btn-outline btn-sm" style="color:#2563EB;border-color:#BFDBFE" onclick="openConvertFor({{ $item->id }}, '{{ addslashes($item->item_name) }}', '{{ $item->unit }}', {{ $item->quantity }}, {{ $item->portion_size ?? 0.25 }}, '{{ $item->portion_unit ?? $item->unit }}')">
                                 <i class="fas fa-arrows-rotate"></i>
                             </button>

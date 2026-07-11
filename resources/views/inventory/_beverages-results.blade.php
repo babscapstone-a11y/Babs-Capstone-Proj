@@ -47,7 +47,6 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:.4rem">
-                            <button class="btn btn-outline btn-sm" onclick="openStockInFor({{ $item->id }},'{{ addslashes($item->item_name) }}','{{ $item->unit }}',{{ $item->quantity }})"><i class="fas fa-plus"></i></button>
                             <button class="btn btn-outline btn-sm" style="color:#7C3AED;border-color:#DDD6FE" onclick="openAdjustFor({{ $item->id }},'{{ addslashes($item->item_name) }}','{{ $item->unit }}',{{ $item->quantity }})"><i class="fas fa-pen-to-square"></i></button>
                             <a href="{{ route('inventory.edit', $item) }}" class="btn btn-outline btn-sm"><i class="fas fa-sliders"></i></a>
                         </div>

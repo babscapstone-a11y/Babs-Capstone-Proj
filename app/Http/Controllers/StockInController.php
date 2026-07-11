@@ -29,10 +29,7 @@ class StockInController extends Controller
 
         $transactions = $query->latest()->paginate(15)->withQueryString();
 
-        $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
-
-        return view('inventory.stock-in', compact('transactions', 'rtcItems', 'beverageItems'));
+        return view('inventory.stock-in', compact('transactions'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -41,8 +38,6 @@ class StockInController extends Controller
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'quantity_purchased' => ['required', 'numeric', 'min:0.01'],
             'purchase_date'     => ['required', 'date'],
-            'supplier'          => ['nullable', 'string', 'max:255'],
-            'remarks'           => ['nullable', 'string', 'max:1000'],
         ]);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
@@ -55,20 +50,17 @@ class StockInController extends Controller
         PurchaseOrder::create([
             'inventory_item_id' => $item->id,
             'po_type'           => $item->item_type,
-            'supplier'          => $request->supplier,
             'quantity_purchased'=> $purchased,
             'unit'              => $item->unit,
             'previous_quantity' => $previousQty,
             'new_quantity'      => $newQty,
             'purchase_date'     => $request->purchase_date,
-            'remarks'           => $request->remarks,
             'recorded_by'       => auth()->id(),
         ]);
 
         // Update inventory
         $item->update(['quantity' => $newQty]);
 
-        return redirect()->route('inventory.stock-in.index')
-            ->with('success', "Stock-in recorded: +{$purchased} {$item->unit} of {$item->item_name}. New total: {$newQty} {$item->unit}.");
+        return back()->with('success', "Stock-in recorded: +{$purchased} {$item->unit} of {$item->item_name}. New total: {$newQty} {$item->unit}.");
     }
 }

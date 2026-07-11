@@ -77,7 +77,6 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
-            <button class="btn btn-primary" onclick="openModal('stockInModal')"><i class="fas fa-plus"></i> Stock In</button>
             <button class="btn btn-purple" onclick="openModal('adjustModal')"><i class="fas fa-pen-to-square"></i> Adjust</button>
         </div>
     </div>
@@ -116,55 +115,6 @@
     <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem">
         <a href="{{ route('inventory.adjustments.index') }}" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Adjustment History</a>
         <a href="{{ route('inventory.stock-in.index') }}?type=beverage" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Stock-In History</a>
-    </div>
-</div>
-
-{{-- Stock-In Modal --}}
-<div class="modal-backdrop" id="stockInModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In (Beverage)</h3>
-            <button class="modal-close-btn" onclick="closeModal('stockInModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.stock-in.store') }}" onsubmit="return confirmStockIn()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>Beverage Item *</label>
-                    <select name="inventory_item_id" id="siItemId" required onchange="updateSIPreview()">
-                        <option value="">Select beverage…</option>
-                        @foreach($items as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Quantity Purchased *</label>
-                    <input type="number" name="quantity_purchased" id="siQty" step="1" min="1" required placeholder="0" oninput="updateSIPreview()">
-                </div>
-                <div class="field">
-                    <label>Purchase Date *</label>
-                    <input type="date" name="purchase_date" required value="{{ date('Y-m-d') }}">
-                </div>
-                <div class="field">
-                    <label>Supplier (Optional)</label>
-                    <input type="text" name="supplier" placeholder="Supplier name…">
-                </div>
-                <div class="field">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" placeholder="Optional notes…" style="resize:none"></textarea>
-                </div>
-                <div class="preview-box" id="siPreview" style="display:none">
-                    <div class="preview-row"><span>Previous Quantity</span><span id="siPrevQty">—</span></div>
-                    <div class="preview-row"><span>Purchased</span><span id="siPurchased">—</span></div>
-                    <div class="preview-row"><span>New Total</span><span id="siNewQty">—</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('stockInModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Stock-In</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -246,29 +196,10 @@ function setAdjType(type, btn) {
     btn.classList.add('selected');
 }
 
-function openStockInFor(id, name, unit, qty) {
-    document.getElementById('siItemId').value = id;
-    updateSIPreview();
-    openModal('stockInModal');
-}
 function openAdjustFor(id, name, unit, qty) {
     document.getElementById('adjItemId').value = id;
     updateAdjPreview();
     openModal('adjustModal');
-}
-
-function updateSIPreview() {
-    const sel = document.getElementById('siItemId');
-    const opt = sel.selectedOptions[0];
-    const qty = parseFloat(document.getElementById('siQty').value) || 0;
-    const preview = document.getElementById('siPreview');
-    if (!opt?.value || !qty) { preview.style.display='none'; return; }
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    const unit = opt.dataset.unit;
-    document.getElementById('siPrevQty').textContent = prev.toFixed(0) + ' ' + unit;
-    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(0) + ' ' + unit;
-    document.getElementById('siNewQty').textContent = (prev + qty).toFixed(0) + ' ' + unit;
-    preview.style.display = '';
 }
 
 function updateAdjPreview() {
@@ -284,15 +215,6 @@ function updateAdjPreview() {
     document.getElementById('adjChange').textContent = (adj >= 0 ? '+' : '') + adj.toFixed(0) + ' ' + unit;
     document.getElementById('adjAfter').textContent = after.toFixed(0) + ' ' + unit;
     preview.style.display = '';
-}
-
-function confirmStockIn() {
-    const sel = document.getElementById('siItemId');
-    const opt = sel.selectedOptions[0];
-    const qty = parseFloat(document.getElementById('siQty').value) || 0;
-    if (!opt?.value || !qty) return true;
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    return confirm(`Stock-In Confirmation\n\nBeverage: ${opt.text.split('(')[0].trim()}\nPrevious: ${prev} ${opt.dataset.unit}\nPurchased: +${qty} ${opt.dataset.unit}\nNew Total: ${prev+qty} ${opt.dataset.unit}\n\nAre you sure you want to confirm this stock-in transaction?`);
 }
 
 function confirmAdjust() {
