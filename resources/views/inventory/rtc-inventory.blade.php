@@ -65,6 +65,12 @@
 .conv-calc .calc-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1D4ED8;margin-bottom:.4rem}
 .conv-result{font-size:1.5rem;font-weight:900;color:#1D4ED8}
 .conv-result span{font-size:.8rem;font-weight:600}
+.conv-flow{display:flex;align-items:center;gap:.75rem;margin-top:.6rem;flex-wrap:wrap}
+.flow-box{background:#fff;border:1px solid #BFDBFE;border-radius:10px;padding:.5rem .85rem;text-align:center}
+.flow-box .fl-val{font-size:.92rem;font-weight:700;color:#1D4ED8}
+.flow-box .fl-lbl{font-size:.7rem;color:#93C5FD;font-weight:600}
+.flow-arrow{color:#93C5FD;font-size:1rem}
+.error-msg{background:#FEF2F2;border:1.5px solid #FECACA;color:#B91C1C;border-radius:10px;padding:.7rem 1rem;font-size:.82rem;margin-bottom:1.1rem}
 </style>
 @endsection
 
@@ -130,9 +136,13 @@
             <h3><i class="fas fa-arrows-rotate"></i> Convert Raw Meat → RTC Servings</h3>
             <button class="modal-close-btn" onclick="closeModal('convertModal')"><i class="fas fa-times"></i></button>
         </div>
-        <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm" onsubmit="return confirmConvert()">
+        <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm">
             @csrf
             <div class="modal-body">
+                @if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
+                @endif
+                <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
                     <label>RTC Item *</label>
                     <select name="inventory_item_id" id="cvItemId" required onchange="updateConvertCalc()">
@@ -174,9 +184,42 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeModal('convertModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Conversion</button>
+                <button type="button" class="btn btn-primary" onclick="proceedConvert()"><i class="fas fa-arrow-right"></i> Review Conversion</button>
             </div>
         </form>
+    </div>
+</div>
+
+{{-- Convert Confirmation modal --}}
+<div class="modal-backdrop" id="convertConfirmModal">
+    <div class="modal" style="max-width:460px">
+        <div class="modal-hd">
+            <h3><i class="fas fa-clipboard-check"></i> Confirm Conversion</h3>
+            <button class="modal-close-btn" onclick="closeModal('convertConfirmModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="field" style="margin-bottom:.6rem">
+                <label style="margin-bottom:.15rem">Item</label>
+                <div style="font-weight:700;color:var(--dark)" id="cvConfirmItem">—</div>
+            </div>
+            <div class="conv-calc">
+                <div class="calc-label"><i class="fas fa-calculator"></i> Summary</div>
+                <div class="conv-result"><span id="cvConfirmUnits">0</span> <span>RTC Servings</span></div>
+                <div class="conv-flow">
+                    <div class="flow-box"><div class="fl-val" id="cvConfirmRaw">0</div><div class="fl-lbl">Raw Used</div></div>
+                    <div class="flow-arrow">÷</div>
+                    <div class="flow-box"><div class="fl-val" id="cvConfirmPortion">0</div><div class="fl-lbl">Per Serving</div></div>
+                    <div class="flow-arrow">=</div>
+                    <div class="flow-box"><div class="fl-val" id="cvConfirmUnits2">0</div><div class="fl-lbl">Servings</div></div>
+                </div>
+                <div style="font-size:.75rem;color:#60A5FA;margin-top:.5rem">Remaining raw: <strong id="cvConfirmRemain">0</strong></div>
+            </div>
+            <p style="margin-top:1rem;font-size:.82rem;color:var(--muted)">This will deduct raw stock and add RTC servings. Please confirm the numbers above are correct.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="backToConvertForm()">Back</button>
+            <button type="button" class="btn btn-primary" onclick="submitConvert()"><i class="fas fa-check"></i> Confirm &amp; Save</button>
+        </div>
     </div>
 </div>
 @endsection
@@ -227,14 +270,71 @@ function updateConvertCalc() {
     document.getElementById('cvPortionHelp').textContent = opt.dataset.portion ? `Default: ${opt.dataset.portion} ${punit}/serving` : '';
 }
 
-function confirmConvert() {
+function proceedConvert() {
+    const errBox = document.getElementById('cvClientError');
+    errBox.style.display = 'none';
+
     const sel = document.getElementById('cvItemId');
     const opt = sel.selectedOptions[0];
-    const rawQty = parseFloat(document.getElementById('cvRawQty').value) || 0;
-    const portion = parseFloat(document.getElementById('cvPortion').value) || 0;
-    if (!opt || !opt.value || !rawQty || !portion) return true;
+    const rawQty = parseFloat(document.getElementById('cvRawQty').value);
+    const portion = parseFloat(document.getElementById('cvPortion').value);
+
+    if (!opt || !opt.value) {
+        errBox.textContent = 'Please select an RTC item.';
+        errBox.style.display = '';
+        return;
+    }
+    if (!rawQty || rawQty <= 0) {
+        errBox.textContent = 'Please enter a raw quantity greater than 0.';
+        errBox.style.display = '';
+        return;
+    }
+    if (!portion || portion <= 0) {
+        errBox.textContent = 'Please enter a portion size greater than 0.';
+        errBox.style.display = '';
+        return;
+    }
+
+    const avail = parseFloat(opt.dataset.qty) || 0;
+    const unit  = opt.dataset.unit;
+    const punit = opt.dataset.punit || unit;
+
+    if (rawQty > avail) {
+        errBox.textContent = 'Insufficient raw stock. Available: ' + avail.toFixed(2) + ' ' + unit + '.';
+        errBox.style.display = '';
+        return;
+    }
+
     const units = Math.floor(rawQty / portion);
-    return confirm(`Conversion Confirmation\n\nItem: ${opt.text.split('(')[0].trim()}\nRaw Used: ${rawQty.toFixed(3)} ${opt.dataset.unit}\nPortion Size: ${portion.toFixed(3)} ${opt.dataset.punit}/serving\nRTC Servings Produced: ${units}\n\nAre you sure you want to confirm this conversion?`);
+    if (units < 1) {
+        errBox.textContent = 'This quantity is too small to produce even 1 RTC serving (need at least ' + portion.toFixed(3) + ' ' + punit + ').';
+        errBox.style.display = '';
+        return;
+    }
+
+    const remain = avail - rawQty;
+    document.getElementById('cvConfirmItem').textContent = opt.text.split('(')[0].trim();
+    document.getElementById('cvConfirmUnits').textContent = units;
+    document.getElementById('cvConfirmUnits2').textContent = units;
+    document.getElementById('cvConfirmRaw').textContent = rawQty.toFixed(3) + ' ' + unit;
+    document.getElementById('cvConfirmPortion').textContent = portion.toFixed(3) + ' ' + punit;
+    document.getElementById('cvConfirmRemain').textContent = remain.toFixed(3) + ' ' + unit;
+
+    closeModal('convertModal');
+    openModal('convertConfirmModal');
 }
+
+function backToConvertForm() {
+    closeModal('convertConfirmModal');
+    openModal('convertModal');
+}
+
+function submitConvert() {
+    document.getElementById('convertForm').submit();
+}
+
+@if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+openModal('convertModal');
+@endif
 </script>
 @endsection
