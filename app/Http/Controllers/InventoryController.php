@@ -119,6 +119,42 @@ class InventoryController extends Controller
         return view('inventory.restocking', compact('outOfStockItems', 'lowStockItems'));
     }
 
+    public function create(Request $request): View
+    {
+        $type = $request->query('type') === 'beverage' ? 'beverage' : 'rtc';
+
+        return view('inventory.create', compact('type'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'item_name'       => ['required', 'string', 'max:255'],
+            'item_type'       => ['required', 'in:rtc,beverage'],
+            'category'        => ['nullable', 'string', 'max:100'],
+            'unit'            => ['required', 'string', 'max:50'],
+            'quantity'        => ['required', 'numeric', 'min:0'],
+            'min_stock_level' => ['required', 'numeric', 'min:0'],
+            'reorder_level'   => ['required', 'numeric', 'min:0'],
+            'cost_price'      => ['nullable', 'numeric', 'min:0'],
+            'supplier'        => ['nullable', 'string', 'max:255'],
+            'portion_size'    => ['nullable', 'numeric', 'min:0.001'],
+            'portion_unit'    => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $item = InventoryItem::create([
+            ...$validated,
+            'cost_price' => $validated['cost_price'] ?? 0,
+            'is_rtc'     => $validated['item_type'] === 'rtc',
+            'is_active'  => true,
+        ]);
+
+        $redirectRoute = $item->item_type === 'rtc' ? 'inventory.rtc' : 'inventory.beverages';
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "\"{$item->item_name}\" has been added to inventory.");
+    }
+
     public function edit(InventoryItem $item): View
     {
         return view('inventory.edit', compact('item'));

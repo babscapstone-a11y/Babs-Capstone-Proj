@@ -80,6 +80,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/rtc',        [InventoryController::class, 'rtc'])        ->name('rtc');
         Route::get('/beverages',  [InventoryController::class, 'beverages'])  ->name('beverages');
         Route::get('/restocking', [InventoryController::class, 'restocking']) ->name('restocking');
+        Route::get('/create',    [InventoryController::class, 'create'])     ->name('create');
+        Route::post('/',         [InventoryController::class, 'store'])      ->name('store');
         Route::get('/{item}/edit',[InventoryController::class, 'edit'])       ->name('edit');
         Route::put('/{item}',     [InventoryController::class, 'update'])     ->name('update');
 

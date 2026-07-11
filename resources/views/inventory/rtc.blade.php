@@ -32,6 +32,7 @@
 .btn-sm{padding:.38rem .75rem;font-size:.78rem}
 .btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
 .btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
+.btn-amber{background:#F59E0B;color:#fff}.btn-amber:hover{background:#D97706}
 
 .card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
 .table-wrap{overflow-x:auto}
@@ -85,6 +86,7 @@
             <div class="page-sub">Track raw meat stock and convert to RTC servings</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.create', ['type' => 'rtc']) }}" class="btn btn-amber"><i class="fas fa-plus"></i> Add Item</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
             <button class="btn btn-blue" onclick="openModal('stockInModal')"><i class="fas fa-plus"></i> Stock In</button>
             <button class="btn btn-green" onclick="openModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>

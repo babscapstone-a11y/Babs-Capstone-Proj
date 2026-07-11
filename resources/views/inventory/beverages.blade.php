@@ -76,6 +76,7 @@
             <div class="page-sub">Track beverage stock and manage adjustments</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.create', ['type' => 'beverage']) }}" class="btn btn-amber"><i class="fas fa-plus"></i> Add Item</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
             <button class="btn btn-primary" onclick="openModal('stockInModal')"><i class="fas fa-plus"></i> Stock In</button>
             <button class="btn btn-purple" onclick="openModal('adjustModal')"><i class="fas fa-pen-to-square"></i> Adjust</button>
