@@ -406,16 +406,12 @@
                     <label>Inventory Item *</label>
                     <select name="inventory_item_id" id="siItemId" required onchange="onSIItemChange()">
                         <option value="">Select item…</option>
-                        <optgroup id="siOptgroupRaw">
                         @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
+                        <option class="si-opt-raw" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
-                        </optgroup>
-                        <optgroup id="siOptgroupBev" style="display:none">
                         @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
+                        <option class="si-opt-bev" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}" style="display:none">{{ $item->item_name }}</option>
                         @endforeach
-                        </optgroup>
                     </select>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
@@ -506,10 +502,8 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
 })();
 
 function filterSIItemsByType(type) {
-    const rawGroup = document.getElementById('siOptgroupRaw');
-    const bevGroup = document.getElementById('siOptgroupBev');
-    rawGroup.style.display = type === 'rtc' ? '' : 'none';
-    bevGroup.style.display = type === 'beverage' ? '' : 'none';
+    document.querySelectorAll('#siItemId option.si-opt-raw').forEach(o => o.style.display = type === 'rtc' ? '' : 'none');
+    document.querySelectorAll('#siItemId option.si-opt-bev').forEach(o => o.style.display = type === 'beverage' ? '' : 'none');
     document.getElementById('siItemId').value = '';
     document.getElementById('siUnit').value = '';
     document.getElementById('siCost').value = '';
