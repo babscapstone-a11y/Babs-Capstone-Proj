@@ -408,12 +408,12 @@
                         <option value="">Select item…</option>
                         <optgroup label="Raw Meat" id="siOptgroupRaw">
                         @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
                         </optgroup>
                         <optgroup label="Beverages" id="siOptgroupBev" style="display:none">
                         @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
                         </optgroup>
                     </select>
@@ -597,7 +597,7 @@ function proceedStockIn() {
     const newQty = prev + qty;
     const costVal = parseFloat(cost);
 
-    document.getElementById('siConfirmItem').textContent = opt.text.split('(')[0].trim();
+    document.getElementById('siConfirmItem').textContent = opt.text.trim();
     document.getElementById('siConfirmPrev').textContent = prev.toFixed(2) + ' ' + unit;
     document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
     document.getElementById('siConfirmNew').textContent = newQty.toFixed(2) + ' ' + unit;
