@@ -406,12 +406,12 @@
                     <label>Inventory Item *</label>
                     <select name="inventory_item_id" id="siItemId" required onchange="onSIItemChange()">
                         <option value="">Select item…</option>
-                        <optgroup label="Raw Meat" id="siOptgroupRaw">
+                        <optgroup id="siOptgroupRaw">
                         @foreach($rtcItems as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
                         </optgroup>
-                        <optgroup label="Beverages" id="siOptgroupBev" style="display:none">
+                        <optgroup id="siOptgroupBev" style="display:none">
                         @foreach($beverageItems as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
