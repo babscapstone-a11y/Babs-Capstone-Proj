@@ -57,6 +57,7 @@
             <div class="page-sub">Track raw meat stock levels and thresholds</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
         </div>
     </div>

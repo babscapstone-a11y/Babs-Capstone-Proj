@@ -8,7 +8,6 @@
                 <tr>
                     <th>#</th>
                     <th>Item Name</th>
-                    <th>Category</th>
                     <th>Raw Stock</th>
                     <th>Reorder Level</th>
                     <th>Stock Status</th>
@@ -25,7 +24,6 @@
                         <div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>
                         @endif
                     </td>
-                    <td><span style="font-size:.8rem;padding:.2rem .55rem;border-radius:6px;background:#F3F4F6;font-weight:600;">{{ $item->category ?? '—' }}</span></td>
                     <td>
                         <div style="font-weight:700">{{ number_format($item->quantity, 2) }} {{ $item->unit }}</div>
                         @php
@@ -54,7 +52,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No RTC items found.</td></tr>
+                <tr><td colspan="6" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No RTC items found.</td></tr>
                 @endforelse
             </tbody>
         </table>
