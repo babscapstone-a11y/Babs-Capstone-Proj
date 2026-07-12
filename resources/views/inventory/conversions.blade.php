@@ -61,7 +61,10 @@
             <div class="page-title"><i class="fas fa-arrows-rotate"></i> RTC Conversion History</div>
             <div class="page-sub">Raw meat → RTC serving conversion records</div>
         </div>
-        <button class="btn btn-blue" onclick="openLocalModal('cvModal')"><i class="fas fa-arrows-rotate"></i> New Conversion</button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <button class="btn btn-blue" onclick="openLocalModal('cvModal')"><i class="fas fa-arrows-rotate"></i> New Conversion</button>
+        </div>
     </div>
 
     @if(session('success'))
