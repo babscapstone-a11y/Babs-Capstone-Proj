@@ -84,7 +84,7 @@
             <div class="page-sub">Track ready-to-cook servings converted from raw meat stock</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-            <button class="btn btn-green" onclick="openModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
+            <button class="btn btn-green" onclick="openLocalModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
 
@@ -134,7 +134,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-arrows-rotate"></i> Convert Raw Meat → RTC Servings</h3>
-            <button class="modal-close-btn" onclick="closeModal('convertModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('convertModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm">
             @csrf
@@ -183,7 +183,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('convertModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('convertModal')">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="proceedConvert()"><i class="fas fa-arrow-right"></i> Review Conversion</button>
             </div>
         </form>
@@ -195,7 +195,7 @@
     <div class="modal" style="max-width:460px">
         <div class="modal-hd">
             <h3><i class="fas fa-clipboard-check"></i> Confirm Conversion</h3>
-            <button class="modal-close-btn" onclick="closeModal('convertConfirmModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('convertConfirmModal')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div class="field" style="margin-bottom:.6rem">
@@ -226,9 +226,9 @@
 
 @section('scripts')
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); }));
+function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeLocalModal(el.id); }));
 
 document.addEventListener('DOMContentLoaded', function () {
     LiveTable.init({
@@ -246,7 +246,7 @@ function openConvertFor(id, name, unit, qty, portion, punit) {
     document.getElementById('cvPortion').value = portion;
     document.getElementById('cvPortionHelp').textContent = `Default: ${portion} ${punit} per serving`;
     updateConvertCalc();
-    openModal('convertModal');
+    openLocalModal('convertModal');
 }
 
 function updateConvertCalc() {
@@ -320,13 +320,13 @@ function proceedConvert() {
     document.getElementById('cvConfirmPortion').textContent = portion.toFixed(3) + ' ' + punit;
     document.getElementById('cvConfirmRemain').textContent = remain.toFixed(3) + ' ' + unit;
 
-    closeModal('convertModal');
-    openModal('convertConfirmModal');
+    closeLocalModal('convertModal');
+    openLocalModal('convertConfirmModal');
 }
 
 function backToConvertForm() {
-    closeModal('convertConfirmModal');
-    openModal('convertModal');
+    closeLocalModal('convertConfirmModal');
+    openLocalModal('convertModal');
 }
 
 function submitConvert() {
@@ -334,7 +334,7 @@ function submitConvert() {
 }
 
 @if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
-openModal('convertModal');
+openLocalModal('convertModal');
 @endif
 </script>
 @endsection

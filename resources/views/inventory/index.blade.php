@@ -124,10 +124,10 @@
             <a href="{{ route('inventory.restocking') }}" class="btn btn-amber">
                 <i class="fas fa-cart-shopping"></i> Repurchase List
             </a>
-            <button type="button" class="btn btn-outline" onclick="openModal('addItemModal')">
+            <button type="button" class="btn btn-outline" onclick="openLocalModal('addItemModal')">
                 <i class="fas fa-plus"></i> Add Item
             </button>
-            <button type="button" class="btn btn-primary" onclick="openModal('stockInModal')">
+            <button type="button" class="btn btn-primary" onclick="openLocalModal('stockInModal')">
                 <i class="fas fa-plus"></i> Stock In
             </button>
         </div>
@@ -335,7 +335,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-plus"></i> Add Inventory Item</h3>
-            <button class="modal-close-btn" onclick="closeModal('addItemModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('addItemModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.store') }}">
             @csrf
@@ -371,7 +371,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('addItemModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('addItemModal')">Cancel</button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add Item</button>
             </div>
         </form>
@@ -383,7 +383,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-arrow-down-to-bracket"></i> New Stock-In Transaction</h3>
-            <button class="modal-close-btn" onclick="closeModal('stockInModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('stockInModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.stock-in.store') }}" id="stockInForm">
             @csrf
@@ -437,7 +437,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('stockInModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('stockInModal')">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="proceedStockIn()"><i class="fas fa-arrow-right"></i> Review Stock-In</button>
             </div>
         </form>
@@ -449,7 +449,7 @@
     <div class="modal" style="max-width:420px">
         <div class="modal-hd">
             <h3><i class="fas fa-clipboard-check"></i> Confirm Stock-In</h3>
-            <button class="modal-close-btn" onclick="closeModal('stockInConfirmModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('stockInConfirmModal')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div class="preview-box">
@@ -471,9 +471,9 @@
 
 @section('scripts')
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); }));
+function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if (e.target === el) closeLocalModal(el.id); }));
 
 (function(){
     var options = document.querySelectorAll('#addItemModal .type-option');
@@ -486,9 +486,9 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
 })();
 
 @if($errors->has('item_name') || $errors->has('min_stock_level'))
-openModal('addItemModal');
+openLocalModal('addItemModal');
 @elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('unit_cost') || $errors->has('purchase_date'))
-openModal('stockInModal');
+openLocalModal('stockInModal');
 @endif
 
 function onSIItemChange() {
@@ -580,13 +580,13 @@ function proceedStockIn() {
         confirmCostRow.style.display = 'none';
     }
 
-    closeModal('stockInModal');
-    openModal('stockInConfirmModal');
+    closeLocalModal('stockInModal');
+    openLocalModal('stockInConfirmModal');
 }
 
 function backToStockInForm() {
-    closeModal('stockInConfirmModal');
-    openModal('stockInModal');
+    closeLocalModal('stockInConfirmModal');
+    openLocalModal('stockInModal');
 }
 
 function submitStockIn() {

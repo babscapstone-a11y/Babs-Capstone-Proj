@@ -77,7 +77,7 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
-            <button class="btn btn-purple" onclick="openModal('adjustModal')"><i class="fas fa-pen-to-square"></i> Adjust</button>
+            <button class="btn btn-purple" onclick="openLocalModal('adjustModal')"><i class="fas fa-pen-to-square"></i> Adjust</button>
         </div>
     </div>
 
@@ -123,7 +123,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-pen-to-square"></i> Inventory Adjustment</h3>
-            <button class="modal-close-btn" onclick="closeModal('adjustModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('adjustModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.adjustments.store') }}" onsubmit="return confirmAdjust()">
             @csrf
@@ -166,7 +166,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('adjustModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('adjustModal')">Cancel</button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Adjustment</button>
             </div>
         </form>
@@ -176,9 +176,9 @@
 
 @section('scripts')
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); }));
+function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('click', e => { if(e.target===el) closeLocalModal(el.id); }));
 
 document.addEventListener('DOMContentLoaded', function () {
     LiveTable.init({
@@ -199,7 +199,7 @@ function setAdjType(type, btn) {
 function openAdjustFor(id, name, unit, qty) {
     document.getElementById('adjItemId').value = id;
     updateAdjPreview();
-    openModal('adjustModal');
+    openLocalModal('adjustModal');
 }
 
 function updateAdjPreview() {

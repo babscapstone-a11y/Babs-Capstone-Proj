@@ -61,7 +61,7 @@
             <div class="page-title"><i class="fas fa-arrows-rotate"></i> RTC Conversion History</div>
             <div class="page-sub">Raw meat → RTC serving conversion records</div>
         </div>
-        <button class="btn btn-blue" onclick="openModal('cvModal')"><i class="fas fa-arrows-rotate"></i> New Conversion</button>
+        <button class="btn btn-blue" onclick="openLocalModal('cvModal')"><i class="fas fa-arrows-rotate"></i> New Conversion</button>
     </div>
 
     @if(session('success'))
@@ -127,7 +127,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-arrows-rotate"></i> Convert Raw Meat → RTC Servings</h3>
-            <button class="modal-close-btn" onclick="closeModal('cvModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('cvModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.conversions.store') }}" id="cvForm">
             @csrf
@@ -175,7 +175,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('cvModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('cvModal')">Cancel</button>
                 <button type="button" class="btn btn-blue" onclick="proceedConvert()"><i class="fas fa-arrow-right"></i> Review Conversion</button>
             </div>
         </form>
@@ -187,7 +187,7 @@
     <div class="modal" style="max-width:460px">
         <div class="modal-hd">
             <h3><i class="fas fa-clipboard-check"></i> Confirm Conversion</h3>
-            <button class="modal-close-btn" onclick="closeModal('cvConfirmModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('cvConfirmModal')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div class="field" style="margin-bottom:.6rem">
@@ -218,9 +218,9 @@
 
 @section('scripts')
 <script>
-function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
-document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
+function openLocalModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeLocalModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeLocalModal(el.id);}));
 function updateCalc(){
     const sel=document.getElementById('cvItem');const opt=sel.selectedOptions[0];
     const raw=parseFloat(document.getElementById('cvRaw').value)||0;
@@ -271,13 +271,13 @@ function proceedConvert(){
     document.getElementById('cvConfirmPortion').textContent=portion.toFixed(3)+' '+punit;
     document.getElementById('cvConfirmRemain').textContent=remain.toFixed(3)+' '+unit;
 
-    closeModal('cvModal');
-    openModal('cvConfirmModal');
+    closeLocalModal('cvModal');
+    openLocalModal('cvConfirmModal');
 }
 
 function backToConvertForm(){
-    closeModal('cvConfirmModal');
-    openModal('cvModal');
+    closeLocalModal('cvConfirmModal');
+    openLocalModal('cvModal');
 }
 
 function submitConvert(){
@@ -285,7 +285,7 @@ function submitConvert(){
 }
 
 @if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
-openModal('cvModal');
+openLocalModal('cvModal');
 @endif
 </script>
 @endsection

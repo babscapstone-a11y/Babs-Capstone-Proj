@@ -59,7 +59,7 @@
             <div class="page-title"><i class="fas fa-pen-to-square"></i> Inventory Adjustments</div>
             <div class="page-sub">Manual corrections, damaged, expired, and missing stock records</div>
         </div>
-        <button class="btn btn-purple" onclick="openModal('adjModal')"><i class="fas fa-plus"></i> New Adjustment</button>
+        <button class="btn btn-purple" onclick="openLocalModal('adjModal')"><i class="fas fa-plus"></i> New Adjustment</button>
     </div>
 
     @if(session('success'))
@@ -143,7 +143,7 @@
     <div class="modal">
         <div class="modal-hd">
             <h3><i class="fas fa-pen-to-square"></i> New Inventory Adjustment</h3>
-            <button class="modal-close-btn" onclick="closeModal('adjModal')"><i class="fas fa-times"></i></button>
+            <button class="modal-close-btn" onclick="closeLocalModal('adjModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.adjustments.store') }}" onsubmit="return confirmAdj()">
             @csrf
@@ -193,7 +193,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal('adjModal')">Cancel</button>
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('adjModal')">Cancel</button>
                 <button type="submit" class="btn btn-purple"><i class="fas fa-check"></i> Confirm Adjustment</button>
             </div>
         </form>
@@ -203,9 +203,9 @@
 
 @section('scripts')
 <script>
-function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
-document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
+function openLocalModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeLocalModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeLocalModal(el.id);}));
 function setAdjType(type,btn){
     document.getElementById('adjTypeHidden').value=type;
     document.querySelectorAll('.adj-type-btn').forEach(b=>b.classList.remove('selected'));
