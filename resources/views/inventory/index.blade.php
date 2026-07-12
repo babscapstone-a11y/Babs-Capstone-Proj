@@ -358,12 +358,8 @@
                 </div>
 
                 <div class="field">
-                    <label>Item Name *</label>
-                    <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork Belly">
-                </div>
-                <div class="field">
-                    <label>Category</label>
-                    <input type="text" name="category" value="{{ old('category') }}" placeholder="e.g. Pork, Chicken…">
+                    <label>Category Name *</label>
+                    <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork, Chicken…">
                 </div>
                 <div class="field" style="margin-bottom:0">
                     <label>Min Stock Level *</label>

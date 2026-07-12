@@ -159,7 +159,6 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'item_name'       => ['required', 'string', 'max:255'],
             'item_type'       => ['required', 'in:rtc,beverage'],
-            'category'        => ['nullable', 'string', 'max:100'],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
         ]);
 
