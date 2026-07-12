@@ -8,9 +8,8 @@
                 <tr>
                     <th>#</th>
                     <th>Item Name</th>
-                    <th>Category</th>
                     <th>RTC Servings</th>
-                    <th>Portion Rule</th>
+                    <th>Portion Size</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -25,7 +24,6 @@
                         <div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>
                         @endif
                     </td>
-                    <td><span style="font-size:.8rem;padding:.2rem .55rem;border-radius:6px;background:#F3F4F6;font-weight:600;">{{ $item->category ?? '—' }}</span></td>
                     <td>
                         @if($item->rtc_servings > 0)
                         <span style="font-weight:700;color:#1D4ED8">{{ number_format($item->rtc_servings, 0) }}</span>
@@ -60,7 +58,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No RTC items found.</td></tr>
+                <tr><td colspan="6" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No RTC items found.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -8,11 +8,9 @@
                 <tr>
                     <th>#</th>
                     <th>Beverage Name</th>
-                    <th>Category</th>
                     <th>Current Qty</th>
                     <th>Unit</th>
                     <th>Reorder Level</th>
-                    <th>Min Stock</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -25,7 +23,6 @@
                         <div style="font-weight:700">{{ $item->item_name }}</div>
                         @if($item->supplier)<div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>@endif
                     </td>
-                    <td><span style="font-size:.8rem;padding:.2rem .55rem;border-radius:6px;background:#F3F4F6;font-weight:600">{{ $item->category ?? '—' }}</span></td>
                     <td>
                         <div style="font-weight:700;font-size:.95rem">{{ number_format($item->quantity, 0) }}</div>
                         @php $pct = $item->reorder_level > 0 ? min(100, ($item->quantity / ($item->reorder_level * 2)) * 100) : 100; $color = $item->stock_status === 'available' ? 'progress-green' : ($item->stock_status === 'low_stock' ? 'progress-amber' : 'progress-red'); @endphp
@@ -34,9 +31,6 @@
                     <td style="color:var(--muted)">{{ $item->unit }}</td>
                     <td>
                         <div style="font-size:.82rem">{{ number_format($item->reorder_level, 0) }} {{ $item->unit }}</div>
-                    </td>
-                    <td>
-                        <div style="font-size:.82rem;color:var(--muted)">{{ number_format($item->min_stock_level, 0) }}</div>
                     </td>
                     <td>
                         @php $s = $item->stock_status; @endphp
@@ -53,7 +47,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="9" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No beverage items found.</td></tr>
+                <tr><td colspan="7" class="empty-row"><i class="fas fa-box-open" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No beverage items found.</td></tr>
                 @endforelse
             </tbody>
         </table>
