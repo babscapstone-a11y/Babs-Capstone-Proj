@@ -138,6 +138,11 @@
         <div class="stat-card blue">
             <div class="stat-icon blue"><i class="fas fa-drumstick-bite"></i></div>
             <div class="stat-value">{{ $totalRtc }}</div>
+            <div class="stat-label">Total Raw Meat</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon blue"><i class="fas fa-utensils"></i></div>
+            <div class="stat-value">{{ $totalRtc }}</div>
             <div class="stat-label">Total RTC Items</div>
         </div>
         <div class="stat-card green">
