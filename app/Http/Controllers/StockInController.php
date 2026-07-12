@@ -38,7 +38,7 @@ class StockInController extends Controller
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'quantity_purchased' => ['required', 'numeric', 'min:0.01'],
             'unit'              => ['required', 'string', 'max:50'],
-            'unit_cost'         => ['nullable', 'numeric', 'min:0'],
+            'total_cost'        => ['nullable', 'numeric', 'min:0'],
             'purchase_date'     => ['required', 'date'],
         ]);
 
@@ -48,8 +48,8 @@ class StockInController extends Controller
         $purchased   = (float) $request->quantity_purchased;
         $newQty      = $previousQty + $purchased;
         $unit        = $request->unit;
-        $unitCost    = $request->filled('unit_cost') ? (float) $request->unit_cost : null;
-        $totalCost   = $unitCost !== null ? round($unitCost * $purchased, 2) : null;
+        $totalCost   = $request->filled('total_cost') ? (float) $request->total_cost : null;
+        $unitCost    = $totalCost !== null ? round($totalCost / $purchased, 2) : null;
 
         // Record the stock-in transaction
         PurchaseOrder::create([
