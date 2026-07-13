@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMenuItemRequest;
 use App\Http\Requests\UpdateMenuItemRequest;
 use App\Models\Category;
-use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -68,9 +67,8 @@ class MenuItemController extends Controller
         $this->authorize('create', MenuItem::class);
 
         $categories = Category::where('is_active', true)->orderBy('category_name')->get();
-        $rtcItems   = InventoryItem::where('is_rtc', true)->orderBy('item_name')->get();
 
-        return view('menu.create', compact('categories', 'rtcItems'));
+        return view('menu.create', compact('categories'));
     }
 
     public function store(StoreMenuItemRequest $request): RedirectResponse
@@ -103,9 +101,8 @@ class MenuItemController extends Controller
         $this->authorize('update', $menu);
 
         $categories = Category::where('is_active', true)->orderBy('category_name')->get();
-        $rtcItems   = InventoryItem::where('is_rtc', true)->orderBy('item_name')->get();
 
-        return view('menu.edit', compact('menu', 'categories', 'rtcItems'));
+        return view('menu.edit', compact('menu', 'categories'));
     }
 
     public function update(UpdateMenuItemRequest $request, MenuItem $menu): RedirectResponse
@@ -121,12 +118,6 @@ class MenuItemController extends Controller
             $data['image'] = $request->file('image')->store('menu-items', 'public');
         } else {
             unset($data['image']);
-        }
-
-        if (empty($data['rtc_inventory_item_id'])) {
-            $data['rtc_inventory_item_id'] = null;
-            $data['rtc_quantity']          = null;
-            $data['rtc_unit']              = null;
         }
 
         $menu->update($data);

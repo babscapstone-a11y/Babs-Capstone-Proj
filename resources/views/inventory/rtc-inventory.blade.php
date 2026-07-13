@@ -104,7 +104,7 @@
     {{-- Filter --}}
     <form method="GET" action="{{ route('inventory.rtc-inventory') }}" class="filter-bar" id="liveFilterForm">
         <div class="search-wrap">
-            <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search RTC name…" class="search-input" autocomplete="off">
+            <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search menu item…" class="search-input" autocomplete="off">
             <button type="button" class="search-clear" aria-label="Clear search"><i class="fas fa-times"></i></button>
         </div>
         <select name="status" class="filter-select">
@@ -140,7 +140,7 @@
         <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm">
             @csrf
             <div class="modal-body">
-                @if($errors->has('inventory_item_id') || $errors->has('rtc_name') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+                @if($errors->has('inventory_item_id') || $errors->has('menu_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
                 <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
                 @endif
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
@@ -160,13 +160,13 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label>RTC Name *</label>
-                    <input type="text" name="rtc_name" id="cvName" list="cvNameList" maxlength="255" required placeholder="e.g. Chicken Adobo">
-                    <datalist id="cvNameList">
-                        @foreach($rtcNames as $name)
-                        <option value="{{ $name }}">
+                    <label>Menu Item *</label>
+                    <select name="menu_item_id" id="cvMenuItem" required>
+                        <option value="">Select menu item…</option>
+                        @foreach($menuItems as $menuItem)
+                        <option value="{{ $menuItem->id }}">{{ $menuItem->menu_name }}</option>
                         @endforeach
-                    </datalist>
+                    </select>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
@@ -209,7 +209,7 @@
                 <div style="font-weight:700;color:var(--dark)" id="cvConfirmItem">—</div>
             </div>
             <div class="field" style="margin-bottom:.6rem">
-                <label style="margin-bottom:.15rem">RTC Name</label>
+                <label style="margin-bottom:.15rem">Menu Item</label>
                 <div style="font-weight:700;color:var(--dark)" id="cvConfirmName">—</div>
             </div>
             <div class="conv-calc">
@@ -250,8 +250,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function openConvertFor(name, portion, punit) {
-    document.getElementById('cvName').value = name;
+function openConvertFor(menuItemId, portion, punit) {
+    document.getElementById('cvMenuItem').value = menuItemId;
     document.getElementById('cvPortion').value = portion;
     document.getElementById('cvPortionHelp').textContent = punit ? `Default: ${portion} ${punit} per serving` : '';
     updateConvertCalc();
@@ -285,7 +285,8 @@ function proceedConvert() {
 
     const sel = document.getElementById('cvItemId');
     const opt = sel.selectedOptions[0];
-    const rtcName = document.getElementById('cvName').value.trim();
+    const menuSel = document.getElementById('cvMenuItem');
+    const menuOpt = menuSel.selectedOptions[0];
     const rawQty = parseFloat(document.getElementById('cvRawQty').value);
     const portion = parseFloat(document.getElementById('cvPortion').value);
 
@@ -294,8 +295,8 @@ function proceedConvert() {
         errBox.style.display = '';
         return;
     }
-    if (!rtcName) {
-        errBox.textContent = 'Please enter an RTC name.';
+    if (!menuOpt || !menuOpt.value) {
+        errBox.textContent = 'Please select a menu item.';
         errBox.style.display = '';
         return;
     }
@@ -329,7 +330,7 @@ function proceedConvert() {
 
     const remain = avail - rawQty;
     document.getElementById('cvConfirmItem').textContent = opt.text.split('(')[0].trim();
-    document.getElementById('cvConfirmName').textContent = rtcName;
+    document.getElementById('cvConfirmName').textContent = menuOpt.text.trim();
     document.getElementById('cvConfirmUnits').textContent = units;
     document.getElementById('cvConfirmUnits2').textContent = units;
     document.getElementById('cvConfirmRaw').textContent = rawQty.toFixed(3) + ' ' + unit;
@@ -349,7 +350,7 @@ function submitConvert() {
     document.getElementById('convertForm').submit();
 }
 
-@if($errors->has('inventory_item_id') || $errors->has('rtc_name') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+@if($errors->has('inventory_item_id') || $errors->has('menu_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
 openLocalModal('convertModal');
 @endif
 </script>

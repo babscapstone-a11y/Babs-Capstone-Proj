@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ConversionLog extends Model
 {
     protected $fillable = [
-        'inventory_item_id', 'rtc_product_id', 'raw_quantity_used', 'unit', 'portion_size',
+        'inventory_item_id', 'menu_item_id', 'raw_quantity_used', 'unit', 'portion_size',
         'rtc_units_produced', 'previous_raw_stock', 'remaining_raw_stock',
         'previous_rtc_servings', 'new_rtc_servings', 'converted_by', 'remarks',
     ];
@@ -28,9 +28,9 @@ class ConversionLog extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 
-    public function rtcProduct(): BelongsTo
+    public function menuItem(): BelongsTo
     {
-        return $this->belongsTo(RtcProduct::class);
+        return $this->belongsTo(MenuItem::class);
     }
 
     public function converter(): BelongsTo

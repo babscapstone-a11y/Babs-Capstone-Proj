@@ -152,24 +152,20 @@
         <div class="section-label"><i class="fas fa-tag"></i> Item Type</div>
         <div class="tile-group" style="margin-bottom:1.5rem">
             <input type="radio" name="item_type" id="type_food" value="food" class="tile-input"
-                {{ old('item_type', 'food') === 'food' ? 'checked' : '' }}
-                onchange="handleTypeChange(this.value)">
+                {{ old('item_type', 'food') === 'food' ? 'checked' : '' }}>
             <label for="type_food" class="tile-label">
                 <div class="tile-icon" style="background:rgba(37,99,235,0.10);color:#2563EB"><i class="fas fa-bowl-food"></i></div>
                 <div>
                     <div class="tile-text">Food</div>
-                    <div class="tile-sub">Requires RTC material</div>
                 </div>
             </label>
 
             <input type="radio" name="item_type" id="type_beverage" value="beverage" class="tile-input"
-                {{ old('item_type') === 'beverage' ? 'checked' : '' }}
-                onchange="handleTypeChange(this.value)">
+                {{ old('item_type') === 'beverage' ? 'checked' : '' }}>
             <label for="type_beverage" class="tile-label">
                 <div class="tile-icon" style="background:rgba(139,92,246,0.10);color:#7C3AED"><i class="fas fa-glass-water"></i></div>
                 <div>
                     <div class="tile-text">Beverage</div>
-                    <div class="tile-sub">No RTC assignment needed</div>
                 </div>
             </label>
         </div>
@@ -215,28 +211,9 @@
 
         <hr class="form-divider">
 
-        {{-- ── Availability & Status ────────────────────────── --}}
-        <div class="section-label"><i class="fas fa-toggle-on"></i> Availability & Status</div>
+        {{-- ── Status ─────────────────────────────────────────── --}}
+        <div class="section-label"><i class="fas fa-toggle-on"></i> Status</div>
         <div class="form-grid-2" style="margin-bottom:1.5rem">
-            <div class="form-group">
-                <label>Availability <span class="req">*</span></label>
-                <div class="tile-group">
-                    <input type="radio" name="is_available" id="avail_yes" value="1" class="tile-input"
-                        {{ old('is_available', '1') === '1' ? 'checked' : '' }}>
-                    <label for="avail_yes" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(22,163,74,0.10);color:#16A34A;width:28px;height:28px;font-size:.75rem"><i class="fas fa-check"></i></div>
-                        <div class="tile-text" style="font-size:.82rem">Available</div>
-                    </label>
-                    <input type="radio" name="is_available" id="avail_no" value="0" class="tile-input"
-                        {{ old('is_available') === '0' ? 'checked' : '' }}>
-                    <label for="avail_no" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(107,114,128,0.10);color:#6B7280;width:28px;height:28px;font-size:.75rem"><i class="fas fa-minus"></i></div>
-                        <div class="tile-text" style="font-size:.82rem">Unavailable</div>
-                    </label>
-                </div>
-                <div class="form-hint">Temporarily hide from ordering without deactivating.</div>
-                @error('is_available')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
             <div class="form-group">
                 <label>Active Status <span class="req">*</span></label>
                 <div class="tile-group">
@@ -256,6 +233,7 @@
                 <div class="form-hint">Inactive items are hidden from POS and ordering page.</div>
                 @error('is_active')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
+            <div></div>
         </div>
 
         <hr class="form-divider">
@@ -279,65 +257,6 @@
                 </div>
             </div>
             @error('image')<div class="invalid-feedback" style="margin-top:.4rem">{{ $message }}</div>@enderror
-        </div>
-
-        <hr class="form-divider">
-
-        {{-- ── RTC Raw Material (REQ018) ────────────────────── --}}
-        <div id="rtcSection">
-            <div class="section-label"><i class="fas fa-drumstick-bite"></i> RTC Raw Material (Ready-to-Cook)</div>
-            <div class="rtc-card">
-                <div class="rtc-notice">
-                    <i class="fas fa-circle-info" style="margin-top:.1rem;flex-shrink:0"></i>
-                    <div>
-                        <strong>What is RTC?</strong> Each food item is linked to one raw meat/seafood material used per serving.
-                        This is used by the Inventory Module to auto-deduct stock when orders are completed.
-                        Leave blank if this item doesn't use a tracked raw material.
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom:1.1rem">
-                    <label for="rtc_inventory_item_id">RTC Raw Material</label>
-                    <select id="rtc_inventory_item_id" name="rtc_inventory_item_id" class="form-control @error('rtc_inventory_item_id') is-invalid @enderror"
-                        onchange="handleRtcChange(this.value)">
-                        <option value="">— None (no raw material tracking) —</option>
-                        @foreach($rtcItems as $rtc)
-                            <option value="{{ $rtc->id }}" @selected(old('rtc_inventory_item_id') == $rtc->id)>
-                                {{ $rtc->item_name }} ({{ $rtc->unit }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('rtc_inventory_item_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div id="rtcFields">
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="rtc_quantity">Quantity Per Serving <span class="req">*</span></label>
-                            <input type="number" id="rtc_quantity" name="rtc_quantity" class="form-control @error('rtc_quantity') is-invalid @enderror"
-                                value="{{ old('rtc_quantity') }}" min="0.0001" step="0.0001" placeholder="e.g. 0.25">
-                            <div class="form-hint">How much raw material is used for 1 serving.</div>
-                            @error('rtc_quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="form-group">
-                            <label for="rtc_unit">Unit of Measure <span class="req">*</span></label>
-                            <input type="text" id="rtc_unit" name="rtc_unit" class="form-control @error('rtc_unit') is-invalid @enderror"
-                                value="{{ old('rtc_unit') }}" placeholder="e.g. Kilogram, Piece, Gram">
-                            <div class="form-hint">Unit matching the inventory item's unit.</div>
-                            @error('rtc_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Hide RTC for beverages notice --}}
-        <div id="rtcBeverageNotice" style="display:none">
-            <div class="section-label"><i class="fas fa-drumstick-bite"></i> RTC Raw Material</div>
-            <div style="background:rgba(139,92,246,0.06);border:1.5px solid rgba(139,92,246,0.18);border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:.65rem;font-size:.83rem;color:#6D28D9">
-                <i class="fas fa-circle-info" style="flex-shrink:0"></i>
-                <span>Beverages do not require an RTC raw material assignment.</span>
-            </div>
         </div>
 
     </div>{{-- /form-card-body --}}
@@ -374,37 +293,6 @@ function clearImage() {
     document.getElementById('uploadArea').style.display = 'block';
     document.getElementById('previewWrap').style.display = 'none';
 }
-
-/* ── Item type toggle ──────────────────────────────────── */
-function handleTypeChange(type) {
-    var rtcSection = document.getElementById('rtcSection');
-    var rtcNotice  = document.getElementById('rtcBeverageNotice');
-    if (type === 'beverage') {
-        rtcSection.style.display = 'none';
-        rtcNotice.style.display  = 'block';
-    } else {
-        rtcSection.style.display = 'block';
-        rtcNotice.style.display  = 'none';
-    }
-}
-
-/* ── RTC material toggle ───────────────────────────────── */
-function handleRtcChange(val) {
-    document.getElementById('rtcFields').style.display = val ? 'block' : 'none';
-}
-
-/* ── Init on page load ─────────────────────────────────── */
-(function() {
-    var typeChecked = document.querySelector('input[name="item_type"]:checked');
-    if (typeChecked) handleTypeChange(typeChecked.value);
-
-    var rtcSel = document.getElementById('rtc_inventory_item_id');
-    if (rtcSel && rtcSel.value) handleRtcChange(rtcSel.value);
-
-    @if(old('rtc_inventory_item_id'))
-        document.getElementById('rtcFields').style.display = 'block';
-    @endif
-})();
 
 /* ── Submit spinner ────────────────────────────────────── */
 document.getElementById('menuForm').addEventListener('submit', function() {

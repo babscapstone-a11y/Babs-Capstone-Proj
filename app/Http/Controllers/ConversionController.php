@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ConversionLog;
 use App\Models\InventoryItem;
-use App\Models\RtcProduct;
+use App\Models\MenuItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,12 +13,12 @@ class ConversionController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = ConversionLog::with(['inventoryItem', 'rtcProduct', 'converter']);
+        $query = ConversionLog::with(['inventoryItem', 'menuItem', 'converter']);
 
         if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"))
-                  ->orWhereHas('rtcProduct', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                  ->orWhereHas('menuItem', fn ($q) => $q->where('menu_name', 'like', "%{$search}%"));
             });
         }
         if ($from = $request->input('from')) {
@@ -28,18 +28,18 @@ class ConversionController extends Controller
             $query->where('created_at', '<=', $to . ' 23:59:59');
         }
 
-        $logs         = $query->latest()->paginate(15)->withQueryString();
-        $rtcItems     = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
-        $rtcNames     = RtcProduct::orderBy('name')->pluck('name');
+        $logs      = $query->latest()->paginate(15)->withQueryString();
+        $rtcItems  = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
+        $menuItems = MenuItem::orderBy('menu_name')->get();
 
-        return view('inventory.conversions', compact('logs', 'rtcItems', 'rtcNames'));
+        return view('inventory.conversions', compact('logs', 'rtcItems', 'menuItems'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
-            'rtc_name'          => ['required', 'string', 'max:255'],
+            'menu_item_id'      => ['required', 'exists:menu_items,id'],
             'raw_quantity_used' => ['required', 'numeric', 'min:0.01'],
             'portion_size'      => ['required', 'numeric', 'min:0.001'],
         ]);
@@ -63,17 +63,16 @@ class ConversionController extends Controller
             return back()->withErrors(['raw_quantity_used' => "Raw quantity too small to produce at least 1 RTC serving. Need at least {$portion} {$item->unit}."]);
         }
 
-        $rtcName    = trim($request->rtc_name);
-        $rtcProduct = RtcProduct::firstOrCreate(['name' => $rtcName], ['servings' => 0]);
+        $menuItem = MenuItem::findOrFail($request->menu_item_id);
 
         $previousRawStock  = (float) $item->quantity;
         $remainingRawStock = $previousRawStock - $rawUsed;
-        $previousServings  = (float) $rtcProduct->servings;
+        $previousServings  = (float) $menuItem->rtc_servings;
         $newServings       = $previousServings + $unitsProduced;
 
         ConversionLog::create([
             'inventory_item_id'     => $item->id,
-            'rtc_product_id'        => $rtcProduct->id,
+            'menu_item_id'          => $menuItem->id,
             'raw_quantity_used'     => $rawUsed,
             'unit'                  => $item->unit,
             'portion_size'          => $portion,
@@ -87,13 +86,14 @@ class ConversionController extends Controller
 
         $item->update(['quantity' => $remainingRawStock]);
 
-        $rtcProduct->update([
-            'servings'     => $newServings,
-            'portion_size' => $portion,
-            'portion_unit' => $item->unit,
+        $menuItem->update([
+            'rtc_servings'          => $newServings,
+            'rtc_inventory_item_id' => $item->id,
+            'rtc_quantity'          => $portion,
+            'rtc_unit'              => $item->unit,
         ]);
 
         return redirect()->route('inventory.conversions.index')
-            ->with('success', "Converted {$rawUsed} {$item->unit} of {$item->item_name} → {$unitsProduced} servings of \"{$rtcName}\" ({$newServings} total).");
+            ->with('success', "Converted {$rawUsed} {$item->unit} of {$item->item_name} → {$unitsProduced} servings of \"{$menuItem->menu_name}\" ({$newServings} total).");
     }
 }

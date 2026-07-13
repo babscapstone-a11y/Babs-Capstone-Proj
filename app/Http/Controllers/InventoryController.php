@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
+use App\Models\MenuItem;
 use App\Models\PurchaseOrder;
-use App\Models\RtcProduct;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,18 +17,18 @@ class InventoryController extends Controller
     public function index(): View
     {
         $totalRtc         = InventoryItem::rtc()->count();
-        $totalRtcProducts = RtcProduct::count();
+        $totalRtcProducts = MenuItem::rtcTracked()->count();
         $totalBeverage    = InventoryItem::beverage()->count();
         $lowStock         = InventoryItem::lowStock()->count();
         $outOfStock       = InventoryItem::outOfStock()->count();
 
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $rtcProducts   = RtcProduct::orderBy('name')->get();
+        $rtcProducts   = MenuItem::rtcTracked()->orderBy('menu_name')->get();
         $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
 
         $recentStockIns   = PurchaseOrder::with(['inventoryItem', 'recorder'])
             ->latest()->limit(5)->get();
-        $recentConversions = ConversionLog::with(['inventoryItem', 'rtcProduct', 'converter'])
+        $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])
             ->latest()->limit(5)->get();
         $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'adjuster'])
             ->latest()->limit(5)->get();
@@ -77,21 +77,21 @@ class InventoryController extends Controller
 
     public function rtcInventory(Request $request): View|JsonResponse
     {
-        $query = RtcProduct::query();
+        $query = MenuItem::rtcTracked();
 
         if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->where('menu_name', 'like', "%{$search}%");
         }
         if ($status = $request->input('status')) {
             match($status) {
-                'low_stock'    => $query->lowStock(),
-                'out_of_stock' => $query->outOfStock(),
-                'available'    => $query->where('servings', '>', 10),
+                'low_stock'    => $query->rtcLowStock(),
+                'out_of_stock' => $query->rtcOutOfStock(),
+                'available'    => $query->where('rtc_servings', '>', 10),
                 default        => null,
             };
         }
 
-        $items = $query->orderBy('name')->get();
+        $items = $query->orderBy('menu_name')->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -100,14 +100,14 @@ class InventoryController extends Controller
             ]);
         }
 
-        $totalRtc      = RtcProduct::count();
-        $lowServings   = RtcProduct::lowStock()->count();
-        $outOfServings = RtcProduct::outOfStock()->count();
-        $totalServings = RtcProduct::sum('servings');
+        $totalRtc      = MenuItem::rtcTracked()->count();
+        $lowServings   = MenuItem::rtcTracked()->rtcLowStock()->count();
+        $outOfServings = MenuItem::rtcTracked()->rtcOutOfStock()->count();
+        $totalServings = MenuItem::rtcTracked()->sum('rtc_servings');
         $rawItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $rtcNames      = RtcProduct::orderBy('name')->pluck('name');
+        $menuItems     = MenuItem::orderBy('menu_name')->get();
 
-        return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'rtcNames'));
+        return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'menuItems'));
     }
 
     public function beverages(Request $request): View|JsonResponse
