@@ -54,7 +54,12 @@ class MenuItem extends Model
 
     public function scopeRtcTracked(Builder $q): Builder
     {
-        return $q->whereNotNull('rtc_quantity');
+        return $q->where('item_type', 'food')->whereNotNull('rtc_quantity');
+    }
+
+    public function scopeFood(Builder $q): Builder
+    {
+        return $q->where('item_type', 'food');
     }
 
     public function scopeRtcLowStock(Builder $q): Builder

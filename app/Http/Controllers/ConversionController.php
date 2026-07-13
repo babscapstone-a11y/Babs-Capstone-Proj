@@ -30,7 +30,7 @@ class ConversionController extends Controller
 
         $logs      = $query->latest()->paginate(15)->withQueryString();
         $rtcItems  = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
-        $menuItems = MenuItem::orderBy('menu_name')->get();
+        $menuItems = MenuItem::food()->orderBy('menu_name')->get();
 
         return view('inventory.conversions', compact('logs', 'rtcItems', 'menuItems'));
     }

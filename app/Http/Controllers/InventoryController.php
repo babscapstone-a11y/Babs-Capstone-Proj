@@ -105,7 +105,7 @@ class InventoryController extends Controller
         $outOfServings = MenuItem::rtcTracked()->rtcOutOfStock()->count();
         $totalServings = MenuItem::rtcTracked()->sum('rtc_servings');
         $rawItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $menuItems     = MenuItem::orderBy('menu_name')->get();
+        $menuItems     = MenuItem::food()->orderBy('menu_name')->get();
 
         return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'menuItems'));
     }
