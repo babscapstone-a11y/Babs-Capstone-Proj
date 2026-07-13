@@ -72,7 +72,7 @@
     @endif
 
     <form method="GET" action="{{ route('inventory.conversions.index') }}" class="filter-bar">
-        <div class="search-wrap"><i class="fas fa-search"></i><input type="text" name="q" value="{{ request('q') }}" placeholder="Search item…" class="search-input"></div>
+        <div class="search-wrap"><i class="fas fa-search"></i><input type="text" name="q" value="{{ request('q') }}" placeholder="Search raw item or RTC name…" class="search-input"></div>
         <input type="date" name="from" value="{{ request('from') }}" class="filter-date" title="From date">
         <input type="date" name="to"   value="{{ request('to') }}"   class="filter-date" title="To date">
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
@@ -87,7 +87,8 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Item</th>
+                        <th>Raw Item</th>
+                        <th>RTC Name</th>
                         <th>Raw Used</th>
                         <th>Portion Size</th>
                         <th>RTC Produced</th>
@@ -104,6 +105,7 @@
                     <tr>
                         <td style="color:var(--muted);font-size:.78rem">#{{ $log->id }}</td>
                         <td><div style="font-weight:700">{{ $log->inventoryItem?->item_name ?? '—' }}</div></td>
+                        <td><div style="font-weight:700;color:#1D4ED8">{{ $log->rtcProduct?->name ?? '—' }}</div></td>
                         <td style="color:#DC2626;font-weight:700">{{ number_format($log->raw_quantity_used,3) }} {{ $log->unit }}</td>
                         <td style="color:var(--muted)">{{ number_format($log->portion_size,3) }}/srv</td>
                         <td><span style="font-weight:800;color:#1D4ED8;font-size:.95rem">{{ number_format($log->rtc_units_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
@@ -115,7 +117,7 @@
                         <td style="font-size:.78rem;color:var(--muted)">{{ $log->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="11" class="empty-row"><i class="fas fa-arrows-rotate" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No conversions recorded yet.</td></tr>
+                    <tr><td colspan="12" class="empty-row"><i class="fas fa-arrows-rotate" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No conversions recorded yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -135,20 +137,29 @@
         <form method="POST" action="{{ route('inventory.conversions.store') }}" id="cvForm">
             @csrf
             <div class="modal-body">
-                @if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+                @if($errors->has('inventory_item_id') || $errors->has('rtc_name') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
                 <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
                 @endif
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
-                    <label>RTC Item *</label>
+                    <label>Raw Meat Item *</label>
                     <select name="inventory_item_id" id="cvItem" required onchange="updateCalc()">
-                        <option value="">Select RTC item…</option>
+                        <option value="">Select raw meat item…</option>
                         @foreach($rtcItems as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-portion="{{ $item->portion_size ?? 0.25 }}" data-punit="{{ $item->portion_unit ?? $item->unit }}">
                             {{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }} available)
                         </option>
                         @endforeach
                     </select>
+                </div>
+                <div class="field">
+                    <label>RTC Name *</label>
+                    <input type="text" name="rtc_name" id="cvName" list="cvNameList" maxlength="255" required placeholder="e.g. Chicken Adobo">
+                    <datalist id="cvNameList">
+                        @foreach($rtcNames as $name)
+                        <option value="{{ $name }}">
+                        @endforeach
+                    </datalist>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
@@ -172,10 +183,6 @@
                     </div>
                     <div style="font-size:.75rem;color:#60A5FA;margin-top:.5rem">Remaining raw: <strong id="cvRemain">0</strong></div>
                 </div>
-                <div class="field" style="margin-top:1rem">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" style="resize:none" placeholder="Optional notes…"></textarea>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeLocalModal('cvModal')">Cancel</button>
@@ -194,8 +201,12 @@
         </div>
         <div class="modal-body">
             <div class="field" style="margin-bottom:.6rem">
-                <label style="margin-bottom:.15rem">Item</label>
+                <label style="margin-bottom:.15rem">Raw Meat Item</label>
                 <div style="font-weight:700;color:var(--dark)" id="cvConfirmItem">—</div>
+            </div>
+            <div class="field" style="margin-bottom:.6rem">
+                <label style="margin-bottom:.15rem">RTC Name</label>
+                <div style="font-weight:700;color:var(--dark)" id="cvConfirmName">—</div>
             </div>
             <div class="conv-calc">
                 <div class="calc-label"><i class="fas fa-calculator"></i> Summary</div>
@@ -251,10 +262,12 @@ function proceedConvert(){
     errBox.style.display='none';
 
     const sel=document.getElementById('cvItem');const opt=sel.selectedOptions[0];
+    const rtcName=document.getElementById('cvName').value.trim();
     const raw=parseFloat(document.getElementById('cvRaw').value);
     const portion=parseFloat(document.getElementById('cvPortion').value);
 
-    if(!opt||!opt.value){errBox.textContent='Please select an RTC item.';errBox.style.display='';return;}
+    if(!opt||!opt.value){errBox.textContent='Please select a raw meat item.';errBox.style.display='';return;}
+    if(!rtcName){errBox.textContent='Please enter an RTC name.';errBox.style.display='';return;}
     if(!raw||raw<=0){errBox.textContent='Please enter a raw quantity greater than 0.';errBox.style.display='';return;}
     if(!portion||portion<=0){errBox.textContent='Please enter a portion size greater than 0.';errBox.style.display='';return;}
 
@@ -268,6 +281,7 @@ function proceedConvert(){
 
     const remain=avail-raw;
     document.getElementById('cvConfirmItem').textContent=opt.text.split('(')[0].trim();
+    document.getElementById('cvConfirmName').textContent=rtcName;
     document.getElementById('cvConfirmUnits').textContent=units;
     document.getElementById('cvConfirmUnits2').textContent=units;
     document.getElementById('cvConfirmRaw').textContent=raw.toFixed(3)+' '+unit;
@@ -287,7 +301,7 @@ function submitConvert(){
     document.getElementById('cvForm').submit();
 }
 
-@if($errors->has('inventory_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
+@if($errors->has('inventory_item_id') || $errors->has('rtc_name') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
 openLocalModal('cvModal');
 @endif
 </script>

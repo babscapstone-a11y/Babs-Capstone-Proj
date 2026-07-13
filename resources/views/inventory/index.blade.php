@@ -142,7 +142,7 @@
         </div>
         <div class="stat-card blue">
             <div class="stat-icon blue"><i class="fas fa-utensils"></i></div>
-            <div class="stat-value">{{ $totalRtc }}</div>
+            <div class="stat-value">{{ $totalRtcProducts }}</div>
             <div class="stat-label">Total RTC Items</div>
         </div>
         <div class="stat-card green">
@@ -221,15 +221,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($rtcItems as $item)
+                    @forelse($rtcProducts as $product)
                     <tr>
                         <td>
-                            <div style="font-weight:600;">{{ $item->item_name }}</div>
-                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
+                            <div style="font-weight:600;">{{ $product->name }}</div>
                         </td>
-                        <td>{{ number_format($item->rtc_servings, 0) }} srv.</td>
+                        <td>{{ number_format($product->servings, 0) }} srv.</td>
                         <td>
-                            @php $s = $item->rtc_servings_status; @endphp
+                            @php $s = $product->servings_status; @endphp
                             <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
                                 {{ $s === 'available' ? 'Available' : ($s === 'low_stock' ? 'Low Servings' : 'Out of Servings') }}
                             </span>
@@ -316,8 +315,8 @@
                 <div class="activity-item">
                     <div class="activity-icon blue"><i class="fas fa-arrows-rotate"></i></div>
                     <div class="activity-body">
-                        <div class="activity-name">{{ $log->inventoryItem?->item_name ?? '—' }}</div>
-                        <div class="activity-meta">{{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
+                        <div class="activity-name">{{ $log->rtcProduct?->name ?? '—' }}</div>
+                        <div class="activity-meta">from {{ $log->inventoryItem?->item_name ?? '—' }} &bull; {{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
                     </div>
                     <div class="activity-qty">{{ number_format($log->rtc_units_produced, 0) }} srv.</div>
                 </div>

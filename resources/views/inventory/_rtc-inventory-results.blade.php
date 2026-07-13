@@ -19,14 +19,11 @@
                 <tr>
                     <td style="color:var(--muted);font-size:.78rem">{{ $i + 1 }}</td>
                     <td>
-                        <div style="font-weight:700;color:var(--dark)">{{ $item->item_name }}</div>
-                        @if($item->supplier)
-                        <div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>
-                        @endif
+                        <div style="font-weight:700;color:var(--dark)">{{ $item->name }}</div>
                     </td>
                     <td>
-                        @if($item->rtc_servings > 0)
-                        <span style="font-weight:700;color:#1D4ED8">{{ number_format($item->rtc_servings, 0) }}</span>
+                        @if($item->servings > 0)
+                        <span style="font-weight:700;color:#1D4ED8">{{ number_format($item->servings, 0) }}</span>
                         <span style="font-size:.75rem;color:var(--muted)"> servings</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">—</span>
@@ -34,13 +31,13 @@
                     </td>
                     <td>
                         @if($item->portion_size)
-                        <span style="font-size:.8rem">{{ number_format($item->portion_size, 3) }} {{ $item->portion_unit ?? $item->unit }}/serving</span>
+                        <span style="font-size:.8rem">{{ number_format($item->portion_size, 3) }} {{ $item->portion_unit }}/serving</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">Not set</span>
                         @endif
                     </td>
                     <td>
-                        @php $s = $item->rtc_servings_status; @endphp
+                        @php $s = $item->servings_status; @endphp
                         <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
                             @if($s === 'low_stock')<i class="fas fa-triangle-exclamation"></i>@elseif($s === 'out_of_stock')<i class="fas fa-circle-xmark"></i>@else<i class="fas fa-circle-check"></i>@endif
                             {{ $s === 'available' ? 'Available' : ($s === 'low_stock' ? 'Low Servings' : 'Out of Servings') }}
@@ -48,12 +45,9 @@
                     </td>
                     <td>
                         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                            <button class="btn btn-outline btn-sm" style="color:#2563EB;border-color:#BFDBFE" onclick="openConvertFor({{ $item->id }}, '{{ addslashes($item->item_name) }}', '{{ $item->unit }}', {{ $item->quantity }}, {{ $item->portion_size ?? 0.25 }}, '{{ $item->portion_unit ?? $item->unit }}')">
+                            <button class="btn btn-outline btn-sm" style="color:#2563EB;border-color:#BFDBFE" onclick="openConvertFor('{{ addslashes($item->name) }}', {{ $item->portion_size ?? 0.25 }}, '{{ $item->portion_unit ?? '' }}')">
                                 <i class="fas fa-arrows-rotate"></i>
                             </button>
-                            <a href="{{ route('inventory.edit', $item) }}" class="btn btn-outline btn-sm">
-                                <i class="fas fa-sliders"></i>
-                            </a>
                         </div>
                     </td>
                 </tr>
