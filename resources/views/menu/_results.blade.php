@@ -12,7 +12,7 @@
                 <th>Type</th>
                 <th>Price</th>
                 <th>RTC Material</th>
-                <th>RTC Qty</th>
+                <th>RTC Servings</th>
                 <th>Availability</th>
                 <th>Status</th>
                 <th>Created</th>
@@ -60,8 +60,8 @@
                 </td>
                 <td>
                     @if($item->rtc_quantity)
-                        <span class="rtc-cell">{{ rtrim(rtrim(number_format($item->rtc_quantity, 4), '0'), '.') }}
-                            <span style="color:var(--muted);font-size:.72rem">{{ $item->rtc_unit }}</span>
+                        <span class="rtc-cell">{{ number_format($item->rtc_servings, 0) }}
+                            <span style="color:var(--muted);font-size:.72rem">servings</span>
                         </span>
                     @else
                         <span class="rtc-none">—</span>
