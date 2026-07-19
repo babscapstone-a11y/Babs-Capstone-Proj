@@ -360,9 +360,24 @@
                     <label>Category Name *</label>
                     <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork, Chicken…">
                 </div>
-                <div class="field" style="margin-bottom:0">
+                <div class="field">
                     <label>Min Stock Level *</label>
                     <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level') }}">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>Unit *</label>
+                    <select name="unit" id="addUnitRaw" required>
+                        <option value="">Select unit…</option>
+                        <option value="Gram" {{ old('unit') === 'Gram' ? 'selected' : '' }}>Gram</option>
+                        <option value="Kilogram" {{ old('unit') === 'Kilogram' ? 'selected' : '' }}>Kilogram</option>
+                        <option value="Piece" {{ old('unit') === 'Piece' ? 'selected' : '' }}>Piece</option>
+                    </select>
+                    <select name="unit" id="addUnitBev" required style="display:none" disabled>
+                        <option value="">Select unit…</option>
+                        <option value="Box" {{ old('unit') === 'Box' ? 'selected' : '' }}>Box</option>
+                        <option value="Piece" {{ old('unit') === 'Piece' ? 'selected' : '' }}>Piece</option>
+                        <option value="Case" {{ old('unit') === 'Case' ? 'selected' : '' }}>Case</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -481,12 +496,29 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
 
 (function(){
     var options = document.querySelectorAll('#addItemModal .type-option');
+    var unitRaw = document.getElementById('addUnitRaw');
+    var unitBev = document.getElementById('addUnitBev');
+
+    function toggleUnitSelect(type) {
+        if (type === 'beverage') {
+            unitRaw.style.display = 'none'; unitRaw.disabled = true;
+            unitBev.style.display = ''; unitBev.disabled = false;
+        } else {
+            unitRaw.style.display = ''; unitRaw.disabled = false;
+            unitBev.style.display = 'none'; unitBev.disabled = true;
+        }
+    }
+
     options.forEach(function(opt){
         opt.addEventListener('click', function(){
             opt.querySelector('input[type=radio]').checked = true;
             options.forEach(o => o.classList.toggle('active', o === opt));
+            toggleUnitSelect(opt.dataset.type);
         });
     });
+
+    var checked = document.querySelector('#addItemModal input[name=item_type]:checked');
+    toggleUnitSelect(checked ? checked.value : 'rtc');
 })();
 
 (function(){
@@ -509,7 +541,7 @@ function filterSIItemsByType(type) {
     updateSIPreview();
 }
 
-@if($errors->has('item_name') || $errors->has('min_stock_level'))
+@if($errors->has('item_name') || $errors->has('unit') || $errors->has('min_stock_level'))
 openLocalModal('addItemModal');
 @elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('total_cost') || $errors->has('purchase_date'))
 openLocalModal('stockInModal');

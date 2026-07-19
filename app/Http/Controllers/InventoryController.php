@@ -161,12 +161,12 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'item_name'       => ['required', 'string', 'max:255'],
             'item_type'       => ['required', 'in:rtc,beverage'],
+            'unit'            => ['required', 'in:Gram,Kilogram,Piece,Box,Case'],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
         ]);
 
         $item = InventoryItem::create([
             ...$validated,
-            'unit'           => '',
             'quantity'       => 0,
             'reorder_level'  => $validated['min_stock_level'],
             'cost_price'     => 0,
