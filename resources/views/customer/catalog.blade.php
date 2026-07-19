@@ -31,7 +31,7 @@
 .nav-logo-sub  { font-size: .68rem; font-weight: 500; color: var(--muted); letter-spacing: .04em; margin-top: -3px; }
 
 .nav-search {
-    flex: 1; max-width: 480px;
+    flex: 1; min-width: 0; max-width: 480px;
     display: flex; align-items: center;
     background: var(--bg); border: 1.5px solid var(--border);
     border-radius: 50px; overflow: hidden;
@@ -113,6 +113,19 @@
 .dropdown-item i { width: 16px; text-align: center; color: var(--muted); }
 .dropdown-item.danger i { color: var(--primary); }
 
+/* ── Top nav responsive (phones) ── */
+@media (max-width: 768px) {
+    .nav-inner { gap: .6rem; padding: .65rem 1rem; }
+    .nav-logo-sub { display: none; }
+    .nav-search-btn { display: none; }
+    .nav-search input { font-size: .82rem; }
+}
+@media (max-width: 480px) {
+    .nav-logo-text { font-size: .92rem; }
+    .profile-name { display: none; }
+    .nav-search i { padding: 0 .5rem 0 .7rem; }
+}
+
 /* ══════════════════════════════════════════════
    HERO SECTION
 ══════════════════════════════════════════════ */
@@ -153,6 +166,13 @@
     display: flex; flex-direction: column; gap: 1rem;
     opacity: .15; font-size: 5rem; color: var(--accent);
     flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+    .hero { padding: 2.25rem 1.25rem; }
+    .hero-inner { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+    .hero-icons { display: none; }
+    .hero-stats { flex-wrap: wrap; gap: 1.25rem; }
 }
 
 /* ══════════════════════════════════════════════
