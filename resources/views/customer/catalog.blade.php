@@ -1089,6 +1089,7 @@ function openItemModal(id, name, desc, price, category, type, image) {
 
     qtyVal.textContent = 1;
     updateModalAddBtn();
+    document.getElementById('qtyDec').disabled = true;
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
@@ -1108,6 +1109,7 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 
 document.getElementById('qtyInc').addEventListener('click', () => {
     if (currentQty < 99) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
+    document.getElementById('qtyDec').disabled = currentQty <= 1;
 });
 document.getElementById('qtyDec').addEventListener('click', () => {
     if (currentQty > 1) { currentQty--; qtyVal.textContent = currentQty; updateModalAddBtn(); }
