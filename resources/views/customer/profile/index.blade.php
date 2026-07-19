@@ -19,6 +19,7 @@
     gap: 1.5rem;
     align-items: start;
 }
+.profile-grid > div { min-width: 0; }
 @media (max-width: 900px) {
     .profile-grid { grid-template-columns: 1fr; }
 }
@@ -116,7 +117,7 @@
 .form-section-title i { color: var(--primary); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-.field { margin-bottom: 1rem; }
+.field { margin-bottom: 1rem; min-width: 0; }
 .field label {
     display: block; font-size: .8rem; font-weight: 600; color: var(--dark);
     margin-bottom: .4rem;
