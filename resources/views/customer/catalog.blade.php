@@ -946,21 +946,22 @@ function formatMoney(n) { return '₱' + parseFloat(n).toLocaleString('en-PH', {
 
 function renderCart() {
     const list    = document.getElementById('cartItemsList');
-    const empty   = document.getElementById('cartEmptyState');
     const footer  = document.getElementById('cartFooter');
     const subtotal = document.getElementById('cartSubtotal');
     const grand   = document.getElementById('cartGrandTotal');
 
     if (cartItems.length === 0) {
-        list.innerHTML = '';
-        list.appendChild(empty);
-        empty.style.display = 'flex';
+        list.innerHTML = `
+            <div class="cart-empty-state" id="cartEmptyState">
+                <div class="cart-empty-icon"><i class="fas fa-shopping-basket"></i></div>
+                <div class="cart-empty-title">Your cart is empty</div>
+                <div class="cart-empty-sub">Add items from the menu to get started.</div>
+            </div>`;
         footer.style.display = 'none';
         updateBadge(0);
         return;
     }
 
-    empty.style.display = 'none';
     footer.style.display = 'block';
 
     const totalAmt = cartItems.reduce((s, ci) => s + ci.price * ci.quantity, 0);
