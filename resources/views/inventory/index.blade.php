@@ -435,7 +435,9 @@
                     </div>
                     <div class="field">
                         <label>Unit *</label>
-                        <input type="text" name="unit" id="siUnit" maxlength="50" required placeholder="e.g. kg, Piece" oninput="updateSIPreview()">
+                        <select name="unit" id="siUnit" required onchange="updateSIPreview()">
+                            <option value="">Select item first…</option>
+                        </select>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
@@ -536,9 +538,34 @@ function filterSIItemsByType(type) {
     document.querySelectorAll('#siItemId option.si-opt-raw').forEach(o => o.style.display = type === 'rtc' ? '' : 'none');
     document.querySelectorAll('#siItemId option.si-opt-bev').forEach(o => o.style.display = type === 'beverage' ? '' : 'none');
     document.getElementById('siItemId').value = '';
-    document.getElementById('siUnit').value = '';
+    populateSIUnitOptions('');
     document.getElementById('siCost').value = '';
     updateSIPreview();
+}
+
+const SI_UNIT_FAMILIES = {
+    'Gram': ['Gram', 'Kilogram'],
+    'Kilogram': ['Gram', 'Kilogram'],
+    'Piece': ['Piece'],
+    'Box': ['Box'],
+    'Case': ['Case'],
+};
+
+function populateSIUnitOptions(baseUnit) {
+    const sel = document.getElementById('siUnit');
+    sel.innerHTML = '';
+    if (!baseUnit) {
+        sel.innerHTML = '<option value="">Select item first…</option>';
+        return;
+    }
+    const options = SI_UNIT_FAMILIES[baseUnit] || [baseUnit];
+    options.forEach(function(u) {
+        const o = document.createElement('option');
+        o.value = u;
+        o.textContent = u;
+        if (u === baseUnit) o.selected = true;
+        sel.appendChild(o);
+    });
 }
 
 @if($errors->has('item_name') || $errors->has('unit') || $errors->has('min_stock_level'))
@@ -550,10 +577,19 @@ openLocalModal('stockInModal');
 function onSIItemChange() {
     const sel = document.getElementById('siItemId');
     const opt = sel.selectedOptions[0];
-    if (opt && opt.value) {
-        document.getElementById('siUnit').value = opt.dataset.unit || '';
-    }
+    populateSIUnitOptions(opt && opt.value ? (opt.dataset.unit || '') : '');
     updateSIPreview();
+}
+
+const SI_UNIT_CONVERSION = {
+    'Gram->Kilogram': 0.001,
+    'Kilogram->Gram': 1000,
+};
+
+function siConvert(qty, fromUnit, toUnit) {
+    if (fromUnit === toUnit) return qty;
+    const factor = SI_UNIT_CONVERSION[fromUnit + '->' + toUnit];
+    return factor !== undefined ? qty * factor : qty;
 }
 
 function updateSIPreview() {
@@ -562,18 +598,20 @@ function updateSIPreview() {
     const qty = parseFloat(document.getElementById('siQty').value) || 0;
     const preview = document.getElementById('siPreview');
     if (!opt || !opt.value || !qty) { preview.style.display = 'none'; return; }
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    const unit = document.getElementById('siUnit').value.trim() || opt.dataset.unit;
-    const newQty = prev + qty;
-    document.getElementById('siPrevQty').textContent = prev.toFixed(2) + ' ' + unit;
-    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
-    document.getElementById('siNewQty').textContent = newQty.toFixed(2) + ' ' + unit;
+    const baseUnit = opt.dataset.unit;
+    const enteredUnit = document.getElementById('siUnit').value || baseUnit;
+    const prevBase = parseFloat(opt.dataset.qty) || 0;
+    const purchasedInBase = siConvert(qty, enteredUnit, baseUnit);
+    const newQtyBase = prevBase + purchasedInBase;
+    document.getElementById('siPrevQty').textContent = prevBase.toFixed(2) + ' ' + baseUnit;
+    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + enteredUnit;
+    document.getElementById('siNewQty').textContent = newQtyBase.toFixed(2) + ' ' + baseUnit;
 
     const totalCost = parseFloat(document.getElementById('siCost').value);
     const costRow = document.getElementById('siCostRow');
     if (totalCost > 0) {
         const perUnit = totalCost / qty;
-        document.getElementById('siTotalCost').textContent = '₱' + totalCost.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + unit + ')';
+        document.getElementById('siTotalCost').textContent = '₱' + totalCost.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + enteredUnit + ')';
         costRow.style.display = '';
     } else {
         costRow.style.display = 'none';
@@ -618,14 +656,16 @@ function proceedStockIn() {
         return;
     }
 
-    const prev = parseFloat(opt.dataset.qty) || 0;
-    const newQty = prev + qty;
+    const baseUnit = opt.dataset.unit;
+    const prevBase = parseFloat(opt.dataset.qty) || 0;
+    const purchasedInBase = siConvert(qty, unit, baseUnit);
+    const newQtyBase = prevBase + purchasedInBase;
     const costVal = parseFloat(cost);
 
     document.getElementById('siConfirmItem').textContent = opt.text.trim();
-    document.getElementById('siConfirmPrev').textContent = prev.toFixed(2) + ' ' + unit;
+    document.getElementById('siConfirmPrev').textContent = prevBase.toFixed(2) + ' ' + baseUnit;
     document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
-    document.getElementById('siConfirmNew').textContent = newQty.toFixed(2) + ' ' + unit;
+    document.getElementById('siConfirmNew').textContent = newQtyBase.toFixed(2) + ' ' + baseUnit;
 
     const confirmCostRow = document.getElementById('siConfirmCostRow');
     if (costVal > 0) {
