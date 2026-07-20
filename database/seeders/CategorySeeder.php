@@ -18,7 +18,7 @@ class CategorySeeder extends Seeder
             ['category_name' => 'Grilled & BBQ',    'description' => 'Grilled and barbecued dishes'],
             ['category_name' => 'Snacks & Sides',   'description' => 'Side dishes and snacks'],
             ['category_name' => 'Desserts',          'description' => 'Sweet treats and desserts'],
-            ['category_name' => 'Beverages',         'description' => 'Drinks and refreshments'],
+            ['category_name' => 'Beverages',         'description' => 'Drinks and refreshments', 'item_type' => 'beverage'],
         ];
 
         foreach ($categories as $cat) {

@@ -197,7 +197,7 @@
                 <select id="category_id" name="category_id" class="form-control @error('category_id') is-invalid @enderror" required>
                     <option value="">— Select Category —</option>
                     @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" @selected(old('category_id', $menu->category_id) == $cat->id)>{{ $cat->category_name }}</option>
+                        <option value="{{ $cat->id }}" data-type="{{ $cat->item_type }}" @selected(old('category_id', $menu->category_id) == $cat->id)>{{ $cat->category_name }}</option>
                     @endforeach
                 </select>
                 @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -339,5 +339,28 @@ function submitForm() {
 document.getElementById('confirmOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeConfirmDialog();
 });
+
+/* ── Filter Category options by selected Item Type ────── */
+function filterCategoriesByType() {
+    var checked = document.querySelector('input[name="item_type"]:checked');
+    if (!checked) return;
+    var type = checked.value;
+    var select = document.getElementById('category_id');
+    var currentValue = select.value;
+    var currentValid = false;
+
+    select.querySelectorAll('option[data-type]').forEach(function(opt) {
+        var matches = opt.dataset.type === type;
+        opt.hidden = !matches;
+        opt.disabled = !matches;
+        if (matches && opt.value === currentValue) currentValid = true;
+    });
+
+    if (!currentValid) select.value = '';
+}
+document.querySelectorAll('input[name="item_type"]').forEach(function(radio) {
+    radio.addEventListener('change', filterCategoriesByType);
+});
+filterCategoriesByType();
 </script>
 @endsection
