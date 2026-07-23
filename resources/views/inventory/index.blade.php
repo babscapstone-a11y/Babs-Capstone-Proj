@@ -238,7 +238,6 @@
                         <option value="">Select unit…</option>
                         <option value="Gram" {{ old('unit') === 'Gram' ? 'selected' : '' }}>Gram</option>
                         <option value="Kilogram" {{ old('unit') === 'Kilogram' ? 'selected' : '' }}>Kilogram</option>
-                        <option value="Piece" {{ old('unit') === 'Piece' ? 'selected' : '' }}>Piece</option>
                     </select>
                     <select name="unit" id="addUnitBev" required style="display:none" disabled>
                         <option value="">Select unit…</option>

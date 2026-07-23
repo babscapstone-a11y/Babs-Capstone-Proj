@@ -10,6 +10,7 @@ use App\Models\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class InventoryController extends Controller
@@ -161,10 +162,14 @@ class InventoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $allowedUnits = $request->input('item_type') === 'beverage'
+            ? ['Box', 'Piece', 'Case']
+            : ['Gram', 'Kilogram'];
+
         $validated = $request->validate([
             'item_name'       => ['required', 'string', 'max:255'],
             'item_type'       => ['required', 'in:rtc,beverage'],
-            'unit'            => ['required', 'in:Gram,Kilogram,Piece,Box,Case'],
+            'unit'            => ['required', Rule::in($allowedUnits)],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
         ]);
 
