@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Restocking / Repurchase List')
+@section('title', $statusFilter === 'out_of_stock' ? 'Out of Stock Items' : ($statusFilter === 'low_stock' ? 'Low Stock Items' : 'Restocking / Repurchase List'))
 
 @section('styles')
 <style>
@@ -49,10 +49,30 @@
 
     <div class="page-header no-print">
         <div>
-            <div class="page-title"><i class="fas fa-cart-shopping"></i> Restocking / Repurchase List</div>
-            <div class="page-sub">Items at or below reorder threshold requiring repurchase</div>
+            <div class="page-title">
+                <i class="fas fa-cart-shopping"></i>
+                @if($statusFilter === 'out_of_stock')
+                    Out of Stock Items
+                @elseif($statusFilter === 'low_stock')
+                    Low Stock Items
+                @else
+                    Restocking / Repurchase List
+                @endif
+            </div>
+            <div class="page-sub">
+                @if($statusFilter === 'out_of_stock')
+                    Items with zero quantity remaining
+                @elseif($statusFilter === 'low_stock')
+                    Items at or below reorder threshold, but not yet out of stock
+                @else
+                    Items at or below reorder threshold requiring repurchase
+                @endif
+            </div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            @if($statusFilter)
+            <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-list"></i> View All</a>
+            @endif
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
             <button class="btn btn-green" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
             @if($outOfStockItems->isNotEmpty() || $lowStockItems->isNotEmpty())
@@ -77,7 +97,7 @@
         <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-battery-half"></i></div><div class="stat-value">{{ $lowStockItems->count() }}</div><div class="stat-label">Low Stock</div></div>
     </div>
 
-    @if($outOfStockItems->isNotEmpty())
+    @if((!$statusFilter || $statusFilter === 'out_of_stock') && $outOfStockItems->isNotEmpty())
     <div class="card">
         <div class="section-hd" style="background:#FFF5F5;border-bottom-color:#FECACA;color:#B91C1C"><i class="fas fa-circle-xmark"></i> Out of Stock — Urgent Repurchase Needed</div>
         <div class="table-wrap">
@@ -115,7 +135,7 @@
     </div>
     @endif
 
-    @if($lowStockItems->isNotEmpty())
+    @if((!$statusFilter || $statusFilter === 'low_stock') && $lowStockItems->isNotEmpty())
     <div class="card">
         <div class="section-hd" style="background:#FFFBEB;border-bottom-color:#FDE68A;color:#B45309"><i class="fas fa-triangle-exclamation"></i> Low Stock — Replenish Soon</div>
         <div class="table-wrap">
@@ -155,10 +175,25 @@
     </div>
     @endif
 
-    @if($outOfStockItems->isEmpty() && $lowStockItems->isEmpty())
+    @php
+        $showEmpty = match($statusFilter) {
+            'out_of_stock' => $outOfStockItems->isEmpty(),
+            'low_stock'    => $lowStockItems->isEmpty(),
+            default        => $outOfStockItems->isEmpty() && $lowStockItems->isEmpty(),
+        };
+    @endphp
+    @if($showEmpty)
     <div class="card" style="padding:3rem;text-align:center">
         <i class="fas fa-circle-check" style="font-size:2.5rem;color:#16A34A;margin-bottom:1rem;display:block"></i>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--dark)">All items are well-stocked!</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--dark)">
+            @if($statusFilter === 'out_of_stock')
+                No items are out of stock!
+            @elseif($statusFilter === 'low_stock')
+                No items are low on stock!
+            @else
+                All items are well-stocked!
+            @endif
+        </div>
         <div style="font-size:.85rem;color:var(--muted);margin-top:.35rem">No items are currently below the reorder threshold.</div>
         <a href="{{ route('inventory.index') }}" class="btn btn-outline" style="margin-top:1.25rem"><i class="fas fa-arrow-left"></i> Back to Inventory</a>
     </div>

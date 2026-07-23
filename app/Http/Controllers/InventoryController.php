@@ -145,15 +145,19 @@ class InventoryController extends Controller
         return view('inventory.beverages', compact('items', 'totalBev', 'lowStock', 'outOfStock'));
     }
 
-    public function restocking(): View
+    public function restocking(Request $request): View
     {
+        $statusFilter = in_array($request->input('status'), ['low_stock', 'out_of_stock'])
+            ? $request->input('status')
+            : null;
+
         $outOfStockItems = InventoryItem::outOfStock()
             ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
 
         $lowStockItems = InventoryItem::lowStock()
             ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
 
-        return view('inventory.restocking', compact('outOfStockItems', 'lowStockItems'));
+        return view('inventory.restocking', compact('outOfStockItems', 'lowStockItems', 'statusFilter'));
     }
 
     public function store(Request $request): RedirectResponse

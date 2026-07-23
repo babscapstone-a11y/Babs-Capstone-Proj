@@ -13,7 +13,8 @@
 
 /* stat cards */
 .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1.25rem; margin-bottom:2rem; }
-.stat-card { background:#fff; border-radius:16px; padding:1.25rem 1.4rem; border:1px solid var(--border); box-shadow:var(--shadow-sm); position:relative; overflow:hidden; }
+.stat-card { background:#fff; border-radius:16px; padding:1.25rem 1.4rem; border:1px solid var(--border); box-shadow:var(--shadow-sm); position:relative; overflow:hidden; display:block; color:inherit; text-decoration:none; transition:transform .15s, box-shadow .15s; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(17,24,39,0.08); color:inherit; }
 .stat-card::before { content:''; position:absolute; top:0; right:0; width:80px; height:80px; border-radius:0 16px 0 80px; opacity:.07; }
 .stat-card.blue::before  { background:#3B82F6; }
 .stat-card.green::before { background:#16A34A; }
@@ -135,31 +136,31 @@
 
     {{-- ── Summary Cards ── --}}
     <div class="stat-grid">
-        <div class="stat-card blue">
+        <a href="{{ route('inventory.rtc') }}" class="stat-card blue">
             <div class="stat-icon blue"><i class="fas fa-drumstick-bite"></i></div>
             <div class="stat-value">{{ $totalRtc }}</div>
             <div class="stat-label">Total Raw Meat</div>
-        </div>
-        <div class="stat-card blue">
+        </a>
+        <a href="{{ route('inventory.rtc-inventory') }}" class="stat-card blue">
             <div class="stat-icon blue"><i class="fas fa-utensils"></i></div>
             <div class="stat-value">{{ $totalRtcProducts }}</div>
             <div class="stat-label">Total RTC Items</div>
-        </div>
-        <div class="stat-card green">
+        </a>
+        <a href="{{ route('inventory.beverages') }}" class="stat-card green">
             <div class="stat-icon green"><i class="fas fa-bottle-water"></i></div>
             <div class="stat-value">{{ $totalBeverage }}</div>
             <div class="stat-label">Beverage Items</div>
-        </div>
-        <div class="stat-card amber">
+        </a>
+        <a href="{{ route('inventory.restocking', ['status' => 'low_stock']) }}" class="stat-card amber">
             <div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div>
             <div class="stat-value">{{ $lowStock }}</div>
             <div class="stat-label">Low Stock</div>
-        </div>
-        <div class="stat-card red">
+        </a>
+        <a href="{{ route('inventory.restocking', ['status' => 'out_of_stock']) }}" class="stat-card red">
             <div class="stat-icon red"><i class="fas fa-circle-xmark"></i></div>
             <div class="stat-value">{{ $outOfStock }}</div>
             <div class="stat-label">Out of Stock</div>
-        </div>
+        </a>
     </div>
 
     @if(session('success'))
