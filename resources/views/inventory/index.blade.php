@@ -36,21 +36,6 @@
 .section-hd a { font-size:.8rem; font-weight:600; color:var(--primary); text-decoration:none; }
 .section-hd a:hover { text-decoration:underline; }
 
-/* inventory table */
-.inv-table { width:100%; border-collapse:collapse; font-size:.83rem; }
-.inv-table th { padding:.65rem 1rem; text-align:left; font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); background:#F8FAFC; border-bottom:1px solid var(--border); }
-.inv-table td { padding:.75rem 1rem; border-bottom:1px solid #F3F4F6; color:var(--dark); vertical-align:middle; }
-.inv-table tr:last-child td { border-bottom:none; }
-.inv-table tr:hover td { background:#FAFAFA; }
-
-/* status badges */
-.badge { display:inline-flex; align-items:center; gap:.3rem; padding:.22rem .65rem; border-radius:50px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
-.badge-available  { background:#DCFCE7; color:#15803D; }
-.badge-low        { background:#FEF3C7; color:#B45309; }
-.badge-out        { background:#FEE2E2; color:#B91C1C; }
-.badge-rtc        { background:#EFF6FF; color:#1D4ED8; }
-.badge-beverage   { background:#F5F3FF; color:#6D28D9; }
-
 /* recent activity */
 .activity-list { padding:.5rem 0; }
 .activity-item { display:flex; align-items:center; gap:.9rem; padding:.7rem 1.5rem; border-bottom:1px solid #F3F4F6; }
@@ -67,10 +52,6 @@
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
 @media(max-width:900px) { .two-col { grid-template-columns:1fr; } }
 
-.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; }
-@media(max-width:1100px) { .three-col { grid-template-columns:1fr 1fr; } }
-@media(max-width:700px) { .three-col { grid-template-columns:1fr; } }
-
 .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; border-radius:10px; font-size:.83rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all .18s; text-decoration:none; }
 .btn-primary { background:var(--primary); color:#fff; }
 .btn-primary:hover { background:var(--primary-dk, #B91C1C); }
@@ -78,8 +59,6 @@
 .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
 .btn-amber { background:#F59E0B; color:#fff; }
 .btn-amber:hover { background:#D97706; }
-
-.empty-row td { text-align:center; color:var(--muted); padding:1.5rem; font-size:.83rem; }
 
 /* Add Item modal */
 .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(3px); z-index:1000; display:none; align-items:center; justify-content:center; padding:1rem; }
@@ -168,118 +147,6 @@
         <i class="fas fa-check-circle" style="color:#16A34A;"></i> {{ session('success') }}
     </div>
     @endif
-
-    {{-- ── Three column: Raw Meat + RTC + Beverages ── --}}
-    <div class="three-col">
-        {{-- Raw Meat Inventory --}}
-        <div class="section-card">
-            <div class="section-hd">
-                <h2><i class="fas fa-drumstick-bite"></i> Raw Meats</h2>
-                <a href="{{ route('inventory.rtc') }}">View All →</a>
-            </div>
-            <table class="inv-table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Raw Stock</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($rtcItems as $item)
-                    <tr>
-                        <td>
-                            <div style="font-weight:600;">{{ $item->item_name }}</div>
-                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
-                        </td>
-                        <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>
-                        <td>
-                            @php $s = $item->stock_status; @endphp
-                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
-                                {{ $item->stock_status_label }}
-                            </span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="3" class="empty-row">No RTC items found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- RTC Inventory --}}
-        <div class="section-card">
-            <div class="section-hd">
-                <h2><i class="fas fa-utensils"></i> RTC Units</h2>
-                <a href="{{ route('inventory.rtc-inventory') }}">View All →</a>
-            </div>
-            <table class="inv-table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>RTC Servings</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($rtcProducts as $product)
-                    <tr>
-                        <td>
-                            <div style="font-weight:600;">{{ $product->menu_name }}</div>
-                        </td>
-                        <td>{{ number_format($product->rtc_servings, 0) }} srv.</td>
-                        <td>
-                            @php $s = $product->rtc_servings_status; @endphp
-                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
-                                {{ $s === 'available' ? 'Available' : ($s === 'low_stock' ? 'Low Servings' : 'Out of Servings') }}
-                            </span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="3" class="empty-row">No RTC items found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Beverage Inventory --}}
-        <div class="section-card">
-            <div class="section-hd">
-                <h2><i class="fas fa-bottle-water"></i> Beverages</h2>
-                <a href="{{ route('inventory.beverages') }}">View All →</a>
-            </div>
-            <table class="inv-table">
-                <thead>
-                    <tr>
-                        <th>Beverage</th>
-                        <th>Qty</th>
-                        <th>Unit</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($beverageItems as $item)
-                    <tr>
-                        <td>
-                            <div style="font-weight:600;">{{ $item->item_name }}</div>
-                            <div style="font-size:.73rem;color:var(--muted);">{{ $item->category }}</div>
-                        </td>
-                        <td>{{ number_format($item->quantity, 0) }}</td>
-                        <td>{{ $item->unit }}</td>
-                        <td>
-                            @php $s = $item->stock_status; @endphp
-                            <span class="badge {{ $s === 'available' ? 'badge-available' : ($s === 'low_stock' ? 'badge-low' : 'badge-out') }}">
-                                {{ $item->stock_status_label }}
-                            </span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="4" class="empty-row">No beverages found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
 
     {{-- ── Recent Activity ── --}}
     <div class="two-col">

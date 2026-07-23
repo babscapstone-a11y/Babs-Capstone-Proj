@@ -23,7 +23,6 @@ class InventoryController extends Controller
         $outOfStock       = InventoryItem::outOfStock()->count();
 
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $rtcProducts   = MenuItem::rtcTracked()->orderBy('menu_name')->get();
         $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
 
         $recentStockIns   = PurchaseOrder::with(['inventoryItem', 'recorder'])
@@ -35,7 +34,7 @@ class InventoryController extends Controller
 
         return view('inventory.index', compact(
             'totalRtc', 'totalRtcProducts', 'totalBeverage', 'lowStock', 'outOfStock',
-            'rtcItems', 'rtcProducts', 'beverageItems',
+            'rtcItems', 'beverageItems',
             'recentStockIns', 'recentConversions', 'recentAdjustments'
         ));
     }
