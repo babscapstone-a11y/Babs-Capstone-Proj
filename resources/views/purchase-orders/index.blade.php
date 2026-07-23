@@ -70,12 +70,23 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-boxes-stacked"></i> View Restocking List</a>
-            <form method="POST" action="{{ route('purchase-orders.generate') }}">
-                @csrf
-                <button type="submit" class="btn btn-primary" onclick="return confirm('Generate a new draft Purchase Order from all current low/out-of-stock items?')">
-                    <i class="fas fa-wand-magic-sparkles"></i> Generate Purchase Order
-                </button>
-            </form>
+            @if($lowStockCount + $outOfStockCount > 0)
+            <button type="button" class="btn btn-primary" onclick="openModal({
+                    type: 'warn',
+                    iconClass: 'fas fa-wand-magic-sparkles',
+                    title: 'Generate Purchase Order?',
+                    desc: 'This will create a new draft Purchase Order from all current low/out-of-stock items.',
+                    action: '{{ route('purchase-orders.generate') }}',
+                    method: 'POST',
+                    confirmText: 'Generate'
+                })">
+                <i class="fas fa-wand-magic-sparkles"></i> Generate Purchase Order
+            </button>
+            @else
+            <button type="button" class="btn btn-primary" disabled title="No low/out-of-stock items to restock" style="opacity:.5;cursor:not-allowed">
+                <i class="fas fa-wand-magic-sparkles"></i> Generate Purchase Order
+            </button>
+            @endif
         </div>
     </div>
 
@@ -152,12 +163,17 @@
             @endif
             @if($lowStockCount + $outOfStockCount > 0)
             <div class="quick-actions">
-                <form method="POST" action="{{ route('purchase-orders.generate') }}" style="display:inline">
-                    @csrf
-                    <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Generate a draft Purchase Order from all low/out-of-stock items?')">
-                        <i class="fas fa-wand-magic-sparkles"></i> Generate PO Draft
-                    </button>
-                </form>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openModal({
+                        type: 'warn',
+                        iconClass: 'fas fa-wand-magic-sparkles',
+                        title: 'Generate Purchase Order?',
+                        desc: 'This will create a draft Purchase Order from all low/out-of-stock items.',
+                        action: '{{ route('purchase-orders.generate') }}',
+                        method: 'POST',
+                        confirmText: 'Generate'
+                    })">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate PO Draft
+                </button>
             </div>
             @endif
         </div>
@@ -236,12 +252,17 @@
                     <tr><td colspan="7" class="empty-msg">
                         <i class="fas fa-file-invoice" style="font-size:1.6rem;display:block;margin-bottom:.5rem;opacity:.35"></i>
                         No purchase orders found.<br>
-                        <form method="POST" action="{{ route('purchase-orders.generate') }}" style="display:inline;margin-top:.75rem">
-                            @csrf
-                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:.75rem" onclick="return confirm('Generate a draft PO from all restocking items?')">
-                                <i class="fas fa-wand-magic-sparkles"></i> Generate First Purchase Order
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-primary btn-sm" style="margin-top:.75rem" onclick="openModal({
+                                type: 'warn',
+                                iconClass: 'fas fa-wand-magic-sparkles',
+                                title: 'Generate Purchase Order?',
+                                desc: 'This will create a draft Purchase Order from all current restocking items.',
+                                action: '{{ route('purchase-orders.generate') }}',
+                                method: 'POST',
+                                confirmText: 'Generate'
+                            })">
+                            <i class="fas fa-wand-magic-sparkles"></i> Generate First Purchase Order
+                        </button>
                     </td></tr>
                     @endforelse
                 </tbody>
