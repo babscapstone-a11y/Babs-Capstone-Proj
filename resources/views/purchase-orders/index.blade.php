@@ -234,14 +234,24 @@
                                 <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-outline btn-sm" title="View"><i class="fas fa-eye"></i></a>
                                 @if($order->isDraft())
                                 <a href="{{ route('purchase-orders.edit', $order) }}" class="btn btn-outline btn-sm" title="Edit"><i class="fas fa-pen"></i></a>
-                                <form method="POST" action="{{ route('purchase-orders.finalize', $order) }}" onsubmit="return confirm('Finalize Purchase Order {{ $order->po_number }}? This cannot be undone.')">
-                                    @csrf
-                                    <button type="submit" class="btn btn-green btn-sm" title="Finalize"><i class="fas fa-check-double"></i></button>
-                                </form>
-                                <form method="POST" action="{{ route('purchase-orders.destroy', $order) }}" onsubmit="return confirm('Delete draft PO {{ $order->po_number }}?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm" style="background:#FEF2F2;color:#DC2626" title="Delete"><i class="fas fa-trash"></i></button>
-                                </form>
+                                <button type="button" class="btn btn-green btn-sm" title="Finalize" onclick="openModal({
+                                        type: 'warn',
+                                        iconClass: 'fas fa-check-double',
+                                        title: 'Finalize Purchase Order?',
+                                        desc: 'Finalize ' + {{ Js::from($order->po_number) }} + '? This cannot be undone.',
+                                        action: '{{ route('purchase-orders.finalize', $order) }}',
+                                        method: 'POST',
+                                        confirmText: 'Finalize'
+                                    })"><i class="fas fa-check-double"></i></button>
+                                <button type="button" class="btn btn-sm" style="background:#FEF2F2;color:#DC2626" title="Delete" onclick="openModal({
+                                        type: 'danger',
+                                        iconClass: 'fas fa-trash',
+                                        title: 'Delete Draft PO?',
+                                        desc: 'Delete draft PO ' + {{ Js::from($order->po_number) }} + '?',
+                                        action: '{{ route('purchase-orders.destroy', $order) }}',
+                                        method: 'DELETE',
+                                        confirmText: 'Delete'
+                                    })"><i class="fas fa-trash"></i></button>
                                 @else
                                 <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="btn btn-blue btn-sm" title="Print"><i class="fas fa-print"></i></a>
                                 @endif

@@ -66,10 +66,15 @@
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             @if($po->isDraft())
             <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline"><i class="fas fa-pen"></i> Edit Draft</a>
-            <form method="POST" action="{{ route('purchase-orders.finalize', $po) }}" onsubmit="return confirm('Finalize Purchase Order {{ $po->po_number }}? This action cannot be undone.')">
-                @csrf
-                <button type="submit" class="btn btn-green"><i class="fas fa-check-double"></i> Finalize</button>
-            </form>
+            <button type="button" class="btn btn-green" onclick="openModal({
+                    type: 'warn',
+                    iconClass: 'fas fa-check-double',
+                    title: 'Finalize Purchase Order?',
+                    desc: 'Finalize ' + {{ Js::from($po->po_number) }} + '? This action cannot be undone.',
+                    action: '{{ route('purchase-orders.finalize', $po) }}',
+                    method: 'POST',
+                    confirmText: 'Finalize'
+                })"><i class="fas fa-check-double"></i> Finalize</button>
             @else
             <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-blue"><i class="fas fa-print"></i> Print / Save PDF</a>
             @endif
@@ -191,10 +196,15 @@
             <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-blue"><i class="fas fa-print"></i> Print Purchase Order</a>
             @else
             <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline" style="border-color:var(--primary);color:var(--primary)"><i class="fas fa-pen"></i> Edit Quantities</a>
-            <form method="POST" action="{{ route('purchase-orders.finalize', $po) }}" onsubmit="return confirm('Finalize Purchase Order {{ $po->po_number }}? This cannot be undone.')">
-                @csrf
-                <button type="submit" class="btn btn-green"><i class="fas fa-check-double"></i> Finalize Purchase Order</button>
-            </form>
+            <button type="button" class="btn btn-green" onclick="openModal({
+                    type: 'warn',
+                    iconClass: 'fas fa-check-double',
+                    title: 'Finalize Purchase Order?',
+                    desc: 'Finalize ' + {{ Js::from($po->po_number) }} + '? This cannot be undone.',
+                    action: '{{ route('purchase-orders.finalize', $po) }}',
+                    method: 'POST',
+                    confirmText: 'Finalize'
+                })"><i class="fas fa-check-double"></i> Finalize Purchase Order</button>
             @endif
         </div>
     </div>
