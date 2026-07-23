@@ -134,6 +134,7 @@
                     </thead>
                     <tbody>
                         @foreach($rtcItems as $i => $item)
+                        @php $rtcMin = max((float) $item->threshold, 0.01); @endphp
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
@@ -144,9 +145,11 @@
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,2,'.','')) }}"
-                                           class="qty-input" step="0.01" min="0.01" required
+                                           class="qty-input" step="0.01" min="{{ number_format($rtcMin,2,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,2,'.','') }}"
+                                           title="Must be at least the minimum threshold ({{ number_format($rtcMin,2) }} {{ $item->unit }})"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }}</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
@@ -196,6 +199,7 @@
                     </thead>
                     <tbody>
                         @foreach($bevItems as $i => $item)
+                        @php $bevMin = max((float) $item->threshold, 1); @endphp
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
@@ -206,9 +210,11 @@
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,0,'.','')) }}"
-                                           class="qty-input" step="1" min="1" required
+                                           class="qty-input" step="1" min="{{ number_format($bevMin,0,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,0,'.','') }}"
+                                           title="Must be at least the minimum threshold ({{ number_format($bevMin,0) }} {{ $item->unit }})"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }}</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
@@ -283,6 +289,7 @@
                         <option value="">Select item…</option>
                         @forelse($availableItems as $ai)
                         <option value="{{ $ai->id }}" data-unit="{{ $ai->unit }}" data-stock="{{ number_format($ai->quantity,2) }}"
+                                data-threshold="{{ number_format(max((float) $ai->reorder_level, 0.01),2,'.','') }}"
                                 {{ (string) old('inventory_item_id') === (string) $ai->id ? 'selected' : '' }}>
                             {{ $ai->item_name }} ({{ $ai->item_type === 'rtc' ? 'RTC Raw Meat' : 'Beverage' }})
                         </option>
@@ -296,7 +303,7 @@
                     <label>Quantity to Purchase *</label>
                     <input type="number" name="quantity_to_purchase" id="addPoItemQty" step="0.01" min="0.01" required
                            value="{{ old('quantity_to_purchase') }}" placeholder="0.00" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
-                    <div class="field-hint">Unit: <span id="addPoItemUnit">—</span></div>
+                    <div class="field-hint">Unit: <span id="addPoItemUnit">—</span> &nbsp;|&nbsp; Min: <span id="addPoItemMin">—</span></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -341,10 +348,19 @@ function onAddPoItemChange() {
     var sel = document.getElementById('addPoItemSelect');
     var opt = sel.selectedOptions[0];
     var unit = opt ? opt.dataset.unit : '';
+    var threshold = opt ? opt.dataset.threshold : '';
+    var qtyInput = document.getElementById('addPoItemQty');
+
     document.getElementById('addPoItemUnit').textContent = unit || '—';
+    document.getElementById('addPoItemMin').textContent = threshold || '—';
     document.getElementById('addPoItemStockHint').innerHTML = (opt && opt.dataset.stock)
         ? 'Current stock: ' + opt.dataset.stock + ' ' + unit
         : '&nbsp;';
+
+    qtyInput.min = threshold || '0.01';
+    if (threshold && parseFloat(qtyInput.value) < parseFloat(threshold)) {
+        qtyInput.value = threshold;
+    }
 }
 
 @if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))

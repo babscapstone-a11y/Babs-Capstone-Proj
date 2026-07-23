@@ -119,11 +119,18 @@ class ProcurementOrderController extends Controller
             return back()->with('error', 'Finalized purchase orders cannot be modified.');
         }
 
-        $request->validate([
-            'notes'        => ['nullable', 'string', 'max:1000'],
-            'quantities'   => ['required', 'array'],
-            'quantities.*' => ['required', 'numeric', 'min:0.01'],
-        ]);
+        $rules = [
+            'notes'      => ['nullable', 'string', 'max:1000'],
+            'quantities' => ['required', 'array'],
+        ];
+        $messages = [];
+        foreach ($purchaseOrder->items as $item) {
+            $min = max((float) $item->threshold, 0.01);
+            $rules["quantities.{$item->id}"] = ['required', 'numeric', "min:{$min}"];
+            $messages["quantities.{$item->id}.min"] = "{$item->item_name}: quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit}).";
+        }
+
+        $request->validate($rules, $messages);
 
         $purchaseOrder->update(['notes' => $request->notes]);
 
@@ -152,6 +159,13 @@ class ProcurementOrderController extends Controller
         }
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
+        $min  = max((float) $item->reorder_level, 0.01);
+
+        if ((float) $request->quantity_to_purchase < $min) {
+            return back()
+                ->withErrors(['quantity_to_purchase' => "Quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit})."])
+                ->withInput();
+        }
 
         $purchaseOrder->items()->create([
             'inventory_item_id'    => $item->id,
