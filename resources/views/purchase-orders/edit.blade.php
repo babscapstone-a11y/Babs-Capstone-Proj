@@ -123,7 +123,6 @@
                         <tr>
                             <th>#</th>
                             <th>Item Name</th>
-                            <th>Category</th>
                             <th>Current Stock</th>
                             <th>Threshold</th>
                             <th>Recommended</th>
@@ -138,7 +137,6 @@
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
-                            <td class="ro-val">{{ $item->category ?? '—' }}</td>
                             <td class="ro-val">{{ number_format($item->current_stock,2) }} {{ $item->unit }}</td>
                             <td class="ro-val">{{ number_format($item->threshold,2) }} {{ $item->unit }}</td>
                             <td class="ro-val">{{ number_format($item->quantity_recommended,2) }} {{ $item->unit }}</td>
@@ -187,7 +185,6 @@
                         <tr>
                             <th>#</th>
                             <th>Item Name</th>
-                            <th>Category</th>
                             <th>Current Stock</th>
                             <th>Threshold</th>
                             <th>Recommended</th>
@@ -202,7 +199,6 @@
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
-                            <td class="ro-val">{{ $item->category ?? '—' }}</td>
                             <td class="ro-val">{{ number_format($item->current_stock,0) }} {{ $item->unit }}</td>
                             <td class="ro-val">{{ number_format($item->threshold,0) }} {{ $item->unit }}</td>
                             <td class="ro-val">{{ number_format($item->quantity_recommended,0) }} {{ $item->unit }}</td>
