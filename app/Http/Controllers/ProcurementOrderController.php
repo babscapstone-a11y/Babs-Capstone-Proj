@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
 use App\Models\ProcurementOrder;
+use App\Models\ProcurementOrderItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -103,7 +104,13 @@ class ProcurementOrderController extends Controller
                 ->with('info', 'This purchase order is already finalized. You can only view or print it.');
         }
         $purchaseOrder->load(['items.inventoryItem', 'preparedBy']);
-        return view('purchase-orders.edit', ['po' => $purchaseOrder]);
+
+        $availableItems = InventoryItem::where('is_active', true)
+            ->whereNotIn('id', $purchaseOrder->items->pluck('inventory_item_id'))
+            ->orderBy('item_type')->orderBy('item_name')
+            ->get();
+
+        return view('purchase-orders.edit', ['po' => $purchaseOrder, 'availableItems' => $availableItems]);
     }
 
     public function update(Request $request, ProcurementOrder $purchaseOrder): RedirectResponse
@@ -127,6 +134,59 @@ class ProcurementOrderController extends Controller
         }
 
         return back()->with('success', 'Purchase order quantities updated successfully.');
+    }
+
+    public function addItem(Request $request, ProcurementOrder $purchaseOrder): RedirectResponse
+    {
+        if ($purchaseOrder->isFinalized()) {
+            return back()->with('error', 'Finalized purchase orders cannot be modified.');
+        }
+
+        $request->validate([
+            'inventory_item_id'    => ['required', 'exists:inventory_items,id'],
+            'quantity_to_purchase' => ['required', 'numeric', 'min:0.01'],
+        ]);
+
+        if ($purchaseOrder->items()->where('inventory_item_id', $request->inventory_item_id)->exists()) {
+            return back()->with('error', 'That item is already on this purchase order.')->withInput();
+        }
+
+        $item = InventoryItem::findOrFail($request->inventory_item_id);
+
+        $purchaseOrder->items()->create([
+            'inventory_item_id'    => $item->id,
+            'item_name'            => $item->item_name,
+            'category'             => $item->category,
+            'item_type'            => $item->item_type,
+            'current_stock'        => $item->quantity,
+            'threshold'            => $item->reorder_level,
+            'quantity_recommended' => (float) $request->quantity_to_purchase,
+            'quantity_to_purchase' => (float) $request->quantity_to_purchase,
+            'unit'                 => $item->unit,
+            'stock_status'         => $item->stock_status,
+        ]);
+
+        $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
+
+        return redirect()->route('purchase-orders.edit', $purchaseOrder)
+            ->with('success', "{$item->item_name} added to the purchase order.");
+    }
+
+    public function removeItem(ProcurementOrder $purchaseOrder, ProcurementOrderItem $item): RedirectResponse
+    {
+        if ($purchaseOrder->isFinalized()) {
+            return back()->with('error', 'Finalized purchase orders cannot be modified.');
+        }
+        if ($item->procurement_order_id !== $purchaseOrder->id) {
+            abort(404);
+        }
+
+        $name = $item->item_name;
+        $item->delete();
+        $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
+
+        return redirect()->route('purchase-orders.edit', $purchaseOrder)
+            ->with('success', "{$name} removed from the purchase order.");
     }
 
     public function finalize(ProcurementOrder $purchaseOrder): RedirectResponse

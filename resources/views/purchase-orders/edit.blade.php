@@ -21,6 +21,7 @@
 .badge-po-draft{background:#FEF3C7;color:#B45309;display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase}
 .badge-po-out{background:#FEE2E2;color:#B91C1C;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;display:inline-block}
 .badge-po-low{background:#FEF3C7;color:#B45309;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;display:inline-block}
+.badge-po-ok{background:#F0FDF4;color:#15803D;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;display:inline-block}
 .badge-rtc{background:#EFF6FF;color:#1D4ED8;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase;display:inline-block}
 .badge-bev{background:#F5F3FF;color:#6D28D9;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase;display:inline-block}
 .card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.25rem}
@@ -47,6 +48,25 @@
 .ro-val{font-size:.85rem;color:var(--muted)}
 .changed-hint{font-size:.72rem;color:#16A34A;display:none}
 .qty-wrap{display:flex;flex-direction:column;align-items:center;gap:.2rem}
+.row-remove-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:#B91C1C;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.78rem}
+.row-remove-btn:hover{background:#FEF2F2;border-color:#FECACA}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
+.modal-hd h3{font-size:1rem;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:.5rem;margin:0}
+.modal-hd h3 i{color:var(--primary)}
+.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:#F8FAFC;cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close-btn:hover{background:#FEE2E2;color:var(--primary)}
+.modal-body{padding:1.5rem}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--dark);margin-bottom:.35rem}
+.field input,.field select{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;box-sizing:border-box}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.field-hint{font-size:.76rem;color:var(--muted);margin-top:.3rem}
+.error-msg{background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:.7rem 1rem;font-size:.8rem;color:#B91C1C;margin-bottom:1.1rem}
 </style>
 @endsection
 
@@ -59,6 +79,7 @@
             <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Review and edit quantities before finalizing</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <button type="button" class="btn btn-primary" onclick="openLocalModal('addPoItemModal')"><i class="fas fa-plus"></i> Add Item</button>
             <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-outline"><i class="fas fa-eye"></i> View</a>
             <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
@@ -109,6 +130,7 @@
                             <th>Qty to Purchase *</th>
                             <th>Unit</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,6 +154,17 @@
                             </td>
                             <td class="ro-val">{{ $item->unit }}</td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
+                            <td>
+                                <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
+                                        type: 'danger',
+                                        iconClass: 'fas fa-trash',
+                                        title: 'Remove Item?',
+                                        desc: 'Remove ' + {{ Js::from($item->item_name) }} + ' from this purchase order?',
+                                        action: '{{ route('purchase-orders.items.destroy', [$po, $item]) }}',
+                                        method: 'DELETE',
+                                        confirmText: 'Remove'
+                                    })"><i class="fas fa-trash"></i></button>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -161,6 +194,7 @@
                             <th>Qty to Purchase *</th>
                             <th>Unit</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -184,10 +218,31 @@
                             </td>
                             <td class="ro-val">{{ $item->unit }}</td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
+                            <td>
+                                <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
+                                        type: 'danger',
+                                        iconClass: 'fas fa-trash',
+                                        title: 'Remove Item?',
+                                        desc: 'Remove ' + {{ Js::from($item->item_name) }} + ' from this purchase order?',
+                                        action: '{{ route('purchase-orders.items.destroy', [$po, $item]) }}',
+                                        method: 'DELETE',
+                                        confirmText: 'Remove'
+                                    })"><i class="fas fa-trash"></i></button>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        </div>
+        @endif
+
+        @if($rtcItems->isEmpty() && $bevItems->isEmpty())
+        <div class="card">
+            <div style="padding:2.5rem;text-align:center;color:var(--muted);font-size:.85rem">
+                <i class="fas fa-boxes-stacked" style="font-size:1.6rem;display:block;margin-bottom:.6rem;opacity:.35"></i>
+                No items on this purchase order yet.<br>
+                <button type="button" class="btn btn-primary btn-sm" style="margin-top:.9rem" onclick="openLocalModal('addPoItemModal')"><i class="fas fa-plus"></i> Add Item</button>
             </div>
         </div>
         @endif
@@ -211,6 +266,50 @@
     <form method="POST" action="{{ route('purchase-orders.finalize', $po) }}" id="finalizeForm">@csrf</form>
 
 </div>
+
+{{-- Add Item modal --}}
+<div class="modal-backdrop" id="addPoItemModal">
+    <div class="modal">
+        <div class="modal-hd">
+            <h3><i class="fas fa-plus"></i> Add Item to Purchase Order</h3>
+            <button class="modal-close-btn" onclick="closeLocalModal('addPoItemModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST" action="{{ route('purchase-orders.items.store', $po) }}">
+            @csrf
+            <div class="modal-body">
+                @if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))
+                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ $errors->first('inventory_item_id') ?: $errors->first('quantity_to_purchase') }}</div>
+                @endif
+
+                <div class="field">
+                    <label>Inventory Item *</label>
+                    <select name="inventory_item_id" id="addPoItemSelect" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
+                        <option value="">Select item…</option>
+                        @forelse($availableItems as $ai)
+                        <option value="{{ $ai->id }}" data-unit="{{ $ai->unit }}" data-stock="{{ number_format($ai->quantity,2) }}"
+                                {{ (string) old('inventory_item_id') === (string) $ai->id ? 'selected' : '' }}>
+                            {{ $ai->item_name }} ({{ $ai->item_type === 'rtc' ? 'RTC Raw Meat' : 'Beverage' }})
+                        </option>
+                        @empty
+                        <option value="" disabled>No additional inventory items available</option>
+                        @endforelse
+                    </select>
+                    <div class="field-hint" id="addPoItemStockHint">&nbsp;</div>
+                </div>
+                <div class="field" style="margin-bottom:0">
+                    <label>Quantity to Purchase *</label>
+                    <input type="number" name="quantity_to_purchase" id="addPoItemQty" step="0.01" min="0.01" required
+                           value="{{ old('quantity_to_purchase') }}" placeholder="0.00" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
+                    <div class="field-hint">Unit: <span id="addPoItemUnit">—</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeLocalModal('addPoItemModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" {{ $availableItems->isEmpty() ? 'disabled' : '' }}><i class="fas fa-plus"></i> Add Item</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -225,9 +324,35 @@ function markChanged(input) {
 }
 
 function doFinalize() {
-    if (!confirm('Are you sure you want to finalize this Purchase Order?\n\n"' + {{ Js::from($po->po_number) }} + '"\n\nOnce finalized, it will become read-only and cannot be edited.')) return;
-    // Save first, then finalize
-    document.getElementById('finalizeForm').submit();
+    openModal({
+        type: 'warn',
+        iconClass: 'fas fa-check-double',
+        title: 'Finalize Purchase Order?',
+        desc: 'Once "' + {{ Js::from($po->po_number) }} + '" is finalized, it becomes read-only and cannot be edited.',
+        action: {{ Js::from(route('purchase-orders.finalize', $po)) }},
+        method: 'POST',
+        confirmText: 'Finalize'
+    });
 }
+
+function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-backdrop').forEach(function (el) {
+    el.addEventListener('click', function (e) { if (e.target === el) closeLocalModal(el.id); });
+});
+
+function onAddPoItemChange() {
+    var sel = document.getElementById('addPoItemSelect');
+    var opt = sel.selectedOptions[0];
+    var unit = opt ? opt.dataset.unit : '';
+    document.getElementById('addPoItemUnit').textContent = unit || '—';
+    document.getElementById('addPoItemStockHint').innerHTML = (opt && opt.dataset.stock)
+        ? 'Current stock: ' + opt.dataset.stock + ' ' + unit
+        : '&nbsp;';
+}
+
+@if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))
+openLocalModal('addPoItemModal');
+@endif
 </script>
 @endsection

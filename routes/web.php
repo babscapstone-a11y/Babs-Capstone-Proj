@@ -102,6 +102,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/{purchaseOrder}',                 [ProcurementOrderController::class, 'show'])     ->name('show');
         Route::get('/{purchaseOrder}/edit',            [ProcurementOrderController::class, 'edit'])     ->name('edit');
         Route::put('/{purchaseOrder}',                 [ProcurementOrderController::class, 'update'])   ->name('update');
+        Route::post('/{purchaseOrder}/items',          [ProcurementOrderController::class, 'addItem'])  ->name('items.store');
+        Route::delete('/{purchaseOrder}/items/{item}', [ProcurementOrderController::class, 'removeItem'])->name('items.destroy');
         Route::post('/{purchaseOrder}/finalize',       [ProcurementOrderController::class, 'finalize']) ->name('finalize');
         Route::get('/{purchaseOrder}/print',           [ProcurementOrderController::class, 'print'])    ->name('print');
         Route::delete('/{purchaseOrder}',              [ProcurementOrderController::class, 'destroy'])  ->name('destroy');
