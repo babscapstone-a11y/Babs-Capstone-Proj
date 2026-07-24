@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCancellationRequestRequest;
 use App\Http\Requests\UpdateCustomerPasswordRequest;
 use App\Http\Requests\UpdateCustomerProfileRequest;
 use App\Models\Address;
 use App\Models\Cart;
+use App\Models\CancellationRequest;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +28,7 @@ class CustomerProfileController extends Controller
         $customer = auth('customer')->user()->load('address');
 
         $orders = Order::where('customer_id', $customer->id)
-            ->with(['orderStatus', 'details'])
+            ->with(['orderStatus', 'details', 'cancellationRequest'])
             ->orderByDesc('created_at')
             ->paginate(8, ['*'], 'page');
 
@@ -99,7 +101,7 @@ class CustomerProfileController extends Controller
             abort(403, 'You are not authorized to view this order.');
         }
 
-        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder', 'dineInOrder']);
+        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder', 'dineInOrder', 'cancellationRequest']);
 
         return view('customer.profile.order-show', [
             'order'     => $order,
@@ -116,17 +118,51 @@ class CustomerProfileController extends Controller
             abort(403);
         }
 
-        $order->load('orderStatus');
+        $order->load(['orderStatus', 'cancellationRequest']);
 
         return response()->json([
-            'status_name'      => $order->status_name,
-            'status_color'     => $order->status_color,
-            'customer_label'   => $order->customer_status_label,
-            'payment_status'   => $order->payment_status,
-            'is_cancelled'     => $order->isCancelled(),
-            'is_completed'     => $order->isCompleted(),
-            'approval_status'  => $order->approval_status,
-            'rejection_reason' => $order->rejection_reason,
+            'status_name'        => $order->status_name,
+            'status_color'       => $order->status_color,
+            'customer_label'     => $order->customer_status_label,
+            'payment_status'     => $order->payment_status,
+            'is_cancelled'       => $order->isCancelled(),
+            'is_completed'       => $order->isCompleted(),
+            'approval_status'    => $order->approval_status,
+            'rejection_reason'   => $order->rejection_reason,
+            'cancellation_status'          => $order->cancellationRequest?->review_status,
+            'cancellation_rejection_reason' => $order->cancellationRequest?->rejection_reason,
         ]);
+    }
+
+    /**
+     * POST /account/orders/{order}/cancellation-request — customer-originated
+     * step of REQ047–REQ050's workflow: customers may not cancel an order
+     * directly, only submit a request that an Administrator later reviews.
+     */
+    public function storeCancellationRequest(StoreCancellationRequestRequest $request, Order $order): RedirectResponse
+    {
+        $customer = auth('customer')->user();
+
+        if ($order->customer_id !== $customer->id) {
+            abort(403, 'You are not authorized to act on this order.');
+        }
+
+        if (! $order->isCancellationEligible()) {
+            return back()->with('error', 'This order has already entered the preparation stage and can no longer be cancelled.');
+        }
+
+        if ($order->cancellationRequest) {
+            return back()->with('error', 'A cancellation request has already been submitted for this order.');
+        }
+
+        CancellationRequest::create([
+            'request_number'       => CancellationRequest::generateRequestNumber(),
+            'order_id'             => $order->id,
+            'customer_id'          => $customer->id,
+            'cancellation_reason'  => $request->cancellation_reason,
+            'review_status'        => 'pending',
+        ]);
+
+        return back()->with('success', 'Your cancellation request has been submitted and is awaiting Administrator review.');
     }
 }

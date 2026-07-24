@@ -562,6 +562,13 @@
                                         <span class="status-dot" style="background:{{ $order->status_color }}1a; color:{{ $order->status_color }}">
                                             {{ $order->status_name }}
                                         </span>
+                                        @if($order->cancellationRequest?->isPending())
+                                        <div style="margin-top:.3rem"><span class="status-dot" style="background:#FEF3C7;color:#92400E"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> Cancellation Pending</span></div>
+                                        @elseif($order->cancellationRequest?->isRejected())
+                                        <div style="margin-top:.3rem" title="{{ $order->cancellationRequest->rejection_reason }}">
+                                            <span class="status-dot" style="background:#FEE2E2;color:#B91C1C"><i class="fas fa-xmark" style="font-size:.6rem"></i> Cancellation Rejected</span>
+                                        </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <a href="{{ route('account.orders.show', $order) }}" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">

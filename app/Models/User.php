@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->hasMany(StaffPasswordResetRequest::class, 'requested_by');
     }
 
+    public function reviewedCancellationRequests(): HasMany
+    {
+        return $this->hasMany(CancellationRequest::class, 'reviewed_by');
+    }
+
     /* ── Helpers ─────────────────────────────────────────────── */
 
     public function isAdmin(): bool

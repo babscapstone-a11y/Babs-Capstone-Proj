@@ -74,6 +74,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function cancellationRequest(): HasOne
+    {
+        return $this->hasOne(CancellationRequest::class);
+    }
+
     /* ── Scopes ── */
 
     /**
@@ -293,5 +298,17 @@ class Order extends Model
     public function needsApproval(): bool
     {
         return $this->isOnline() && $this->approval_status === 'pending';
+    }
+
+    /**
+     * Cancellation Policy: only an order still sitting in the kitchen's
+     * intake queue (raw status "Pending" — shown to staff as "Order
+     * Received") may be cancelled. Once the kitchen has started preparing
+     * it (Processing/Ready/Completed), a cancellation request must be
+     * rejected. An already-cancelled order is closed to further requests.
+     */
+    public function isCancellationEligible(): bool
+    {
+        return $this->status_name === 'Pending';
     }
 }

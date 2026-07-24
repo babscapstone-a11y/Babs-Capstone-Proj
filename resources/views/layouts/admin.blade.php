@@ -366,6 +366,15 @@
                class="nav-item {{ request()->routeIs('discounts.*') ? 'active' : '' }}">
                 <i class="fas fa-tag"></i> Discounts
             </a>
+
+            <a href="{{ route('cancellations.index') }}"
+               class="nav-item {{ request()->routeIs('cancellations.*') ? 'active' : '' }}">
+                <i class="fas fa-ban"></i> Cancellation Requests
+                @php $pendingCancellations = \App\Models\CancellationRequest::where('review_status', 'pending')->count() @endphp
+                @if($pendingCancellations > 0)
+                    <span class="nav-badge">{{ $pendingCancellations }}</span>
+                @endif
+            </a>
         </nav>
 
         <div class="sidebar-footer">

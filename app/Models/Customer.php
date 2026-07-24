@@ -44,6 +44,11 @@ class Customer extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(CancellationRequest::class);
+    }
+
     /* ── Helpers ─────────────────────────────────────────────── */
 
     public function getFullNameAttribute(): string
