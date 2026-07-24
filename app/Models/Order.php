@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,6 +51,23 @@ class Order extends Model
     public function placedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'placed_by');
+    }
+
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
+    /* ── Scopes ── */
+
+    /**
+     * Orders the cashier is allowed to bill: kitchen has marked them Ready or
+     * Completed, and no payment has been recorded for them yet.
+     */
+    public function scopeAwaitingPayment(Builder $q): Builder
+    {
+        return $q->where('payment_status', 'pending')
+            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Ready', 'Completed']));
     }
 
     /* ── Order Number Generation ── */
@@ -169,6 +187,22 @@ class Order extends Model
     public function getItemCountAttribute(): int
     {
         return (int) $this->details->sum('quantity');
+    }
+
+    public function getCustomerNameAttribute(): string
+    {
+        return $this->customer?->full_name ?? 'Walk-in';
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    public function isAwaitingPayment(): bool
+    {
+        return $this->payment_status === 'pending'
+            && in_array($this->status_name, ['Ready', 'Completed'], true);
     }
 
     public function isCancelled(): bool

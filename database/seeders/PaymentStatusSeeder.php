@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PaymentStatus;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,12 +13,10 @@ class PaymentStatusSeeder extends Seeder
      */
     public function run(): void
     {
-        $statuses = [
-    'Pending',
-    'Paid',
-    'Partially Paid',
-    'Refunded',
-    'Cancelled'
-];
+        $statuses = ['Pending', 'Paid', 'Failed', 'Refunded'];
+
+        foreach ($statuses as $status) {
+            PaymentStatus::firstOrCreate(['status_name' => $status]);
+        }
     }
 }

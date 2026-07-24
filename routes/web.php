@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CashierController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ConversionController;
@@ -120,6 +121,17 @@ Route::middleware(['auth', 'kitchen_staff'])->prefix('kitchen')->name('kitchen.'
     Route::get('/',                 [KitchenController::class, 'index'])       ->name('index');
     Route::get('/orders',           [KitchenController::class, 'orders'])      ->name('orders');
     Route::patch('/orders/{order}/status', [KitchenController::class, 'updateStatus']) ->name('orders.status');
+});
+
+/* ── Payment and Billing Module (Cashier only) — Module 22 ─────── */
+Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->group(function () {
+    Route::get('/',          [CashierController::class, 'dashboard'])      ->name('index');
+    Route::get('/billing',   [CashierController::class, 'billing'])       ->name('billing');
+    Route::get('/orders',    [CashierController::class, 'orders'])        ->name('orders.index');
+    Route::get('/orders/{order}', [CashierController::class, 'showOrder'])->name('orders.show');
+    Route::post('/orders/{order}/payment', [CashierController::class, 'processPayment'])->name('orders.pay');
+    Route::get('/discounts', [CashierController::class, 'discounts'])     ->name('discounts.index');
+    Route::get('/receipts/{payment}', [CashierController::class, 'receipt'])->name('receipts.show');
 });
 
 /* ── Food Server Digital Menu Catalog (Table Server only) — Module 19 ─── */

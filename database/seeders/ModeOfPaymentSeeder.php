@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ModeOfPayment;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,11 +13,10 @@ class ModeOfPaymentSeeder extends Seeder
      */
     public function run(): void
     {
-        $methods = [
-    'Cash',
-    'GCash',
-    'Credit Card',
-    'Debit Card'
-];
+        $methods = ['Cash', 'Cashless'];
+
+        foreach ($methods as $method) {
+            ModeOfPayment::firstOrCreate(['method_name' => $method]);
+        }
     }
 }

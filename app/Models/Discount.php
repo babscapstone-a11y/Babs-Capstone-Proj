@@ -107,4 +107,58 @@ class Discount extends Model
         if ($this->is_expired && $this->status === 'active') return 'Expired';
         return $this->status === 'active' ? 'Active' : 'Inactive';
     }
+
+    /* ── Billing Helpers (Payment & Billing Module) ── */
+
+    /**
+     * Whether this discount rule can currently be applied at all — active,
+     * not expired, and (if a start date is set) already in effect.
+     */
+    public function isCurrentlyValid(): bool
+    {
+        if ($this->status !== 'active' || $this->is_expired) {
+            return false;
+        }
+
+        if ($this->start_date && $this->start_date->isFuture()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the given order subtotal meets this discount's minimum purchase
+     * requirement (if any is configured).
+     */
+    public function meetsMinimumPurchase(float $subtotal): bool
+    {
+        return $this->minimum_purchase === null || $subtotal >= (float) $this->minimum_purchase;
+    }
+
+    /**
+     * True for eligibility types that require the cashier to physically verify
+     * an ID before the discount may be applied (REQ099).
+     */
+    public function requiresEligibilityVerification(): bool
+    {
+        return in_array($this->eligibility_type, ['senior_citizen', 'pwd'], true);
+    }
+
+    /**
+     * Compute the peso discount amount for a given subtotal, respecting the
+     * discount type and the optional maximum-discount cap.
+     */
+    public function computeDiscountAmount(float $subtotal): float
+    {
+        $amount = $this->discount_type === 'percentage'
+            ? $subtotal * ((float) $this->discount_value / 100)
+            : (float) $this->discount_value;
+
+        if ($this->maximum_discount !== null) {
+            $amount = min($amount, (float) $this->maximum_discount);
+        }
+
+        return round(min($amount, $subtotal), 2);
+    }
 }
