@@ -33,6 +33,12 @@ class KitchenController extends Controller
                       ->whereDate('created_at', today());
                 });
             })
+            // Online pre-orders stay invisible to the kitchen until a cashier
+            // has verified the down-payment and approved them (Module 23).
+            ->where(function ($query) {
+                $query->where('order_type', '!=', 'online')
+                      ->orWhere('approval_status', 'approved');
+            })
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Order $order) => $this->serializeOrder($order));

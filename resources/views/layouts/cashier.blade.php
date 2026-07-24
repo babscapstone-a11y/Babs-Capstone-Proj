@@ -57,6 +57,11 @@
         }
         .nav-link-cb:hover { background: rgba(255,255,255,0.12); color: var(--white); }
         .nav-link-cb.active { background: rgba(220,38,38,0.22); border-color: rgba(220,38,38,0.4); color: var(--white); }
+        .nav-badge-cb {
+            background: var(--accent); color: var(--dark);
+            font-size: .65rem; font-weight: 800; border-radius: 50px;
+            padding: .05rem .45rem; min-width: 16px; text-align: center; line-height: 1.4;
+        }
 
         .cb-datetime { text-align: right; color: rgba(255,255,255,0.85); line-height: 1.25; }
         .cb-date { font-size: .78rem; color: rgba(255,255,255,0.45); }
@@ -197,6 +202,13 @@
                 </a>
                 <a href="{{ route('cashier.billing') }}" class="nav-link-cb {{ request()->routeIs('cashier.billing') ? 'active' : '' }}">
                     <i class="fas fa-cash-register"></i> Billing
+                </a>
+                <a href="{{ route('cashier.online-orders.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.online-orders.*') ? 'active' : '' }}">
+                    <i class="fas fa-mobile-screen-button"></i> Online Orders
+                    @php $pendingOnlineOrders = \App\Models\Order::onlineOrders()->where('approval_status', 'pending')->count() @endphp
+                    @if($pendingOnlineOrders > 0)
+                        <span class="nav-badge-cb">{{ $pendingOnlineOrders }}</span>
+                    @endif
                 </a>
             </nav>
             <div class="cb-datetime">

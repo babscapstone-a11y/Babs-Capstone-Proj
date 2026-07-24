@@ -217,6 +217,35 @@
         </div>
     </div>
 
+    {{-- Online pre-order: awaiting cashier verification --}}
+    @if($order->isOnline() && $order->approval_status === 'pending')
+    <div class="cancel-banner fade-up" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
+        <i class="fas fa-hourglass-half"></i>
+        <div>
+            <strong>Awaiting Payment Verification</strong><br>
+            Our staff is reviewing your down-payment. You'll be notified as soon as it's verified.
+        </div>
+    </div>
+    @endif
+
+    {{-- Online pre-order: rejected --}}
+    @if($order->isOnline() && $order->approval_status === 'rejected')
+    <div class="cancel-banner fade-up">
+        <i class="fas fa-circle-xmark"></i>
+        <div>
+            <strong>Order Rejected</strong><br>
+            @if($order->rejection_reason)
+                Reason: {{ $order->rejection_reason }}
+            @else
+                Your down-payment could not be verified.
+            @endif
+            @if($order->reviewed_at)
+                <div style="font-size:.76rem;margin-top:.2rem;color:#B91C1C99">Reviewed on {{ $order->reviewed_at->format('F d, Y h:i A') }}</div>
+            @endif
+        </div>
+    </div>
+    @endif
+
     {{-- Cancellation banner --}}
     @if($order->isCancelled())
     <div class="cancel-banner fade-up">
@@ -273,6 +302,7 @@
         $currentStatus = $order->status_name;
         $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', 'Completed' => 'fa-circle-check'];
         $currentIdx    = array_search($currentStatus, $allStatuses);
+        $awaitingApproval = $order->isOnline() && in_array($order->approval_status, ['pending', 'rejected', 'cancelled'], true);
     @endphp
     <div class="card fade-up">
         <div class="card-header">
@@ -292,6 +322,25 @@
                         @if($order->cancellation_reason)
                         <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">{{ $order->cancellation_reason }}</div>
                         @endif
+                    </div>
+                </div>
+            @elseif($awaitingApproval)
+                @php
+                    $isRejected = $order->approval_status === 'rejected';
+                @endphp
+                <div style="display:flex;align-items:center;gap:1.25rem" id="timelineContainer">
+                    <div style="width:40px;height:40px;border-radius:50%;background:{{ $isRejected ? '#FEE2E2' : '#FEF3C7' }};border:2px solid {{ $isRejected ? '#DC2626' : '#F59E0B' }};display:flex;align-items:center;justify-content:center;color:{{ $isRejected ? '#DC2626' : '#B45309' }};flex-shrink:0">
+                        <i class="fas {{ $isRejected ? 'fa-xmark' : 'fa-hourglass-half' }}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700">{{ $order->customer_status_label }}</div>
+                        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">
+                            @if($order->approval_status === 'pending')
+                                Your order will move to the kitchen once our staff verifies your down-payment.
+                            @else
+                                This order will not be prepared by the kitchen.
+                            @endif
+                        </div>
                     </div>
                 </div>
             @else
@@ -496,18 +545,19 @@
 </style>
 @endsection
 
-@if(! $order->isCancelled() && ! $order->isCompleted())
+@if(! $order->isCancelled() && ! $order->isCompleted() && $order->approval_status !== 'rejected')
 @section('scripts')
 <script>
 const orderStatusUrl = "{{ route('account.orders.status', $order) }}";
 let lastStatus = @json($order->status_name);
+let lastApprovalStatus = @json($order->approval_status);
 
 async function pollOrderStatus() {
     try {
         const res = await fetch(orderStatusUrl, { headers: { 'Accept': 'application/json' } });
         const data = await res.json();
 
-        if (data.status_name !== lastStatus || data.is_cancelled || data.is_completed) {
+        if (data.status_name !== lastStatus || data.approval_status !== lastApprovalStatus || data.is_cancelled || data.is_completed) {
             window.location.reload();
             return;
         }

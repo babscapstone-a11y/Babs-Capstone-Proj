@@ -14,12 +14,18 @@ class Order extends Model
         'order_number', 'total_amount', 'customer_id', 'placed_by', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'cancelled_at', 'cancellation_reason',
+        'pickup_at', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
         'cancelled_at' => 'datetime',
+        'pickup_at'    => 'datetime',
+        'reviewed_at'  => 'datetime',
     ];
+
+    /** Percentage of the order total a customer must pay upfront for an online pre-order. */
+    const DOWN_PAYMENT_PERCENT = 30;
 
     /* ── Relationships ── */
 
@@ -58,6 +64,16 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function paymentProof(): HasOne
+    {
+        return $this->hasOne(PaymentProof::class);
+    }
+
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
     /* ── Scopes ── */
 
     /**
@@ -68,6 +84,15 @@ class Order extends Model
     {
         return $q->where('payment_status', 'pending')
             ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Ready', 'Completed']));
+    }
+
+    /**
+     * Online pre-orders — the ones that go through the cashier approval
+     * checkpoint before the Kitchen Display System ever sees them.
+     */
+    public function scopeOnlineOrders(Builder $q): Builder
+    {
+        return $q->where('order_type', 'online');
     }
 
     /* ── Order Number Generation ── */
@@ -88,7 +113,7 @@ class Order extends Model
         return match($this->order_type) {
             'dine_in' => 'Dine-In',
             'takeout' => 'Take-Out',
-            'online'  => 'Delivery',
+            'online'  => 'Take-Out (Online)',
             default   => ucfirst($this->order_type ?? 'Unknown'),
         };
     }
@@ -98,7 +123,7 @@ class Order extends Model
         return match($this->order_type) {
             'dine_in' => 'fa-utensils',
             'takeout' => 'fa-bag-shopping',
-            'online'  => 'fa-motorcycle',
+            'online'  => 'fa-mobile-screen-button',
             default   => 'fa-receipt',
         };
     }
@@ -135,6 +160,15 @@ class Order extends Model
 
     public function getCustomerStatusLabelAttribute(): string
     {
+        if ($this->isOnline() && $this->approval_status && $this->approval_status !== 'approved') {
+            return match ($this->approval_status) {
+                'pending'   => 'Awaiting Payment Verification',
+                'rejected'  => 'Order Rejected',
+                'cancelled' => 'Cancelled',
+                default     => $this->status_name,
+            };
+        }
+
         return match ($this->status_name) {
             'Pending'    => 'Order Received',
             'Processing' => 'Preparing',
@@ -143,6 +177,33 @@ class Order extends Model
             'Cancelled'  => 'Cancelled',
             default      => $this->status_name,
         };
+    }
+
+    public function getApprovalStatusLabelAttribute(): string
+    {
+        return match ($this->approval_status) {
+            'pending'   => 'Pending Approval',
+            'approved'  => 'Approved',
+            'rejected'  => 'Rejected',
+            'cancelled' => 'Cancelled',
+            default     => 'N/A',
+        };
+    }
+
+    public function getApprovalStatusBadgeClassAttribute(): string
+    {
+        return match ($this->approval_status) {
+            'pending'   => 'badge-pending',
+            'approved'  => 'badge-approved',
+            'rejected'  => 'badge-rejected',
+            'cancelled' => 'badge-cancelled',
+            default     => 'badge-pending',
+        };
+    }
+
+    public function getRequiredDownPaymentAttribute(): float
+    {
+        return round(((float) $this->total_amount) * (self::DOWN_PAYMENT_PERCENT / 100), 2);
     }
 
     public function getPaymentMethodLabelAttribute(): string
@@ -218,5 +279,19 @@ class Order extends Model
     public function isDelivery(): bool
     {
         return $this->order_type === 'online';
+    }
+
+    public function isOnline(): bool
+    {
+        return $this->order_type === 'online';
+    }
+
+    /**
+     * True while this online pre-order still needs a cashier's approval
+     * decision — the checkpoint that keeps it out of the KDS until cleared.
+     */
+    public function needsApproval(): bool
+    {
+        return $this->isOnline() && $this->approval_status === 'pending';
     }
 }

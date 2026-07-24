@@ -119,12 +119,14 @@ class CustomerProfileController extends Controller
         $order->load('orderStatus');
 
         return response()->json([
-            'status_name'     => $order->status_name,
-            'status_color'    => $order->status_color,
-            'customer_label'  => $order->customer_status_label,
-            'payment_status'  => $order->payment_status,
-            'is_cancelled'    => $order->isCancelled(),
-            'is_completed'    => $order->isCompleted(),
+            'status_name'      => $order->status_name,
+            'status_color'     => $order->status_color,
+            'customer_label'   => $order->customer_status_label,
+            'payment_status'   => $order->payment_status,
+            'is_cancelled'     => $order->isCancelled(),
+            'is_completed'     => $order->isCompleted(),
+            'approval_status'  => $order->approval_status,
+            'rejection_reason' => $order->rejection_reason,
         ]);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\InventoryAdjustmentController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\MenuItemController;
+use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
 use App\Http\Controllers\StaffPasswordResetController;
@@ -132,6 +133,14 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
     Route::post('/orders/{order}/payment', [CashierController::class, 'processPayment'])->name('orders.pay');
     Route::get('/discounts', [CashierController::class, 'discounts'])     ->name('discounts.index');
     Route::get('/receipts/{payment}', [CashierController::class, 'receipt'])->name('receipts.show');
+
+    // ── Online Order Management Module (REQ103–REQ106) — Module 23 ────
+    Route::prefix('online-orders')->name('online-orders.')->group(function () {
+        Route::get('/',                  [OnlineOrderController::class, 'index'])   ->name('index');
+        Route::get('/{order}',           [OnlineOrderController::class, 'show'])    ->name('show');
+        Route::post('/{order}/approve',  [OnlineOrderController::class, 'approve']) ->name('approve');
+        Route::post('/{order}/reject',   [OnlineOrderController::class, 'reject'])  ->name('reject');
+    });
 });
 
 /* ── Food Server Digital Menu Catalog (Table Server only) — Module 19 ─── */

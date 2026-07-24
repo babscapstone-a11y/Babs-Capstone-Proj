@@ -44,7 +44,8 @@
 
 /* Order type / payment selector */
 .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.option-grid.three { grid-template-columns: repeat(2, 1fr); }
+.option-grid.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 700px) { .option-grid.three { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .option-grid, .option-grid.three { grid-template-columns: 1fr; } }
 
 .option-card {
@@ -76,6 +77,7 @@
 .field textarea { resize: vertical; min-height: 80px; }
 .field .hint { font-size: .74rem; color: var(--muted); margin-top: .3rem; }
 .field.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* Order summary sidebar */
 .summary-card { position: sticky; top: calc(var(--nav-h) + 1.5rem); }
@@ -114,7 +116,7 @@
 <div class="page-wrap checkout-wrap">
     <div class="page-title fade-up"><i class="fas fa-receipt"></i> Checkout</div>
 
-    <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm">
+    <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm" enctype="multipart/form-data">
         @csrf
         <div class="checkout-grid">
 
@@ -153,11 +155,11 @@
                                 <div class="oc-icon"><i class="fas fa-bag-shopping"></i></div>
                                 <div class="oc-label">Take-Out</div>
                             </label>
-                            <label class="option-card disabled">
-                                <span class="oc-badge">Coming Soon</span>
-                                <input type="radio" disabled>
-                                <div class="oc-icon"><i class="fas fa-motorcycle"></i></div>
-                                <div class="oc-label">Delivery</div>
+                            <label class="option-card" data-type="online">
+                                <input type="radio" name="order_type" value="online">
+                                <div class="oc-icon"><i class="fas fa-mobile-screen-button"></i></div>
+                                <div class="oc-label">Online Pre-Order</div>
+                                <div class="oc-sub">Pay online, pick up later</div>
                             </label>
                         </div>
 
@@ -174,11 +176,22 @@
                                 <i class="fas fa-clock" style="color:var(--accent)"></i> Approximately 30 minutes after order confirmation
                             </div>
                         </div>
+
+                        {{-- Online Pre-Order: scheduled pickup --}}
+                        <div class="field hidden" id="onlinePickupField">
+                            <label for="pickup_date">Scheduled Pick-up Date &amp; Time</label>
+                            <div style="display:flex;gap:.6rem">
+                                <input type="date" id="pickup_date" placeholder="Date" style="flex:1">
+                                <input type="time" id="pickup_time" placeholder="Time" style="flex:1">
+                            </div>
+                            <input type="hidden" name="pickup_at" id="pickup_at">
+                            <div class="hint">Choose when you'll pick up your order.</div>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Payment Method --}}
-                <div class="card">
+                {{-- Payment Method (Dine-In / Take-Out) --}}
+                <div class="card" id="cashPaymentCard">
                     <div class="card-header"><h2><i class="fas fa-wallet"></i> Payment Method</h2></div>
                     <div class="card-body">
                         <div class="option-grid">
@@ -193,6 +206,40 @@
                                 <div class="oc-icon"><i class="fas fa-credit-card"></i></div>
                                 <div class="oc-label">Cashless</div>
                             </label>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Down Payment (Online Pre-Order only) --}}
+                <div class="card hidden" id="downPaymentCard">
+                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Down Payment ({{ \App\Models\Order::DOWN_PAYMENT_PERCENT }}% required)</h2></div>
+                    <div class="card-body">
+                        <div class="hint" style="font-size:.85rem;color:var(--dark);font-weight:600;margin-bottom:.9rem">
+                            Required down-payment: <span id="requiredDownPaymentDisplay">₱0.00</span>
+                        </div>
+
+                        <div class="field" style="margin-top:0">
+                            <label for="down_payment_method">Payment Method</label>
+                            <select id="down_payment_method" name="down_payment_method" style="width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.87rem">
+                                <option value="">Select method...</option>
+                                <option value="gcash">GCash</option>
+                                <option value="maya">Maya</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="other">Other Electronic Payment</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="down_payment_reference">Reference Number</label>
+                            <input type="text" id="down_payment_reference" name="down_payment_reference" placeholder="e.g. GCash reference number">
+                        </div>
+                        <div class="field">
+                            <label for="down_payment_amount">Amount Paid</label>
+                            <input type="number" id="down_payment_amount" name="down_payment_amount" min="1" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="field">
+                            <label for="proof_image">Proof of Payment (screenshot/receipt)</label>
+                            <input type="file" id="proof_image" name="proof_image" accept="image/*">
+                            <div class="hint">Your order will be forwarded to the kitchen only after a cashier verifies this payment.</div>
                         </div>
                     </div>
                 </div>
@@ -248,6 +295,11 @@
 const orderTypeCards = document.querySelectorAll('.option-card[data-type]');
 const tableNumberField = document.getElementById('tableNumberField');
 const pickupTimeField  = document.getElementById('pickupTimeField');
+const onlinePickupField = document.getElementById('onlinePickupField');
+const cashPaymentCard  = document.getElementById('cashPaymentCard');
+const downPaymentCard  = document.getElementById('downPaymentCard');
+const cartTotal = {{ (float) $cart->total }};
+const downPaymentPercent = {{ \App\Models\Order::DOWN_PAYMENT_PERCENT }};
 
 orderTypeCards.forEach(card => {
     card.addEventListener('click', () => {
@@ -258,6 +310,17 @@ orderTypeCards.forEach(card => {
         const type = card.dataset.type;
         tableNumberField.classList.toggle('hidden', type !== 'dine_in');
         pickupTimeField.classList.toggle('hidden', type !== 'takeout');
+        onlinePickupField.classList.toggle('hidden', type !== 'online');
+        cashPaymentCard.classList.toggle('hidden', type === 'online');
+        downPaymentCard.classList.toggle('hidden', type !== 'online');
+
+        if (type === 'online') {
+            const required = (cartTotal * downPaymentPercent / 100).toFixed(2);
+            document.getElementById('requiredDownPaymentDisplay').textContent = '₱' + required;
+            if (! document.getElementById('down_payment_amount').value) {
+                document.getElementById('down_payment_amount').value = required;
+            }
+        }
     });
 });
 
@@ -270,11 +333,22 @@ document.querySelectorAll('.option-card[data-pay]').forEach(card => {
     });
 });
 
+/* Combine pickup date + time into a single datetime field before submit */
+function syncPickupAt() {
+    const date = document.getElementById('pickup_date').value;
+    const time = document.getElementById('pickup_time').value;
+    document.getElementById('pickup_at').value = (date && time) ? `${date} ${time}:00` : '';
+}
+document.getElementById('pickup_date').addEventListener('change', syncPickupAt);
+document.getElementById('pickup_time').addEventListener('change', syncPickupAt);
+
 /* Confirm & submit with duplicate-prevention */
 const form = document.getElementById('checkoutForm');
 const confirmBtn = document.getElementById('confirmOrderBtn');
 
 form.addEventListener('submit', (e) => {
+    syncPickupAt();
+
     if (! confirm('Are you sure you want to place this order?')) {
         e.preventDefault();
         return;
