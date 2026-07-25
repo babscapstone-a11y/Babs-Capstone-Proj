@@ -209,7 +209,29 @@
     </div>
 
     <script>
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        // Re-fetches this page's HTML purely to read a live CSRF token out of it —
+        // used to recover from a 419 (stale token) without a full page reload, which
+        // would otherwise wipe any in-progress client-side state (e.g. a food
+        // server's not-yet-submitted order). Returns false if the session itself
+        // is gone (the request gets redirected to the login page instead).
+        async function refreshCsrfToken() {
+            try {
+                const res = await fetch(window.location.href, { headers: { Accept: 'text/html' } });
+                if (res.redirected && new URL(res.url).pathname.startsWith('/login')) {
+                    return false;
+                }
+                const html = await res.text();
+                const match = html.match(/name="csrf-token"\s+content="([^"]+)"/);
+                if (!match) return false;
+                csrfToken = match[1];
+                document.querySelector('meta[name="csrf-token"]').content = csrfToken;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
 
         function showToast(msg, type = 'success', duration = 3500) {
             const container = document.getElementById('toastContainer');

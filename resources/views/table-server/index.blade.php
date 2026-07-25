@@ -682,9 +682,26 @@
                     items: orderItems.map(it => ({ menu_item_id: it.menu_item_id, quantity: it.quantity, notes: it.notes })),
                 }),
             });
-            const data = await res.json();
 
             closeConfirmModal();
+
+            // A 419 means the session/CSRF token went stale (e.g. the tab was left open
+            // a long time) — the server returns its default HTML error page for this,
+            // not JSON, so it must be caught before res.json() is attempted. Try to
+            // silently refresh the token so the server can retry without losing the
+            // order they've already built up (a full page reload would wipe orderItems).
+            if (res.status === 419) {
+                const refreshed = await refreshCsrfToken();
+                showToast(
+                    refreshed
+                        ? 'Your session had timed out. It has been refreshed — please tap Submit Order again.'
+                        : 'Your session has expired and you have been logged out. Please log back in — your order here will still be waiting.',
+                    refreshed ? 'info' : 'error'
+                );
+                return;
+            }
+
+            const data = await res.json();
 
             if (!res.ok) {
                 const msg = data.errors?.table_number?.[0] || data.errors?.order_type?.[0] || data.errors?.items?.[0] || data.message || 'Failed to submit order.';
