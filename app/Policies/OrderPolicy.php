@@ -8,12 +8,24 @@ use App\Models\User;
 class OrderPolicy
 {
     /**
-     * Cashiers may view/bill an order only once the kitchen has marked it
-     * Ready or Completed, and only if it has not already been paid.
+     * Cashiers may bill an order only once the kitchen has marked it Ready
+     * or Completed, and only if it has not already been paid.
      */
     public function pay(User $user, Order $order): bool
     {
         return $user->isCashier() && $order->isAwaitingPayment();
+    }
+
+    /**
+     * Cashiers may look up any order's detail as soon as it's on the floor
+     * (in the kitchen queue), even before it's ready for billing — this is
+     * read-only visibility, separate from the `pay` gate above. Online
+     * pre-orders stay excluded until approved, mirroring the visibility
+     * scope used to populate the billing search results.
+     */
+    public function view(User $user, Order $order): bool
+    {
+        return $user->isCashier() && (! $order->isOnline() || $order->approval_status === 'approved');
     }
 
     /**

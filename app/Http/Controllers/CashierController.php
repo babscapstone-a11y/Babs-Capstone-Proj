@@ -53,11 +53,12 @@ class CashierController extends Controller
     }
 
     /**
-     * GET /cashier/orders — REQ096: search unpaid, kitchen-ready orders.
+     * GET /cashier/orders — REQ096: search unpaid orders, from the moment
+     * they're placed (not just once kitchen-ready — see scopeVisibleForBilling).
      */
     public function orders(Request $request): JsonResponse
     {
-        $query = Order::awaitingPayment()
+        $query = Order::visibleForBilling()
             ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details']);
 
         if ($search = trim((string) $request->input('q'))) {
@@ -88,7 +89,7 @@ class CashierController extends Controller
      */
     public function showOrder(Order $order): JsonResponse
     {
-        $this->authorize('pay', $order);
+        $this->authorize('view', $order);
 
         $order->load(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem']);
 
@@ -242,6 +243,8 @@ class CashierController extends Controller
             'table_number'      => $order->dineInOrder?->table_number,
             'created_at'        => $order->created_at?->toIso8601String(),
             'status_label'      => $order->status_name,
+            'status_color'      => $order->status_color,
+            'is_awaiting_payment' => $order->isAwaitingPayment(),
             'payment_status_label' => $order->payment_status_label,
             'item_count'        => $order->item_count,
             'total_amount'      => (float) $order->details->sum('subtotal'),
@@ -262,6 +265,8 @@ class CashierController extends Controller
             'delivery_address'     => $order->onlineOrder?->delivery_address,
             'created_at'           => $order->created_at?->toIso8601String(),
             'status_label'         => $order->status_name,
+            'status_color'         => $order->status_color,
+            'is_awaiting_payment'  => $order->isAwaitingPayment(),
             'special_instructions' => $order->special_instructions,
             'item_count'           => $order->item_count,
             'subtotal'             => $subtotal,

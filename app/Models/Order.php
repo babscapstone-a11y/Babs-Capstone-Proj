@@ -100,6 +100,24 @@ class Order extends Model
         return $q->where('order_type', 'online');
     }
 
+    /**
+     * Orders the cashier billing screen's search should surface: anything
+     * unpaid that has reached the kitchen queue, from the moment it's
+     * placed (not just once it's Ready) — visibility is separate from
+     * being allowed to actually take payment (see isAwaitingPayment()).
+     * Online pre-orders stay excluded until approved, same gate the
+     * Kitchen Display System uses, since before that they're still sitting
+     * in the separate Online Orders approval queue, not on the floor.
+     */
+    public function scopeVisibleForBilling(Builder $q): Builder
+    {
+        return $q->where('payment_status', 'pending')
+            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Completed']))
+            ->where(function ($q) {
+                $q->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
+            });
+    }
+
     /* ── Order Number Generation ── */
 
     public static function generateOrderNumber(): string

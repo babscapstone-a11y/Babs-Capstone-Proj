@@ -33,8 +33,14 @@
     }
     .order-result-status {
         font-size: .72rem; font-weight: 700; padding: .2rem .6rem; border-radius: 50px;
-        background: rgba(139,92,246,0.12); color: #8B5CF6; white-space: nowrap;
+        white-space: nowrap;
     }
+    .not-ready-box {
+        text-align: center; padding: 2rem 1.25rem; background: rgba(17,24,39,0.03);
+        border-radius: 12px; margin-top: .5rem;
+    }
+    .not-ready-box i { font-size: 1.8rem; color: var(--muted); margin-bottom: .7rem; display: block; }
+    .not-ready-box p { color: var(--muted); font-size: .88rem; margin: 0; }
     .search-empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; font-size: .88rem; }
     .search-results { max-height: 360px; overflow-y: auto; padding-right: .25rem; }
 
@@ -200,7 +206,7 @@
                         <span class="order-result-chip"><i class="fas fa-clock"></i> ${new Date(o.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
                     </div>
                 </div>
-                <div class="order-result-status">${o.status_label}</div>
+                <div class="order-result-status" style="background:${o.status_color}1a;color:${o.status_color}">${o.status_label}</div>
             </div>
         `).join('');
     }
@@ -275,9 +281,25 @@
     }
 
     async function renderBillingPanel(order) {
-        await ensureDiscountsLoaded();
-
         const panel = document.getElementById('billingPanel');
+
+        if (!order.is_awaiting_payment) {
+            panel.innerHTML = `
+                <div class="not-ready-box">
+                    <i class="fas fa-kitchen-set"></i>
+                    <p><strong>Order #${order.order_number}</strong> is still <strong>${order.status_label}</strong> in the kitchen.<br>
+                    Billing becomes available once it's marked Ready.</p>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-outline btn-block" onclick="cancelBilling()">
+                        <i class="fas fa-xmark"></i> Close
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        await ensureDiscountsLoaded();
         const discountOptions = discountsCache.map(d => {
             const meetsMin = d.minimum_purchase === null || order.subtotal >= d.minimum_purchase;
             return `<option value="${d.id}" ${!meetsMin ? 'disabled' : ''}>
