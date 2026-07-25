@@ -48,7 +48,7 @@
                 <thead>
                     <tr>
                         <th>Order #</th>
-                        <th>Table</th>
+                        <th>Type</th>
                         <th>Items</th>
                         <th>Total</th>
                         <th>Status</th>
@@ -59,7 +59,12 @@
                     @foreach($orders as $order)
                     <tr>
                         <td style="font-weight:700;color:var(--dark)">{{ $order->order_number }}</td>
-                        <td>{{ $order->dineInOrder?->table_number ?? '—' }}</td>
+                        <td>
+                            {{ $order->order_type_label }}
+                            @if($order->dineInOrder?->table_number)
+                                · Table {{ $order->dineInOrder->table_number }}
+                            @endif
+                        </td>
                         <td>{{ $order->item_count }} {{ Str::plural('item', $order->item_count) }}</td>
                         <td style="font-weight:700;color:var(--dark)">₱{{ number_format($order->total_amount, 2) }}</td>
                         <td>

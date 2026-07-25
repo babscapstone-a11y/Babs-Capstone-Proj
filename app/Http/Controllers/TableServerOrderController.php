@@ -64,7 +64,7 @@ class TableServerOrderController extends Controller
                 'customer_id'           => null,
                 'placed_by'             => auth()->id(),
                 'order_status_id'       => $pendingStatus?->id,
-                'order_type'            => 'dine_in',
+                'order_type'            => $request->order_type,
                 'payment_status'        => 'pending',
                 'payment_method'        => 'cash',
                 'special_instructions'  => $request->special_instructions,
@@ -84,10 +84,12 @@ class TableServerOrderController extends Controller
                 ]);
             }
 
-            DineInOrder::create([
-                'order_id'     => $order->id,
-                'table_number' => $request->table_number,
-            ]);
+            if ($request->order_type === 'dine_in') {
+                DineInOrder::create([
+                    'order_id'     => $order->id,
+                    'table_number' => $request->table_number,
+                ]);
+            }
 
             return $order;
         });

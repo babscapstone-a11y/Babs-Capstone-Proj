@@ -39,7 +39,8 @@ class StoreTableServerOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'table_number'          => ['required', 'integer', 'min:1', 'max:999'],
+            'order_type'            => ['required', 'in:dine_in,takeout'],
+            'table_number'          => ['required_if:order_type,dine_in', 'nullable', 'integer', 'min:1', 'max:999'],
             'items'                 => ['required', 'array', 'min:1'],
             'items.*.menu_item_id'  => [
                 'required',

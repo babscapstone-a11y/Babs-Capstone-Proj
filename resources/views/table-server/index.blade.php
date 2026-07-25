@@ -107,6 +107,19 @@
         font-family: inherit; font-size: .95rem; font-weight: 700; color: var(--dark); outline: none;
     }
     .table-number-input:focus { border-color: var(--primary); }
+    .hidden { display: none !important; }
+
+    .order-type-row { margin-top: .8rem; }
+    .order-type-label { font-size: .78rem; font-weight: 600; color: var(--muted); margin-bottom: .35rem; display: block; }
+    .order-type-toggle { display: flex; gap: .5rem; }
+    .ot-btn {
+        flex: 1; padding: .55rem .4rem; border-radius: 10px; border: 1.5px solid var(--border);
+        background: var(--white); color: var(--dark); font-weight: 700; font-size: .82rem;
+        font-family: inherit; cursor: pointer; transition: all .18s;
+        display: flex; align-items: center; justify-content: center; gap: .4rem;
+    }
+    .ot-btn:hover { border-color: var(--primary); }
+    .ot-btn.selected { border-color: var(--primary); background: #FEF2F2; color: var(--primary); }
 
     .order-items-list { flex: 1; overflow-y: auto; padding: .6rem 1.25rem; }
     .order-empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
@@ -302,7 +315,20 @@
     <div class="order-panel">
         <div class="order-panel-header">
             <div class="order-panel-title"><i class="fas fa-receipt" style="color:var(--primary)"></i> Current Order</div>
-            <div class="table-number-row">
+
+            <div class="order-type-row">
+                <label class="order-type-label">Order Type</label>
+                <div class="order-type-toggle">
+                    <button type="button" class="ot-btn selected" id="dineInTypeBtn" data-type="dine_in">
+                        <i class="fas fa-utensils"></i> Dine-In
+                    </button>
+                    <button type="button" class="ot-btn" id="takeoutTypeBtn" data-type="takeout">
+                        <i class="fas fa-bag-shopping"></i> Take-Out
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-number-row" id="tableNumberRow">
                 <label class="table-number-label" for="tableNumberInput">Table Card Number</label>
                 <input type="number" id="tableNumberInput" class="table-number-input" min="1" max="999" placeholder="e.g. 12">
             </div>
@@ -460,6 +486,23 @@
         showToast(`${currentItemName} added to order.`, 'success');
     });
 
+    /* ══ ORDER TYPE TOGGLE ══ */
+    let orderType = 'dine_in';
+    const dineInTypeBtn = document.getElementById('dineInTypeBtn');
+    const takeoutTypeBtn = document.getElementById('takeoutTypeBtn');
+    const tableNumberRow = document.getElementById('tableNumberRow');
+
+    function setOrderType(type) {
+        orderType = type;
+        dineInTypeBtn.classList.toggle('selected', type === 'dine_in');
+        takeoutTypeBtn.classList.toggle('selected', type === 'takeout');
+        tableNumberRow.classList.toggle('hidden', type !== 'dine_in');
+        renderOrderPanel();
+    }
+
+    dineInTypeBtn.addEventListener('click', () => setOrderType('dine_in'));
+    takeoutTypeBtn.addEventListener('click', () => setOrderType('takeout'));
+
     /* ══ ORDER SUMMARY PANEL ══ */
     function renderOrderPanel() {
         const list = document.getElementById('orderItemsList');
@@ -498,7 +541,7 @@
 
         const grandTotal = orderItems.reduce((s, it) => s + it.price * it.quantity, 0);
         document.getElementById('orderGrandTotal').textContent = formatMoney(grandTotal);
-        submitBtn.disabled = orderItems.length === 0 || !tableNumber;
+        submitBtn.disabled = orderItems.length === 0 || (orderType === 'dine_in' && !tableNumber);
     }
 
     function changeOrderQty(idx, delta) {
@@ -538,7 +581,7 @@
     document.getElementById('submitOrderBtn').addEventListener('click', () => {
         if (orderItems.length === 0) return;
         const tableNumber = document.getElementById('tableNumberInput').value;
-        if (!tableNumber) { showToast('Please enter a Table Card Number.', 'error'); return; }
+        if (orderType === 'dine_in' && !tableNumber) { showToast('Please enter a Table Card Number.', 'error'); return; }
 
         openConfirmModal({
             title: 'Submit this order?',
@@ -560,7 +603,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
                 body: JSON.stringify({
-                    table_number: tableNumber,
+                    order_type: orderType,
+                    table_number: orderType === 'dine_in' ? tableNumber : null,
                     items: orderItems.map(it => ({ menu_item_id: it.menu_item_id, quantity: it.quantity, notes: it.notes })),
                 }),
             });
@@ -569,7 +613,7 @@
             closeConfirmModal();
 
             if (!res.ok) {
-                const msg = data.errors?.table_number?.[0] || data.message || 'Failed to submit order.';
+                const msg = data.errors?.table_number?.[0] || data.errors?.order_type?.[0] || data.message || 'Failed to submit order.';
                 showToast(msg, 'error');
                 // Keep the built order intact so the server can fix the table number and retry.
                 return;
@@ -578,6 +622,7 @@
             showToast(data.message, 'success');
             orderItems = [];
             document.getElementById('tableNumberInput').value = '';
+            setOrderType('dine_in');
             renderOrderPanel();
         } catch (e) {
             closeConfirmModal();
