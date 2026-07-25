@@ -294,6 +294,14 @@
 }
 .badge-food     { background: rgba(34,197,94,.85); color: #fff; }
 .badge-beverage { background: rgba(59,130,246,.85); color: #fff; }
+.card-stock-badge {
+    position: absolute; top: 8px; right: 8px;
+    padding: .22rem .6rem; border-radius: 50px;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    backdrop-filter: blur(8px);
+}
+.stock-low { background: rgba(245,158,11,.9); color: #fff; }
+.stock-out { background: rgba(107,114,128,.92); color: #fff; }
 
 .card-body { padding: .85rem; }
 .card-category { font-size: .71rem; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
@@ -311,6 +319,10 @@
 }
 .add-btn:hover { background: var(--primary-dk); transform: scale(1.1); }
 .add-btn:active { transform: scale(.95); }
+.add-btn:disabled {
+    background: #d1d5db; cursor: not-allowed;
+    transform: none !important;
+}
 
 /* ── Empty state ── */
 .empty-state {
@@ -403,6 +415,15 @@
 .modal-add-btn:hover { background: var(--primary-dk); }
 .modal-add-btn:active { transform: scale(.98); }
 .modal-add-btn i { font-size: 1rem; }
+.modal-add-btn:disabled {
+    background: #d1d5db; cursor: not-allowed; transform: none !important;
+}
+.modal-stock-note {
+    font-size: .8rem; font-weight: 600; margin-bottom: 1rem;
+    padding: .6rem .9rem; border-radius: 10px;
+}
+.modal-stock-note.low { background: #fef3c7; color: #92400e; }
+.modal-stock-note.out { background: #f3f4f6; color: #4b5563; }
 
 /* ══════════════════════════════════════════════
    CART DRAWER
@@ -794,7 +815,9 @@
             <p class="modal-desc" id="itemModalDesc"></p>
             <div class="modal-price" id="modalPrice">₱0.00</div>
 
-            <div class="modal-qty-row">
+            <div class="modal-stock-note" id="modalStockNote" style="display:none"></div>
+
+            <div class="modal-qty-row" id="modalQtyRow">
                 <span class="modal-qty-label">Quantity</span>
                 <div class="qty-control">
                     <button class="qty-btn" id="qtyDec" aria-label="Decrease">−</button>
@@ -1005,7 +1028,9 @@ async function apiPost(url, data = {}) {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
         body: JSON.stringify(data),
     });
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Request failed.');
+    return json;
 }
 async function apiPatch(url, data = {}) {
     const res = await fetch(url, {
@@ -1013,14 +1038,18 @@ async function apiPatch(url, data = {}) {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
         body: JSON.stringify(data),
     });
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Request failed.');
+    return json;
 }
 async function apiDelete(url) {
     const res = await fetch(url, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
     });
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Request failed.');
+    return json;
 }
 
 async function changeCartQty(cartItemId, newQty) {
@@ -1032,7 +1061,7 @@ async function changeCartQty(cartItemId, newQty) {
         const ci = cartItems.find(i => i.id === cartItemId);
         if (ci) { ci.quantity = newQty; ci.subtotal = ci.price * newQty; }
         renderCart();
-    } catch(e) { showToast('Failed to update quantity.', 'error'); }
+    } catch(e) { showToast(e.message || 'Failed to update quantity.', 'error'); }
 }
 
 async function removeCartItem(cartItemId) {
@@ -1041,7 +1070,7 @@ async function removeCartItem(cartItemId) {
         cartItems = cartItems.filter(i => i.id !== cartItemId);
         renderCart();
         showToast('Item removed from cart.', 'info');
-    } catch(e) { showToast('Failed to remove item.', 'error'); }
+    } catch(e) { showToast(e.message || 'Failed to remove item.', 'error'); }
 }
 
 /* ══════════════════════════════════════════════
@@ -1057,12 +1086,19 @@ const modalCat     = document.getElementById('modalCategory');
 const modalTypeBadge = document.getElementById('modalTypeBadge');
 const qtyVal       = document.getElementById('qtyVal');
 const addToCartBtn = document.getElementById('addToCartBtn');
-const addToCartTxt = document.getElementById('addToCartBtnText');
+let addToCartTxt = document.getElementById('addToCartBtnText');
+const modalQtyRow    = document.getElementById('modalQtyRow');
+const modalStockNote = document.getElementById('modalStockNote');
+const qtyIncBtn = document.getElementById('qtyInc');
+const qtyDecBtn = document.getElementById('qtyDec');
 
-function openItemModal(id, name, desc, price, category, type, image) {
+let currentMaxQty = null; // null = unlimited (not RTC stock-tracked)
+
+function openItemModal(id, name, desc, price, category, type, image, maxQty) {
     currentItemId    = id;
     currentItemPrice = parseFloat(price);
     currentQty       = 1;
+    currentMaxQty    = (maxQty === null || maxQty === undefined) ? null : Number(maxQty);
 
     if (image && !image.includes('placeholder')) {
         modalImg.src     = image;
@@ -1088,8 +1124,29 @@ function openItemModal(id, name, desc, price, category, type, image) {
     }
 
     qtyVal.textContent = 1;
-    updateModalAddBtn();
-    document.getElementById('qtyDec').disabled = true;
+
+    const soldOut = currentMaxQty !== null && currentMaxQty <= 0;
+    modalQtyRow.style.display = soldOut ? 'none' : '';
+
+    if (currentMaxQty !== null && currentMaxQty <= 10) {
+        modalStockNote.style.display = '';
+        modalStockNote.className = 'modal-stock-note ' + (soldOut ? 'out' : 'low');
+        modalStockNote.innerHTML = soldOut
+            ? '<i class="fas fa-ban"></i> This item is currently sold out.'
+            : '<i class="fas fa-triangle-exclamation"></i> Low stock — limited servings left.';
+    } else {
+        modalStockNote.style.display = 'none';
+    }
+
+    if (soldOut) {
+        addToCartBtn.disabled = true;
+        addToCartTxt.textContent = 'Sold Out';
+    } else {
+        addToCartBtn.disabled = false;
+        updateModalAddBtn();
+    }
+
+    updateQtyButtonStates();
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
@@ -1104,16 +1161,22 @@ function updateModalAddBtn() {
     addToCartTxt.textContent = `Add to Cart — ${formatMoney(currentItemPrice * currentQty)}`;
 }
 
+function updateQtyButtonStates() {
+    qtyDecBtn.disabled = currentQty <= 1;
+    qtyIncBtn.disabled = currentMaxQty !== null && currentQty >= currentMaxQty;
+}
+
 document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-document.getElementById('qtyInc').addEventListener('click', () => {
-    if (currentQty < 99) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
-    document.getElementById('qtyDec').disabled = currentQty <= 1;
+qtyIncBtn.addEventListener('click', () => {
+    const limit = currentMaxQty !== null ? Math.min(99, currentMaxQty) : 99;
+    if (currentQty < limit) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
+    updateQtyButtonStates();
 });
-document.getElementById('qtyDec').addEventListener('click', () => {
+qtyDecBtn.addEventListener('click', () => {
     if (currentQty > 1) { currentQty--; qtyVal.textContent = currentQty; updateModalAddBtn(); }
-    document.getElementById('qtyDec').disabled = currentQty <= 1;
+    updateQtyButtonStates();
 });
 
 addToCartBtn.addEventListener('click', async () => {
@@ -1134,10 +1197,11 @@ addToCartBtn.addEventListener('click', async () => {
         closeModal();
         showToast(data.message || 'Added to cart!', 'success');
     } catch(e) {
-        showToast('Failed to add item to cart.', 'error');
+        showToast(e.message || 'Failed to add item to cart.', 'error');
     } finally {
         addToCartBtn.disabled = false;
         addToCartBtn.innerHTML = `<i class="fas fa-cart-plus"></i><span id="addToCartBtnText">Add to Cart — ${formatMoney(currentItemPrice * currentQty)}</span>`;
+        addToCartTxt = document.getElementById('addToCartBtnText');
     }
 });
 

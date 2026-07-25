@@ -80,6 +80,16 @@ class CartController extends Controller
             ->where('menu_item_id', $menuItem->id)
             ->first();
 
+        if ($menuItem->isRtcTracked()) {
+            $resultingQty = ($cartItem?->quantity ?? 0) + $request->quantity;
+
+            if ($resultingQty > $menuItem->available_stock) {
+                return response()->json([
+                    'message' => "Only {$menuItem->available_stock} serving(s) of {$menuItem->menu_name} left.",
+                ], 422);
+            }
+        }
+
         if ($cartItem) {
             $cartItem->increment('quantity', $request->quantity);
         } else {
@@ -108,6 +118,16 @@ class CartController extends Controller
             'quantity' => ['sometimes', 'required', 'integer', 'min:1', 'max:99'],
             'notes'    => ['sometimes', 'nullable', 'string', 'max:255'],
         ]);
+
+        if ($request->filled('quantity')) {
+            $menuItem = $cartItem->menuItem;
+
+            if ($menuItem->isRtcTracked() && (int) $request->quantity > $menuItem->available_stock) {
+                return response()->json([
+                    'message' => "Only {$menuItem->available_stock} serving(s) of {$menuItem->menu_name} left.",
+                ], 422);
+            }
+        }
 
         $cartItem->update($request->only(['quantity', 'notes']));
 

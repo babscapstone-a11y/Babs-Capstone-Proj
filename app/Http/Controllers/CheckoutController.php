@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Cart;
 use App\Models\DineInOrder;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatus;
@@ -56,6 +57,24 @@ class CheckoutController extends Controller
         if (! $customer) {
             return redirect()->route('cart.index')
                 ->with('error', 'We could not find your customer profile. Please contact support.');
+        }
+
+        // Re-check RTC stock right before placing the order — stock can have
+        // changed since items were added to the cart. No reservation happens
+        // here (this system only ever deducts stock once kitchen staff move
+        // the order to Processing); this is just a courtesy re-check.
+        $shortages = [];
+        foreach ($cart->items as $item) {
+            $menuItem = MenuItem::find($item->menu_item_id);
+
+            if ($menuItem && $menuItem->isRtcTracked() && $item->quantity > $menuItem->available_stock) {
+                $shortages[] = "{$menuItem->menu_name} (only {$menuItem->available_stock} left)";
+            }
+        }
+
+        if ($shortages) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Some items in your cart no longer have enough stock: ' . implode(', ', $shortages) . '. Please update your cart.');
         }
 
         $pendingStatus = OrderStatus::where('status_name', 'Pending')->first();

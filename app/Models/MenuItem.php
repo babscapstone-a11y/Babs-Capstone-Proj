@@ -80,6 +80,25 @@ class MenuItem extends Model
         return 'available';
     }
 
+    /**
+     * Whether this dish's orderable quantity is capped by RTC servings
+     * stock (vs. beverages / food items never set up through conversion,
+     * which remain unlimited aside from the manual is_available toggle).
+     */
+    public function isRtcTracked(): bool
+    {
+        return $this->item_type === 'food' && $this->rtc_quantity !== null;
+    }
+
+    /**
+     * How many servings can actually be ordered right now. Null means
+     * "not stock-tracked" (no cap), not "zero available".
+     */
+    public function getAvailableStockAttribute(): ?int
+    {
+        return $this->isRtcTracked() ? (int) floor((float) $this->rtc_servings) : null;
+    }
+
     /* ── Helpers ─────────────────────────────────────────────── */
 
     public function getImageUrlAttribute(): string

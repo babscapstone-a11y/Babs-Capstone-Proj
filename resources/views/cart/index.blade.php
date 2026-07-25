@@ -224,14 +224,18 @@ async function apiPatch(url, data = {}) {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
         body: JSON.stringify(data),
     });
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Request failed.');
+    return json;
 }
 async function apiDelete(url) {
     const res = await fetch(url, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
     });
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || 'Request failed.');
+    return json;
 }
 
 function recalcItemCount() {
@@ -268,7 +272,7 @@ async function changeQty(cartItemId, newQty) {
         document.getElementById(`subtotal-${cartItemId}`).textContent = formatMoney(price * newQty);
         updateTotals(data.total, data.count);
     } catch (e) {
-        showToast('Failed to update quantity.', 'error');
+        showToast(e.message || 'Failed to update quantity.', 'error');
     }
 }
 
@@ -277,7 +281,7 @@ async function saveNotes(cartItemId, notes) {
         await apiPatch(`/cart/${cartItemId}/update`, { notes });
         showToast('Note saved.', 'info');
     } catch (e) {
-        showToast('Failed to save note.', 'error');
+        showToast(e.message || 'Failed to save note.', 'error');
     }
 }
 
@@ -298,7 +302,7 @@ async function doRemove(cartItemId) {
         showToast('Item removed from cart.', 'info');
     } catch (e) {
         row.classList.remove('removing');
-        showToast('Failed to remove item.', 'error');
+        showToast(e.message || 'Failed to remove item.', 'error');
     }
 }
 

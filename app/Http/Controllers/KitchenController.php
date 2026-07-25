@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateOrderKitchenStatusRequest;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class KitchenController extends Controller
@@ -70,13 +72,80 @@ class KitchenController extends Controller
 
         $newStatus = OrderStatus::where('status_name', $requestedStatus)->firstOrFail();
 
-        $order->update(['order_status_id' => $newStatus->id]);
+        // Starting to prepare an order is the moment RTC stock actually gets
+        // consumed — mirrors the manual raw→RTC conversion pattern, just
+        // triggered automatically by this status move instead of a staff form.
+        if ($currentStatus === 'Pending' && $requestedStatus === 'Processing') {
+            $error = $this->deductRtcStockForOrder($order, $newStatus);
+
+            if ($error) {
+                return response()->json(['message' => $error], 422);
+            }
+        } else {
+            $order->update(['order_status_id' => $newStatus->id]);
+        }
+
         $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
 
         return response()->json([
             'message' => "Order #{$order->order_number} has been marked as {$order->kitchen_status_label}.",
             'order'   => $this->serializeOrder($order),
         ]);
+    }
+
+    /**
+     * Locks the order and every RTC-tracked menu item it references, checks
+     * each has enough rtc_servings to cover the order's quantities, then
+     * deducts them and advances the order status — all inside one
+     * transaction so concurrent "start preparing" clicks can't oversell the
+     * same servings. Returns an error message on insufficient stock, or
+     * null on success.
+     */
+    private function deductRtcStockForOrder(Order $order, OrderStatus $newStatus): ?string
+    {
+        return DB::transaction(function () use ($order, $newStatus) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $details     = $lockedOrder->details()->get();
+
+            $quantityByMenuItem = $details->groupBy('menu_item_id')
+                ->map(fn ($group) => $group->sum('quantity'));
+
+            $menuItems = MenuItem::whereIn('id', $quantityByMenuItem->keys())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($quantityByMenuItem as $menuItemId => $neededQty) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if (! $menuItem || ! $menuItem->isRtcTracked()) {
+                    continue;
+                }
+
+                if ($neededQty > $menuItem->available_stock) {
+                    return "Not enough RTC stock for {$menuItem->menu_name} (need {$neededQty}, have {$menuItem->available_stock}). Convert more stock before starting this order.";
+                }
+            }
+
+            $now = now();
+
+            foreach ($quantityByMenuItem as $menuItemId => $neededQty) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if (! $menuItem || ! $menuItem->isRtcTracked()) {
+                    continue;
+                }
+
+                $menuItem->update(['rtc_servings' => $menuItem->rtc_servings - $neededQty]);
+
+                $details->where('menu_item_id', $menuItemId)
+                    ->each(fn ($detail) => $detail->update(['rtc_deducted_at' => $now]));
+            }
+
+            $lockedOrder->update(['order_status_id' => $newStatus->id]);
+
+            return null;
+        });
     }
 
     private function serializeOrder(Order $order): array
