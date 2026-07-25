@@ -73,6 +73,13 @@
     }
     .badge { display: inline-flex; align-items: center; gap: .3rem; border-radius: 50px; font-size: .68rem; font-weight: 700; padding: .22rem .6rem; white-space: nowrap; }
     .badge-avail-no { background: rgba(255,255,255,0.92); color: #4B5563; }
+    .card-stock-badge {
+        position: absolute; top: 8px; right: 8px;
+        padding: .2rem .55rem; border-radius: 50px;
+        font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+        backdrop-filter: blur(8px);
+    }
+    .stock-low { background: rgba(245,158,11,.9); color: #fff; }
 
     .card-body { padding: .8rem; }
     .card-category { font-size: .68rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .2rem; }
@@ -183,6 +190,12 @@
     .modal-name { font-size: 1.3rem; font-weight: 800; color: var(--dark); margin: 0 0 .4rem; }
     .modal-desc { font-size: .86rem; color: var(--muted); line-height: 1.6; margin: 0 0 1rem; }
     .modal-price { font-size: 1.4rem; font-weight: 900; color: var(--primary); margin-bottom: 1.2rem; }
+    .modal-stock-note {
+        font-size: .78rem; font-weight: 600; margin-bottom: 1rem;
+        padding: .55rem .85rem; border-radius: 10px;
+    }
+    .modal-stock-note.low { background: #fef3c7; color: #92400e; }
+    .modal-stock-note.out { background: #f3f4f6; color: #4b5563; }
     .modal-qty-row { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 12px; padding: .9rem 1.1rem; margin-bottom: 1rem; }
     .modal-qty-label { font-size: .86rem; font-weight: 600; color: var(--dark); }
     .qty-control { display: flex; align-items: center; gap: .7rem; }
@@ -202,6 +215,7 @@
         display: flex; align-items: center; justify-content: center; gap: .6rem;
     }
     .modal-add-btn:hover { background: var(--primary-dk); }
+    .modal-add-btn:disabled { background: #d1d5db; cursor: not-allowed; }
 </style>
 @endsection
 
@@ -374,7 +388,9 @@
             <p class="modal-desc" id="itemModalDesc"></p>
             <div class="modal-price" id="modalPrice">₱0.00</div>
 
-            <div class="modal-qty-row">
+            <div class="modal-stock-note" id="modalStockNote" style="display:none"></div>
+
+            <div class="modal-qty-row" id="modalQtyRow">
                 <span class="modal-qty-label">Quantity</span>
                 <div class="qty-control">
                     <button class="qty-btn" id="qtyDec" aria-label="Decrease">−</button>
@@ -399,8 +415,13 @@
 @section('scripts')
 <script>
     /* ══ STATE ══ */
-    let orderItems = []; // { menu_item_id, name, price, quantity, notes }
+    let orderItems = []; // { menu_item_id, name, price, quantity, notes, maxQty }
     let currentItemId = null, currentItemName = '', currentItemPrice = 0, currentQty = 1;
+    let currentMaxQty = null; // null = unlimited (not RTC stock-tracked)
+
+    function totalQtyForItem(menuItemId, excludeIdx = null) {
+        return orderItems.reduce((sum, it, i) => (i !== excludeIdx && it.menu_item_id === menuItemId) ? sum + it.quantity : sum, 0);
+    }
 
     function formatMoney(n) { return '₱' + parseFloat(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -416,13 +437,18 @@
     const qtyVal = document.getElementById('qtyVal');
     const notesInput = document.getElementById('modalNotesInput');
     const addToOrderBtn = document.getElementById('addToOrderBtn');
-    const addToOrderTxt = document.getElementById('addToOrderBtnText');
+    let addToOrderTxt = document.getElementById('addToOrderBtnText');
+    const modalQtyRow = document.getElementById('modalQtyRow');
+    const modalStockNote = document.getElementById('modalStockNote');
+    const qtyIncBtn = document.getElementById('qtyInc');
+    const qtyDecBtn = document.getElementById('qtyDec');
 
-    function openItemModal(id, name, desc, price, category, type, image) {
+    function openItemModal(id, name, desc, price, category, type, image, maxQty) {
         currentItemId = id;
         currentItemName = name;
         currentItemPrice = parseFloat(price);
         currentQty = 1;
+        currentMaxQty = (maxQty === null || maxQty === undefined) ? null : Number(maxQty);
         notesInput.value = '';
 
         if (image && !image.includes('placeholder')) {
@@ -444,7 +470,29 @@
         }
 
         qtyVal.textContent = 1;
-        updateModalAddBtn();
+
+        const soldOut = currentMaxQty !== null && currentMaxQty <= 0;
+        modalQtyRow.style.display = soldOut ? 'none' : '';
+
+        if (currentMaxQty !== null && currentMaxQty <= 10) {
+            modalStockNote.style.display = '';
+            modalStockNote.className = 'modal-stock-note ' + (soldOut ? 'out' : 'low');
+            modalStockNote.innerHTML = soldOut
+                ? '<i class="fas fa-ban"></i> This item is currently sold out.'
+                : `<i class="fas fa-triangle-exclamation"></i> Low stock — only ${currentMaxQty} serving(s) left.`;
+        } else {
+            modalStockNote.style.display = 'none';
+        }
+
+        if (soldOut) {
+            addToOrderBtn.disabled = true;
+            addToOrderTxt.textContent = 'Sold Out';
+        } else {
+            addToOrderBtn.disabled = false;
+            updateModalAddBtn();
+        }
+
+        updateQtyButtonStates();
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
@@ -459,19 +507,34 @@
         addToOrderTxt.textContent = `Add to Order — ${formatMoney(currentItemPrice * currentQty)}`;
     }
 
+    function updateQtyButtonStates() {
+        qtyDecBtn.disabled = currentQty <= 1;
+        qtyIncBtn.disabled = currentMaxQty !== null && currentQty >= currentMaxQty;
+    }
+
     document.getElementById('modalCloseBtn').addEventListener('click', closeItemModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeItemModal(); });
 
-    document.getElementById('qtyInc').addEventListener('click', () => {
-        if (currentQty < 99) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
+    qtyIncBtn.addEventListener('click', () => {
+        const limit = currentMaxQty !== null ? Math.min(99, currentMaxQty) : 99;
+        if (currentQty < limit) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
+        updateQtyButtonStates();
     });
-    document.getElementById('qtyDec').addEventListener('click', () => {
+    qtyDecBtn.addEventListener('click', () => {
         if (currentQty > 1) { currentQty--; qtyVal.textContent = currentQty; updateModalAddBtn(); }
-        document.getElementById('qtyDec').disabled = currentQty <= 1;
+        updateQtyButtonStates();
     });
 
     addToOrderBtn.addEventListener('click', () => {
         if (!currentItemId) return;
+
+        if (currentMaxQty !== null) {
+            const alreadySelected = totalQtyForItem(currentItemId);
+            if (alreadySelected + currentQty > currentMaxQty) {
+                showToast(`Only ${currentMaxQty} serving(s) of ${currentItemName} left — you already have ${alreadySelected} in this order.`, 'error');
+                return;
+            }
+        }
 
         orderItems.push({
             menu_item_id: currentItemId,
@@ -479,6 +542,7 @@
             price: currentItemPrice,
             quantity: currentQty,
             notes: notesInput.value.trim() || null,
+            maxQty: currentMaxQty,
         });
 
         renderOrderPanel();
@@ -548,6 +612,16 @@
         const newQty = orderItems[idx].quantity + delta;
         if (newQty < 1) { removeOrderItem(idx); return; }
         if (newQty > 99) return;
+
+        const maxQty = orderItems[idx].maxQty;
+        if (maxQty !== null && maxQty !== undefined) {
+            const otherQty = totalQtyForItem(orderItems[idx].menu_item_id, idx);
+            if (otherQty + newQty > maxQty) {
+                showToast(`Only ${maxQty} serving(s) of ${orderItems[idx].name} left.`, 'error');
+                return;
+            }
+        }
+
         orderItems[idx].quantity = newQty;
         renderOrderPanel();
     }
@@ -613,7 +687,7 @@
             closeConfirmModal();
 
             if (!res.ok) {
-                const msg = data.errors?.table_number?.[0] || data.errors?.order_type?.[0] || data.message || 'Failed to submit order.';
+                const msg = data.errors?.table_number?.[0] || data.errors?.order_type?.[0] || data.errors?.items?.[0] || data.message || 'Failed to submit order.';
                 showToast(msg, 'error');
                 // Keep the built order intact so the server can fix the table number and retry.
                 return;

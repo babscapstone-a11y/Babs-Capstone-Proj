@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\DineInOrder;
+use App\Models\MenuItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
@@ -69,6 +70,33 @@ class StoreTableServerOrderRequest extends FormRequest
                     "Table {$this->table_number} already has an active order in progress. Please choose another table or wait until it is completed."
                 );
             }
+        });
+
+        $validator->after(function (Validator $validator) {
+            $items = collect($this->input('items', []))->filter(fn ($line) => isset($line['menu_item_id'], $line['quantity']));
+
+            if ($items->isEmpty()) {
+                return;
+            }
+
+            $menuItems = MenuItem::whereIn('id', $items->pluck('menu_item_id'))->get()->keyBy('id');
+
+            $items->groupBy('menu_item_id')->each(function ($group, $menuItemId) use ($validator, $menuItems) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if (! $menuItem || ! $menuItem->isRtcTracked()) {
+                    return;
+                }
+
+                $needed = $group->sum('quantity');
+
+                if ($needed > $menuItem->available_stock) {
+                    $validator->errors()->add(
+                        'items',
+                        "Only {$menuItem->available_stock} serving(s) of {$menuItem->menu_name} left."
+                    );
+                }
+            });
         });
     }
 }
