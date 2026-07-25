@@ -11,23 +11,22 @@ class StoreOrderRequest extends FormRequest
         return auth('customer')->check();
     }
 
+    /**
+     * Customer self-checkout only ever places online orders now (Advance
+     * Order / Pick-Up are both order_type "online", identical requirements —
+     * they differ only in how the customer frames the request, not in how
+     * it's processed). Dine-In orders are placed by table servers, not here.
+     */
     public function rules(): array
     {
-        $rules = [
-            'order_type'           => ['required', 'in:dine_in,takeout,online'],
-            'payment_method'       => ['required_unless:order_type,online', 'nullable', 'in:cash,cashless'],
-            'table_number'         => ['nullable', 'integer', 'min:1', 'max:999'],
-            'special_instructions' => ['nullable', 'string', 'max:500'],
+        return [
+            'order_type'              => ['required', 'in:online'],
+            'special_instructions'    => ['nullable', 'string', 'max:500'],
+            'pickup_at'               => ['required', 'date', 'after:now'],
+            'down_payment_method'     => ['required', 'in:gcash,maya,bank_transfer,other'],
+            'down_payment_reference'  => ['required', 'string', 'max:100'],
+            'down_payment_amount'     => ['required', 'numeric', 'min:1'],
+            'proof_image'             => ['required', 'image', 'max:5120'],
         ];
-
-        if ($this->input('order_type') === 'online') {
-            $rules['pickup_at']              = ['required', 'date', 'after:now'];
-            $rules['down_payment_method']    = ['required', 'in:gcash,maya,bank_transfer,other'];
-            $rules['down_payment_reference'] = ['required', 'string', 'max:100'];
-            $rules['down_payment_amount']    = ['required', 'numeric', 'min:1'];
-            $rules['proof_image']            = ['required', 'image', 'max:5120'];
-        }
-
-        return $rules;
     }
 }

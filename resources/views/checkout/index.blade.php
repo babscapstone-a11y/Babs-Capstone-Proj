@@ -42,11 +42,9 @@
 .info-item .label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .2rem; }
 .info-item .value { font-size: .92rem; font-weight: 600; color: var(--dark); }
 
-/* Order type / payment selector */
+/* Order type selector */
 .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.option-grid.three { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 700px) { .option-grid.three { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .option-grid, .option-grid.three { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .option-grid { grid-template-columns: 1fr; } }
 
 .option-card {
     position: relative; border: 1.5px solid var(--border); border-radius: 14px;
@@ -59,13 +57,6 @@
 .option-card .oc-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
 .option-card.selected { border-color: var(--primary); background: #FEF2F2; }
 .option-card.selected .oc-icon { color: var(--primary); }
-.option-card.disabled { opacity: .5; cursor: not-allowed; }
-.option-card.disabled:hover { border-color: var(--border); }
-.oc-badge {
-    position: absolute; top: -8px; right: 10px;
-    background: var(--accent); color: #fff; font-size: .62rem; font-weight: 700;
-    padding: .15rem .5rem; border-radius: 20px;
-}
 
 .field { margin-top: 1rem; }
 .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--dark); margin-bottom: .4rem; }
@@ -76,8 +67,6 @@
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--primary); }
 .field textarea { resize: vertical; min-height: 80px; }
 .field .hint { font-size: .74rem; color: var(--muted); margin-top: .3rem; }
-.field.hidden { display: none; }
-.hidden { display: none !important; }
 
 /* Order summary sidebar */
 .summary-card { position: sticky; top: calc(var(--nav-h) + 1.5rem); }
@@ -144,41 +133,23 @@
                 <div class="card">
                     <div class="card-header"><h2><i class="fas fa-utensils"></i> Order Type</h2></div>
                     <div class="card-body">
-                        <div class="option-grid three">
-                            <label class="option-card selected" data-type="dine_in">
-                                <input type="radio" name="order_type" value="dine_in" checked>
-                                <div class="oc-icon"><i class="fas fa-utensils"></i></div>
-                                <div class="oc-label">Dine-In</div>
-                            </label>
-                            <label class="option-card" data-type="takeout">
-                                <input type="radio" name="order_type" value="takeout">
-                                <div class="oc-icon"><i class="fas fa-bag-shopping"></i></div>
-                                <div class="oc-label">Take-Out</div>
+                        <div class="option-grid">
+                            <label class="option-card selected" data-type="online">
+                                <input type="radio" name="order_type" value="online" checked>
+                                <div class="oc-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div class="oc-label">Advance Order</div>
+                                <div class="oc-sub">Schedule ahead, pay online</div>
                             </label>
                             <label class="option-card" data-type="online">
                                 <input type="radio" name="order_type" value="online">
                                 <div class="oc-icon"><i class="fas fa-mobile-screen-button"></i></div>
-                                <div class="oc-label">Online Pre-Order</div>
-                                <div class="oc-sub">Pay online, pick up later</div>
+                                <div class="oc-label">Pick-Up</div>
+                                <div class="oc-sub">Pay online, pick up soon</div>
                             </label>
                         </div>
 
-                        {{-- Dine-In fields --}}
-                        <div class="field" id="tableNumberField">
-                            <label for="table_number">Table Number <span style="color:var(--muted);font-weight:500">(optional — assigned at the counter if left blank)</span></label>
-                            <input type="number" id="table_number" name="table_number" min="1" max="999" value="{{ old('table_number') }}" placeholder="e.g. 12">
-                        </div>
-
-                        {{-- Take-Out info --}}
-                        <div class="field hidden" id="pickupTimeField">
-                            <label>Estimated Pick-Up Time</label>
-                            <div class="hint" style="font-size:.85rem;color:var(--dark);font-weight:600">
-                                <i class="fas fa-clock" style="color:var(--accent)"></i> Approximately 30 minutes after order confirmation
-                            </div>
-                        </div>
-
-                        {{-- Online Pre-Order: scheduled pickup --}}
-                        <div class="field hidden" id="onlinePickupField">
+                        {{-- Scheduled pickup --}}
+                        <div class="field" id="onlinePickupField">
                             <label for="pickup_date">Scheduled Pick-up Date &amp; Time</label>
                             <div style="display:flex;gap:.6rem">
                                 <input type="date" id="pickup_date" placeholder="Date" style="flex:1">
@@ -190,28 +161,8 @@
                     </div>
                 </div>
 
-                {{-- Payment Method (Dine-In / Take-Out) --}}
-                <div class="card" id="cashPaymentCard">
-                    <div class="card-header"><h2><i class="fas fa-wallet"></i> Payment Method</h2></div>
-                    <div class="card-body">
-                        <div class="option-grid">
-                            <label class="option-card selected" data-pay="cash">
-                                <input type="radio" name="payment_method" value="cash" checked>
-                                <div class="oc-icon"><i class="fas fa-money-bill-wave"></i></div>
-                                <div class="oc-label">Cash</div>
-                            </label>
-                            <label class="option-card disabled">
-                                <span class="oc-badge">Coming Soon</span>
-                                <input type="radio" disabled>
-                                <div class="oc-icon"><i class="fas fa-credit-card"></i></div>
-                                <div class="oc-label">Cashless</div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Down Payment (Online Pre-Order only) --}}
-                <div class="card hidden" id="downPaymentCard">
+                {{-- Down Payment --}}
+                <div class="card" id="downPaymentCard">
                     <div class="card-header"><h2><i class="fas fa-qrcode"></i> Down Payment ({{ \App\Models\Order::DOWN_PAYMENT_PERCENT }}% required)</h2></div>
                     <div class="card-body">
                         <div class="hint" style="font-size:.85rem;color:var(--dark);font-weight:600;margin-bottom:.9rem">
@@ -291,13 +242,9 @@
 
 @section('scripts')
 <script>
-/* Order type selector */
+/* Order type selector — Advance Order / Pick-Up both submit order_type=online
+   and require the same fields, so this is purely visual selection feedback. */
 const orderTypeCards = document.querySelectorAll('.option-card[data-type]');
-const tableNumberField = document.getElementById('tableNumberField');
-const pickupTimeField  = document.getElementById('pickupTimeField');
-const onlinePickupField = document.getElementById('onlinePickupField');
-const cashPaymentCard  = document.getElementById('cashPaymentCard');
-const downPaymentCard  = document.getElementById('downPaymentCard');
 const cartTotal = {{ (float) $cart->total }};
 const downPaymentPercent = {{ \App\Models\Order::DOWN_PAYMENT_PERCENT }};
 
@@ -306,32 +253,13 @@ orderTypeCards.forEach(card => {
         orderTypeCards.forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         card.querySelector('input').checked = true;
-
-        const type = card.dataset.type;
-        tableNumberField.classList.toggle('hidden', type !== 'dine_in');
-        pickupTimeField.classList.toggle('hidden', type !== 'takeout');
-        onlinePickupField.classList.toggle('hidden', type !== 'online');
-        cashPaymentCard.classList.toggle('hidden', type === 'online');
-        downPaymentCard.classList.toggle('hidden', type !== 'online');
-
-        if (type === 'online') {
-            const required = (cartTotal * downPaymentPercent / 100).toFixed(2);
-            document.getElementById('requiredDownPaymentDisplay').textContent = '₱' + required;
-            if (! document.getElementById('down_payment_amount').value) {
-                document.getElementById('down_payment_amount').value = required;
-            }
-        }
     });
 });
 
-/* Payment method selector */
-document.querySelectorAll('.option-card[data-pay]').forEach(card => {
-    card.addEventListener('click', () => {
-        document.querySelectorAll('.option-card[data-pay]').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        card.querySelector('input').checked = true;
-    });
-});
+/* Every order requires the down payment — compute it once up front. */
+const requiredDownPayment = (cartTotal * downPaymentPercent / 100).toFixed(2);
+document.getElementById('requiredDownPaymentDisplay').textContent = '₱' + requiredDownPayment;
+document.getElementById('down_payment_amount').value = requiredDownPayment;
 
 /* Combine pickup date + time into a single datetime field before submit */
 function syncPickupAt() {
