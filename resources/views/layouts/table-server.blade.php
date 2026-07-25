@@ -22,6 +22,9 @@
             --bg:         #F8FAFC;
             --muted:      #6B7280;
             --border:     rgba(17,24,39,0.08);
+            --status-ready:     #16A34A;
+            --status-served:    #2563EB;
+            --status-packaged:  #F59E0B;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Poppins', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--dark); }
@@ -155,15 +158,20 @@
         </div>
 
         <div class="kds-topbar-right">
-            @if(request()->routeIs('table-server.orders.index'))
-                <a href="{{ route('table-server.index') }}" class="nav-link-ts">
-                    <i class="fas fa-utensils"></i> Take Order
+            @php
+                $tsNavItems = [
+                    ['route' => 'table-server.index',         'icon' => 'fa-utensils',         'label' => 'Take Order',    'active' => request()->routeIs('table-server.index')],
+                    ['route' => 'table-server.service.index', 'icon' => 'fa-bell-concierge',    'label' => 'Ready Orders',  'active' => request()->routeIs('table-server.service.*')],
+                    ['route' => 'table-server.orders.index',  'icon' => 'fa-receipt',           'label' => 'My Orders',     'active' => request()->routeIs('table-server.orders.index')],
+                ];
+            @endphp
+            @foreach($tsNavItems as $navItem)
+                @if(! $navItem['active'])
+                <a href="{{ route($navItem['route']) }}" class="nav-link-ts">
+                    <i class="fas {{ $navItem['icon'] }}"></i> {{ $navItem['label'] }}
                 </a>
-            @else
-                <a href="{{ route('table-server.orders.index') }}" class="nav-link-ts">
-                    <i class="fas fa-receipt"></i> My Orders
-                </a>
-            @endif
+                @endif
+            @endforeach
             <div class="kds-datetime">
                 <div class="kds-date">{{ now()->format('l, F d, Y') }}</div>
                 <div class="kds-clock" id="liveClock">--:--:-- --</div>

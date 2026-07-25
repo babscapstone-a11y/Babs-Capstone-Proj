@@ -19,6 +19,7 @@ use App\Http\Controllers\StaffPasswordResetController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\CustomerProfileController;
 use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\TableServerFulfillmentController;
 use App\Http\Controllers\TableServerOrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -157,6 +158,15 @@ Route::middleware(['auth', 'table_server'])->prefix('table-server')->name('table
     Route::get('/',        [TableServerOrderController::class, 'index'])    ->name('index');
     Route::post('/orders', [TableServerOrderController::class, 'store'])    ->name('orders.store');
     Route::get('/orders',  [TableServerOrderController::class, 'myOrders']) ->name('orders.index');
+});
+
+/* ── Order Completion & Service Fulfillment (Table Server only) — Module 20 ─── */
+Route::middleware(['auth', 'table_server'])->prefix('table-server/service')->name('table-server.service.')->group(function () {
+    Route::get('/',                  [TableServerFulfillmentController::class, 'index'])       ->name('index');
+    Route::get('/orders',            [TableServerFulfillmentController::class, 'readyOrders'])  ->name('orders');
+    Route::get('/{order}',           [TableServerFulfillmentController::class, 'show'])         ->name('show');
+    Route::post('/{order}/serve',    [TableServerFulfillmentController::class, 'serve'])        ->name('serve');
+    Route::post('/{order}/package',  [TableServerFulfillmentController::class, 'package'])      ->name('package');
 });
 
 /* ── Customer Profile Module (REQ063–REQ065) ─────────────────── */

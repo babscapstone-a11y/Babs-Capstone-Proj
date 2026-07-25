@@ -323,11 +323,17 @@
 
     {{-- Status timeline --}}
     @php
-        $allStatuses   = ['Pending', 'Processing', 'Ready', 'Completed'];
-        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), 'Completed' => 'Completed'];
+        // Dine-in orders get "Served" at the table; take-out/online orders get
+        // "Packaged" at the counter — the step between Ready and Completed
+        // differs by order type, same split the food-server module uses.
+        $handoffStatus = $order->order_type === 'dine_in' ? 'Served' : 'Packaged';
+        $handoffLabel  = $order->order_type === 'dine_in' ? 'Served' : 'Packaged';
+        $handoffIcon   = $order->order_type === 'dine_in' ? 'fa-utensils' : 'fa-box';
+        $allStatuses   = ['Pending', 'Processing', 'Ready', $handoffStatus, 'Completed'];
+        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), $handoffStatus => $handoffLabel, 'Completed' => 'Completed'];
         $cancelledRaw  = $order->isCancelled();
         $currentStatus = $order->status_name;
-        $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', 'Completed' => 'fa-circle-check'];
+        $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
         $currentIdx    = array_search($currentStatus, $allStatuses);
         $awaitingApproval = $order->isOnline() && in_array($order->approval_status, ['pending', 'rejected', 'cancelled'], true);
     @endphp

@@ -15,6 +15,7 @@ class Order extends Model
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'cancelled_at', 'cancellation_reason',
         'pickup_at', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
+        'ready_at', 'served_by', 'served_at', 'packaged_at',
     ];
 
     protected $casts = [
@@ -22,6 +23,9 @@ class Order extends Model
         'cancelled_at' => 'datetime',
         'pickup_at'    => 'datetime',
         'reviewed_at'  => 'datetime',
+        'ready_at'     => 'datetime',
+        'served_at'    => 'datetime',
+        'packaged_at'  => 'datetime',
     ];
 
     /** Percentage of the order total a customer must pay upfront for an online pre-order. */
@@ -74,6 +78,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function servedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'served_by');
+    }
+
     public function cancellationRequest(): HasOne
     {
         return $this->hasOne(CancellationRequest::class);
@@ -82,13 +91,15 @@ class Order extends Model
     /* ── Scopes ── */
 
     /**
-     * Orders the cashier is allowed to bill: kitchen has marked them Ready or
-     * Completed, and no payment has been recorded for them yet.
+     * Orders the cashier is allowed to bill: kitchen/food-server has moved
+     * them to Ready, Served, or Packaged (or a kitchen self-completed them
+     * without going through the food-server handoff), and no payment has
+     * been recorded for them yet.
      */
     public function scopeAwaitingPayment(Builder $q): Builder
     {
         return $q->where('payment_status', 'pending')
-            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Ready', 'Completed']));
+            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Ready', 'Served', 'Packaged', 'Completed']));
     }
 
     /**
@@ -112,10 +123,32 @@ class Order extends Model
     public function scopeVisibleForBilling(Builder $q): Builder
     {
         return $q->where('payment_status', 'pending')
-            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Completed']))
+            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served', 'Packaged', 'Completed']))
             ->where(function ($q) {
                 $q->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
             });
+    }
+
+    /**
+     * Orders the food-server fulfillment board surfaces: Ready (needs
+     * action) plus today's Served/Packaged (recently handled, kept visible
+     * for the summary counts and quick lookup). Mirrors the Kitchen board's
+     * own "Completed today" pattern.
+     */
+    public function scopeVisibleForFulfillment(Builder $q): Builder
+    {
+        return $q->where(function ($query) {
+            $query->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Ready'))
+                ->orWhere(function ($sub) {
+                    $sub->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Served', 'Packaged']))
+                        ->where(function ($dateQ) {
+                            $dateQ->whereDate('served_at', today())->orWhereDate('packaged_at', today());
+                        });
+                });
+        })
+        ->where(function ($query) {
+            $query->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
+        });
     }
 
     /* ── Order Number Generation ── */
@@ -196,6 +229,8 @@ class Order extends Model
             'Pending'    => 'Order Received',
             'Processing' => 'Preparing',
             'Ready'      => $this->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup',
+            'Served'     => 'Served',
+            'Packaged'   => 'Packaged — Ready for Pickup',
             'Completed'  => 'Completed',
             'Cancelled'  => 'Cancelled',
             default      => $this->status_name,
@@ -243,6 +278,8 @@ class Order extends Model
             'Pending'    => 'Order Received',
             'Processing' => 'Preparing',
             'Ready'      => 'Ready',
+            'Served'     => 'Served',
+            'Packaged'   => 'Packaged',
             'Completed'  => 'Completed',
             'Cancelled'  => 'Cancelled',
             default      => $this->status_name,
@@ -286,7 +323,7 @@ class Order extends Model
     public function isAwaitingPayment(): bool
     {
         return $this->payment_status === 'pending'
-            && in_array($this->status_name, ['Ready', 'Completed'], true);
+            && in_array($this->status_name, ['Ready', 'Served', 'Packaged', 'Completed'], true);
     }
 
     public function isCancelled(): bool
@@ -328,5 +365,37 @@ class Order extends Model
     public function isCancellationEligible(): bool
     {
         return $this->status_name === 'Pending';
+    }
+
+    /* ── Service Fulfillment (Module 20) ── */
+
+    public function isServed(): bool
+    {
+        return $this->status_name === 'Served';
+    }
+
+    public function isPackaged(): bool
+    {
+        return $this->status_name === 'Packaged';
+    }
+
+    /**
+     * Dine-in orders get handed to the customer at the table ("Serve");
+     * everything else (take-out, online pickup) gets boxed at the counter
+     * ("Package") — there's no table to serve at.
+     */
+    public function usesPackagingFlow(): bool
+    {
+        return $this->order_type !== 'dine_in';
+    }
+
+    public function canBeFulfilled(): bool
+    {
+        return $this->status_name === 'Ready';
+    }
+
+    public function getFulfillmentActionLabelAttribute(): string
+    {
+        return $this->usesPackagingFlow() ? 'Package Order' : 'Serve Order';
     }
 }

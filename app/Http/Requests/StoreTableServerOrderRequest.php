@@ -61,7 +61,7 @@ class StoreTableServerOrderRequest extends FormRequest
             }
 
             $hasActiveOrder = DineInOrder::where('table_number', $this->table_number)
-                ->whereHas('order.orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']))
+                ->whereHas('order.orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
                 ->exists();
 
             if ($hasActiveOrder) {
