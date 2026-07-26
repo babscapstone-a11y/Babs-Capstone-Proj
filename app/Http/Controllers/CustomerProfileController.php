@@ -126,7 +126,7 @@ class CustomerProfileController extends Controller
             'customer_label'     => $order->customer_status_label,
             'payment_status'     => $order->payment_status,
             'is_cancelled'       => $order->isCancelled(),
-            'is_completed'       => $order->isCompleted(),
+            'is_completed'       => $order->isFullyClosed(),
             'approval_status'    => $order->approval_status,
             'rejection_reason'   => $order->rejection_reason,
             'cancellation_status'          => $order->cancellationRequest?->review_status,

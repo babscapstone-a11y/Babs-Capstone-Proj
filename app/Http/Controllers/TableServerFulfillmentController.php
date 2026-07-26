@@ -41,7 +41,7 @@ class TableServerFulfillmentController extends Controller
         return response()->json([
             'orders' => $orders->map(fn (Order $order) => $this->serializeOrder($order)),
             'summary' => [
-                'ready_to_serve'   => $orders->where('status_name', 'Ready')->count(),
+                'ready_to_serve'   => $orders->where('fulfillment_status', 'Ready')->count(),
                 'served_today'     => $orders->where('status_name', 'Served')->count(),
                 'ready_for_pickup' => $orders->where('status_name', 'Packaged')->count(),
                 'avg_serving_minutes' => $this->averageServingMinutes(),
@@ -57,7 +57,7 @@ class TableServerFulfillmentController extends Controller
     {
         $this->authorize('view', $order);
 
-        if (! in_array($order->status_name, ['Ready', 'Served', 'Packaged'], true)) {
+        if (! in_array($order->fulfillment_status, ['Ready', 'Served', 'Packaged'], true)) {
             return redirect()->route('table-server.service.index')
                 ->with('error', "Order #{$order->order_number} is no longer in the fulfillment queue.");
         }
@@ -145,9 +145,12 @@ class TableServerFulfillmentController extends Controller
             'order_type'        => $order->order_type,
             'order_type_label'  => $order->order_type_label,
             'table_number'      => $order->dineInOrder?->table_number,
-            'status'            => $order->status_name,
-            'status_label'      => $order->kitchen_status_label,
-            'status_color'      => $order->status_color,
+            // Uses the food-server-facing status (kitchen's internal
+            // "Completed" hand-off signal reads as "Ready" here), not the
+            // raw order status.
+            'status'            => $order->fulfillment_status,
+            'status_label'      => $order->fulfillment_status_label,
+            'status_color'      => $order->fulfillment_status_color,
             'uses_packaging'    => $order->usesPackagingFlow(),
             'fulfillment_action_label' => $order->fulfillment_action_label,
             'can_be_fulfilled'  => $order->canBeFulfilled(),

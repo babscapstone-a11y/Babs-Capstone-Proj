@@ -81,9 +81,12 @@ class KitchenController extends Controller
             if ($error) {
                 return response()->json(['message' => $error], 422);
             }
-        } elseif ($requestedStatus === 'Ready') {
-            // Stamped separately from created_at so the food-server board can
-            // measure "waiting since ready" without including kitchen prep time.
+        } elseif ($requestedStatus === 'Completed') {
+            // "Completed" is the kitchen's hand-off signal to the food server
+            // (Module 20) — "Ready" is treated as an internal in-progress
+            // step. Stamped separately from created_at so the food-server
+            // board can measure "waiting since ready" without including
+            // kitchen prep time.
             $order->update(['order_status_id' => $newStatus->id, 'ready_at' => now()]);
         } else {
             $order->update(['order_status_id' => $newStatus->id]);

@@ -83,7 +83,10 @@
         ],
     ];
     $statusOrder = ['Pending', 'Processing', 'Ready', $fulfillmentStatus];
-    $currentIdx = array_search($order->status_name, $statusOrder);
+    // fulfillment_status, not the raw status_name — the kitchen's own
+    // "Completed" hand-off signal reads as "Ready" from here, and raw
+    // status_name wouldn't be found in $statusOrder at all.
+    $currentIdx = array_search($order->fulfillment_status, $statusOrder);
 @endphp
 
 <div class="sf-header">
@@ -92,7 +95,7 @@
 
 <div class="sf-title-row" style="margin-bottom:1.25rem">
     <div class="sf-order-number">#{{ $order->order_number }}</div>
-    <span class="sf-status-badge" style="background:{{ $order->status_color }}">{{ $order->kitchen_status_label }}</span>
+    <span class="sf-status-badge" style="background:{{ $order->fulfillment_status_color }}">{{ $order->fulfillment_status_label }}</span>
 </div>
 
 <div class="sf-layout">

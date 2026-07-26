@@ -60,8 +60,22 @@ class StoreTableServerOrderRequest extends FormRequest
                 return;
             }
 
+            // "Completed" needs special handling here: the kitchen sets it as
+            // their hand-off signal to the food server (Module 20), well
+            // before the table's actually been served — but the same status
+            // gets reused again once the cashier takes payment. served_at/
+            // packaged_at (only ever set once a food server acts) are what
+            // distinguish "still sitting there, not yet served" from
+            // "already served and since paid" for that second case.
             $hasActiveOrder = DineInOrder::where('table_number', $this->table_number)
-                ->whereHas('order.orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
+                ->whereHas('order', function ($oq) {
+                    $oq->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
+                        ->orWhere(function ($completedQ) {
+                            $completedQ->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
+                                ->whereNull('served_at')
+                                ->whereNull('packaged_at');
+                        });
+                })
                 ->exists();
 
             if ($hasActiveOrder) {

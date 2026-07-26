@@ -334,13 +334,28 @@
         $cancelledRaw  = $order->isCancelled();
         $currentStatus = $order->status_name;
         $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
-        $currentIdx    = array_search($currentStatus, $allStatuses);
+
+        // The kitchen notifies the food server by marking an order
+        // "Completed" — before it's actually been served/packaged or paid.
+        // That status_name gets reused again later once the cashier takes
+        // payment, so a raw array_search($currentStatus, ...) can't tell
+        // those two moments apart. served_at/packaged_at and payment_status
+        // disambiguate which one this order is actually at.
+        $handedOff  = $order->served_at !== null || $order->packaged_at !== null;
+        $currentIdx = match (true) {
+            $order->payment_status === 'paid'                         => 4,
+            $handedOff                                                => 3,
+            in_array($currentStatus, ['Ready', 'Completed'], true)    => 2,
+            $currentStatus === 'Processing'                           => 1,
+            $currentStatus === 'Pending'                              => 0,
+            default                                                   => false,
+        };
         $awaitingApproval = $order->isOnline() && in_array($order->approval_status, ['pending', 'rejected', 'cancelled'], true);
     @endphp
     <div class="card fade-up">
         <div class="card-header">
             <h2><i class="fas fa-timeline"></i> Order Status</h2>
-            @if(! $cancelledRaw && ! $order->isCompleted())
+            @if(! $order->isFullyClosed())
             <span style="font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.3rem"><i class="fas fa-rotate" id="refreshSpinner"></i> Auto-updating</span>
             @endif
         </div>
@@ -610,7 +625,7 @@ document.getElementById('cancelReqModal').addEventListener('click', function (e)
 </style>
 @endsection
 
-@if(! $order->isCancelled() && ! $order->isCompleted() && $order->approval_status !== 'rejected')
+@if(! $order->isFullyClosed() && $order->approval_status !== 'rejected')
 @section('scripts')
 <script>
 const orderStatusUrl = "{{ route('account.orders.status', $order) }}";
