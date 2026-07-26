@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return route('dashboard');
             }
             if (Auth::guard('staff')->user()?->isCashier()) {
-                return route('cashier.index');
+                return route('cashier.billing');
             }
             if (Auth::guard('staff')->user()?->isKitchenStaff()) {
                 return route('kitchen.index');

@@ -18,30 +18,6 @@ use Illuminate\View\View;
 class CashierController extends Controller
 {
     /**
-     * GET /cashier — Payment Dashboard: KPI cards, recent transactions, quick search.
-     */
-    public function dashboard(): View
-    {
-        $pendingPayments = Order::awaitingPayment()->count();
-
-        $completedToday = Payment::whereDate('payment_date', today())->count();
-        $dailySales     = (float) Payment::whereDate('payment_date', today())->sum('amount_paid');
-
-        $recentTransactions = Payment::with(['order.customer', 'order.dineInOrder', 'cashier.staff'])
-            ->latest('payment_date')
-            ->limit(10)
-            ->get();
-
-        return view('cashier.dashboard', [
-            'pendingPayments'     => $pendingPayments,
-            'completedToday'      => $completedToday,
-            'dailySales'          => $dailySales,
-            'totalRevenueToday'   => $dailySales,
-            'recentTransactions'  => $recentTransactions,
-        ]);
-    }
-
-    /**
      * GET /cashier/billing — billing screen shell. Order data is fetched
      * client-side via orders()/showOrder(), same pattern as the KDS board.
      */

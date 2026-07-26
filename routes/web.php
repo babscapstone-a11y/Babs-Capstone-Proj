@@ -136,7 +136,8 @@ Route::middleware(['auth', 'kitchen_staff'])->prefix('kitchen')->name('kitchen.'
 
 /* ── Payment and Billing Module (Cashier only) — Module 22 ─────── */
 Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->group(function () {
-    Route::get('/',          [CashierController::class, 'dashboard'])      ->name('index');
+    // Billing is the cashier's home screen — no separate dashboard.
+    Route::get('/',          [CashierController::class, 'billing'])       ->name('index');
     Route::get('/billing',   [CashierController::class, 'billing'])       ->name('billing');
     Route::get('/orders',    [CashierController::class, 'orders'])        ->name('orders.index');
     Route::get('/orders/{order}', [CashierController::class, 'showOrder'])->name('orders.show');

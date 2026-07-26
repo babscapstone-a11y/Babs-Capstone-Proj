@@ -197,10 +197,7 @@
 
         <div class="cb-topbar-right">
             <nav class="cb-nav">
-                <a href="{{ route('cashier.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.index') ? 'active' : '' }}">
-                    <i class="fas fa-gauge-high"></i> Dashboard
-                </a>
-                <a href="{{ route('cashier.billing') }}" class="nav-link-cb {{ request()->routeIs('cashier.billing') ? 'active' : '' }}">
+                <a href="{{ route('cashier.billing') }}" class="nav-link-cb {{ request()->routeIs('cashier.index', 'cashier.billing') ? 'active' : '' }}">
                     <i class="fas fa-cash-register"></i> Billing
                 </a>
                 <a href="{{ route('cashier.online-orders.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.online-orders.*') ? 'active' : '' }}">
