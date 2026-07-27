@@ -105,7 +105,7 @@
 <div class="page-wrap checkout-wrap">
     <div class="page-title fade-up"><i class="fas fa-receipt"></i> Checkout</div>
 
-    <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm" enctype="multipart/form-data">
+    <form id="checkoutForm">
         @csrf
         <div class="checkout-grid">
 
@@ -161,36 +161,26 @@
                     </div>
                 </div>
 
-                {{-- Down Payment --}}
-                <div class="card" id="downPaymentCard">
-                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Down Payment ({{ \App\Models\Order::DOWN_PAYMENT_PERCENT }}% required)</h2></div>
+                {{-- Payment via GCash --}}
+                <div class="card" id="paymentCard">
+                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay with GCash</h2></div>
                     <div class="card-body">
-                        <div class="hint" style="font-size:.85rem;color:var(--dark);font-weight:600;margin-bottom:.9rem">
-                            Required down-payment: <span id="requiredDownPaymentDisplay">₱0.00</span>
+                        <div class="option-grid">
+                            <label class="option-card selected" data-payment-type="half">
+                                <input type="radio" name="payment_type" value="half" checked>
+                                <div class="oc-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                                <div class="oc-label">Pay Half Now</div>
+                                <div class="oc-sub"><span class="payment-amount" data-type="half">₱0.00</span></div>
+                            </label>
+                            <label class="option-card" data-payment-type="full">
+                                <input type="radio" name="payment_type" value="full">
+                                <div class="oc-icon"><i class="fas fa-money-bill-wave"></i></div>
+                                <div class="oc-label">Pay in Full</div>
+                                <div class="oc-sub"><span class="payment-amount" data-type="full">₱0.00</span></div>
+                            </label>
                         </div>
-
-                        <div class="field" style="margin-top:0">
-                            <label for="down_payment_method">Payment Method</label>
-                            <select id="down_payment_method" name="down_payment_method" style="width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.87rem">
-                                <option value="">Select method...</option>
-                                <option value="gcash">GCash</option>
-                                <option value="maya">Maya</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="other">Other Electronic Payment</option>
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="down_payment_reference">Reference Number</label>
-                            <input type="text" id="down_payment_reference" name="down_payment_reference" placeholder="e.g. GCash reference number">
-                        </div>
-                        <div class="field">
-                            <label for="down_payment_amount">Amount Paid</label>
-                            <input type="number" id="down_payment_amount" name="down_payment_amount" min="1" step="0.01" placeholder="0.00">
-                        </div>
-                        <div class="field">
-                            <label for="proof_image">Proof of Payment (screenshot/receipt)</label>
-                            <input type="file" id="proof_image" name="proof_image" accept="image/*">
-                            <div class="hint">Your order will be forwarded to the kitchen only after a cashier verifies this payment.</div>
+                        <div class="hint" style="margin-top:.9rem">
+                            You'll be redirected to GCash (via PayMongo) to complete this payment securely. Any remaining balance is settled at pickup.
                         </div>
                     </div>
                 </div>
@@ -228,7 +218,7 @@
                     <div class="summary-row total"><span>Grand Total</span><span class="amt">₱{{ number_format($cart->total, 2) }}</span></div>
 
                     <button type="submit" class="btn btn-primary" id="confirmOrderBtn" style="margin-top:1.1rem">
-                        <i class="fas fa-check-circle"></i> <span>Confirm Order</span>
+                        <i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>
                     </button>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline" style="margin-top:.6rem">
                         <i class="fas fa-arrow-left"></i> Back to Cart
@@ -242,11 +232,13 @@
 
 @section('scripts')
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
 /* Order type selector — Advance Order / Pick-Up both submit order_type=online
    and require the same fields, so this is purely visual selection feedback. */
 const orderTypeCards = document.querySelectorAll('.option-card[data-type]');
 const cartTotal = {{ (float) $cart->total }};
-const downPaymentPercent = {{ \App\Models\Order::DOWN_PAYMENT_PERCENT }};
+const halfPaymentPercent = {{ \App\Models\Order::HALF_PAYMENT_PERCENT }};
 
 orderTypeCards.forEach(card => {
     card.addEventListener('click', () => {
@@ -256,10 +248,20 @@ orderTypeCards.forEach(card => {
     });
 });
 
-/* Every order requires the down payment — compute it once up front. */
-const requiredDownPayment = (cartTotal * downPaymentPercent / 100).toFixed(2);
-document.getElementById('requiredDownPaymentDisplay').textContent = '₱' + requiredDownPayment;
-document.getElementById('down_payment_amount').value = requiredDownPayment;
+/* Payment option selector — Pay Half Now / Pay in Full */
+const paymentCards = document.querySelectorAll('.option-card[data-payment-type]');
+
+paymentCards.forEach(card => {
+    card.addEventListener('click', () => {
+        paymentCards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        card.querySelector('input').checked = true;
+    });
+});
+
+const halfAmount = (cartTotal * halfPaymentPercent / 100).toFixed(2);
+document.querySelector('.payment-amount[data-type="half"]').textContent = '₱' + halfAmount;
+document.querySelector('.payment-amount[data-type="full"]').textContent = '₱' + cartTotal.toFixed(2);
 
 /* Combine pickup date + time into a single datetime field before submit */
 function syncPickupAt() {
@@ -270,19 +272,55 @@ function syncPickupAt() {
 document.getElementById('pickup_date').addEventListener('change', syncPickupAt);
 document.getElementById('pickup_time').addEventListener('change', syncPickupAt);
 
-/* Confirm & submit with duplicate-prevention */
+/* Confirm & submit to PayMongo with duplicate-prevention */
 const form = document.getElementById('checkoutForm');
 const confirmBtn = document.getElementById('confirmOrderBtn');
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
     syncPickupAt();
 
-    if (! confirm('Are you sure you want to place this order?')) {
-        e.preventDefault();
+    if (! document.getElementById('pickup_at').value) {
+        alert('Please choose a pick-up date and time.');
         return;
     }
+
+    if (! confirm('Are you sure you want to place this order?')) {
+        return;
+    }
+
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<span class="spin"></span> <span>Placing Order...</span>';
+    confirmBtn.innerHTML = '<span class="spin"></span> <span>Starting GCash Payment...</span>';
+
+    const orderType = form.querySelector('input[name="order_type"]:checked').value;
+    const paymentType = form.querySelector('input[name="payment_type"]:checked').value;
+
+    try {
+        const res = await fetch('{{ route("checkout.paymongo.create") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+            body: JSON.stringify({
+                order_type: orderType,
+                payment_type: paymentType,
+                pickup_at: document.getElementById('pickup_at').value,
+                special_instructions: form.querySelector('textarea[name="special_instructions"]').value,
+            }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (! res.ok) {
+            alert(data.message || 'Something went wrong. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
+            return;
+        }
+
+        window.location.href = data.redirect_url;
+    } catch (err) {
+        alert('Something went wrong. Please try again.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
+    }
 });
 </script>
 @endsection

@@ -28,8 +28,8 @@ class Order extends Model
         'packaged_at'  => 'datetime',
     ];
 
-    /** Percentage of the order total a customer must pay upfront for an online pre-order. */
-    const DOWN_PAYMENT_PERCENT = 30;
+    /** Percentage of the order total the "pay half now" GCash checkout option charges. */
+    const HALF_PAYMENT_PERCENT = 50;
 
     /* ── Relationships ── */
 
@@ -271,11 +271,6 @@ class Order extends Model
             'cancelled' => 'badge-cancelled',
             default     => 'badge-pending',
         };
-    }
-
-    public function getRequiredDownPaymentAttribute(): float
-    {
-        return round(((float) $this->total_amount) * (self::DOWN_PAYMENT_PERCENT / 100), 2);
     }
 
     public function getPaymentMethodLabelAttribute(): string

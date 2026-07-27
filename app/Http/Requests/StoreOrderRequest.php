@@ -23,10 +23,7 @@ class StoreOrderRequest extends FormRequest
             'order_type'              => ['required', 'in:online'],
             'special_instructions'    => ['nullable', 'string', 'max:500'],
             'pickup_at'               => ['required', 'date', 'after:now'],
-            'down_payment_method'     => ['required', 'in:gcash,maya,bank_transfer,other'],
-            'down_payment_reference'  => ['required', 'string', 'max:100'],
-            'down_payment_amount'     => ['required', 'numeric', 'min:1'],
-            'proof_image'             => ['required', 'image', 'max:5120'],
+            'payment_type'            => ['required', 'in:half,full'],
         ];
     }
 }

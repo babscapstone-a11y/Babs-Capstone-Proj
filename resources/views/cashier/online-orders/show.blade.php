@@ -28,6 +28,10 @@
     .badge-rejected  { background: rgba(220,38,38,0.18);  color: #FCA5A5; }
     .badge-cancelled { background: rgba(107,114,128,0.18); color: #D1D5DB; }
 
+    .badge-light-paid             { background: rgba(22,163,74,0.12);  color: #15803D; }
+    .badge-light-failed           { background: rgba(220,38,38,0.12);  color: #B91C1C; }
+    .badge-light-awaiting_payment { background: rgba(245,158,11,0.14); color: #B45309; }
+
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
     @media (max-width: 480px) { .info-grid { grid-template-columns: 1fr; } }
     .info-item .label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .2rem; }
@@ -48,10 +52,6 @@
         padding: .75rem .9rem; margin-top: 1rem; font-size: .86rem; color: #92400E;
     }
 
-    .proof-thumb {
-        width: 100%; max-width: 260px; border-radius: 12px; border: 1.5px solid var(--border);
-        cursor: zoom-in; display: block; margin: 0 auto;
-    }
     .proof-caption { text-align: center; font-size: .78rem; color: var(--muted); margin-top: .5rem; }
 
     .timeline-step { display: flex; gap: .8rem; padding-bottom: 1.1rem; position: relative; }
@@ -74,17 +74,6 @@
     .reviewed-box.approved { background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.25); color: #15803D; }
     .reviewed-box.rejected { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.25); color: #B91C1C; }
 
-    /* Enlarge modal */
-    .img-modal-overlay {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;
-        z-index: 1100; padding: 2rem;
-    }
-    .img-modal-overlay.open { display: flex; }
-    .img-modal-overlay img { max-width: 100%; max-height: 90vh; border-radius: 8px; }
-    .img-modal-close {
-        position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(255,255,255,0.15); border: none;
-        color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1rem;
-    }
 </style>
 @endsection
 
@@ -166,10 +155,18 @@
                     </div>
                 </div>
                 @if($order->paymentProof)
-                <div class="timeline-step done">
-                    <div class="timeline-dot"><i class="fas fa-receipt"></i></div>
+                <div class="timeline-step {{ $order->paymentProof->status === 'paid' ? 'done' : ($order->paymentProof->status === 'failed' ? 'rejected' : '') }}">
+                    <div class="timeline-dot"><i class="fas fa-{{ $order->paymentProof->status === 'paid' ? 'check' : ($order->paymentProof->status === 'failed' ? 'xmark' : 'hourglass-half') }}"></i></div>
                     <div>
-                        <div class="timeline-title">Proof of Payment Submitted</div>
+                        <div class="timeline-title">
+                            @if($order->paymentProof->status === 'paid')
+                                GCash Payment Received
+                            @elseif($order->paymentProof->status === 'failed')
+                                GCash Payment Failed
+                            @else
+                                GCash Payment Pending
+                            @endif
+                        </div>
                         <div class="timeline-time">{{ ($order->paymentProof->paid_at ?? $order->paymentProof->created_at)->format('M d, Y h:i A') }}</div>
                     </div>
                 </div>
@@ -210,34 +207,39 @@
             <div class="card-header"><h3 class="card-title"><i class="fas fa-money-check-dollar"></i> Payment Information</h3></div>
             <div class="card-body">
                 <div class="info-grid">
-                    <div class="info-item"><div class="label">Required Down-Payment ({{ \App\Models\Order::DOWN_PAYMENT_PERCENT }}%)</div><div class="value">₱{{ number_format($order->required_down_payment, 2) }}</div></div>
                     @if($order->paymentProof)
-                        <div class="info-item"><div class="label">Amount Submitted</div><div class="value">₱{{ number_format($order->paymentProof->amount, 2) }}</div></div>
-                        <div class="info-item"><div class="label">Payment Method</div><div class="value">{{ $order->paymentProof->payment_method_label }}</div></div>
-                        <div class="info-item"><div class="label">Reference Number</div><div class="value">{{ $order->paymentProof->reference_number ?: '—' }}</div></div>
+                        <div class="info-item"><div class="label">Payment Option</div><div class="value">{{ $order->paymentProof->payment_type_label }}</div></div>
+                        <div class="info-item"><div class="label">Amount Paid</div><div class="value">₱{{ number_format($order->paymentProof->amount, 2) }}</div></div>
+                        <div class="info-item"><div class="label">Payment Method</div><div class="value">{{ $order->paymentProof->payment_method_label }} (PayMongo)</div></div>
                         <div class="info-item"><div class="label">Payment Date &amp; Time</div><div class="value">{{ ($order->paymentProof->paid_at ?? $order->paymentProof->created_at)->format('M d, Y h:i A') }}</div></div>
                     @else
-                        <div class="info-item" style="grid-column:1/-1;color:var(--muted)">No proof of payment was submitted for this order.</div>
+                        <div class="info-item" style="grid-column:1/-1;color:var(--muted)">No payment was recorded for this order.</div>
                     @endif
                 </div>
 
-                @if((float) $order->paymentProof?->amount < $order->required_down_payment)
+                @if($order->paymentProof && $order->paymentProof->status !== 'paid')
                     <div class="instructions-box" style="margin-top:1rem">
-                        <i class="fas fa-triangle-exclamation"></i> Amount submitted is less than the required down-payment. Review carefully before approving.
+                        <i class="fas fa-triangle-exclamation"></i> Payment has not been confirmed as successful by PayMongo. Review carefully before approving.
                     </div>
                 @endif
             </div>
         </div>
 
-        {{-- Proof of Payment --}}
+        {{-- PayMongo Transaction --}}
         <div class="card" style="margin-bottom:1.25rem">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-image"></i> Proof of Payment</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-qrcode"></i> PayMongo Transaction</h3></div>
             <div class="card-body">
-                @if($order->paymentProof?->proof_image_url)
-                    <img src="{{ $order->paymentProof->proof_image_url }}" alt="Proof of payment" class="proof-thumb" onclick="openImageModal(this.src)">
-                    <div class="proof-caption">Click image to enlarge</div>
+                @if($order->paymentProof)
+                    <div style="margin-bottom:.9rem">
+                        <span class="badge badge-light-{{ $order->paymentProof->status }}">{{ $order->paymentProof->status_label }}</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item" style="grid-column:1/-1"><div class="label">PayMongo Payment Intent ID</div><div class="value" style="word-break:break-all">{{ $order->paymentProof->paymongo_payment_intent_id ?: '—' }}</div></div>
+                        <div class="info-item" style="grid-column:1/-1"><div class="label">Reference Number</div><div class="value" style="word-break:break-all">{{ $order->paymentProof->reference_number ?: '—' }}</div></div>
+                    </div>
+                    <div class="proof-caption">Cross-check this transaction in the PayMongo Dashboard if needed.</div>
                 @else
-                    <div style="text-align:center;color:var(--muted);padding:1.5rem 0"><i class="fas fa-image" style="font-size:1.8rem;opacity:.3;display:block;margin-bottom:.5rem"></i>No proof of payment uploaded.</div>
+                    <div style="text-align:center;color:var(--muted);padding:1.5rem 0"><i class="fas fa-qrcode" style="font-size:1.8rem;opacity:.3;display:block;margin-bottom:.5rem"></i>No PayMongo payment was recorded for this order.</div>
                 @endif
             </div>
         </div>
@@ -290,9 +292,8 @@
         <h3 class="modal-title">Reject Online Order?</h3>
         <p class="modal-desc">Please provide a reason. This will be shown to the customer.</p>
         <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem">
-            <button type="button" class="reason-preset" data-reason="Invalid proof of payment" style="font-size:.74rem;padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;color:var(--muted)">Invalid proof of payment</button>
+            <button type="button" class="reason-preset" data-reason="GCash payment not confirmed by PayMongo" style="font-size:.74rem;padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;color:var(--muted)">GCash payment not confirmed by PayMongo</button>
             <button type="button" class="reason-preset" data-reason="Incorrect payment amount" style="font-size:.74rem;padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;color:var(--muted)">Incorrect payment amount</button>
-            <button type="button" class="reason-preset" data-reason="Unclear payment receipt" style="font-size:.74rem;padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;color:var(--muted)">Unclear payment receipt</button>
             <button type="button" class="reason-preset" data-reason="Payment not received" style="font-size:.74rem;padding:.3rem .65rem;border-radius:50px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;color:var(--muted)">Payment not received</button>
         </div>
         <textarea id="rejectReasonInput" placeholder="Reason for rejection..." style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.65rem .85rem;font-size:.87rem;font-family:inherit;outline:none;resize:vertical;min-height:90px"></textarea>
@@ -303,28 +304,12 @@
     </div>
 </div>
 
-{{-- Enlarge image modal --}}
-<div class="img-modal-overlay" id="imageModal" onclick="closeImageModal(event)">
-    <button type="button" class="img-modal-close" onclick="closeImageModal(event)"><i class="fas fa-xmark"></i></button>
-    <img id="enlargedImage" src="" alt="Proof of payment (enlarged)">
-</div>
-
 @endsection
 
 @section('scripts')
 <script>
     const orderId = {{ $order->id }};
     const orderNumber = @json($order->order_number);
-
-    function openImageModal(src) {
-        document.getElementById('enlargedImage').src = src;
-        document.getElementById('imageModal').classList.add('open');
-    }
-    function closeImageModal(e) {
-        if (e.target.id === 'imageModal' || e.target.closest('.img-modal-close')) {
-            document.getElementById('imageModal').classList.remove('open');
-        }
-    }
 
     document.querySelectorAll('.reason-preset').forEach(btn => {
         btn.addEventListener('click', () => { document.getElementById('rejectReasonInput').value = btn.dataset.reason; });

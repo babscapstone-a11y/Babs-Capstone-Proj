@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Storage;
 class PaymentProof extends Model
 {
     protected $fillable = [
-        'order_id', 'customer_id', 'amount', 'payment_method',
+        'order_id', 'customer_id', 'amount', 'payment_type', 'payment_method',
         'reference_number', 'proof_image', 'paid_at',
+        'paymongo_payment_intent_id', 'paymongo_payment_method_id',
+        'paymongo_checkout_url', 'status',
     ];
 
     protected $casts = [
@@ -23,6 +25,17 @@ class PaymentProof extends Model
         'maya'          => 'Maya',
         'bank_transfer' => 'Bank Transfer',
         'other'         => 'Other Electronic Payment',
+    ];
+
+    const PAYMENT_TYPES = [
+        'half' => 'Half Payment (50%)',
+        'full' => 'Full Payment',
+    ];
+
+    const STATUSES = [
+        'awaiting_payment' => 'Awaiting Payment',
+        'paid'              => 'Paid',
+        'failed'            => 'Failed',
     ];
 
     /* ── Relationships ── */
@@ -42,6 +55,16 @@ class PaymentProof extends Model
     public function getPaymentMethodLabelAttribute(): string
     {
         return self::METHODS[$this->payment_method] ?? ucfirst($this->payment_method);
+    }
+
+    public function getPaymentTypeLabelAttribute(): string
+    {
+        return self::PAYMENT_TYPES[$this->payment_type] ?? ucfirst((string) $this->payment_type);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::STATUSES[$this->status] ?? ucfirst((string) $this->status);
     }
 
     public function getProofImageUrlAttribute(): ?string

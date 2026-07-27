@@ -13,6 +13,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\OnlineOrderController;
+use App\Http\Controllers\PaymongoWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
 use App\Http\Controllers\StaffPasswordResetController;
@@ -194,7 +195,11 @@ Route::middleware(['auth:customer', 'customer'])->group(function () {
 
     // ── Order Module: Checkout (REQ071–REQ075) ────────────────────
     Route::get('/checkout',  [CheckoutController::class, 'index']) ->name('checkout.index');
-    Route::post('/checkout', [CheckoutController::class, 'store']) ->name('checkout.store');
+    Route::post('/checkout/paymongo', [CheckoutController::class, 'payWithGcash']) ->name('checkout.paymongo.create');
+    Route::get('/checkout/paymongo/return/{order}', [CheckoutController::class, 'paymongoReturn']) ->name('checkout.paymongo.return');
 });
+
+/* ── PayMongo webhook — server-to-server, no auth/CSRF ─────────── */
+Route::post('/webhooks/paymongo', [PaymongoWebhookController::class, 'handle'])->name('webhooks.paymongo');
 
 require __DIR__.'/auth.php';
