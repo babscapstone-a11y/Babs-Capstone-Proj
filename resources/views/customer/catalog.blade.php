@@ -222,7 +222,7 @@
 
 /* ── Category chips (mobile) ── */
 .cat-chips-row {
-    display: none; gap: .5rem; overflow-x: auto; padding: 0 1.5rem 1rem;
+    display: none; gap: .5rem; overflow-x: auto; padding: 1.25rem 1.5rem 1rem;
     scrollbar-width: none; -ms-overflow-style: none;
 }
 .cat-chips-row::-webkit-scrollbar { display: none; }

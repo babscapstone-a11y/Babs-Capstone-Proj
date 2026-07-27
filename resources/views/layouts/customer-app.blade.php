@@ -26,7 +26,7 @@
             --shadow-lg:  0 12px 40px rgba(0,0,0,.14);
             --nav-h:      64px;
         }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         html { scroll-behavior: smooth; }
         body {
             font-family: 'Poppins', system-ui, sans-serif;
