@@ -423,7 +423,7 @@
     </div>
 
     {{-- Two-column layout for items + sidebar --}}
-    <div style="display:grid;grid-template-columns:1fr 280px;gap:1.25rem;align-items:start">
+    <div class="order-content-grid" style="display:grid;grid-template-columns:1fr 280px;gap:1.25rem;align-items:start">
 
     {{-- Order Items --}}
     <div class="fade-up-2">
@@ -612,11 +612,12 @@ document.getElementById('cancelReqModal').addEventListener('click', function (e)
 
 @section('layout-styles')
 <style>
+.order-content-grid > * { min-width: 0; }
 @media (max-width: 700px) {
-    div[style*="grid-template-columns: 1fr 280px"] {
+    .order-content-grid {
         display: block !important;
     }
-    div[style*="grid-template-columns: 1fr 280px"] > * {
+    .order-content-grid > * {
         margin-bottom: 1.25rem;
     }
 }
