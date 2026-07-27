@@ -121,9 +121,10 @@
     .nav-search input { font-size: .82rem; }
 }
 @media (max-width: 480px) {
-    .nav-logo-text { font-size: .92rem; }
+    .nav-logo-text { display: none; }
     .profile-name { display: none; }
     .nav-search i { padding: 0 .5rem 0 .7rem; }
+    .nav-search input { font-size: .8rem; }
 }
 
 /* ══════════════════════════════════════════════
