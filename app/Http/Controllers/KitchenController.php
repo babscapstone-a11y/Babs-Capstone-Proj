@@ -101,6 +101,100 @@ class KitchenController extends Controller
     }
 
     /**
+     * Sequential reverse-transition whitelist for undoing a misclicked status
+     * change — the mirror image of UpdateOrderKitchenStatusRequest::ALLOWED_TRANSITIONS.
+     */
+    private const REVERT_TRANSITIONS = [
+        'Processing' => 'Pending',
+        'Ready'      => 'Processing',
+        'Completed'  => 'Ready',
+    ];
+
+    /**
+     * PATCH /kitchen/orders/{order}/revert — steps a misclicked order back one
+     * status. Blocked once the food server has already served/packaged it or
+     * the cashier has taken payment, since those hand-offs shouldn't be undone
+     * from the kitchen board.
+     */
+    public function revertStatus(Order $order): JsonResponse
+    {
+        $order->load('orderStatus');
+        $currentStatus = $order->status_name;
+        $previousStatus = self::REVERT_TRANSITIONS[$currentStatus] ?? null;
+
+        if (! $previousStatus) {
+            return response()->json([
+                'message' => "Order #{$order->order_number} has no earlier status to revert to.",
+            ], 422);
+        }
+
+        if ($order->served_at || $order->packaged_at || $order->payment_status === 'paid') {
+            return response()->json([
+                'message' => "Order #{$order->order_number} has already been handed off / paid and can no longer be reverted.",
+            ], 422);
+        }
+
+        $previous = OrderStatus::where('status_name', $previousStatus)->firstOrFail();
+
+        if ($currentStatus === 'Processing') {
+            // Undoing "Start Preparing" means the RTC stock deducted for it
+            // never should have left inventory — give it back.
+            $this->restoreRtcStockForOrder($order);
+            $order->update(['order_status_id' => $previous->id]);
+        } elseif ($currentStatus === 'Completed') {
+            // Mirrors the ready_at stamp set when moving into Completed.
+            $order->update(['order_status_id' => $previous->id, 'ready_at' => null]);
+        } else {
+            $order->update(['order_status_id' => $previous->id]);
+        }
+
+        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
+
+        return response()->json([
+            'message' => "Order #{$order->order_number} reverted to {$order->kitchen_status_label}.",
+            'order'   => $this->serializeOrder($order),
+        ]);
+    }
+
+    /**
+     * Reverses deductRtcStockForOrder(): gives back rtc_servings for every
+     * order detail that was actually deducted (rtc_deducted_at set) and
+     * clears that stamp, inside a lock so it can't race a concurrent
+     * "start preparing" on the same menu items.
+     */
+    private function restoreRtcStockForOrder(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $details = $lockedOrder->details()->whereNotNull('rtc_deducted_at')->get();
+
+            if ($details->isEmpty()) {
+                return;
+            }
+
+            $quantityByMenuItem = $details->groupBy('menu_item_id')
+                ->map(fn ($group) => $group->sum('quantity'));
+
+            $menuItems = MenuItem::whereIn('id', $quantityByMenuItem->keys())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($quantityByMenuItem as $menuItemId => $qty) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if (! $menuItem) {
+                    continue;
+                }
+
+                $menuItem->update(['rtc_servings' => $menuItem->rtc_servings + $qty]);
+            }
+
+            $details->each(fn ($detail) => $detail->update(['rtc_deducted_at' => null]));
+        });
+    }
+
+    /**
      * Locks the order and every RTC-tracked menu item it references, checks
      * each has enough rtc_servings to cover the order's quantities, then
      * deducts them and advances the order status — all inside one
@@ -157,6 +251,11 @@ class KitchenController extends Controller
 
     private function serializeOrder(Order $order): array
     {
+        $canRevert = isset(self::REVERT_TRANSITIONS[$order->status_name])
+            && ! $order->served_at && ! $order->packaged_at && $order->payment_status !== 'paid';
+
+        $previousStatusLabels = ['Processing' => 'Order Received', 'Ready' => 'Preparing', 'Completed' => 'Ready'];
+
         return [
             'id'                    => $order->id,
             'order_number'          => $order->order_number,
@@ -168,9 +267,12 @@ class KitchenController extends Controller
             'status_label'          => $order->kitchen_status_label,
             'next_action'           => $order->next_kitchen_action,
             'created_at'            => $order->created_at?->toIso8601String(),
+            'pickup_at'             => $order->pickup_at?->toIso8601String(),
             'item_count'            => $order->item_count,
             'estimated_completion'  => $order->estimated_completion?->toIso8601String(),
             'special_instructions'  => $order->special_instructions,
+            'can_revert'            => $canRevert,
+            'previous_status_label' => $previousStatusLabels[$order->status_name] ?? null,
             'items'                 => $order->details->map(fn ($d) => [
                 'name'     => $d->item_name,
                 'quantity' => $d->quantity,

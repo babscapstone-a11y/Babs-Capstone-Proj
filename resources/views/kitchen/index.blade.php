@@ -27,7 +27,7 @@
 
     /* ── Kanban board ────────────────────────────────────────── */
     .kanban-board {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem;
+        display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.1rem;
         align-items: start;
     }
     .kanban-col {
@@ -94,6 +94,19 @@
     .ticket-action-btn.status-preparing { background: var(--status-preparing); }
     .ticket-action-btn.status-ready     { background: var(--status-ready); }
 
+    .ticket-revert-btn {
+        background: rgba(220,38,38,0.08); border: none; color: var(--muted);
+        width: 28px; height: 28px; border-radius: 8px; cursor: pointer; font-size: .8rem; flex-shrink: 0;
+    }
+    .ticket-revert-btn:hover { background: rgba(220,38,38,0.15); color: var(--primary); }
+    .ticket-revert-btn-wide {
+        width: 100%; margin-top: .5rem; padding: .6rem; border-radius: 10px;
+        border: 1px solid rgba(220,38,38,0.3); background: rgba(220,38,38,0.06);
+        color: var(--primary); font-family: inherit; font-weight: 700; font-size: .85rem; cursor: pointer;
+    }
+    .ticket-revert-btn-wide:hover { background: rgba(220,38,38,0.12); }
+    .kanban-col-sublabel { font-size: .72rem; color: var(--muted); font-weight: 600; margin: -.5rem .3rem .6rem; }
+
     /* ── Detail modal ────────────────────────────────────────── */
     .detail-modal-box {
         background: var(--white); border-radius: 20px;
@@ -127,7 +140,9 @@
         border-radius: 10px; padding: .75rem .9rem; margin-top: 1rem; font-size: .88rem; color: #92400E;
     }
 
-    @media (max-width: 1100px) { .summary-row, .kanban-board { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1300px) { .kanban-board { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .kanban-board { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 640px) { .summary-row, .kanban-board { grid-template-columns: 1fr; } }
 </style>
 @endsection
@@ -155,8 +170,13 @@
 
 <div class="kanban-board">
     <div class="kanban-col">
-        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-pending)"></span>Pending</span><span class="kanban-count" id="colCountPending">0</span></div>
-        <div class="kanban-cards" id="col-Pending"></div>
+        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-pending)"></span>Pending · Online</span><span class="kanban-count" id="colCountPendingOnline">0</span></div>
+        <div class="kanban-col-sublabel"><i class="fas fa-calendar-clock"></i> Sorted by pickup date &amp; time</div>
+        <div class="kanban-cards" id="col-PendingOnline"></div>
+    </div>
+    <div class="kanban-col">
+        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-pending)"></span>Pending · Walk-in</span><span class="kanban-count" id="colCountPendingWalkin">0</span></div>
+        <div class="kanban-cards" id="col-PendingWalkin"></div>
     </div>
     <div class="kanban-col">
         <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-preparing)"></span>Preparing</span><span class="kanban-count" id="colCountProcessing">0</span></div>
@@ -188,12 +208,16 @@
         Completed:  getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
     };
     const STATUS_CSS_CLASS = { Pending: 'status-pending', Processing: 'status-preparing', Ready: 'status-ready', Completed: 'status-completed' };
-    const COLUMN_IDS = { Pending: 'col-Pending', Processing: 'col-Processing', Ready: 'col-Ready', Completed: 'col-Completed' };
+    const COLUMN_IDS = { PendingOnline: 'col-PendingOnline', PendingWalkin: 'col-PendingWalkin', Processing: 'col-Processing', Ready: 'col-Ready', Completed: 'col-Completed' };
 
     let ordersCache = {};
 
     function formatTime(iso) {
         return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    function formatPickup(iso) {
+        return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
     }
 
     function elapsedText(iso) {
@@ -224,17 +248,25 @@
             actionBtn = `<button type="button" class="ticket-action-btn ${cssClass}" onclick="event.stopPropagation(); confirmStatusChange(${order.id})">${order.next_action}</button>`;
         }
 
+        const revertBtn = order.can_revert
+            ? `<button type="button" class="ticket-revert-btn" title="Revert to ${order.previous_status_label}" onclick="event.stopPropagation(); confirmRevert(${order.id})"><i class="fas fa-rotate-left"></i></button>`
+            : '';
+
         return `
             <div class="ticket-card ${cssClass}" onclick="openDetailModal(${order.id})">
                 <div class="ticket-top">
                     <div class="ticket-order-number">#${order.order_number}</div>
-                    <div class="ticket-elapsed ${isUrgent(order.created_at) ? 'urgent' : ''}" data-created="${order.created_at}">${elapsedText(order.created_at)}</div>
+                    <div style="display:flex;align-items:center;gap:.4rem">
+                        ${revertBtn}
+                        <div class="ticket-elapsed ${isUrgent(order.created_at) ? 'urgent' : ''}" data-created="${order.created_at}">${elapsedText(order.created_at)}</div>
+                    </div>
                 </div>
                 <div class="ticket-customer"><i class="fas fa-user"></i> ${order.customer_name}</div>
                 <div class="ticket-meta">
                     <span class="ticket-chip">${order.order_type_label}</span>
                     ${order.table_number ? `<span class="ticket-chip"><i class="fas fa-chair"></i> Table ${order.table_number}</span>` : ''}
                     <span class="ticket-chip"><i class="fas fa-clock"></i> ${formatTime(order.created_at)}</span>
+                    ${order.order_type === 'online' && order.pickup_at ? `<span class="ticket-chip"><i class="fas fa-calendar-clock"></i> Pickup ${formatPickup(order.pickup_at)}</span>` : ''}
                 </div>
                 <div class="ticket-items">
                     ${itemsHtml}
@@ -246,19 +278,35 @@
     }
 
     function renderBoard(orders) {
-        const grouped = { Pending: [], Processing: [], Ready: [], Completed: [] };
-        orders.forEach(o => { if (grouped[o.status]) grouped[o.status].push(o); });
+        const grouped = { PendingOnline: [], PendingWalkin: [], Processing: [], Ready: [], Completed: [] };
+        orders.forEach(o => {
+            if (o.status === 'Pending') {
+                (o.order_type === 'online' ? grouped.PendingOnline : grouped.PendingWalkin).push(o);
+            } else if (grouped[o.status]) {
+                grouped[o.status].push(o);
+            }
+        });
 
-        Object.keys(COLUMN_IDS).forEach(status => {
-            const col = document.getElementById(COLUMN_IDS[status]);
-            const list = grouped[status];
+        // Online pending orders are sorted by requested pickup date/time
+        // (soonest first) rather than by when the order was placed, since
+        // that's what the kitchen needs to prioritize prep against.
+        grouped.PendingOnline.sort((a, b) => {
+            if (!a.pickup_at && !b.pickup_at) return 0;
+            if (!a.pickup_at) return 1;
+            if (!b.pickup_at) return -1;
+            return new Date(a.pickup_at) - new Date(b.pickup_at);
+        });
+
+        Object.keys(COLUMN_IDS).forEach(key => {
+            const col = document.getElementById(COLUMN_IDS[key]);
+            const list = grouped[key];
             col.innerHTML = list.length
                 ? list.map(renderCard).join('')
                 : '<div class="kanban-empty">No orders</div>';
-            document.getElementById('colCount' + status).textContent = list.length;
+            document.getElementById('colCount' + key).textContent = list.length;
         });
 
-        document.getElementById('countPending').textContent = grouped.Pending.length;
+        document.getElementById('countPending').textContent = grouped.PendingOnline.length + grouped.PendingWalkin.length;
         document.getElementById('countPreparing').textContent = grouped.Processing.length;
         document.getElementById('countReady').textContent = grouped.Ready.length;
         document.getElementById('countCompleted').textContent = grouped.Completed.length;
@@ -300,6 +348,10 @@
             ? `<button type="button" class="ticket-action-btn ${STATUS_CSS_CLASS[order.status]}" style="margin-top:1rem" onclick="confirmStatusChange(${order.id})">${order.next_action}</button>`
             : '';
 
+        const revertBtn = order.can_revert
+            ? `<button type="button" class="ticket-revert-btn-wide" onclick="confirmRevert(${order.id})"><i class="fas fa-rotate-left"></i> Revert to ${order.previous_status_label}</button>`
+            : '';
+
         document.getElementById('detailModalContent').innerHTML = `
             <div class="detail-header">
                 <div>
@@ -318,6 +370,7 @@
             ${itemsHtml}
             ${order.special_instructions ? `<div class="detail-instructions-box"><i class="fas fa-circle-info"></i> ${order.special_instructions}</div>` : ''}
             ${actionBtn}
+            ${revertBtn}
         `;
         document.getElementById('orderDetailModal').classList.add('open');
     }
@@ -366,6 +419,42 @@
         } catch (e) {
             closeConfirmModal();
             showToast('Failed to update order status.', 'error');
+        }
+    }
+
+    function confirmRevert(orderId) {
+        const order = ordersCache[orderId];
+        if (!order || !order.can_revert) return;
+
+        openConfirmModal({
+            title: 'Revert Order?',
+            desc: `Move Order #${order.order_number} back to ${order.previous_status_label}? Only do this if the status was changed by mistake.`,
+            confirmText: 'Revert',
+            onConfirm: () => submitRevert(orderId),
+        });
+    }
+
+    async function submitRevert(orderId) {
+        try {
+            const res = await fetch(`/kitchen/orders/${orderId}/revert`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+            });
+            const data = await res.json();
+
+            closeConfirmModal();
+            closeDetailModal();
+
+            if (!res.ok) {
+                showToast(data.message || 'Failed to revert order status.', 'error');
+                return;
+            }
+
+            showToast(data.message, 'success');
+            pollOrders();
+        } catch (e) {
+            closeConfirmModal();
+            showToast('Failed to revert order status.', 'error');
         }
     }
 
