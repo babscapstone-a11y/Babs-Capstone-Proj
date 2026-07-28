@@ -137,11 +137,11 @@ class CheckoutController extends Controller
                 "Order {$order->order_number} — " . ($request->payment_type === 'full' ? 'Full Payment' : 'Half Payment')
             );
 
-            $method = $this->paymongo->createGcashPaymentMethod([
+            $method = $this->paymongo->createGcashPaymentMethod(array_filter([
                 'name'  => $customer->full_name,
                 'email' => $customer->email,
                 'phone' => $customer->contact_no,
-            ]);
+            ]));
 
             $attached = $this->paymongo->attachPaymentMethod(
                 $intent['id'],
@@ -202,9 +202,9 @@ class CheckoutController extends Controller
 
         try {
             $intent = $this->paymongo->retrievePaymentIntent($paymentProof->paymongo_payment_intent_id);
-            $status = $intent['attributes']['status'] ?? null;
+            $resolved = $this->paymongo->interpretIntentStatus($intent);
 
-            if ($status === 'succeeded') {
+            if ($resolved === 'succeeded') {
                 $paymentId = $intent['attributes']['payments'][0]['id'] ?? $paymentProof->paymongo_payment_intent_id;
 
                 $paymentProof->update([
@@ -217,10 +217,17 @@ class CheckoutController extends Controller
                     ->with('success', 'Payment received! We will verify and confirm your order shortly.');
             }
 
-            $paymentProof->update(['status' => 'failed']);
+            if ($resolved === 'failed') {
+                $paymentProof->update(['status' => 'failed']);
 
+                return redirect()->route('account.orders.show', $order)
+                    ->with('error', 'Your GCash payment was not completed. Please contact us or try again.');
+            }
+
+            // Still awaiting the customer to act (e.g. they navigated back
+            // without finishing) — leave it pending rather than failing it.
             return redirect()->route('account.orders.show', $order)
-                ->with('error', 'Your GCash payment was not completed. Please contact us or try again.');
+                ->with('error', 'Your GCash payment is still processing. We will update your order once it completes.');
         } catch (\Throwable $e) {
             Log::error('PayMongo payment status check failed', [
                 'order_id' => $order->id,

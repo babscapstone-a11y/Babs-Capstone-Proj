@@ -118,6 +118,19 @@
     .receipt-success h3 { margin: 0 0 .3rem; }
     .receipt-success p { color: var(--muted); font-size: .88rem; margin: 0 0 1.2rem; }
 
+    .gcash-qr-box { text-align: center; margin-top: 1.25rem; }
+    .gcash-qr-box canvas { border: 1.5px solid var(--border); border-radius: 12px; padding: .5rem; background: #fff; }
+    .gcash-qr-hint { font-size: .82rem; color: var(--muted); margin-top: .8rem; }
+    .gcash-qr-status { font-size: .86rem; font-weight: 600; color: var(--dark); margin-top: .9rem; display: flex; align-items: center; justify-content: center; gap: .55rem; }
+    .gcash-qr-status.is-error { color: var(--primary); }
+
+    .spin {
+        width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4);
+        border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; display: inline-block;
+    }
+    .spin.dark { border: 2px solid rgba(17,24,39,.15); border-top-color: var(--primary); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     @media (max-width: 1100px) { .billing-layout { grid-template-columns: 1fr; } }
 </style>
 @endsection
@@ -166,12 +179,15 @@
     const MENU_PLACEHOLDER = "{{ asset('images/menu-placeholder.png') }}";
     const ORDERS_URL     = "{{ route('cashier.orders.index') }}";
     const DISCOUNTS_URL  = "{{ route('cashier.discounts.index') }}";
+    const GCASH_INTENTS_BASE_URL = "{{ url('/cashier/gcash-intents') }}";
     const PRESELECT_ORDER = @json($preselectedOrderId);
     const PRESELECT_Q      = @json(request()->query('q'));
 
     let discountsCache = [];
     let currentOrder = null;
     let searchDebounce = null;
+    let currentGcashIntentId = null;
+    let gcashPollTimer = null;
 
     /* ── Search ── */
     async function searchOrders() {
@@ -219,6 +235,8 @@
 
     /* ── Select & load an order ── */
     async function selectOrder(orderId) {
+        stopGcashPolling();
+        currentGcashIntentId = null;
         try {
             const res = await fetch(`${ORDERS_URL}/${orderId}`, { headers: { Accept: 'application/json' } });
             if (!res.ok) {
@@ -337,8 +355,8 @@
                     <input type="radio" name="paymentMethod" id="payCash" class="pay-method-option" value="cash" checked>
                     <label for="payCash" class="pay-method-label"><i class="fas fa-money-bill"></i><span>Cash</span></label>
 
-                    <input type="radio" name="paymentMethod" id="payCashless" class="pay-method-option" value="cashless" disabled>
-                    <label for="payCashless" class="pay-method-label"><i class="fas fa-credit-card"></i><span>Cashless (Soon)</span></label>
+                    <input type="radio" name="paymentMethod" id="payCashless" class="pay-method-option" value="cashless">
+                    <label for="payCashless" class="pay-method-label"><i class="fas fa-qrcode"></i><span>GCash (Scan QR)</span></label>
                 </div>
             </div>
 
@@ -352,13 +370,24 @@
                 </div>
             </div>
 
-            <div class="action-buttons">
-                <button type="button" class="btn btn-primary btn-block" id="confirmPaymentBtn" onclick="confirmPayment()">
-                    <i class="fas fa-check"></i> Confirm Payment
+            <div class="action-buttons" id="mainActionButtons">
+                <button type="button" class="btn btn-primary btn-block" id="primaryActionBtn" onclick="handlePrimaryAction()">
+                    <i class="fas fa-check"></i> <span id="primaryActionLabel">Confirm Payment</span>
                 </button>
                 <button type="button" class="btn btn-outline btn-block" onclick="cancelBilling()">
                     <i class="fas fa-xmark"></i> Cancel
                 </button>
+            </div>
+
+            <div class="gcash-qr-box" id="gcashQrBox" style="display:none">
+                <canvas id="gcashQrCanvas"></canvas>
+                <div class="gcash-qr-hint">Ask the customer to scan this with their GCash app or phone camera.</div>
+                <div class="gcash-qr-status" id="gcashQrStatus"></div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-outline btn-block" onclick="cancelGcashIntent()">
+                        <i class="fas fa-xmark"></i> Cancel GCash Payment
+                    </button>
+                </div>
             </div>
         `;
 
@@ -404,6 +433,11 @@
         const isCash = document.getElementById('payCash').checked;
         document.getElementById('amountReceivedGroup').style.display = isCash ? 'block' : 'none';
 
+        const primaryLabel = document.getElementById('primaryActionLabel');
+        const primaryIcon = document.querySelector('#primaryActionBtn i');
+        if (primaryLabel) primaryLabel.textContent = isCash ? 'Confirm Payment' : 'Generate GCash QR Code';
+        if (primaryIcon) primaryIcon.className = isCash ? 'fas fa-check' : 'fas fa-qrcode';
+
         const amountReceivedInput = document.getElementById('amountReceivedInput');
         const amountReceived = parseFloat(amountReceivedInput.value) || 0;
         const changeBox = document.getElementById('changeBox');
@@ -428,6 +462,8 @@
     }
 
     function cancelBilling() {
+        stopGcashPolling();
+        currentGcashIntentId = null;
         currentOrder = null;
         document.getElementById('orderDetailBox').style.display = 'none';
         document.getElementById('orderDetailBox').innerHTML = '';
@@ -498,6 +534,147 @@
             closeConfirmModal();
             showToast('Failed to process payment.', 'error');
         }
+    }
+
+    function handlePrimaryAction() {
+        if (document.getElementById('payCash').checked) {
+            confirmPayment();
+        } else {
+            generateGcashQr();
+        }
+    }
+
+    async function generateGcashQr() {
+        const discount = currentDiscount();
+        if (discount && discount.requires_verification && !document.getElementById('eligibilityConfirmed').checked) {
+            showToast("Please verify the customer's ID before applying this discount.", 'error');
+            return;
+        }
+
+        const btn = document.getElementById('primaryActionBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> <span>Starting GCash Payment...</span>';
+
+        const payload = {
+            discount_id: discount ? discount.id : null,
+            service_charge: parseFloat(document.getElementById('serviceChargeInput').value) || 0,
+            eligibility_confirmed: discount && discount.requires_verification
+                ? document.getElementById('eligibilityConfirmed').checked
+                : false,
+        };
+
+        try {
+            const res = await fetch(`${ORDERS_URL}/${currentOrder.id}/gcash-intent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showToast(data.message || 'Failed to start GCash payment.', 'error');
+                resetPrimaryButton();
+                return;
+            }
+
+            currentGcashIntentId = data.intent_id;
+            await showGcashQr(data.checkout_url);
+            startGcashPolling();
+        } catch (e) {
+            showToast('Failed to start GCash payment.', 'error');
+            resetPrimaryButton();
+        }
+    }
+
+    function resetPrimaryButton() {
+        const btn = document.getElementById('primaryActionBtn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-qrcode"></i> <span id="primaryActionLabel">Generate GCash QR Code</span>';
+    }
+
+    async function showGcashQr(url) {
+        document.getElementById('mainActionButtons').style.display = 'none';
+        document.getElementById('discountSelect').disabled = true;
+        document.getElementById('serviceChargeInput').disabled = true;
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = true);
+
+        const box = document.getElementById('gcashQrBox');
+        box.style.display = 'block';
+        setGcashStatus('Waiting for customer to scan and pay…', false);
+
+        try {
+            await QRCode.toCanvas(document.getElementById('gcashQrCanvas'), url, { width: 220, margin: 1 });
+        } catch (e) {
+            console.error('QR render failed', e);
+        }
+    }
+
+    function setGcashStatus(message, isError) {
+        const el = document.getElementById('gcashQrStatus');
+        el.classList.toggle('is-error', !!isError);
+        el.innerHTML = isError
+            ? `<i class="fas fa-triangle-exclamation"></i> ${message}`
+            : `<span class="spin dark"></span> ${message}`;
+    }
+
+    function startGcashPolling() {
+        stopGcashPolling();
+        gcashPollTimer = setInterval(checkGcashStatus, 3000);
+    }
+
+    function stopGcashPolling() {
+        if (gcashPollTimer) {
+            clearInterval(gcashPollTimer);
+            gcashPollTimer = null;
+        }
+    }
+
+    async function checkGcashStatus() {
+        if (!currentGcashIntentId) return;
+        try {
+            const res = await fetch(`${GCASH_INTENTS_BASE_URL}/${currentGcashIntentId}/status`, {
+                headers: { Accept: 'application/json' },
+            });
+            const data = await res.json();
+
+            if (data.status === 'paid') {
+                stopGcashPolling();
+                showToast('GCash payment received!', 'success');
+                renderPaymentSuccess(data.receipt_url);
+            } else if (data.status === 'failed' || data.status === 'cancelled') {
+                stopGcashPolling();
+                setGcashStatus('Payment was not completed.', true);
+                showToast('GCash payment was not completed.', 'error');
+            }
+            // status === 'pending' → keep polling silently.
+        } catch (e) {
+            // Transient network hiccup — next tick will retry.
+        }
+    }
+
+    async function cancelGcashIntent() {
+        stopGcashPolling();
+        const intentId = currentGcashIntentId;
+        currentGcashIntentId = null;
+
+        if (intentId) {
+            try {
+                await fetch(`${GCASH_INTENTS_BASE_URL}/${intentId}/cancel`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+                });
+            } catch (e) {
+                // Nothing to do — the intent will simply age out unused.
+            }
+        }
+
+        document.getElementById('gcashQrBox').style.display = 'none';
+        document.getElementById('mainActionButtons').style.display = 'flex';
+        document.getElementById('discountSelect').disabled = false;
+        document.getElementById('serviceChargeInput').disabled = false;
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = false);
+        resetPrimaryButton();
+        recomputeTotals();
     }
 
     function renderPaymentSuccess(receiptUrl) {

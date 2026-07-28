@@ -147,6 +147,11 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
     Route::get('/discounts', [CashierController::class, 'discounts'])     ->name('discounts.index');
     Route::get('/receipts/{payment}', [CashierController::class, 'receipt'])->name('receipts.show');
 
+    // ── Cashier GCash QR payments ──────────────────────────────────
+    Route::post('/orders/{order}/gcash-intent', [CashierController::class, 'createGcashIntent'])->name('orders.gcash-intent');
+    Route::get('/gcash-intents/{intent}/status', [CashierController::class, 'gcashIntentStatus'])->name('gcash-intents.status');
+    Route::post('/gcash-intents/{intent}/cancel', [CashierController::class, 'cancelGcashIntent'])->name('gcash-intents.cancel');
+
     // ── Online Order Management Module (REQ103–REQ106) — Module 23 ────
     Route::prefix('online-orders')->name('online-orders.')->group(function () {
         Route::get('/',                  [OnlineOrderController::class, 'index'])   ->name('index');
@@ -155,6 +160,10 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
         Route::post('/{order}/reject',   [OnlineOrderController::class, 'reject'])  ->name('reject');
     });
 });
+
+/* ── Cashier GCash QR return page — opened on the customer's own phone
+   after authorizing in GCash, so it carries no cashier session. ────── */
+Route::get('/cashier/gcash/return/{intent}', [CashierController::class, 'gcashReturn'])->name('cashier.gcash.return');
 
 /* ── Food Server Digital Menu Catalog (Table Server only) — Module 19 ─── */
 Route::middleware(['auth', 'table_server'])->prefix('table-server')->name('table-server.')->group(function () {

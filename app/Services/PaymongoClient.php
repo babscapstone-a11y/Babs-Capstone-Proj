@@ -103,6 +103,37 @@ class PaymongoClient
     }
 
     /**
+     * Payment Intents don't expose a simple "still waiting" vs "failed"
+     * status — right after attach() a GCash intent sits at
+     * `awaiting_next_action` for as long as the customer takes to act, and
+     * there's no separate top-level "failed" status at all. A failed
+     * attempt shows up as a `last_payment_error`, or a `failed` entry in the
+     * `payments` array, while the intent itself may still read
+     * `awaiting_payment_method` (ready to retry). This normalizes all of
+     * that into the three states callers actually care about.
+     */
+    public function interpretIntentStatus(array $paymongoIntent): string
+    {
+        $attributes = $paymongoIntent['attributes'] ?? [];
+
+        if (($attributes['status'] ?? null) === 'succeeded') {
+            return 'succeeded';
+        }
+
+        if (! empty($attributes['last_payment_error'])) {
+            return 'failed';
+        }
+
+        foreach ($attributes['payments'] ?? [] as $payment) {
+            if (($payment['attributes']['status'] ?? null) === 'failed') {
+                return 'failed';
+            }
+        }
+
+        return 'pending';
+    }
+
+    /**
      * Verify the `Paymongo-Signature` header PayMongo sends with webhook
      * requests. Header format: "t=<timestamp>,te=<test_sig>,li=<live_sig>" —
      * the signed payload is "<timestamp>.<raw body>", HMAC-SHA256'd with the
