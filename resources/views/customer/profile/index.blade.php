@@ -439,7 +439,7 @@
 
                     <div class="form-footer">
                         <button type="reset" class="btn btn-outline" onclick="resetForm()">Reset</button>
-                        <button type="submit" class="btn btn-primary" onclick="return confirmSave()">
+                        <button type="button" class="btn btn-primary" id="saveProfileBtn">
                             <i class="fas fa-floppy-disk"></i> Save Changes
                         </button>
                     </div>
@@ -489,7 +489,7 @@
 
                     <div class="form-footer">
                         <button type="reset" class="btn btn-outline" onclick="resetPwdForm()">Clear</button>
-                        <button type="submit" class="btn btn-primary" onclick="return confirmPwdChange()">
+                        <button type="button" class="btn btn-primary" id="updatePwdBtn">
                             <i class="fas fa-shield-halved"></i> Update Password
                         </button>
                     </div>
@@ -661,20 +661,36 @@ function checkMatch() {
 }
 
 /* Confirm save profile */
-function confirmSave() {
-    return confirm('Save changes to your profile?');
-}
+document.getElementById('saveProfileBtn').addEventListener('click', () => {
+    openConfirmModal({
+        title: 'Save Changes?',
+        desc: 'Save changes to your profile?',
+        confirmText: 'Save Changes',
+        onConfirm: () => {
+            closeConfirmModal();
+            document.getElementById('profileForm').submit();
+        },
+    });
+});
 
 /* Confirm password change */
-function confirmPwdChange() {
+document.getElementById('updatePwdBtn').addEventListener('click', () => {
     const np = document.getElementById('newPwd').value;
     const cp = document.getElementById('confPwd').value;
     if (np !== cp) {
-        alert('New passwords do not match. Please check and try again.');
-        return false;
+        showToast('New passwords do not match. Please check and try again.', 'error');
+        return;
     }
-    return confirm('Update your password?');
-}
+    openConfirmModal({
+        title: 'Update Password?',
+        desc: 'Update your password?',
+        confirmText: 'Update Password',
+        onConfirm: () => {
+            closeConfirmModal();
+            document.getElementById('pwdForm').submit();
+        },
+    });
+});
 
 function resetForm() {
     document.getElementById('picChangeNotice').style.display = 'none';

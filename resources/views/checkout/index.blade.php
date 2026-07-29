@@ -276,18 +276,25 @@ document.getElementById('pickup_time').addEventListener('change', syncPickupAt);
 const form = document.getElementById('checkoutForm');
 const confirmBtn = document.getElementById('confirmOrderBtn');
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', (e) => {
     e.preventDefault();
     syncPickupAt();
 
     if (! document.getElementById('pickup_at').value) {
-        alert('Please choose a pick-up date and time.');
+        showToast('Please choose a pick-up date and time.', 'error');
         return;
     }
 
-    if (! confirm('Are you sure you want to place this order?')) {
-        return;
-    }
+    openConfirmModal({
+        title: 'Place this order?',
+        desc: 'Are you sure you want to place this order?',
+        confirmText: 'Place Order',
+        onConfirm: submitCheckout,
+    });
+});
+
+async function submitCheckout() {
+    closeConfirmModal();
 
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="spin"></span> <span>Starting GCash Payment...</span>';
@@ -309,7 +316,7 @@ form.addEventListener('submit', async (e) => {
         const data = await res.json().catch(() => ({}));
 
         if (! res.ok) {
-            alert(data.message || 'Something went wrong. Please try again.');
+            showToast(data.message || 'Something went wrong. Please try again.', 'error');
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
             return;
@@ -317,10 +324,10 @@ form.addEventListener('submit', async (e) => {
 
         window.location.href = data.redirect_url;
     } catch (err) {
-        alert('Something went wrong. Please try again.');
+        showToast('Something went wrong. Please try again.', 'error');
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
     }
-});
+}
 </script>
 @endsection

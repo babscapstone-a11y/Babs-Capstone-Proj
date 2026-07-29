@@ -286,8 +286,12 @@ async function saveNotes(cartItemId, notes) {
 }
 
 function removeItem(cartItemId) {
-    if (! confirm('Remove this item from your cart?')) return;
-    doRemove(cartItemId);
+    openConfirmModal({
+        title: 'Remove Item?',
+        desc: 'Remove this item from your cart?',
+        confirmText: 'Remove',
+        onConfirm: () => { closeConfirmModal(); doRemove(cartItemId); },
+    });
 }
 
 async function doRemove(cartItemId) {
@@ -306,17 +310,24 @@ async function doRemove(cartItemId) {
     }
 }
 
-document.getElementById('clearCartBtn')?.addEventListener('click', async () => {
-    if (! confirm('Clear all items from your cart? This cannot be undone.')) return;
-    try {
-        await fetch('/cart/clear', {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        });
-        window.location.reload();
-    } catch (e) {
-        showToast('Failed to clear cart.', 'error');
-    }
+document.getElementById('clearCartBtn')?.addEventListener('click', () => {
+    openConfirmModal({
+        title: 'Clear Cart?',
+        desc: 'Clear all items from your cart? This cannot be undone.',
+        confirmText: 'Clear Cart',
+        onConfirm: async () => {
+            closeConfirmModal();
+            try {
+                await fetch('/cart/clear', {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                });
+                window.location.reload();
+            } catch (e) {
+                showToast('Failed to clear cart.', 'error');
+            }
+        },
+    });
 });
 </script>
 @endsection
