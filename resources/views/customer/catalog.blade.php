@@ -426,104 +426,6 @@
 .modal-stock-note.low { background: #fef3c7; color: #92400e; }
 .modal-stock-note.out { background: #f3f4f6; color: #4b5563; }
 
-/* ══════════════════════════════════════════════
-   CART DRAWER
-══════════════════════════════════════════════ */
-.cart-overlay {
-    position: fixed; inset: 0; z-index: 1100;
-    background: rgba(0,0,0,.5); backdrop-filter: blur(2px);
-    display: none;
-}
-.cart-overlay.open { display: block; animation: overlayIn .25s ease; }
-.cart-drawer {
-    position: fixed; right: -420px; top: 0; bottom: 0;
-    width: 100%; max-width: 420px; z-index: 1101;
-    background: var(--white); box-shadow: -12px 0 40px rgba(0,0,0,.15);
-    display: flex; flex-direction: column;
-    transition: right .35s cubic-bezier(.4,0,.2,1);
-}
-.cart-drawer.open { right: 0; }
-
-.cart-drawer-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-}
-.cart-drawer-title { font-size: 1.1rem; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: .55rem; }
-.cart-drawer-close {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 1.5px solid var(--border); background: none;
-    cursor: pointer; font-size: .95rem; color: var(--muted);
-    display: flex; align-items: center; justify-content: center;
-    transition: all .18s;
-}
-.cart-drawer-close:hover { border-color: var(--primary); color: var(--primary); background: #fee2e2; }
-
-.cart-items-list { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; }
-
-.cart-empty-state {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    height: 100%; padding: 3rem 1rem; color: var(--muted); text-align: center;
-}
-.cart-empty-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: .35; }
-.cart-empty-title { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: .35rem; }
-.cart-empty-sub { font-size: .82rem; }
-
-.cart-item {
-    display: flex; align-items: center; gap: .9rem;
-    padding: .9rem 0; border-bottom: 1px solid var(--bg);
-}
-.cart-item-img {
-    width: 62px; height: 62px; border-radius: 10px;
-    overflow: hidden; background: var(--bg); flex-shrink: 0;
-}
-.cart-item-img img { width:100%;height:100%;object-fit:cover; }
-.cart-item-img-ph { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#d1d5db; }
-.cart-item-info { flex: 1; min-width: 0; }
-.cart-item-name { font-size: .86rem; font-weight: 700; color: var(--dark); line-height: 1.3; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-.cart-item-unit-price { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
-.cart-item-controls { display: flex; align-items: center; gap: .4rem; margin-top: .45rem; }
-.cart-qty-btn {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1.5px solid var(--border); background: var(--bg);
-    font-size: .8rem; cursor: pointer; color: var(--dark);
-    display: flex; align-items: center; justify-content: center;
-    transition: all .18s;
-}
-.cart-qty-btn:hover { border-color: var(--primary); color: var(--primary); background: #fee2e2; }
-.cart-qty-val { font-size: .86rem; font-weight: 700; min-width: 20px; text-align: center; }
-.cart-item-subtotal { font-size: .88rem; font-weight: 700; color: var(--primary); flex-shrink: 0; }
-.cart-remove-btn {
-    width: 28px; height: 28px; border-radius: 50%; border: none;
-    background: none; color: #d1d5db; cursor: pointer; font-size: .85rem;
-    transition: color .18s;
-}
-.cart-remove-btn:hover { color: var(--primary); }
-
-.cart-footer {
-    border-top: 1px solid var(--border); padding: 1.25rem 1.5rem;
-    flex-shrink: 0;
-}
-.cart-totals { margin-bottom: 1rem; }
-.cart-total-row {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: .86rem; color: var(--muted); margin-bottom: .35rem;
-}
-.cart-total-row.grand {
-    font-size: 1.05rem; font-weight: 800; color: var(--dark);
-    margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--border);
-}
-.cart-total-row.grand .amt { color: var(--primary); }
-.checkout-btn {
-    width: 100%; padding: .9rem; border-radius: 14px;
-    background: var(--primary); border: none; color: #fff;
-    font-size: .95rem; font-weight: 700; font-family: inherit;
-    cursor: pointer; transition: background .2s;
-    display: flex; align-items: center; justify-content: center; gap: .6rem;
-}
-.checkout-btn:hover { background: var(--primary-dk); }
-.checkout-btn:disabled { opacity: .5; cursor: not-allowed; }
-
 /* ── Floating cart FAB (mobile) ── */
 .cart-fab {
     display: none;
@@ -578,10 +480,10 @@
 
         {{-- Actions --}}
         <div class="nav-actions">
-            <button class="cart-btn" id="openCartBtn" aria-label="Open cart" title="View Cart">
+            <a href="{{ route('cart.index') }}" class="cart-btn" aria-label="View cart" title="View Cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-badge" id="cartBadge">{{ $cartCount }}</span>
-            </button>
+            </a>
 
             {{-- Profile dropdown --}}
             <div class="profile-menu">
@@ -835,77 +737,20 @@
     </div>
 </div>
 
-{{-- ══ CART DRAWER ══ --}}
-<div class="cart-overlay" id="cartOverlay"></div>
-<aside class="cart-drawer" id="cartDrawer" aria-label="Your cart">
-    <div class="cart-drawer-header">
-        <div class="cart-drawer-title">
-            <i class="fas fa-shopping-cart" style="color:var(--primary);"></i>
-            Your Cart
-            <span id="cartDrawerCount" style="background:#fee2e2;color:var(--primary);font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:50px;"></span>
-        </div>
-        <button class="cart-drawer-close" id="closeCartBtn" aria-label="Close cart">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-
-    <div class="cart-items-list" id="cartItemsList">
-        <div class="cart-empty-state" id="cartEmptyState">
-            <div class="cart-empty-icon"><i class="fas fa-shopping-basket"></i></div>
-            <div class="cart-empty-title">Your cart is empty</div>
-            <div class="cart-empty-sub">Add items from the menu to get started.</div>
-        </div>
-    </div>
-
-    <div class="cart-footer" id="cartFooter" style="display:none;">
-        <div class="cart-totals">
-            <div class="cart-total-row">
-                <span>Subtotal</span>
-                <span class="amt" id="cartSubtotal">₱0.00</span>
-            </div>
-            <div class="cart-total-row grand">
-                <span>Total</span>
-                <span class="amt" id="cartGrandTotal">₱0.00</span>
-            </div>
-        </div>
-        <button class="checkout-btn" id="checkoutBtn">
-            <i class="fas fa-receipt"></i> Proceed to Checkout
-        </button>
-    </div>
-</aside>
-
 {{-- ══ FLOATING CART FAB ══ --}}
-<button class="cart-fab" id="cartFab" aria-label="Open cart">
+<a href="{{ route('cart.index') }}" class="cart-fab" aria-label="View cart">
     <i class="fas fa-shopping-cart"></i>
     <span>Cart</span>
     <span class="cart-fab-count" id="cartFabCount">{{ $cartCount }}</span>
-</button>
+</a>
 
 @endsection
 
-@php
-// Pre-compute cart items array so @json() doesn't choke on closure braces
-$initialCartItems = $cartItems->map(function ($ci) {
-    $mi = $ci->menuItem;
-    return [
-        'id'           => $ci->id,
-        'menu_item_id' => $ci->menu_item_id,
-        'name'         => $mi->menu_name,
-        'price'        => (float) $ci->unit_price,
-        'quantity'     => $ci->quantity,
-        'subtotal'     => (float) $ci->unit_price * $ci->quantity,
-        'image'        => $mi->image_url,
-    ];
-})->values()->all();
-@endphp
 @section('scripts')
 <script>
 /* ══════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════ */
-let cartCount = {{ $cartCount }};
-let cartItems = @json($initialCartItems);
-
 let currentItemId   = null;
 let currentItemPrice = 0;
 let currentQty       = 1;
@@ -913,7 +758,6 @@ let currentQty       = 1;
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const cartBadge       = document.getElementById('cartBadge');
 const cartFabCount    = document.getElementById('cartFabCount');
-const cartDrawerCount = document.getElementById('cartDrawerCount');
 
 /* ══════════════════════════════════════════════
    PROFILE DROPDOWN
@@ -932,93 +776,18 @@ document.addEventListener('click', (e) => {
 });
 
 /* ══════════════════════════════════════════════
-   CART DRAWER
-══════════════════════════════════════════════ */
-const cartOverlay = document.getElementById('cartOverlay');
-const cartDrawer  = document.getElementById('cartDrawer');
-
-function openCart()  { cartDrawer.classList.add('open'); cartOverlay.classList.add('open'); document.body.style.overflow = 'hidden'; renderCart(); }
-function closeCart() { cartDrawer.classList.remove('open'); cartOverlay.classList.remove('open'); document.body.style.overflow = ''; }
-
-document.getElementById('openCartBtn').addEventListener('click', openCart);
-document.getElementById('cartFab').addEventListener('click', openCart);
-document.getElementById('closeCartBtn').addEventListener('click', closeCart);
-cartOverlay.addEventListener('click', closeCart);
-
-document.getElementById('checkoutBtn').addEventListener('click', () => {
-    window.location.href = '{{ route('cart.index') }}';
-});
-
-/* ══════════════════════════════════════════════
    BADGE UPDATE
 ══════════════════════════════════════════════ */
 function updateBadge(count) {
-    cartCount = count;
     [cartBadge, cartFabCount].forEach(el => {
         el.textContent = count;
         if (count > 0) { el.style.display = ''; el.classList.add('bump'); setTimeout(() => el.classList.remove('bump'), 400); }
         else el.style.display = 'none';
     });
-    cartDrawerCount.textContent = count > 0 ? `${count} item${count !== 1 ? 's' : ''}` : '';
 }
-updateBadge(cartCount);
+updateBadge({{ $cartCount }});
 
-/* ══════════════════════════════════════════════
-   RENDER CART
-══════════════════════════════════════════════ */
 function formatMoney(n) { return '₱' + parseFloat(n).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2}); }
-
-function renderCart() {
-    const list    = document.getElementById('cartItemsList');
-    const footer  = document.getElementById('cartFooter');
-    const subtotal = document.getElementById('cartSubtotal');
-    const grand   = document.getElementById('cartGrandTotal');
-
-    if (cartItems.length === 0) {
-        list.innerHTML = `
-            <div class="cart-empty-state" id="cartEmptyState">
-                <div class="cart-empty-icon"><i class="fas fa-shopping-basket"></i></div>
-                <div class="cart-empty-title">Your cart is empty</div>
-                <div class="cart-empty-sub">Add items from the menu to get started.</div>
-            </div>`;
-        footer.style.display = 'none';
-        updateBadge(0);
-        return;
-    }
-
-    footer.style.display = 'block';
-
-    const totalAmt = cartItems.reduce((s, ci) => s + ci.price * ci.quantity, 0);
-    const totalQty = cartItems.reduce((s, ci) => s + ci.quantity, 0);
-    subtotal.textContent = formatMoney(totalAmt);
-    grand.textContent    = formatMoney(totalAmt);
-    updateBadge(totalQty);
-
-    list.innerHTML = cartItems.map(ci => `
-        <div class="cart-item" data-id="${ci.id}">
-            <div class="cart-item-img">
-                ${ci.image && !ci.image.includes('placeholder')
-                    ? `<img src="${ci.image}" alt="${ci.name}" loading="lazy">`
-                    : `<div class="cart-item-img-ph"><i class="fas fa-utensils"></i></div>`}
-            </div>
-            <div class="cart-item-info">
-                <div class="cart-item-name">${ci.name}</div>
-                <div class="cart-item-unit-price">${formatMoney(ci.price)} each</div>
-                <div class="cart-item-controls">
-                    <button class="cart-qty-btn" onclick="changeCartQty(${ci.id}, ${ci.quantity - 1})">−</button>
-                    <span class="cart-qty-val">${ci.quantity}</span>
-                    <button class="cart-qty-btn" onclick="changeCartQty(${ci.id}, ${ci.quantity + 1})">+</button>
-                </div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;flex-shrink:0;">
-                <div class="cart-item-subtotal">${formatMoney(ci.price * ci.quantity)}</div>
-                <button class="cart-remove-btn" onclick="removeCartItem(${ci.id})" title="Remove">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
 
 /* ══════════════════════════════════════════════
    CART API CALLS
@@ -1032,46 +801,6 @@ async function apiPost(url, data = {}) {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.message || 'Request failed.');
     return json;
-}
-async function apiPatch(url, data = {}) {
-    const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-        body: JSON.stringify(data),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.message || 'Request failed.');
-    return json;
-}
-async function apiDelete(url) {
-    const res = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.message || 'Request failed.');
-    return json;
-}
-
-async function changeCartQty(cartItemId, newQty) {
-    if (newQty < 1) { removeCartItem(cartItemId); return; }
-    if (newQty > 99) return;
-
-    try {
-        const data = await apiPatch(`/cart/${cartItemId}/update`, { quantity: newQty });
-        const ci = cartItems.find(i => i.id === cartItemId);
-        if (ci) { ci.quantity = newQty; ci.subtotal = ci.price * newQty; }
-        renderCart();
-    } catch(e) { showToast(e.message || 'Failed to update quantity.', 'error'); }
-}
-
-async function removeCartItem(cartItemId) {
-    try {
-        await apiDelete(`/cart/${cartItemId}/remove`);
-        cartItems = cartItems.filter(i => i.id !== cartItemId);
-        renderCart();
-        showToast('Item removed from cart.', 'info');
-    } catch(e) { showToast(e.message || 'Failed to remove item.', 'error'); }
 }
 
 /* ══════════════════════════════════════════════
@@ -1188,13 +917,7 @@ addToCartBtn.addEventListener('click', async () => {
 
     try {
         const data = await apiPost('/cart/add', { menu_item_id: currentItemId, quantity: currentQty });
-
-        // Refresh cart from server
-        const cartData = await fetch('/cart', { headers: { 'Accept': 'application/json' } }).then(r => r.json());
-        cartItems = cartData.items;
-        updateBadge(cartData.count);
-        renderCart();
-
+        updateBadge(data.count);
         closeModal();
         showToast(data.message || 'Added to cart!', 'success');
     } catch(e) {
@@ -1208,10 +931,7 @@ addToCartBtn.addEventListener('click', async () => {
 
 // Keyboard close
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeModal(); closeCart(); }
+    if (e.key === 'Escape') { closeModal(); }
 });
-
-// Initialize
-renderCart();
 </script>
 @endsection

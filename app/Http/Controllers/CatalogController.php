@@ -38,19 +38,16 @@ class CatalogController extends Controller
         // Group by category for section display
         $itemsByCategory = $menuItems->groupBy('category_id');
 
-        // Load active cart for current customer
+        // Cart badge count only — the catalog page links straight to the
+        // cart page rather than rendering cart contents inline.
         $cart = Cart::where('customer_id', auth('customer')->id())
             ->where('status', 'active')
-            ->with(['items.menuItem'])
             ->first();
 
-        $cartCount  = $cart ? $cart->item_count : 0;
-        $cartTotal  = $cart ? $cart->total : 0;
-        $cartItems  = $cart ? $cart->items : collect();
+        $cartCount = $cart ? $cart->item_count : 0;
 
         return view('customer.catalog', compact(
-            'categories', 'menuItems', 'itemsByCategory',
-            'cart', 'cartCount', 'cartTotal', 'cartItems'
+            'categories', 'menuItems', 'itemsByCategory', 'cartCount'
         ));
     }
 }
