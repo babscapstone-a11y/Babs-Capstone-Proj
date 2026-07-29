@@ -380,10 +380,11 @@
             </div>
 
             <div class="gcash-qr-box" id="gcashQrBox" style="display:none">
-                <canvas id="gcashQrCanvas"></canvas>
+                <canvas id="gcashQrCanvas" style="display:none"></canvas>
+                <img id="gcashQrImage" alt="Scan to pay" style="display:none;max-width:220px;width:100%;border:1.5px solid var(--border);border-radius:12px;padding:.5rem;background:#fff">
                 <div class="gcash-qr-hint">Ask the customer to scan this with their GCash app or phone camera.</div>
                 <div class="gcash-qr-status" id="gcashQrStatus"></div>
-                <div class="action-buttons">
+                <div class="action-buttons" id="gcashQrActions">
                     <button type="button" class="btn btn-outline btn-block" onclick="cancelGcashIntent()">
                         <i class="fas fa-xmark"></i> Cancel GCash Payment
                     </button>
@@ -578,7 +579,7 @@
             }
 
             currentGcashIntentId = data.intent_id;
-            await showGcashQr(data.checkout_url);
+            await showGcashQr(data.checkout_url, data.next_action_type);
             startGcashPolling();
         } catch (e) {
             showToast('Failed to start GCash payment.', 'error');
@@ -592,7 +593,7 @@
         btn.innerHTML = '<i class="fas fa-qrcode"></i> <span id="primaryActionLabel">Generate GCash QR Code</span>';
     }
 
-    async function showGcashQr(url) {
+    async function showGcashQr(url, nextActionType) {
         document.getElementById('mainActionButtons').style.display = 'none';
         document.getElementById('discountSelect').disabled = true;
         document.getElementById('serviceChargeInput').disabled = true;
@@ -601,11 +602,32 @@
         const box = document.getElementById('gcashQrBox');
         box.style.display = 'block';
         setGcashStatus('Waiting for customer to scan and pay…', false);
+        document.getElementById('gcashQrActions').innerHTML = `
+            <button type="button" class="btn btn-outline btn-block" onclick="cancelGcashIntent()">
+                <i class="fas fa-xmark"></i> Cancel GCash Payment
+            </button>
+        `;
 
-        try {
-            await QRCode.toCanvas(document.getElementById('gcashQrCanvas'), url, { width: 220, margin: 1 });
-        } catch (e) {
-            console.error('QR render failed', e);
+        const canvas = document.getElementById('gcashQrCanvas');
+        const img = document.getElementById('gcashQrImage');
+
+        if (nextActionType === 'qr_image') {
+            // PayMongo (e.g. QR Ph) already handed back a rendered QR image —
+            // just display it, no client-side rendering needed.
+            canvas.style.display = 'none';
+            img.style.display = 'block';
+            img.src = url;
+        } else {
+            // Redirect-based methods (e.g. GCash) hand back a URL the
+            // customer's own device would navigate to — we render that
+            // URL as our own QR code for a *different* device to scan.
+            img.style.display = 'none';
+            canvas.style.display = 'block';
+            try {
+                await QRCode.toCanvas(canvas, url, { width: 220, margin: 1 });
+            } catch (e) {
+                console.error('QR render failed', e);
+            }
         }
     }
 
@@ -641,6 +663,10 @@
                 stopGcashPolling();
                 showToast('GCash payment received!', 'success');
                 renderPaymentSuccess(data.receipt_url);
+            } else if (data.status === 'expired') {
+                stopGcashPolling();
+                setGcashStatus('This QR code expired after 30 minutes.', true);
+                showGenerateNewQrButton();
             } else if (data.status === 'failed' || data.status === 'cancelled') {
                 stopGcashPolling();
                 setGcashStatus('Payment was not completed.', true);
@@ -650,6 +676,22 @@
         } catch (e) {
             // Transient network hiccup — next tick will retry.
         }
+    }
+
+    function showGenerateNewQrButton() {
+        document.getElementById('gcashQrActions').innerHTML = `
+            <button type="button" class="btn btn-primary btn-block" onclick="regenerateGcashQr()">
+                <i class="fas fa-qrcode"></i> Generate New QR
+            </button>
+            <button type="button" class="btn btn-outline btn-block" onclick="cancelGcashIntent()">
+                <i class="fas fa-xmark"></i> Cancel GCash Payment
+            </button>
+        `;
+    }
+
+    async function regenerateGcashQr() {
+        currentGcashIntentId = null;
+        await generateGcashQr();
     }
 
     async function cancelGcashIntent() {

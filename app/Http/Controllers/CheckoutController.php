@@ -137,7 +137,7 @@ class CheckoutController extends Controller
                 "Order {$order->order_number} — " . ($request->payment_type === 'full' ? 'Full Payment' : 'Half Payment')
             );
 
-            $method = $this->paymongo->createGcashPaymentMethod(array_filter([
+            $method = $this->paymongo->createPaymentMethod('gcash', array_filter([
                 'name'  => $customer->full_name,
                 'email' => $customer->email,
                 'phone' => $customer->contact_no,

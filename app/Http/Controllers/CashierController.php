@@ -189,16 +189,19 @@ class CashierController extends Controller
             'status'          => 'pending',
         ]);
 
+        $method = config('services.paymongo.cashier_qr_method', 'gcash');
+
         try {
             $paymongoIntent = $this->paymongo->createPaymentIntent(
                 (int) round($grandTotal * 100),
-                "Order {$order->order_number} — Cashier GCash Payment"
+                "Order {$order->order_number} — Cashier {$method} Payment",
+                [$method]
             );
 
             // PayMongo requires a billing email on the payment method even for
             // walk-in orders with no linked customer account, so fall back to
             // a synthetic (never-emailed) address tied to the order number.
-            $method = $this->paymongo->createGcashPaymentMethod(array_filter([
+            $paymentMethod = $this->paymongo->createPaymentMethod($method, array_filter([
                 'name'  => $order->customer_name,
                 'email' => $order->customer?->email ?? "order-{$order->order_number}@babsresto.com",
                 'phone' => $order->customer?->contact_no,
@@ -206,26 +209,24 @@ class CashierController extends Controller
 
             $attached = $this->paymongo->attachPaymentMethod(
                 $paymongoIntent['id'],
-                $method['id'],
+                $paymentMethod['id'],
                 route('cashier.gcash.return', $intent)
             );
 
-            $redirectUrl = $attached['attributes']['next_action']['redirect']['url'] ?? null;
-
-            if (! $redirectUrl) {
-                throw new \RuntimeException('PayMongo did not return a redirect URL.');
-            }
+            $nextAction = $this->paymongo->extractNextAction($attached);
 
             $intent->update([
                 'paymongo_payment_intent_id' => $paymongoIntent['id'],
-                'paymongo_payment_method_id' => $method['id'],
-                'paymongo_checkout_url'      => $redirectUrl,
+                'paymongo_payment_method_id' => $paymentMethod['id'],
+                'paymongo_checkout_url'      => $nextAction['value'],
+                'next_action_type'           => $nextAction['type'],
             ]);
 
             return response()->json([
-                'intent_id'     => $intent->id,
-                'checkout_url'  => $redirectUrl,
-                'grand_total'   => $grandTotal,
+                'intent_id'        => $intent->id,
+                'checkout_url'     => $nextAction['value'],
+                'next_action_type' => $nextAction['type'],
+                'grand_total'      => $grandTotal,
             ]);
         } catch (\Throwable $e) {
             Log::error('PayMongo cashier GCash intent failed', [
@@ -260,6 +261,17 @@ class CashierController extends Controller
 
         if ($intent->status !== 'pending') {
             return response()->json(['status' => $intent->status]);
+        }
+
+        // QR Ph codes stop working after 30 minutes, but PayMongo doesn't
+        // reliably reflect that on the Payment Intent's own status — this
+        // is tracked off our own created_at instead. Distinct 'expired' so
+        // the cashier gets a "generate a new one" prompt, not a generic
+        // failure message.
+        if ($intent->isExpired()) {
+            $intent->update(['status' => 'failed']);
+
+            return response()->json(['status' => 'expired']);
         }
 
         try {
@@ -315,7 +327,9 @@ class CashierController extends Controller
      */
     public function gcashReturn(GcashPaymentIntent $intent): View
     {
-        if ($intent->status === 'pending') {
+        if ($intent->status === 'pending' && $intent->isExpired()) {
+            $intent->update(['status' => 'failed']);
+        } elseif ($intent->status === 'pending') {
             try {
                 $paymongoIntent = $this->paymongo->retrievePaymentIntent($intent->paymongo_payment_intent_id);
                 $resolved = $this->paymongo->interpretIntentStatus($paymongoIntent);

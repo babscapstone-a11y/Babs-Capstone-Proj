@@ -39,6 +39,13 @@ return [
         'secret_key'     => env('PAYMONGO_SECRET_KEY'),
         'public_key'     => env('PAYMONGO_PUBLIC_KEY'),
         'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
+
+        // Which PayMongo payment method the cashier billing screen's "Scan
+        // QR" option uses. Defaults to 'gcash'; set to 'qrph' as a temporary
+        // stand-in while GCash's e-wallet is pending activation on this
+        // PayMongo account (see Settings > Payment Methods in their
+        // dashboard) — flip this back to 'gcash' once that's Active.
+        'cashier_qr_method' => env('PAYMONGO_CASHIER_QR_METHOD', 'gcash'),
     ],
 
 ];

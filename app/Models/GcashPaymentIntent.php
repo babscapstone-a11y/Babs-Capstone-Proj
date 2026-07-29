@@ -11,8 +11,11 @@ class GcashPaymentIntent extends Model
         'order_id', 'cashier_id', 'discount_id', 'payment_id',
         'subtotal', 'discount_amount', 'service_charge', 'grand_total',
         'paymongo_payment_intent_id', 'paymongo_payment_method_id',
-        'paymongo_checkout_url', 'status',
+        'paymongo_checkout_url', 'next_action_type', 'status',
     ];
+
+    /** How long a QR Ph code stays scannable before PayMongo expires it. */
+    const QR_EXPIRY_MINUTES = 30;
 
     protected $casts = [
         'subtotal'        => 'decimal:2',
@@ -41,5 +44,18 @@ class GcashPaymentIntent extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    /**
+     * PayMongo doesn't reliably surface QR Ph's 30-minute code expiry on the
+     * Payment Intent's own status, so it's tracked here off created_at
+     * instead. Only meaningful while still `pending` — a redirect-based
+     * method (GCash) doesn't expire the same way, but checking this against
+     * an already-resolved intent is harmless (it just won't be consulted).
+     */
+    public function isExpired(): bool
+    {
+        return $this->status === 'pending'
+            && $this->created_at->addMinutes(self::QR_EXPIRY_MINUTES)->isPast();
     }
 }

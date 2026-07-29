@@ -33,10 +33,10 @@ class PaymongoClient
     }
 
     /**
-     * Create a Payment Intent for the given amount (in centavos) restricted
-     * to the GCash payment method.
+     * Create a Payment Intent for the given amount (in centavos), restricted
+     * to whichever payment method type(s) will be attached to it.
      */
-    public function createPaymentIntent(int $amountCentavos, string $description): array
+    public function createPaymentIntent(int $amountCentavos, string $description, array $allowedMethods = ['gcash']): array
     {
         $response = $this->http()->post(self::BASE_URL . '/payment_intents', [
             'data' => [
@@ -44,7 +44,7 @@ class PaymongoClient
                     'amount'                 => $amountCentavos,
                     'currency'               => 'PHP',
                     'description'            => $description,
-                    'payment_method_allowed' => ['gcash'],
+                    'payment_method_allowed' => $allowedMethods,
                     'capture_type'           => 'automatic',
                 ],
             ],
@@ -54,11 +54,12 @@ class PaymongoClient
     }
 
     /**
-     * Create a reusable GCash Payment Method.
+     * Create a reusable Payment Method of the given type (e.g. "gcash",
+     * "qrph").
      */
-    public function createGcashPaymentMethod(array $billing = []): array
+    public function createPaymentMethod(string $type, array $billing = []): array
     {
-        $attributes = ['type' => 'gcash'];
+        $attributes = ['type' => $type];
 
         if ($billing) {
             $attributes['billing'] = $billing;
@@ -72,9 +73,9 @@ class PaymongoClient
     }
 
     /**
-     * Attach a Payment Method to a Payment Intent. For GCash this returns a
-     * next_action.redirect.url the customer must be sent to in order to
-     * authorize the payment in GCash.
+     * Attach a Payment Method to a Payment Intent. What the customer does
+     * next depends on the method type — extractNextAction() below reads it
+     * out of the response.
      */
     public function attachPaymentMethod(string $paymentIntentId, string $paymentMethodId, string $returnUrl): array
     {
@@ -88,6 +89,29 @@ class PaymongoClient
         ]);
 
         return $response->throw()->json('data');
+    }
+
+    /**
+     * Reads the actionable payload out of an attached Payment Intent.
+     * GCash (and similar redirect-based methods) return
+     * `next_action.redirect.url` — a page to send the customer's browser to.
+     * QR Ph returns `next_action.code.image_url` — an already-rendered
+     * Base64 QR image with nowhere to redirect, since a *different* device
+     * is expected to scan it.
+     */
+    public function extractNextAction(array $attachedIntent): array
+    {
+        $nextAction = $attachedIntent['attributes']['next_action'] ?? [];
+
+        if ($url = $nextAction['redirect']['url'] ?? null) {
+            return ['type' => 'redirect', 'value' => $url];
+        }
+
+        if ($image = $nextAction['code']['image_url'] ?? null) {
+            return ['type' => 'qr_image', 'value' => $image];
+        }
+
+        throw new RuntimeException('PayMongo did not return a usable next action.');
     }
 
     /**
