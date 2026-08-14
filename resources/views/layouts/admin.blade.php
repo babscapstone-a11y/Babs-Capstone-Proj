@@ -375,6 +375,13 @@
                     <span class="nav-badge">{{ $pendingCancellations }}</span>
                 @endif
             </a>
+
+            <div class="nav-label" style="margin-top:.5rem">Reports</div>
+
+            <a href="{{ route('reports.index') }}"
+               class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                <i class="fas fa-chart-line"></i> Report Generation
+            </a>
         </nav>
 
         <div class="sidebar-footer">

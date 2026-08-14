@@ -16,6 +16,7 @@ use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PaymongoWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StaffPasswordResetController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\CustomerProfileController;
@@ -125,6 +126,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/{cancellationRequest}',          [CancellationRequestController::class, 'show'])   ->name('show');
         Route::put('/{cancellationRequest}/approve',  [CancellationRequestController::class, 'approve'])->name('approve');
         Route::put('/{cancellationRequest}/reject',   [CancellationRequestController::class, 'reject']) ->name('reject');
+    });
+
+    // ── Report Generation Module (REQ056–REQ060) — Module 10 ───────────
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/',        [ReportController::class, 'index'])  ->name('index');
+        Route::get('/print',   [ReportController::class, 'print'])  ->name('print');
+        Route::get('/export',  [ReportController::class, 'export']) ->name('export');
     });
 });
 
