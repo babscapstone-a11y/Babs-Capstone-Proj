@@ -67,13 +67,23 @@ class StoreTableServerOrderRequest extends FormRequest
             // packaged_at (only ever set once a food server acts) are what
             // distinguish "still sitting there, not yet served" from
             // "already served and since paid" for that second case.
+            //
+            // payment_status is checked directly, on top of that, as a
+            // second line of defense: a paid order must never keep blocking
+            // a table even if order_status_id somehow didn't make it to
+            // Completed (e.g. drifted out of sync with payment_status via a
+            // direct DB edit) — the transaction being closed is what
+            // actually matters here, not which status row it's pointing at.
             $hasActiveOrder = DineInOrder::where('table_number', $this->table_number)
                 ->whereHas('order', function ($oq) {
-                    $oq->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
-                        ->orWhere(function ($completedQ) {
-                            $completedQ->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
-                                ->whereNull('served_at')
-                                ->whereNull('packaged_at');
+                    $oq->where('payment_status', '!=', 'paid')
+                        ->where(function ($statusQ) {
+                            $statusQ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
+                                ->orWhere(function ($completedQ) {
+                                    $completedQ->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
+                                        ->whereNull('served_at')
+                                        ->whereNull('packaged_at');
+                                });
                         });
                 })
                 ->exists();
