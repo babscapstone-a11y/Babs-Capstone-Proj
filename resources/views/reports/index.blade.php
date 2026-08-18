@@ -110,7 +110,7 @@
         <div class="filter-grid">
             <div class="form-group" style="margin-bottom:0">
                 <label class="form-label">Date Range</label>
-                <select name="date_range" id="dateRangeSelect" class="form-select" onchange="toggleCustomDates()">
+                <select name="date_range" id="dateRangeSelect" class="form-select" onchange="handleDateRangeChange()">
                     @foreach($dateRangeLabels as $key => $label)
                         <option value="{{ $key }}" @selected($filters['date_range'] === $key)>{{ $label }}</option>
                     @endforeach
@@ -119,17 +119,17 @@
 
             <div class="form-group" id="customStartWrap" style="margin-bottom:0;display:{{ $filters['date_range'] === 'custom' ? 'block' : 'none' }}">
                 <label class="form-label">Start Date</label>
-                <input type="date" name="start_date" class="form-select" value="{{ $filters['start_date'] }}">
+                <input type="date" name="start_date" id="startDateInput" class="form-select" value="{{ $filters['start_date'] }}" onchange="submitIfCustomRangeComplete()">
             </div>
             <div class="form-group" id="customEndWrap" style="margin-bottom:0;display:{{ $filters['date_range'] === 'custom' ? 'block' : 'none' }}">
                 <label class="form-label">End Date</label>
-                <input type="date" name="end_date" class="form-select" value="{{ $filters['end_date'] }}">
+                <input type="date" name="end_date" id="endDateInput" class="form-select" value="{{ $filters['end_date'] }}" onchange="submitIfCustomRangeComplete()">
             </div>
 
             @if($type === 'sales')
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
+                    <select name="category" class="form-select" onchange="autoSubmit()">
                         <option value="all" @selected($filters['category'] === 'all')>All Categories</option>
                         <option value="food" @selected($filters['category'] === 'food')>Food Category</option>
                         <option value="beverage" @selected($filters['category'] === 'beverage')>Beverage Category</option>
@@ -137,20 +137,20 @@
                 </div>
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Chart Interval</label>
-                    <select name="chart_interval" class="form-select">
+                    <select name="chart_interval" class="form-select" onchange="autoSubmit()">
                         <option value="daily" @selected($filters['chart_interval'] === 'daily')>Daily</option>
                         <option value="weekly" @selected($filters['chart_interval'] === 'weekly')>Weekly</option>
                         <option value="monthly" @selected($filters['chart_interval'] === 'monthly')>Monthly</option>
                     </select>
                 </div>
                 <label class="filter-check">
-                    <input type="checkbox" name="include_unpaid" value="1" @checked($filters['include_unpaid'])>
+                    <input type="checkbox" name="include_unpaid" value="1" @checked($filters['include_unpaid']) onchange="autoSubmit()">
                     Include Cancelled / Unpaid Orders
                 </label>
             @elseif($type === 'inventory')
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
+                    <select name="category" class="form-select" onchange="autoSubmit()">
                         <option value="all" @selected($filters['category'] === 'all')>All Categories</option>
                         <option value="rtc" @selected($filters['category'] === 'rtc')>RTC Raw Meat</option>
                         <option value="beverage" @selected($filters['category'] === 'beverage')>Beverage</option>
@@ -159,7 +159,7 @@
             @else
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Order Type</label>
-                    <select name="order_type" class="form-select">
+                    <select name="order_type" class="form-select" onchange="autoSubmit()">
                         <option value="all" @selected($filters['order_type'] === 'all')>All Order Types</option>
                         <option value="dine_in" @selected($filters['order_type'] === 'dine_in')>Dine-In</option>
                         <option value="takeout" @selected($filters['order_type'] === 'takeout')>Take-Out</option>
@@ -168,7 +168,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Menu Category</label>
-                    <select name="menu_category_id" class="form-select">
+                    <select name="menu_category_id" class="form-select" onchange="autoSubmit()">
                         <option value="all" @selected($filters['menu_category_id'] === 'all')>All Menu Categories</option>
                         @foreach($menuCategories as $cat)
                             <option value="{{ $cat->id }}" @selected((string) $filters['menu_category_id'] === (string) $cat->id)>{{ $cat->category_name }}</option>
@@ -179,7 +179,6 @@
         </div>
 
         <div class="filter-actions">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Apply Filters</button>
             <a href="{{ route('reports.index', ['type' => $type]) }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset Filters</a>
         </div>
     </div>
@@ -450,10 +449,30 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script>
-function toggleCustomDates() {
+// Every filter field auto-applies on change — no "Apply Filters" button needed.
+function autoSubmit() {
+    document.getElementById('reportFilterForm').submit();
+}
+
+function handleDateRangeChange() {
     var isCustom = document.getElementById('dateRangeSelect').value === 'custom';
     document.getElementById('customStartWrap').style.display = isCustom ? 'block' : 'none';
     document.getElementById('customEndWrap').style.display = isCustom ? 'block' : 'none';
+
+    // Every other range (Today, This Week, ...) is a complete selection by
+    // itself, so it can submit immediately. Custom Range needs both dates
+    // picked first — wait for submitIfCustomRangeComplete() instead.
+    if (!isCustom) {
+        autoSubmit();
+    }
+}
+
+function submitIfCustomRangeComplete() {
+    var start = document.getElementById('startDateInput').value;
+    var end = document.getElementById('endDateInput').value;
+    if (start && end) {
+        autoSubmit();
+    }
 }
 
 // ── REQ057/live search: 300ms-debounced client-side row filter ──
