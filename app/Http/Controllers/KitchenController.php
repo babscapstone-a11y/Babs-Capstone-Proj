@@ -26,7 +26,7 @@ class KitchenController extends Controller
      */
     public function orders(): JsonResponse
     {
-        $orders = Order::with(['orderStatus', 'customer', 'dineInOrder', 'details'])
+        $orders = Order::with(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem'])
             ->where(function ($query) {
                 $query->whereHas('orderStatus', function ($q) {
                     $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);
@@ -92,7 +92,7 @@ class KitchenController extends Controller
             $order->update(['order_status_id' => $newStatus->id]);
         }
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
+        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number} has been marked as {$order->kitchen_status_label}.",
@@ -148,7 +148,7 @@ class KitchenController extends Controller
             $order->update(['order_status_id' => $previous->id]);
         }
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
+        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number} reverted to {$order->kitchen_status_label}.",
@@ -191,7 +191,7 @@ class KitchenController extends Controller
             ),
         ]);
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
+        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number}'s prep time was extended by " . self::PREP_EXTENSION_STEP_MINUTES . ' minutes.',

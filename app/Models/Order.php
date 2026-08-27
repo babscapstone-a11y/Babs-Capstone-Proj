@@ -306,13 +306,26 @@ class Order extends Model
         };
     }
 
+    /**
+     * Default prep estimate for orders containing items with no configured
+     * prep time (or none at all).
+     */
+    private const DEFAULT_PREP_MINUTES = 30;
+
     public function getEstimatedCompletionAttribute(): ?\Illuminate\Support\Carbon
     {
         if ($this->isCancelled() || $this->isCompleted()) {
             return null;
         }
 
-        return $this->created_at?->copy()->addMinutes(30 + $this->extra_prep_minutes);
+        // Items are typically prepared in parallel, so the order is only as
+        // fast as its slowest dish — not the sum of every item's prep time.
+        $basePrepMinutes = $this->details
+            ->pluck('menuItem.prep_time_minutes')
+            ->filter()
+            ->max() ?? self::DEFAULT_PREP_MINUTES;
+
+        return $this->created_at?->copy()->addMinutes($basePrepMinutes + $this->extra_prep_minutes);
     }
 
     /**
