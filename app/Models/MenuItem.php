@@ -15,6 +15,7 @@ class MenuItem extends Model
         'item_type',
         'description',
         'price',
+        'prep_time_minutes',
         'image',
         'is_available',
         'is_active',
@@ -26,11 +27,12 @@ class MenuItem extends Model
     ];
 
     protected $casts = [
-        'price'        => 'decimal:2',
-        'rtc_quantity' => 'decimal:4',
-        'rtc_servings' => 'decimal:4',
-        'is_available' => 'boolean',
-        'is_active'    => 'boolean',
+        'price'              => 'decimal:2',
+        'prep_time_minutes'  => 'integer',
+        'rtc_quantity'       => 'decimal:4',
+        'rtc_servings'       => 'decimal:4',
+        'is_available'       => 'boolean',
+        'is_active'          => 'boolean',
     ];
 
     /* ── Relationships ───────────────────────────────────────── */

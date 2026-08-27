@@ -22,6 +22,7 @@ class UpdateMenuItemRequest extends FormRequest
             'category_id' => ['required', Rule::exists('categories', 'id')->where('item_type', $this->input('item_type'))],
             'description' => ['nullable', 'string', 'max:1000'],
             'price'       => ['required', 'numeric', 'min:0.01'],
+            'prep_time_minutes' => ['nullable', 'integer', 'min:1', 'max:480'],
             'image'       => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'is_active'   => ['required', 'boolean'],
         ];
@@ -30,9 +31,11 @@ class UpdateMenuItemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'menu_name.unique'   => 'A menu item with this name already exists.',
-            'price.min'          => 'Price must be greater than zero.',
-            'category_id.exists' => 'Please select a category that matches the chosen item type.',
+            'menu_name.unique'        => 'A menu item with this name already exists.',
+            'price.min'               => 'Price must be greater than zero.',
+            'category_id.exists'      => 'Please select a category that matches the chosen item type.',
+            'prep_time_minutes.min'   => 'Preparation time must be at least 1 minute.',
+            'prep_time_minutes.max'   => 'Preparation time seems too long. Please double-check the value.',
         ];
     }
 }

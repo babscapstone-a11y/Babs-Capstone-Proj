@@ -233,10 +233,20 @@
                 <i class="fas fa-peso-sign"></i> Pricing & Status
             </div>
             <div class="info-card-body">
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem">
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         <div style="font-size:1.5rem;font-weight:800;color:var(--primary)">₱{{ number_format($menu->price, 2) }}</div>
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Selling Price</div>
+                    </div>
+                    <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
+                        @if($menu->prep_time_minutes)
+                            <div style="font-size:1.2rem;color:#D97706"><i class="fas fa-hourglass-half"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--dark)">{{ $menu->prep_time_minutes }} min</div>
+                        @else
+                            <div style="font-size:1.2rem;color:#6B7280"><i class="fas fa-hourglass"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:#6B7280">Not set</div>
+                        @endif
+                        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Prep Time</div>
                     </div>
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         @if($menu->is_available)

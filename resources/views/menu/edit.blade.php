@@ -217,7 +217,13 @@
                     value="{{ old('price', $menu->price) }}" min="0.01" step="0.01" required>
                 @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div></div>
+            <div class="form-group">
+                <label for="prep_time_minutes">Preparation Time (minutes)</label>
+                <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control @error('prep_time_minutes') is-invalid @enderror"
+                    value="{{ old('prep_time_minutes', $menu->prep_time_minutes) }}" min="1" step="1" placeholder="e.g. 15">
+                <div class="form-hint">Estimated time the kitchen needs to prepare this item. Leave blank if not tracked.</div>
+                @error('prep_time_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
         </div>
 
         <hr class="form-divider">
