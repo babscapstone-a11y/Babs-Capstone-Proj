@@ -131,6 +131,7 @@ class CustomerProfileController extends Controller
             'rejection_reason'   => $order->rejection_reason,
             'cancellation_status'          => $order->cancellationRequest?->review_status,
             'cancellation_rejection_reason' => $order->cancellationRequest?->rejection_reason,
+            'extra_prep_minutes' => $order->extra_prep_minutes,
         ]);
     }
 

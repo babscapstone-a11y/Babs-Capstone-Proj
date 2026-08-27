@@ -156,6 +156,49 @@ class KitchenController extends Controller
         ]);
     }
 
+    /** Minutes added to an order's prep estimate per "Extend Prep Time" click. */
+    private const PREP_EXTENSION_STEP_MINUTES = 10;
+
+    /** Upper bound on how far one order's estimate can be pushed back. */
+    private const MAX_EXTRA_PREP_MINUTES = 120;
+
+    /**
+     * PATCH /kitchen/orders/{order}/extend-prep — pushes an order's estimated
+     * completion time back by a fixed step, for tickets running behind. The
+     * customer's order-tracking page picks this up on its next status poll
+     * since it's read straight off Order::estimated_completion.
+     */
+    public function extendPrepTime(Order $order): JsonResponse
+    {
+        $order->load('orderStatus');
+
+        if (! $order->canExtendPrepTime()) {
+            return response()->json([
+                'message' => "Order #{$order->order_number} is no longer being prepared, so its prep time can't be extended.",
+            ], 422);
+        }
+
+        if ($order->extra_prep_minutes >= self::MAX_EXTRA_PREP_MINUTES) {
+            return response()->json([
+                'message' => "Order #{$order->order_number} has already been extended by the maximum of " . self::MAX_EXTRA_PREP_MINUTES . ' minutes.',
+            ], 422);
+        }
+
+        $order->update([
+            'extra_prep_minutes' => min(
+                $order->extra_prep_minutes + self::PREP_EXTENSION_STEP_MINUTES,
+                self::MAX_EXTRA_PREP_MINUTES,
+            ),
+        ]);
+
+        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details']);
+
+        return response()->json([
+            'message' => "Order #{$order->order_number}'s prep time was extended by " . self::PREP_EXTENSION_STEP_MINUTES . ' minutes.',
+            'order'   => $this->serializeOrder($order),
+        ]);
+    }
+
     /**
      * Reverses deductRtcStockForOrder(): gives back rtc_servings for every
      * order detail that was actually deducted (rtc_deducted_at set) and
@@ -270,6 +313,8 @@ class KitchenController extends Controller
             'pickup_at'             => $order->pickup_at?->toIso8601String(),
             'item_count'            => $order->item_count,
             'estimated_completion'  => $order->estimated_completion?->toIso8601String(),
+            'extra_prep_minutes'    => $order->extra_prep_minutes,
+            'can_extend_prep'       => $order->canExtendPrepTime() && $order->extra_prep_minutes < self::MAX_EXTRA_PREP_MINUTES,
             'special_instructions'  => $order->special_instructions,
             'can_revert'            => $canRevert,
             'previous_status_label' => $previousStatusLabels[$order->status_name] ?? null,

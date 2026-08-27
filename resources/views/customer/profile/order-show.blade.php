@@ -413,9 +413,14 @@
                 </div>
 
                 @if($order->estimated_completion)
-                <div style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.45rem">
+                <div id="estimatedCompletionContainer" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.45rem;flex-wrap:wrap">
                     <i class="fas fa-clock" style="color:var(--accent)"></i>
                     Estimated completion: <strong style="color:var(--dark)">{{ $order->estimated_completion->format('h:i A') }}</strong>
+                    @if($order->extra_prep_minutes > 0)
+                    <span style="background:#FEF3C7;color:#92400E;font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:20px">
+                        <i class="fas fa-hourglass-half"></i> Running {{ $order->extra_prep_minutes }} min longer than usual
+                    </span>
+                    @endif
                 </div>
                 @endif
             @endif
@@ -633,6 +638,7 @@ const orderStatusUrl = "{{ route('account.orders.status', $order) }}";
 let lastStatus = @json($order->status_name);
 let lastApprovalStatus = @json($order->approval_status);
 let lastCancellationStatus = @json($order->cancellationRequest?->review_status);
+let lastExtraPrepMinutes = @json($order->extra_prep_minutes);
 
 async function pollOrderStatus() {
     try {
@@ -640,7 +646,8 @@ async function pollOrderStatus() {
         const data = await res.json();
 
         if (data.status_name !== lastStatus || data.approval_status !== lastApprovalStatus
-            || data.cancellation_status !== lastCancellationStatus || data.is_cancelled || data.is_completed) {
+            || data.cancellation_status !== lastCancellationStatus || data.is_cancelled || data.is_completed
+            || data.extra_prep_minutes !== lastExtraPrepMinutes) {
             window.location.reload();
             return;
         }

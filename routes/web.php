@@ -142,6 +142,7 @@ Route::middleware(['auth', 'kitchen_staff'])->prefix('kitchen')->name('kitchen.'
     Route::get('/orders',           [KitchenController::class, 'orders'])      ->name('orders');
     Route::patch('/orders/{order}/status', [KitchenController::class, 'updateStatus']) ->name('orders.status');
     Route::patch('/orders/{order}/revert', [KitchenController::class, 'revertStatus']) ->name('orders.revert');
+    Route::patch('/orders/{order}/extend-prep', [KitchenController::class, 'extendPrepTime']) ->name('orders.extend-prep');
 });
 
 /* ── Payment and Billing Module (Cashier only) — Module 22 ─────── */

@@ -13,6 +13,7 @@ class Order extends Model
     protected $fillable = [
         'order_number', 'total_amount', 'customer_id', 'placed_by', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
+        'extra_prep_minutes',
         'cancelled_at', 'cancellation_reason',
         'pickup_at', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
         'ready_at', 'served_by', 'served_at', 'packaged_at',
@@ -311,7 +312,16 @@ class Order extends Model
             return null;
         }
 
-        return $this->created_at?->copy()->addMinutes(30);
+        return $this->created_at?->copy()->addMinutes(30 + $this->extra_prep_minutes);
+    }
+
+    /**
+     * The kitchen may only push back an order's estimate while it's still
+     * being worked on — once it's Ready there's nothing left to extend.
+     */
+    public function canExtendPrepTime(): bool
+    {
+        return in_array($this->status_name, ['Pending', 'Processing'], true);
     }
 
     public function getItemCountAttribute(): int

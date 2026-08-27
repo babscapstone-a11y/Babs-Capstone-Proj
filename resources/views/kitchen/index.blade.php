@@ -114,6 +114,20 @@
     .ticket-revert-btn-wide:hover { background: rgba(220,38,38,0.12); }
     .kanban-col-sublabel { font-size: .68rem; color: var(--muted); font-weight: 600; margin: -.5rem .3rem .5rem; flex-shrink: 0; }
 
+    .ticket-extend-btn {
+        background: rgba(245,158,11,0.12); border: none; color: var(--accent);
+        width: 24px; height: 24px; border-radius: 7px; cursor: pointer; font-size: .72rem; flex-shrink: 0;
+    }
+    .ticket-extend-btn:hover { background: rgba(245,158,11,0.22); }
+    .ticket-extend-btn-wide {
+        width: 100%; margin-top: .5rem; padding: .6rem; border-radius: 10px;
+        border: 1px solid rgba(245,158,11,0.35); background: rgba(245,158,11,0.1);
+        color: #92400E; font-family: inherit; font-weight: 700; font-size: .85rem; cursor: pointer;
+    }
+    .ticket-extend-btn-wide:hover { background: rgba(245,158,11,0.18); }
+    .ticket-extend-btn-wide:disabled { opacity: .5; cursor: not-allowed; }
+    .ticket-chip.extended { background: rgba(245,158,11,0.14); color: #92400E; }
+
     /* ── Detail modal ────────────────────────────────────────── */
     .detail-modal-box {
         background: var(--white); border-radius: 20px;
@@ -265,11 +279,16 @@
             ? `<button type="button" class="ticket-revert-btn" title="Revert to ${order.previous_status_label}" onclick="event.stopPropagation(); confirmRevert(${order.id})"><i class="fas fa-rotate-left"></i></button>`
             : '';
 
+        const extendBtn = order.can_extend_prep
+            ? `<button type="button" class="ticket-extend-btn" title="Extend prep time by 10 min" onclick="event.stopPropagation(); confirmExtendPrep(${order.id})"><i class="fas fa-clock-rotate-left"></i></button>`
+            : '';
+
         return `
             <div class="ticket-card ${cssClass}" onclick="openDetailModal(${order.id})">
                 <div class="ticket-top">
                     <div class="ticket-order-number">#${order.order_number}</div>
                     <div style="display:flex;align-items:center;gap:.4rem">
+                        ${extendBtn}
                         ${revertBtn}
                         <div class="ticket-elapsed ${isUrgent(order.created_at) ? 'urgent' : ''}" data-created="${order.created_at}">${elapsedText(order.created_at)}</div>
                     </div>
@@ -280,6 +299,7 @@
                     ${order.table_number ? `<span class="ticket-chip"><i class="fas fa-chair"></i> Table ${order.table_number}</span>` : ''}
                     <span class="ticket-chip"><i class="fas fa-clock"></i> ${formatTime(order.created_at)}</span>
                     ${order.order_type === 'online' && order.pickup_at ? `<span class="ticket-chip"><i class="fas fa-calendar-clock"></i> Pickup ${formatPickup(order.pickup_at)}</span>` : ''}
+                    ${order.extra_prep_minutes > 0 ? `<span class="ticket-chip extended"><i class="fas fa-hourglass-half"></i> +${order.extra_prep_minutes}m added</span>` : ''}
                 </div>
                 <div class="ticket-items">
                     ${itemsHtml}
@@ -365,6 +385,10 @@
             ? `<button type="button" class="ticket-revert-btn-wide" onclick="confirmRevert(${order.id})"><i class="fas fa-rotate-left"></i> Revert to ${order.previous_status_label}</button>`
             : '';
 
+        const extendBtn = order.can_extend_prep
+            ? `<button type="button" class="ticket-extend-btn-wide" onclick="confirmExtendPrep(${order.id})"><i class="fas fa-clock-rotate-left"></i> Extend Prep Time (+10 min)</button>`
+            : '';
+
         document.getElementById('detailModalContent').innerHTML = `
             <div class="detail-header">
                 <div>
@@ -378,11 +402,16 @@
                 <div class="detail-meta-item"><div class="detail-meta-label">Order Type</div><div class="detail-meta-value">${order.order_type_label}${order.table_number ? ' · Table ' + order.table_number : ''}</div></div>
                 <div class="detail-meta-item"><div class="detail-meta-label">Order Time</div><div class="detail-meta-value">${formatTime(order.created_at)}</div></div>
                 <div class="detail-meta-item"><div class="detail-meta-label">Total Items</div><div class="detail-meta-value">${order.item_count}</div></div>
+                ${order.estimated_completion ? `
+                <div class="detail-meta-item"><div class="detail-meta-label">Est. Ready</div><div class="detail-meta-value">${formatTime(order.estimated_completion)}</div></div>
+                <div class="detail-meta-item"><div class="detail-meta-label">Extended By</div><div class="detail-meta-value">${order.extra_prep_minutes > 0 ? order.extra_prep_minutes + ' min' : '—'}</div></div>
+                ` : ''}
             </div>
             <div class="detail-section-label">Ordered Items</div>
             ${itemsHtml}
             ${order.special_instructions ? `<div class="detail-instructions-box"><i class="fas fa-circle-info"></i> ${order.special_instructions}</div>` : ''}
             ${actionBtn}
+            ${extendBtn}
             ${revertBtn}
         `;
         document.getElementById('orderDetailModal').classList.add('open');
@@ -468,6 +497,42 @@
         } catch (e) {
             closeConfirmModal();
             showToast('Failed to revert order status.', 'error');
+        }
+    }
+
+    function confirmExtendPrep(orderId) {
+        const order = ordersCache[orderId];
+        if (!order || !order.can_extend_prep) return;
+
+        openConfirmModal({
+            title: 'Extend Prep Time?',
+            desc: `Push back Order #${order.order_number}'s estimated ready time by 10 minutes? The customer will see the updated estimate.`,
+            confirmText: 'Extend +10 min',
+            onConfirm: () => submitExtendPrep(orderId),
+        });
+    }
+
+    async function submitExtendPrep(orderId) {
+        try {
+            const res = await fetch(`/kitchen/orders/${orderId}/extend-prep`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+            });
+            const data = await res.json();
+
+            closeConfirmModal();
+            closeDetailModal();
+
+            if (!res.ok) {
+                showToast(data.message || 'Failed to extend prep time.', 'error');
+                return;
+            }
+
+            showToast(data.message, 'success');
+            pollOrders();
+        } catch (e) {
+            closeConfirmModal();
+            showToast('Failed to extend prep time.', 'error');
         }
     }
 
