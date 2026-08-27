@@ -312,20 +312,28 @@ class Order extends Model
      */
     private const DEFAULT_PREP_MINUTES = 30;
 
+    /**
+     * Total prep estimate in minutes: the slowest item's configured prep
+     * time (items are prepared in parallel, not summed), plus any minutes
+     * the kitchen has tacked on via "Extend Prep Time".
+     */
+    public function getEstimatedPrepMinutesAttribute(): int
+    {
+        $basePrepMinutes = $this->details
+            ->pluck('menuItem.prep_time_minutes')
+            ->filter()
+            ->max() ?? self::DEFAULT_PREP_MINUTES;
+
+        return $basePrepMinutes + $this->extra_prep_minutes;
+    }
+
     public function getEstimatedCompletionAttribute(): ?\Illuminate\Support\Carbon
     {
         if ($this->isCancelled() || $this->isCompleted()) {
             return null;
         }
 
-        // Items are typically prepared in parallel, so the order is only as
-        // fast as its slowest dish — not the sum of every item's prep time.
-        $basePrepMinutes = $this->details
-            ->pluck('menuItem.prep_time_minutes')
-            ->filter()
-            ->max() ?? self::DEFAULT_PREP_MINUTES;
-
-        return $this->created_at?->copy()->addMinutes($basePrepMinutes + $this->extra_prep_minutes);
+        return $this->created_at?->copy()->addMinutes($this->estimated_prep_minutes);
     }
 
     /**
