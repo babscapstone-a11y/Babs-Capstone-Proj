@@ -201,6 +201,12 @@
         align-items: center; justify-content: center;
         text-align: center; min-height: 180px;
     }
+    .widget-body.has-chart {
+        padding: 1.25rem 1.2rem;
+        display: block;
+        text-align: initial;
+    }
+    .chart-box { position: relative; height: 220px; }
     .widget-placeholder-icon {
         width: 56px; height: 56px; border-radius: 14px;
         display: flex; align-items: center; justify-content: center;
@@ -598,17 +604,24 @@
                     <i class="fas fa-chart-area"></i>
                 </div>
                 <div class="widget-title">Sales Overview</div>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);font-weight:500">Last 7 days</span>
             </div>
-            <div class="widget-body">
-                <div class="widget-placeholder-icon" style="background:rgba(220,38,38,0.08);color:var(--primary)">
-                    <i class="fas fa-chart-area"></i>
+            @if(array_sum($salesChartData) > 0)
+                <div class="widget-body has-chart">
+                    <div class="chart-box"><canvas id="salesOverviewChart"></canvas></div>
                 </div>
-                <div class="widget-placeholder-title">No Sales Data Yet</div>
-                <div class="widget-placeholder-desc">
-                    Sales analytics will be available once transactions are recorded through the Order and Payment modules.
+            @else
+                <div class="widget-body">
+                    <div class="widget-placeholder-icon" style="background:rgba(220,38,38,0.08);color:var(--primary)">
+                        <i class="fas fa-chart-area"></i>
+                    </div>
+                    <div class="widget-placeholder-title">No Sales Data Yet</div>
+                    <div class="widget-placeholder-desc">
+                        Sales analytics will appear here once transactions are recorded through the Order and Payment modules.
+                    </div>
+                    <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> No Data</span>
                 </div>
-                <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> Coming Soon</span>
-            </div>
+            @endif
         </div>
 
         {{-- Orders Overview --}}
@@ -662,6 +675,7 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script>
 function updateClock() {
     var now  = new Date();
@@ -673,5 +687,22 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+@if(array_sum($salesChartData) > 0)
+new Chart(document.getElementById('salesOverviewChart'), {
+    type: 'line',
+    data: {
+        labels: @json($salesChartLabels),
+        datasets: [{
+            label: 'Net Sales (₱)',
+            data: @json($salesChartData),
+            borderColor: '#DC2626',
+            backgroundColor: 'rgba(220,38,38,0.08)',
+            fill: true, tension: 0.35, pointBackgroundColor: '#DC2626', pointRadius: 3,
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+@endif
 </script>
 @endsection
