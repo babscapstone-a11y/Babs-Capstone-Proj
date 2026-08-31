@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatus;
 use App\Models\PaymentProof;
+use App\Models\RestaurantDowntime;
 use App\Services\PaymongoClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -43,9 +44,10 @@ class CheckoutController extends Controller
         $customer = auth('customer')->user();
 
         return view('checkout.index', [
-            'cart'      => $cart,
-            'customer'  => $customer,
-            'cartCount' => $cart->item_count,
+            'cart'           => $cart,
+            'customer'       => $customer,
+            'cartCount'      => $cart->item_count,
+            'activeDowntime' => RestaurantDowntime::current(),
         ]);
     }
 

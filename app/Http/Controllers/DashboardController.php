@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\RestaurantDowntime;
 use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
 use Illuminate\View\View;
@@ -55,13 +56,16 @@ class DashboardController extends Controller
             $salesChartData[]   = round($dailySales->get($day->format('Y-m-d'), 0.0), 2);
         }
 
+        $activeDowntime = RestaurantDowntime::current();
+
         return view('dashboard', compact(
             'totalStaff', 'activeStaff', 'pendingResets',
             'totalMenuItems', 'activeMenuItems', 'availableMenuItems',
             'totalCustomers', 'activeCustomers',
             'pendingCancellations', 'approvedCancellationsToday', 'rejectedCancellationsToday',
             'cancelledOrders', 'recentCancellationRequests',
-            'salesChartLabels', 'salesChartData'
+            'salesChartLabels', 'salesChartData',
+            'activeDowntime'
         ));
     }
 }

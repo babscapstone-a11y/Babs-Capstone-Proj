@@ -333,7 +333,25 @@ class Order extends Model
             return null;
         }
 
-        return $this->created_at?->copy()->addMinutes($this->estimated_prep_minutes);
+        // If the kitchen was on downtime when this order was placed, prep
+        // can't start until service resumes — the estimate runs from
+        // whenever that downtime ends rather than from created_at.
+        $start = $this->downtime_at_placement?->ends_at?->copy() ?? $this->created_at?->copy();
+
+        return $start?->addMinutes($this->estimated_prep_minutes);
+    }
+
+    /**
+     * The restaurant downtime window (if any) that was active the moment
+     * this order was placed.
+     */
+    public function getDowntimeAtPlacementAttribute(): ?RestaurantDowntime
+    {
+        if (! $this->created_at) {
+            return null;
+        }
+
+        return RestaurantDowntime::coveringMoment($this->created_at)->first();
     }
 
     /**

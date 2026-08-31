@@ -253,6 +253,23 @@
     }
     .status-label { font-weight: 600; color: var(--dark); }
 
+    /* ── Restaurant service control ─────────────────────────── */
+    .service-status-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; flex-wrap: wrap;
+        border-radius: 14px; padding: 1rem 1.3rem;
+        margin-bottom: 1.75rem; border: 1.5px solid var(--border);
+    }
+    .service-status-bar.is-open { background: rgba(22,163,74,0.06); border-color: rgba(22,163,74,0.25); }
+    .service-status-bar.is-down { background: rgba(217,119,6,0.07); border-color: rgba(217,119,6,0.3); }
+    .service-status-text { display: flex; align-items: center; gap: .75rem; font-size: .86rem; color: var(--dark); }
+    .service-status-text .ss-icon {
+        width: 40px; height: 40px; border-radius: 11px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.05rem; flex-shrink: 0;
+    }
+    .service-status-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+
     /* ── Fade-in animations ─────────────────────────────────── */
     @keyframes fadeUp {
         from { opacity: 0; transform: translateY(18px); }
@@ -329,6 +346,51 @@
             <div class="wb-val" style="color:#FCA5A5">{{ $pendingResets }}</div>
             <div class="wb-label">Pending Resets</div>
         </div>
+        @endif
+    </div>
+</div>
+
+{{-- Restaurant Service Control --}}
+<div class="service-status-bar anim-2 {{ $activeDowntime ? 'is-down' : 'is-open' }}">
+    <div class="service-status-text">
+        <div class="ss-icon" style="background:{{ $activeDowntime ? 'rgba(217,119,6,0.14)' : 'rgba(22,163,74,0.12)' }};color:{{ $activeDowntime ? '#D97706' : '#16A34A' }}">
+            <i class="fas {{ $activeDowntime ? 'fa-store-slash' : 'fa-store' }}"></i>
+        </div>
+        <div>
+            @if($activeDowntime)
+                <strong>Restaurant temporarily unavailable</strong> — service resumes
+                <strong>{{ $activeDowntime->ends_at->format('M d, h:i A') }}</strong>
+                ({{ $activeDowntime->ends_at->diffForHumans() }})
+                @if($activeDowntime->reason)
+                    <div style="color:var(--muted);font-size:.78rem;margin-top:.15rem">{{ $activeDowntime->reason }}</div>
+                @endif
+                <div style="color:var(--muted);font-size:.75rem;margin-top:.15rem">
+                    Customers can still place orders — new orders will only be prepared once service resumes.
+                </div>
+            @else
+                <strong>Restaurant is open</strong> — accepting and preparing orders normally.
+            @endif
+        </div>
+    </div>
+    <div class="service-status-actions">
+        @if($activeDowntime)
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openDowntimeModal()">
+                <i class="fas fa-pen"></i> Edit
+            </button>
+            <button type="button" class="btn btn-success btn-sm"
+                onclick="openModal({
+                    type: 'warn', iconClass: 'fas fa-store',
+                    title: 'Resume Service Now?',
+                    desc: 'Customers will immediately see the restaurant as open, and new orders will go back to normal prep estimates.',
+                    action: '{{ route('downtime.end') }}',
+                    method: 'PUT', confirmText: 'Resume Service',
+                })">
+                <i class="fas fa-play"></i> End Downtime Now
+            </button>
+        @else
+            <button type="button" class="btn btn-secondary btn-sm" style="color:#D97706;border-color:rgba(217,119,6,.3)" onclick="openDowntimeModal()">
+                <i class="fas fa-store-slash"></i> Set Downtime
+            </button>
         @endif
     </div>
 </div>
@@ -667,6 +729,39 @@
     </div>
 </div>
 
+{{-- Set Downtime Modal --}}
+<div class="modal-overlay" id="downtimeModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+        <div class="modal-icon warn"><i class="fas fa-store-slash"></i></div>
+        <h3 class="modal-title">Set Restaurant Downtime</h3>
+        <p class="modal-desc">
+            Customers can still browse and place orders — their prep estimate
+            will simply be pushed back until service resumes.
+        </p>
+        <form id="downtimeForm" method="POST" action="{{ route('downtime.store') }}">
+            @csrf
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(30)">+30 min</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(60)">+1 hr</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(120)">+2 hrs</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(240)">+4 hrs</button>
+            </div>
+            <label for="downtimeEndsAt" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable until</label>
+            <input type="datetime-local" name="ends_at" id="downtimeEndsAt" required
+                   style="width:100%;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff;margin-bottom:.85rem">
+            <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Reason (optional, staff-facing only)</label>
+            <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. Staff shortage, equipment maintenance…"
+                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px"></textarea>
+            <div class="modal-actions" style="margin-top:1.25rem">
+                <button type="button" class="btn-modal-cancel" onclick="closeDowntimeModal()">Cancel</button>
+                <button type="submit" class="btn-modal-confirm" style="background:#D97706">
+                    <i class="fas fa-store-slash"></i> Confirm Downtime
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- Footer note --}}
 <div class="anim-7" style="text-align:center;padding:.75rem 0 .25rem;color:var(--muted);font-size:.78rem">
     BAB'S RESTO v1.0 &mdash; Web-Based Online Ordering, POS &amp; Inventory Management System &middot; &copy; {{ date('Y') }}
@@ -687,6 +782,21 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+function openDowntimeModal() {
+    document.getElementById('downtimeReason').value = @json($activeDowntime->reason ?? '');
+    document.getElementById('downtimeModal').classList.add('open');
+}
+function closeDowntimeModal() { document.getElementById('downtimeModal').classList.remove('open'); }
+document.getElementById('downtimeModal').addEventListener('click', function (e) {
+    if (e.target === this) closeDowntimeModal();
+});
+function setDowntimeIn(minutes) {
+    var d = new Date(Date.now() + minutes * 60000);
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    document.getElementById('downtimeEndsAt').value =
+        d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
 
 @if(array_sum($salesChartData) > 0)
 new Chart(document.getElementById('salesOverviewChart'), {

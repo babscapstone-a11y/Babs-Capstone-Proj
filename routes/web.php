@@ -17,6 +17,7 @@ use App\Http\Controllers\PaymongoWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RestaurantDowntimeController;
 use App\Http\Controllers\StaffPasswordResetController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\CustomerProfileController;
@@ -133,6 +134,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/',        [ReportController::class, 'index'])  ->name('index');
         Route::get('/print',   [ReportController::class, 'print'])  ->name('print');
         Route::get('/export',  [ReportController::class, 'export']) ->name('export');
+    });
+
+    // ── Restaurant Service Downtime (Admin dashboard control) ──────────
+    Route::prefix('downtime')->name('downtime.')->group(function () {
+        Route::post('/',      [RestaurantDowntimeController::class, 'store']) ->name('store');
+        Route::put('/end',    [RestaurantDowntimeController::class, 'end'])   ->name('end');
     });
 });
 
