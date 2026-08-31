@@ -132,6 +132,18 @@
                 <div class="sum-card"><div class="sl">Net Sales</div><div class="sv">₱{{ number_format($data['summary']['net_sales'], 2) }}</div></div>
             </div>
 
+            <div class="section-title">Top Selling Items</div>
+            <table class="rpt-tbl">
+                <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @forelse($data['top_items'] as $i => $item)
+                        <tr><td>{{ $i + 1 }}</td><td>{{ $item['item_name'] }}</td><td>{{ ucfirst($item['category']) }}</td><td>{{ number_format($item['quantity_sold']) }}</td><td>₱{{ number_format($item['revenue'], 2) }}</td></tr>
+                    @empty
+                        <tr><td colspan="5" style="text-align:center;color:#9CA3AF;padding:1rem">No items sold for the selected filters.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+
             <div class="section-title">Detailed Report — Sales Transactions</div>
             <table class="rpt-tbl">
                 <thead><tr><th>Txn #</th><th>Order #</th><th>Date</th><th>Time</th><th>Type</th><th>Cashier</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Method</th><th>Status</th></tr></thead>

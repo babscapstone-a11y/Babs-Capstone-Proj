@@ -6,6 +6,7 @@ use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\Order;
+use App\Models\OrderDetail;
 use App\Models\OrderStatus;
 use App\Models\Payment;
 use App\Models\PurchaseOrder;
@@ -56,7 +57,7 @@ class ReportService
         // paid/unpaid flag to check.
         $paymentsQuery = Payment::query()
             ->whereBetween('payment_date', [$from, $to])
-            ->with(['order', 'cashier.staff', 'modeOfPayment', 'invoice.discount']);
+            ->with(['order.details.menuItem', 'cashier.staff', 'modeOfPayment', 'invoice.discount']);
 
         if ($category !== 'all') {
             $paymentsQuery->whereHas('order.details.menuItem', fn ($q) => $q->where('item_type', $category));
@@ -141,8 +142,9 @@ class ReportService
                 'total_discounts'     => $totalDiscounts,
                 'net_sales'           => $netSales,
             ],
-            'rows'  => $allRows,
-            'chart' => $this->buildSalesChart($payments, $from, $to, $interval),
+            'rows'      => $allRows,
+            'chart'     => $this->buildSalesChart($payments, $from, $to, $interval),
+            'top_items' => $this->buildTopSellingItems($payments, $category),
             'meta'  => [
                 'from' => $from, 'to' => $to, 'category' => $category,
                 'include_unpaid' => $includeUnpaid, 'interval' => $interval,
@@ -187,6 +189,38 @@ class ReportService
         }
 
         return ['labels' => $labels, 'data' => $data];
+    }
+
+    /**
+     * Ranks menu items by units sold across the payments already resolved
+     * for the Sales Report — same paid-only, date/category/search-filtered
+     * set backing the summary and table, so the ranking never drifts from
+     * what the Administrator is already looking at.
+     */
+    private function buildTopSellingItems(Collection $payments, string $category, int $limit = 10): array
+    {
+        $lines = $payments->flatMap(fn (Payment $p) => $p->order?->details ?? collect());
+
+        if ($category !== 'all') {
+            $lines = $lines->filter(fn (OrderDetail $d) => $d->menuItem?->item_type === $category);
+        }
+
+        return $lines->groupBy(fn (OrderDetail $d) => $d->menu_item_id ?? $d->item_name)
+            ->map(function (Collection $group) {
+                $first = $group->first();
+
+                return [
+                    'menu_item_id'  => $first->menu_item_id,
+                    'item_name'     => $first->menuItem?->menu_name ?? $first->item_name,
+                    'category'      => $first->menuItem?->item_type ?? '—',
+                    'quantity_sold' => (int) $group->sum('quantity'),
+                    'revenue'       => (float) $group->sum('subtotal'),
+                ];
+            })
+            ->sortByDesc('quantity_sold')
+            ->take($limit)
+            ->values()
+            ->all();
     }
 
     /* ── Inventory Report (REQ059) ────────────────────────────────── */

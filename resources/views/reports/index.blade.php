@@ -218,6 +218,30 @@
         </div>
     </div>
 
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-ranking-star" style="color:var(--primary);margin-right:.4rem"></i>Top Selling Items</h3></div>
+        <div class="card-body">
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+                    <tbody>
+                        @forelse($data['top_items'] as $i => $item)
+                            <tr>
+                                <td>{{ $i + 1 }}</td>
+                                <td>{{ $item['item_name'] }}</td>
+                                <td>{{ ucfirst($item['category']) }}</td>
+                                <td>{{ number_format($item['quantity_sold']) }}</td>
+                                <td>₱{{ number_format($item['revenue'], 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr class="empty-row"><td colspan="5">No items sold for the selected filters.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="table-toolbar">
