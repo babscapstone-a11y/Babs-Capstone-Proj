@@ -67,6 +67,10 @@
     .ticket-card.status-ready     { border-left-color: var(--status-ready); }
     .ticket-card.status-completed { border-left-color: var(--status-completed); opacity: .82; }
 
+    .ticket-card.collapsed { padding: .5rem .7rem; }
+    .ticket-collapsed-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .ticket-order-number.small { font-size: .85rem; }
+
     .ticket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
     .ticket-order-number { font-size: 1.02rem; font-weight: 800; color: var(--dark); }
     .ticket-elapsed {
@@ -259,8 +263,20 @@
         return (Date.now() - new Date(iso).getTime()) > 20 * 60 * 1000; // 20+ min old
     }
 
-    function renderCard(order) {
+    function renderCard(order, collapsed = false) {
         const cssClass = STATUS_CSS_CLASS[order.status] || 'status-pending';
+
+        if (collapsed) {
+            return `
+                <div class="ticket-card collapsed ${cssClass}" onclick="openDetailModal(${order.id})">
+                    <div class="ticket-collapsed-row">
+                        <span class="ticket-order-number small">#${order.order_number}</span>
+                        <span class="ticket-chip">${order.order_type_label}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         const itemsHtml = order.items.slice(0, 4).map(item => `
             <div class="ticket-item-row">
                 <span class="ticket-item-name">${item.name}</span>
@@ -334,7 +350,7 @@
             const col = document.getElementById(COLUMN_IDS[key]);
             const list = grouped[key];
             col.innerHTML = list.length
-                ? list.map(renderCard).join('')
+                ? list.map((order, idx) => renderCard(order, idx > 0)).join('')
                 : '<div class="kanban-empty">No orders</div>';
             document.getElementById('colCount' + key).textContent = list.length;
         });
