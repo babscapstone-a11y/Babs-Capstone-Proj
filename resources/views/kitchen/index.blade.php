@@ -69,7 +69,8 @@
 
     .ticket-card.collapsed { padding: .5rem .7rem; }
     .ticket-collapsed-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-    .ticket-order-number.small { font-size: .85rem; }
+    .ticket-order-number.small { font-size: .85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket-chip.small { font-size: .65rem; padding: .1rem .4rem; white-space: nowrap; flex-shrink: 0; }
 
     .ticket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
     .ticket-order-number { font-size: 1.02rem; font-weight: 800; color: var(--dark); }
@@ -271,7 +272,7 @@
                 <div class="ticket-card collapsed ${cssClass}" onclick="openDetailModal(${order.id})">
                     <div class="ticket-collapsed-row">
                         <span class="ticket-order-number small">#${order.order_number}</span>
-                        <span class="ticket-chip">${order.order_type_label}</span>
+                        <span class="ticket-chip small">${order.order_type_label}</span>
                     </div>
                 </div>
             `;
