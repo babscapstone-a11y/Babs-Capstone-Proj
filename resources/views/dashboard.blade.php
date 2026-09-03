@@ -770,10 +770,11 @@
             <div id="downtimePreview" style="display:none;margin-top:.7rem;padding:.55rem .8rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.78rem;color:#92400E"></div>
             <div id="downtimeJsError" class="field-error" style="display:none;margin-top:.5rem"><i class="fas fa-circle-exclamation"></i> <span></span></div>
 
-            <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional, staff-facing only)</label>
-            <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. Staff shortage, equipment maintenance…"
+            <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional — shown to customers who try to order)</label>
+            <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. We're temporarily closed for staff shortage…"
                       class="{{ $errors->has('reason') ? 'has-error' : '' }}"
                       style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $activeDowntime->reason ?? '') }}</textarea>
+            <div class="hint" style="font-size:.72rem;color:var(--muted);margin-top:.3rem">If left blank, customers will just see a generic "temporarily unavailable" message.</div>
             @error('reason')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
             <div class="modal-actions" style="margin-top:1.25rem">

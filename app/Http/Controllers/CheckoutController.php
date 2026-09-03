@@ -41,9 +41,9 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty. Add some items before checking out.');
         }
 
-        if (RestaurantDowntime::isRestaurantDown()) {
+        if ($downtime = RestaurantDowntime::current()) {
             return redirect()->route('cart.index')
-                ->with('error', RestaurantDowntime::blockedOrderingMessage());
+                ->with('error', $downtime->blockedOrderingMessage());
         }
 
         $customer = auth('customer')->user();
@@ -62,8 +62,8 @@ class CheckoutController extends Controller
      */
     public function payWithGcash(StoreOrderRequest $request): JsonResponse
     {
-        if (RestaurantDowntime::isRestaurantDown()) {
-            return response()->json(['message' => RestaurantDowntime::blockedOrderingMessage()], 422);
+        if ($downtime = RestaurantDowntime::current()) {
+            return response()->json(['message' => $downtime->blockedOrderingMessage()], 422);
         }
 
         $cart = $this->activeCart();

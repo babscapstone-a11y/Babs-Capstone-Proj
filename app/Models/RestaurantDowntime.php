@@ -56,10 +56,14 @@ class RestaurantDowntime extends Model
         return static::current() !== null;
     }
 
-    /** Shared copy for the error customers see when ordering is blocked. */
-    public static function blockedOrderingMessage(): string
+    /**
+     * The message customers see when ordering is blocked — the admin's own
+     * reason, if they gave one, since that's the most useful thing to tell
+     * a customer; otherwise a generic fallback.
+     */
+    public function blockedOrderingMessage(): string
     {
-        return 'The restaurant is temporarily unavailable and not accepting new orders right now. Please check back later.';
+        return $this->reason ?: 'The restaurant is temporarily unavailable and not accepting new orders right now. Please check back later.';
     }
 
     public function wasEndedEarly(): bool

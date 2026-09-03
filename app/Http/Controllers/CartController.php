@@ -65,8 +65,8 @@ class CartController extends Controller
 
     public function add(Request $request): JsonResponse
     {
-        if (RestaurantDowntime::isRestaurantDown()) {
-            return response()->json(['message' => RestaurantDowntime::blockedOrderingMessage()], 422);
+        if ($downtime = RestaurantDowntime::current()) {
+            return response()->json(['message' => $downtime->blockedOrderingMessage()], 422);
         }
 
         $request->validate([
