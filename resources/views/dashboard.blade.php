@@ -365,7 +365,7 @@
                     <div style="color:var(--muted);font-size:.78rem;margin-top:.15rem">{{ $activeDowntime->reason }}</div>
                 @endif
                 <div style="color:var(--muted);font-size:.75rem;margin-top:.15rem">
-                    Customers can still place orders — new orders will only be prepared once service resumes.
+                    Customers cannot add items to their cart or place new orders until service resumes.
                 </div>
             @else
                 <strong>Restaurant is open</strong> — accepting and preparing orders normally.
@@ -730,28 +730,52 @@
 </div>
 
 {{-- Set Downtime Modal --}}
-<div class="modal-overlay" id="downtimeModal" role="dialog" aria-modal="true">
+@php
+    $downtimeErrors  = $errors->hasAny(['duration_minutes', 'ends_at', 'reason']);
+    $selectedDuration = old('duration_minutes');
+@endphp
+<div class="modal-overlay {{ $downtimeErrors ? 'open' : '' }}" id="downtimeModal" role="dialog" aria-modal="true">
     <div class="modal-box">
         <div class="modal-icon warn"><i class="fas fa-store-slash"></i></div>
         <h3 class="modal-title">Set Restaurant Downtime</h3>
         <p class="modal-desc">
-            Customers can still browse and place orders — their prep estimate
-            will simply be pushed back until service resumes.
+            Customers will be blocked from adding items to their cart or
+            checking out until service resumes.
         </p>
-        <form id="downtimeForm" method="POST" action="{{ route('downtime.store') }}">
+        <form id="downtimeForm" method="POST" action="{{ route('downtime.store') }}" novalidate>
             @csrf
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(30)">+30 min</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(60)">+1 hr</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(120)">+2 hrs</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="setDowntimeIn(240)">+4 hrs</button>
+            <label for="downtimeDuration" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable for</label>
+            <select name="duration_minutes" id="downtimeDuration" required onchange="onDowntimeDurationChange()"
+                    class="form-select {{ $errors->has('duration_minutes') ? 'has-error' : '' }}"
+                    style="width:100%;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff;margin-bottom:.4rem">
+                <option value="" disabled {{ $selectedDuration ? '' : 'selected' }}>Select a duration…</option>
+                <option value="15" {{ $selectedDuration === '15' ? 'selected' : '' }}>15 minutes</option>
+                <option value="30" {{ $selectedDuration === '30' ? 'selected' : '' }}>30 minutes</option>
+                <option value="60" {{ $selectedDuration === '60' ? 'selected' : '' }}>1 hour</option>
+                <option value="120" {{ $selectedDuration === '120' ? 'selected' : '' }}>2 hours</option>
+                <option value="180" {{ $selectedDuration === '180' ? 'selected' : '' }}>3 hours</option>
+                <option value="240" {{ $selectedDuration === '240' ? 'selected' : '' }}>4 hours</option>
+                <option value="custom" {{ $selectedDuration === 'custom' ? 'selected' : '' }}>Custom date &amp; time…</option>
+            </select>
+            @error('duration_minutes')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+
+            <div id="downtimeCustomField" style="display:none;margin-top:.6rem">
+                <label for="downtimeEndsAt" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable until</label>
+                <input type="datetime-local" name="ends_at" id="downtimeEndsAt" value="{{ old('ends_at') }}"
+                       class="{{ $errors->has('ends_at') ? 'has-error' : '' }}"
+                       style="width:100%;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                @error('ends_at')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             </div>
-            <label for="downtimeEndsAt" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable until</label>
-            <input type="datetime-local" name="ends_at" id="downtimeEndsAt" required
-                   style="width:100%;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff;margin-bottom:.85rem">
-            <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Reason (optional, staff-facing only)</label>
+
+            <div id="downtimePreview" style="display:none;margin-top:.7rem;padding:.55rem .8rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.78rem;color:#92400E"></div>
+            <div id="downtimeJsError" class="field-error" style="display:none;margin-top:.5rem"><i class="fas fa-circle-exclamation"></i> <span></span></div>
+
+            <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional, staff-facing only)</label>
             <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. Staff shortage, equipment maintenance…"
-                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px"></textarea>
+                      class="{{ $errors->has('reason') ? 'has-error' : '' }}"
+                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $activeDowntime->reason ?? '') }}</textarea>
+            @error('reason')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+
             <div class="modal-actions" style="margin-top:1.25rem">
                 <button type="button" class="btn-modal-cancel" onclick="closeDowntimeModal()">Cancel</button>
                 <button type="submit" class="btn-modal-confirm" style="background:#D97706">
@@ -783,20 +807,111 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
+var activeDowntimeEndsAt = @json($activeDowntime?->ends_at?->format('Y-m-d\TH:i'));
+var activeDowntimeReason = @json($activeDowntime->reason ?? '');
+
+function downtimeLocalValue(date) {
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+}
+
 function openDowntimeModal() {
-    document.getElementById('downtimeReason').value = @json($activeDowntime->reason ?? '');
+    var select      = document.getElementById('downtimeDuration');
+    var customField = document.getElementById('downtimeCustomField');
+    var endsAtInput = document.getElementById('downtimeEndsAt');
+
+    hideDowntimeJsError();
+
+    if (activeDowntimeEndsAt) {
+        // Editing an already-active downtime: show its current end time so
+        // the admin can see what they're changing, not a blank field.
+        select.value = 'custom';
+        endsAtInput.value = activeDowntimeEndsAt;
+        endsAtInput.required = true;
+        customField.style.display = 'block';
+    } else {
+        select.value = '';
+        endsAtInput.value = '';
+        endsAtInput.required = false;
+        customField.style.display = 'none';
+    }
+
+    document.getElementById('downtimeReason').value = activeDowntimeReason;
+    updateDowntimePreview();
     document.getElementById('downtimeModal').classList.add('open');
 }
 function closeDowntimeModal() { document.getElementById('downtimeModal').classList.remove('open'); }
 document.getElementById('downtimeModal').addEventListener('click', function (e) {
     if (e.target === this) closeDowntimeModal();
 });
-function setDowntimeIn(minutes) {
-    var d = new Date(Date.now() + minutes * 60000);
-    var pad = function (n) { return String(n).padStart(2, '0'); };
-    document.getElementById('downtimeEndsAt').value =
-        d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+function hideDowntimeJsError() { document.getElementById('downtimeJsError').style.display = 'none'; }
+
+function onDowntimeDurationChange() {
+    var select      = document.getElementById('downtimeDuration');
+    var customField = document.getElementById('downtimeCustomField');
+    var endsAtInput = document.getElementById('downtimeEndsAt');
+
+    if (select.value === 'custom') {
+        customField.style.display = 'block';
+        endsAtInput.required = true;
+        endsAtInput.min = downtimeLocalValue(new Date(Date.now() + 60000));
+    } else {
+        customField.style.display = 'none';
+        endsAtInput.required = false;
+    }
+
+    hideDowntimeJsError();
+    updateDowntimePreview();
 }
+
+function updateDowntimePreview() {
+    var select      = document.getElementById('downtimeDuration');
+    var endsAtInput = document.getElementById('downtimeEndsAt');
+    var preview     = document.getElementById('downtimePreview');
+    var resumeDate  = null;
+
+    if (select.value === 'custom') {
+        if (endsAtInput.value) resumeDate = new Date(endsAtInput.value);
+    } else if (select.value) {
+        resumeDate = new Date(Date.now() + parseInt(select.value, 10) * 60000);
+    }
+
+    if (resumeDate && !isNaN(resumeDate.getTime())) {
+        preview.style.display = 'block';
+        preview.innerHTML = '<i class="fas fa-clock"></i> Service will resume around <strong>' +
+            resumeDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) +
+            '</strong>';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+document.getElementById('downtimeEndsAt').addEventListener('input', updateDowntimePreview);
+
+document.getElementById('downtimeForm').addEventListener('submit', function (e) {
+    var select      = document.getElementById('downtimeDuration');
+    var endsAtInput = document.getElementById('downtimeEndsAt');
+    var jsError     = document.getElementById('downtimeJsError');
+    var message     = null;
+
+    if (! select.value) {
+        message = 'Please choose how long the restaurant will be unavailable.';
+    } else if (select.value === 'custom') {
+        if (! endsAtInput.value) {
+            message = 'Please choose the date and time service resumes.';
+        } else if (new Date(endsAtInput.value).getTime() <= Date.now()) {
+            message = 'The downtime must end at a time in the future.';
+        }
+    }
+
+    if (message) {
+        e.preventDefault();
+        jsError.querySelector('span').textContent = message;
+        jsError.style.display = 'flex';
+    } else {
+        hideDowntimeJsError();
+    }
+});
 
 @if(array_sum($salesChartData) > 0)
 new Chart(document.getElementById('salesOverviewChart'), {

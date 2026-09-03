@@ -105,16 +105,6 @@
 <div class="page-wrap checkout-wrap">
     <div class="page-title fade-up"><i class="fas fa-receipt"></i> Checkout</div>
 
-    @if($activeDowntime)
-    <div class="fade-up" style="display:flex;align-items:flex-start;gap:.75rem;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.25rem">
-        <i class="fas fa-store-slash" style="color:#D97706;font-size:1.1rem;margin-top:.1rem"></i>
-        <div style="font-size:.85rem;color:#92400E;line-height:1.55">
-            <strong>The kitchen is temporarily offline</strong> until {{ $activeDowntime->ends_at->format('h:i A') }}.
-            You can still place your order — it will be prepared once service resumes.
-        </div>
-    </div>
-    @endif
-
     <form id="checkoutForm">
         @csrf
         <div class="checkout-grid">

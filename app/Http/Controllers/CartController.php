@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\MenuItem;
+use App\Models\RestaurantDowntime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -64,6 +65,10 @@ class CartController extends Controller
 
     public function add(Request $request): JsonResponse
     {
+        if (RestaurantDowntime::isRestaurantDown()) {
+            return response()->json(['message' => RestaurantDowntime::blockedOrderingMessage()], 422);
+        }
+
         $request->validate([
             'menu_item_id' => ['required', 'exists:menu_items,id'],
             'quantity'     => ['required', 'integer', 'min:1', 'max:99'],

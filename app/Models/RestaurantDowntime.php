@@ -5,13 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * A window during which the restaurant cannot cater orders (e.g. a staff
- * shortage or equipment outage). Customers can still place orders while one
- * is active — Order::getEstimatedCompletionAttribute() pushes their prep
- * estimate out to whenever service resumes.
+ * shortage or equipment outage). While one is active, customers are blocked
+ * from adding items to their cart or checking out — see the guards in
+ * CartController::add() and CheckoutController.
  */
 class RestaurantDowntime extends Model
 {
@@ -55,6 +54,12 @@ class RestaurantDowntime extends Model
     public static function isRestaurantDown(): bool
     {
         return static::current() !== null;
+    }
+
+    /** Shared copy for the error customers see when ordering is blocked. */
+    public static function blockedOrderingMessage(): string
+    {
+        return 'The restaurant is temporarily unavailable and not accepting new orders right now. Please check back later.';
     }
 
     public function wasEndedEarly(): bool
