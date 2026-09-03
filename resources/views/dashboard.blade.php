@@ -747,28 +747,16 @@
             @csrf
             <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable until</label>
             <div style="display:flex;gap:.6rem">
-                <select name="downtime_date" id="downtimeDate" required onchange="hideDowntimeJsError();updateDowntimePreview()"
-                        class="form-select {{ $errors->has('downtime_date') ? 'has-error' : '' }}"
-                        style="flex:1.3;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
-                    <option value="" disabled {{ $selectedDate ? '' : 'selected' }}>Date…</option>
-                    @for($i = 0; $i < 14; $i++)
-                        @php($optDate = now()->addDays($i))
-                        <option value="{{ $optDate->format('Y-m-d') }}" {{ $selectedDate === $optDate->format('Y-m-d') ? 'selected' : '' }}>
-                            {{ $i === 0 ? 'Today' : ($i === 1 ? 'Tomorrow' : $optDate->format('D')) }} — {{ $optDate->format('M d') }}
-                        </option>
-                    @endfor
-                </select>
-                <select name="downtime_time" id="downtimeTime" required onchange="hideDowntimeJsError();updateDowntimePreview()"
-                        class="form-select {{ $errors->has('downtime_time') ? 'has-error' : '' }}"
-                        style="flex:1;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
-                    <option value="" disabled {{ $selectedTime ? '' : 'selected' }}>Time…</option>
-                    @for($m = 0; $m < 1440; $m += 30)
-                        @php($optTime = \Illuminate\Support\Carbon::createFromTime(0, 0)->addMinutes($m))
-                        <option value="{{ $optTime->format('H:i') }}" {{ $selectedTime === $optTime->format('H:i') ? 'selected' : '' }}>
-                            {{ $optTime->format('g:i A') }}
-                        </option>
-                    @endfor
-                </select>
+                <input type="date" name="downtime_date" id="downtimeDate" required
+                       min="{{ now()->format('Y-m-d') }}" value="{{ $selectedDate }}"
+                       oninput="hideDowntimeJsError();updateDowntimePreview()"
+                       class="{{ $errors->has('downtime_date') ? 'has-error' : '' }}"
+                       style="flex:1.3;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                <input type="time" name="downtime_time" id="downtimeTime" required
+                       value="{{ $selectedTime }}"
+                       oninput="hideDowntimeJsError();updateDowntimePreview()"
+                       class="{{ $errors->has('downtime_time') ? 'has-error' : '' }}"
+                       style="flex:1;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
             </div>
             @error('downtime_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             @error('downtime_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
@@ -822,7 +810,7 @@ function openDowntimeModal() {
     hideDowntimeJsError();
 
     // Editing an already-active downtime: show its current date/time so
-    // the admin can see what they're changing, not blank dropdowns.
+    // the admin can see what they're changing, not blank fields.
     document.getElementById('downtimeDate').value = activeDowntimeDate || '';
     document.getElementById('downtimeTime').value = activeDowntimeTime || '';
     document.getElementById('downtimeReason').value = activeDowntimeReason;
@@ -838,12 +826,12 @@ document.getElementById('downtimeModal').addEventListener('click', function (e) 
 function hideDowntimeJsError() { document.getElementById('downtimeJsError').style.display = 'none'; }
 
 function updateDowntimePreview() {
-    var dateSelect = document.getElementById('downtimeDate');
-    var timeSelect = document.getElementById('downtimeTime');
-    var preview    = document.getElementById('downtimePreview');
+    var dateInput = document.getElementById('downtimeDate');
+    var timeInput = document.getElementById('downtimeTime');
+    var preview   = document.getElementById('downtimePreview');
 
-    if (dateSelect.value && timeSelect.value) {
-        var resumeDate = new Date(dateSelect.value + 'T' + timeSelect.value);
+    if (dateInput.value && timeInput.value) {
+        var resumeDate = new Date(dateInput.value + 'T' + timeInput.value);
         if (! isNaN(resumeDate.getTime())) {
             preview.style.display = 'block';
             preview.innerHTML = '<i class="fas fa-clock"></i> Service will resume <strong>' +
@@ -856,16 +844,16 @@ function updateDowntimePreview() {
 }
 
 document.getElementById('downtimeForm').addEventListener('submit', function (e) {
-    var dateSelect = document.getElementById('downtimeDate');
-    var timeSelect = document.getElementById('downtimeTime');
-    var jsError    = document.getElementById('downtimeJsError');
-    var message    = null;
+    var dateInput = document.getElementById('downtimeDate');
+    var timeInput = document.getElementById('downtimeTime');
+    var jsError   = document.getElementById('downtimeJsError');
+    var message   = null;
 
-    if (! dateSelect.value) {
+    if (! dateInput.value) {
         message = 'Please choose a date.';
-    } else if (! timeSelect.value) {
+    } else if (! timeInput.value) {
         message = 'Please choose a time.';
-    } else if (new Date(dateSelect.value + 'T' + timeSelect.value).getTime() <= Date.now()) {
+    } else if (new Date(dateInput.value + 'T' + timeInput.value).getTime() <= Date.now()) {
         message = 'That date and time has already passed — please choose a time in the future.';
     }
 
