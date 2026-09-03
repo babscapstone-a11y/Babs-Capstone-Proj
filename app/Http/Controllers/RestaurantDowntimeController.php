@@ -6,41 +6,35 @@ use App\Models\RestaurantDowntime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class RestaurantDowntimeController extends Controller
 {
-    /** Preset durations (minutes) offered in the "Set Downtime" dropdown. */
-    private const DURATION_PRESETS = [15, 30, 60, 120, 180, 240];
-
     /**
-     * Mark the restaurant temporarily unavailable until a given time. If a
-     * downtime is already active, this just moves its end time / reason
-     * instead of stacking a second overlapping window.
-     *
-     * Preset durations are resolved to an end time from now() here on the
-     * server, rather than trusting a client-computed timestamp, so the
-     * result isn't thrown off by client clock skew or a stale value left
-     * sitting in the form.
+     * Mark the restaurant temporarily unavailable until a given date and
+     * time (picked as two separate dropdowns, not a duration — the admin
+     * sets the actual moment service resumes). If a downtime is already
+     * active, this just moves its end time / reason instead of stacking a
+     * second overlapping window.
      */
     public function store(Request $request): RedirectResponse
     {
-        $presets = array_map('strval', self::DURATION_PRESETS);
-
         $validated = $request->validate([
-            'duration_minutes' => ['required', Rule::in([...$presets, 'custom'])],
-            'ends_at'           => ['required_if:duration_minutes,custom', 'nullable', 'date', 'after:now'],
-            'reason'            => ['nullable', 'string', 'max:255'],
+            'downtime_date' => ['required', 'date'],
+            'downtime_time' => ['required', 'date_format:H:i'],
+            'reason'        => ['nullable', 'string', 'max:255'],
         ], [
-            'duration_minutes.required' => 'Please choose how long the restaurant will be unavailable.',
-            'duration_minutes.in'       => 'Please choose a valid duration.',
-            'ends_at.required_if'       => 'Please choose the date and time service resumes.',
-            'ends_at.after'             => 'The downtime must end at a time in the future.',
+            'downtime_date.required' => 'Please choose a date.',
+            'downtime_time.required' => 'Please choose a time.',
         ]);
 
-        $endsAt = $validated['duration_minutes'] === 'custom'
-            ? Carbon::parse($validated['ends_at'])
-            : now()->addMinutes((int) $validated['duration_minutes']);
+        $endsAt = Carbon::parse($validated['downtime_date'] . ' ' . $validated['downtime_time']);
+
+        if ($endsAt->lessThanOrEqualTo(now())) {
+            throw ValidationException::withMessages([
+                'downtime_time' => 'That date and time has already passed — please choose a time in the future.',
+            ]);
+        }
 
         $active = RestaurantDowntime::current();
 
