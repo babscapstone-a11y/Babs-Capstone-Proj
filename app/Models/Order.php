@@ -92,9 +92,9 @@ class Order extends Model
     /* ── Scopes ── */
 
     /**
-     * Orders the cashier is allowed to bill: kitchen/food-server has moved
-     * them to Ready, Served, or Packaged (or a kitchen self-completed them
-     * without going through the food-server handoff), and no payment has
+     * Orders the cashier is allowed to bill: the kitchen/food-server has
+     * moved them to Ready, Served, or Packaged (or a cashier already flipped
+     * one to Completed at payment time, e.g. a retry), and no payment has
      * been recorded for them yet.
      */
     public function scopeAwaitingPayment(Builder $q): Builder
@@ -131,26 +131,17 @@ class Order extends Model
     }
 
     /**
-     * Orders the food-server fulfillment board surfaces: Completed-by-the-
-     * kitchen-but-not-yet-handed-off (needs action — see canBeFulfilled())
-     * plus today's Served/Packaged (recently handled, kept visible for the
-     * summary counts and quick lookup). Mirrors the Kitchen board's own
-     * "Completed today" pattern.
-     *
-     * "Completed" is intentionally the trigger here, not "Ready" — the
-     * kitchen uses Ready as an internal in-progress step and only notifies
-     * the food server once they hit their own "Mark as Completed". That
-     * same status_name gets reused again later once the cashier takes
-     * payment, so served_at/packaged_at (set the moment a food server acts)
-     * are what actually distinguish "kitchen just finished, needs serving"
-     * from "already served/packaged and since paid" — both sit at
-     * status_name = Completed, but only the first should show up here.
+     * Orders the food-server fulfillment board surfaces: Ready-and-not-yet-
+     * handed-off (needs action — see canBeFulfilled()) plus today's
+     * Served/Packaged (recently handled, kept visible for the summary
+     * counts and quick lookup). Mirrors the Kitchen board's own "Served
+     * today" pattern.
      */
     public function scopeVisibleForFulfillment(Builder $q): Builder
     {
         return $q->where(function ($query) {
             $query->where(function ($sub) {
-                $sub->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
+                $sub->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Ready'))
                     ->whereNull('served_at')
                     ->whereNull('packaged_at');
             })
@@ -296,12 +287,16 @@ class Order extends Model
         };
     }
 
+    /**
+     * The kitchen's action chain stops at "Ready" — once there, the order is
+     * handed off to the food server (Module 20's serve()/package()), so
+     * there is no further kitchen-side action to offer.
+     */
     public function getNextKitchenActionAttribute(): ?string
     {
         return match ($this->status_name) {
             'Pending'    => 'Start Preparing',
             'Processing' => 'Mark as Ready',
-            'Ready'      => 'Mark as Completed',
             default      => null,
         };
     }
@@ -396,11 +391,11 @@ class Order extends Model
 
     /**
      * True once there's genuinely nothing left to happen — paid or
-     * cancelled. Deliberately distinct from isCompleted(): the kitchen
-     * marks an order "Completed" the moment they finish prep, to notify
-     * the food server, well before it's been served/packaged or paid — so
-     * isCompleted() alone goes true too early to mean "stop watching this
-     * order" for customer-facing polling/UI.
+     * cancelled. Deliberately distinct from isCompleted(): "Completed" is
+     * set by the cashier at payment time, which can happen as soon as an
+     * order is Ready — well before it's actually been served/packaged — so
+     * isCompleted() alone isn't reliable for "stop watching this order" in
+     * customer-facing polling/UI.
      */
     public function isFullyClosed(): bool
     {
@@ -461,17 +456,16 @@ class Order extends Model
     }
 
     /**
-     * The food server can act on this order once the kitchen has clicked
-     * their own "Mark as Completed" — that's the intended hand-off signal,
-     * not "Ready" (which the kitchen treats as an internal in-progress
-     * step). Since status_name = Completed gets reused again later once
-     * the cashier takes payment, served_at/packaged_at (only ever set by
-     * serve()/package() below) are what confirm this is the *first* time
-     * this order has hit Completed, not the final post-payment one.
+     * The food server can act on this order once the kitchen has marked it
+     * "Ready" — that's the intended hand-off signal. served_at/packaged_at
+     * (only ever set by serve()/package() below) confirm it hasn't already
+     * been handed off, since status_name = Completed gets reused again
+     * later once the cashier takes payment (which can happen from "Ready"
+     * directly, bypassing this handoff entirely).
      */
     public function canBeFulfilled(): bool
     {
-        return $this->status_name === 'Completed' && $this->served_at === null && $this->packaged_at === null;
+        return $this->status_name === 'Ready' && $this->served_at === null && $this->packaged_at === null;
     }
 
     public function getFulfillmentActionLabelAttribute(): string
@@ -480,11 +474,10 @@ class Order extends Model
     }
 
     /**
-     * How this order's status should read to a food server: the kitchen's
-     * internal "Completed" (pre-handoff) shows as "Ready" here, since
-     * that's what it actually means from the food server's side —
-     * "Completed" would misleadingly suggest the order is already fully
-     * done. Served/Packaged pass through unchanged.
+     * How this order's status should read to a food server — effectively
+     * just the raw status_name, since canBeFulfilled() already keys off
+     * "Ready" directly. Kept as its own accessor so callers don't need to
+     * know that detail.
      */
     public function getFulfillmentStatusAttribute(): string
     {

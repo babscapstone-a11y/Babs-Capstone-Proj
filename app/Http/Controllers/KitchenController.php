@@ -31,8 +31,17 @@ class KitchenController extends Controller
                 $query->whereHas('orderStatus', function ($q) {
                     $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);
                 })->orWhere(function ($q) {
-                    $q->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
-                      ->whereDate('created_at', today());
+                    // The kitchen's own job ends at "Ready" — these are orders
+                    // the food server has since served/packaged (or, in the
+                    // rare case a cashier collected payment before that
+                    // handoff, gone straight to Completed), kept visible in
+                    // today's "Served" column for reference.
+                    $q->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Served', 'Packaged', 'Completed']))
+                      ->where(function ($dateQ) {
+                          $dateQ->whereDate('served_at', today())
+                                ->orWhereDate('packaged_at', today())
+                                ->orWhereDate('created_at', today());
+                      });
                 });
             })
             // Online pre-orders stay invisible to the kitchen until a cashier
@@ -53,8 +62,10 @@ class KitchenController extends Controller
 
     /**
      * PATCH /kitchen/orders/{order}/status — the only mutation endpoint. Kitchen staff
-     * may only move an order through the sequential Pending→Processing→Ready→Completed
-     * chain; they cannot edit customer info or ordered items.
+     * may only move an order through the sequential Pending→Processing→Ready
+     * chain; they cannot edit customer info or ordered items. "Ready" is as
+     * far as the kitchen goes — from there the food server takes over
+     * (Module 20's serve()/package()) to move it to Served/Packaged.
      */
     public function updateStatus(UpdateOrderKitchenStatusRequest $request, Order $order): JsonResponse
     {
@@ -81,12 +92,11 @@ class KitchenController extends Controller
             if ($error) {
                 return response()->json(['message' => $error], 422);
             }
-        } elseif ($requestedStatus === 'Completed') {
-            // "Completed" is the kitchen's hand-off signal to the food server
-            // (Module 20) — "Ready" is treated as an internal in-progress
-            // step. Stamped separately from created_at so the food-server
-            // board can measure "waiting since ready" without including
-            // kitchen prep time.
+        } elseif ($requestedStatus === 'Ready') {
+            // "Ready" is the kitchen's hand-off signal to the food server
+            // (Module 20). Stamped separately from created_at so the
+            // food-server board can measure "waiting since ready" without
+            // including kitchen prep time.
             $order->update(['order_status_id' => $newStatus->id, 'ready_at' => now()]);
         } else {
             $order->update(['order_status_id' => $newStatus->id]);
@@ -107,7 +117,6 @@ class KitchenController extends Controller
     private const REVERT_TRANSITIONS = [
         'Processing' => 'Pending',
         'Ready'      => 'Processing',
-        'Completed'  => 'Ready',
     ];
 
     /**
@@ -141,8 +150,8 @@ class KitchenController extends Controller
             // never should have left inventory — give it back.
             $this->restoreRtcStockForOrder($order);
             $order->update(['order_status_id' => $previous->id]);
-        } elseif ($currentStatus === 'Completed') {
-            // Mirrors the ready_at stamp set when moving into Completed.
+        } elseif ($currentStatus === 'Ready') {
+            // Mirrors the ready_at stamp set when moving into Ready.
             $order->update(['order_status_id' => $previous->id, 'ready_at' => null]);
         } else {
             $order->update(['order_status_id' => $previous->id]);
@@ -297,7 +306,7 @@ class KitchenController extends Controller
         $canRevert = isset(self::REVERT_TRANSITIONS[$order->status_name])
             && ! $order->served_at && ! $order->packaged_at && $order->payment_status !== 'paid';
 
-        $previousStatusLabels = ['Processing' => 'Order Received', 'Ready' => 'Preparing', 'Completed' => 'Ready'];
+        $previousStatusLabels = ['Processing' => 'Order Received', 'Ready' => 'Preparing'];
 
         return [
             'id'                    => $order->id,

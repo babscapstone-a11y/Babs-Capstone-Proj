@@ -83,9 +83,10 @@
         ],
     ];
     $statusOrder = ['Pending', 'Processing', 'Ready', $fulfillmentStatus];
-    // fulfillment_status, not the raw status_name — the kitchen's own
-    // "Completed" hand-off signal reads as "Ready" from here, and raw
-    // status_name wouldn't be found in $statusOrder at all.
+    // fulfillment_status, not the raw status_name — once a cashier collects
+    // payment the raw status flips to "Completed", which wouldn't be found
+    // in $statusOrder at all; fulfillment_status keeps reading "Ready" (or
+    // Served/Packaged) regardless of that payment-time status change.
     $currentIdx = array_search($order->fulfillment_status, $statusOrder);
 @endphp
 

@@ -192,11 +192,11 @@
     </div>
     <div class="summary-card">
         <div class="summary-icon ready"><i class="fas fa-bell-concierge"></i></div>
-        <div><div class="summary-count" id="countReady">0</div><div class="summary-label">Ready</div></div>
+        <div><div class="summary-count" id="countReady">0</div><div class="summary-label">Ready to Serve</div></div>
     </div>
     <div class="summary-card">
         <div class="summary-icon completed"><i class="fas fa-circle-check"></i></div>
-        <div><div class="summary-count" id="countCompleted">0</div><div class="summary-label">Completed Today</div></div>
+        <div><div class="summary-count" id="countCompleted">0</div><div class="summary-label">Served Today</div></div>
     </div>
 </div>
 
@@ -215,11 +215,11 @@
         <div class="kanban-cards" id="col-Processing"></div>
     </div>
     <div class="kanban-col">
-        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-ready)"></span>Ready</span><span class="kanban-count" id="colCountReady">0</span></div>
+        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-ready)"></span>Ready to Serve</span><span class="kanban-count" id="colCountReady">0</span></div>
         <div class="kanban-cards" id="col-Ready"></div>
     </div>
     <div class="kanban-col">
-        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-completed)"></span>Completed</span><span class="kanban-count" id="colCountCompleted">0</span></div>
+        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-completed)"></span>Served</span><span class="kanban-count" id="colCountCompleted">0</span></div>
         <div class="kanban-cards" id="col-Completed"></div>
     </div>
 </div>
@@ -238,8 +238,13 @@
         Processing: getComputedStyle(document.documentElement).getPropertyValue('--status-preparing').trim(),
         Ready:      getComputedStyle(document.documentElement).getPropertyValue('--status-ready').trim(),
         Completed:  getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
+        Served:     getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
+        Packaged:   getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
     };
-    const STATUS_CSS_CLASS = { Pending: 'status-pending', Processing: 'status-preparing', Ready: 'status-ready', Completed: 'status-completed' };
+    // Served/Packaged are what an order actually becomes once the food
+    // server hands it off (the kitchen's own chain stops at Ready) — both
+    // render like Completed on this board's "Served" column.
+    const STATUS_CSS_CLASS = { Pending: 'status-pending', Processing: 'status-preparing', Ready: 'status-ready', Completed: 'status-completed', Served: 'status-completed', Packaged: 'status-completed' };
     const COLUMN_IDS = { PendingOnline: 'col-PendingOnline', PendingWalkin: 'col-PendingWalkin', Processing: 'col-Processing', Ready: 'col-Ready', Completed: 'col-Completed' };
 
     let ordersCache = {};
@@ -332,8 +337,16 @@
         orders.forEach(o => {
             if (o.status === 'Pending') {
                 (o.order_type === 'online' ? grouped.PendingOnline : grouped.PendingWalkin).push(o);
-            } else if (grouped[o.status]) {
-                grouped[o.status].push(o);
+            } else if (o.status === 'Processing') {
+                grouped.Processing.push(o);
+            } else if (o.status === 'Ready') {
+                grouped.Ready.push(o);
+            } else if (o.status === 'Served' || o.status === 'Packaged' || o.status === 'Completed') {
+                // The kitchen's chain stops at Ready — these are orders the
+                // food server has since handed off (or, rarely, the cashier
+                // completed payment before that handoff), shown here as
+                // "Served" for reference.
+                grouped.Completed.push(o);
             }
         });
 
@@ -455,7 +468,7 @@
 
     async function submitStatusChange(orderId) {
         const order = ordersCache[orderId];
-        const targetStatus = { Pending: 'Processing', Processing: 'Ready', Ready: 'Completed' }[order.status];
+        const targetStatus = { Pending: 'Processing', Processing: 'Ready' }[order.status];
 
         try {
             const res = await fetch(`/kitchen/orders/${orderId}/status`, {

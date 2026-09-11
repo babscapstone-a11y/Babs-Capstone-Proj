@@ -60,13 +60,12 @@ class StoreTableServerOrderRequest extends FormRequest
                 return;
             }
 
-            // "Completed" needs special handling here: the kitchen sets it as
-            // their hand-off signal to the food server (Module 20), well
-            // before the table's actually been served — but the same status
-            // gets reused again once the cashier takes payment. served_at/
-            // packaged_at (only ever set once a food server acts) are what
-            // distinguish "still sitting there, not yet served" from
-            // "already served and since paid" for that second case.
+            // "Completed" needs special handling here: a cashier can collect
+            // payment (which sets it) as soon as an order is Ready, before
+            // it's actually been served — served_at/packaged_at (only ever
+            // set once a food server acts) are what distinguish "payment
+            // taken but still sitting there, unserved" from "already served
+            // and since paid" for that case.
             //
             // payment_status is checked directly, on top of that, as a
             // second line of defense: a paid order must never keep blocking
