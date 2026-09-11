@@ -56,7 +56,8 @@ class DashboardController extends Controller
             $salesChartData[]   = round($dailySales->get($day->format('Y-m-d'), 0.0), 2);
         }
 
-        $activeDowntime = RestaurantDowntime::current();
+        $activeDowntime   = RestaurantDowntime::current();
+        $upcomingDowntime = RestaurantDowntime::next();
 
         return view('dashboard', compact(
             'totalStaff', 'activeStaff', 'pendingResets',
@@ -65,7 +66,7 @@ class DashboardController extends Controller
             'pendingCancellations', 'approvedCancellationsToday', 'rejectedCancellationsToday',
             'cancelledOrders', 'recentCancellationRequests',
             'salesChartLabels', 'salesChartData',
-            'activeDowntime'
+            'activeDowntime', 'upcomingDowntime'
         ));
     }
 }

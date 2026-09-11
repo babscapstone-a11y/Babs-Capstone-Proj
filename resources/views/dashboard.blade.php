@@ -395,6 +395,35 @@
     </div>
 </div>
 
+@if(!$activeDowntime && $upcomingDowntime)
+<div class="anim-2" style="margin:0 0 1.25rem;padding:.65rem 1rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.82rem;color:#92400E;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div>
+        <i class="fas fa-calendar-days"></i>
+        <strong>Downtime scheduled</strong> — closed from
+        <strong>{{ $upcomingDowntime->starts_at->format('M d, h:i A') }}</strong> to
+        <strong>{{ $upcomingDowntime->ends_at->format('M d, h:i A') }}</strong>
+        @if($upcomingDowntime->reason)
+            <div style="opacity:.85;font-size:.78rem;margin-top:.15rem">{{ $upcomingDowntime->reason }}</div>
+        @endif
+    </div>
+    <div style="display:flex;gap:.5rem">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openDowntimeModal()">
+            <i class="fas fa-pen"></i> Edit
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" style="color:#B91C1C;border-color:rgba(185,28,28,.3)"
+            onclick="openModal({
+                type: 'warn', iconClass: 'fas fa-calendar-xmark',
+                title: 'Cancel Scheduled Downtime?',
+                desc: 'This scheduled closure will be removed and service will continue normally during that period.',
+                action: '{{ route('downtime.cancel', $upcomingDowntime) }}',
+                method: 'DELETE', confirmText: 'Cancel Downtime',
+            })">
+            <i class="fas fa-calendar-xmark"></i> Cancel
+        </button>
+    </div>
+</div>
+@endif
+
 {{-- System Status Bar --}}
 <div class="status-bar anim-2">
     <div class="status-item">
@@ -731,9 +760,12 @@
 
 {{-- Set Downtime Modal --}}
 @php
-    $downtimeErrors = $errors->hasAny(['downtime_date', 'downtime_time', 'reason']);
-    $selectedDate   = old('downtime_date', $activeDowntime?->ends_at?->format('Y-m-d'));
-    $selectedTime   = old('downtime_time', $activeDowntime?->ends_at?->format('H:i'));
+    $downtimeErrors  = $errors->hasAny(['downtime_start_date', 'downtime_start_time', 'downtime_date', 'downtime_time', 'reason']);
+    $editingDowntime = $activeDowntime ?? $upcomingDowntime;
+    $selectedStartDate = old('downtime_start_date', $editingDowntime?->starts_at?->format('Y-m-d'));
+    $selectedStartTime = old('downtime_start_time', $editingDowntime?->starts_at?->format('H:i'));
+    $selectedDate      = old('downtime_date', $editingDowntime?->ends_at?->format('Y-m-d'));
+    $selectedTime      = old('downtime_time', $editingDowntime?->ends_at?->format('H:i'));
 @endphp
 <div class="modal-overlay {{ $downtimeErrors ? 'open' : '' }}" id="downtimeModal" role="dialog" aria-modal="true">
     <div class="modal-box">
@@ -741,11 +773,28 @@
         <h3 class="modal-title">Set Restaurant Downtime</h3>
         <p class="modal-desc">
             Customers will be blocked from adding items to their cart or
-            checking out until service resumes.
+            checking out until service resumes. Schedule a future window —
+            e.g. a holiday — to close it in advance.
         </p>
         <form id="downtimeForm" method="POST" action="{{ route('downtime.store') }}" novalidate>
             @csrf
-            <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Unavailable until</label>
+            <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Starts</label>
+            <div style="display:flex;gap:.6rem">
+                <input type="date" name="downtime_start_date" id="downtimeStartDate" required
+                       min="{{ now()->format('Y-m-d') }}" value="{{ $selectedStartDate }}"
+                       oninput="hideDowntimeJsError();updateDowntimePreview()"
+                       class="{{ $errors->has('downtime_start_date') ? 'has-error' : '' }}"
+                       style="flex:1.3;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                <input type="time" name="downtime_start_time" id="downtimeStartTime" required
+                       value="{{ $selectedStartTime }}"
+                       oninput="hideDowntimeJsError();updateDowntimePreview()"
+                       class="{{ $errors->has('downtime_start_time') ? 'has-error' : '' }}"
+                       style="flex:1;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+            </div>
+            @error('downtime_start_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+            @error('downtime_start_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+
+            <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Ends</label>
             <div style="display:flex;gap:.6rem">
                 <input type="date" name="downtime_date" id="downtimeDate" required
                        min="{{ now()->format('Y-m-d') }}" value="{{ $selectedDate }}"
@@ -767,7 +816,7 @@
             <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional — shown to customers who try to order)</label>
             <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. We're temporarily closed for staff shortage…"
                       class="{{ $errors->has('reason') ? 'has-error' : '' }}"
-                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $activeDowntime->reason ?? '') }}</textarea>
+                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $editingDowntime->reason ?? '') }}</textarea>
             <div class="hint" style="font-size:.72rem;color:var(--muted);margin-top:.3rem">If left blank, customers will just see a generic "temporarily unavailable" message.</div>
             @error('reason')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
@@ -802,15 +851,26 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-var activeDowntimeDate   = @json($activeDowntime?->ends_at?->format('Y-m-d'));
-var activeDowntimeTime   = @json($activeDowntime?->ends_at?->format('H:i'));
-var activeDowntimeReason = @json($activeDowntime->reason ?? '');
+var activeDowntimeStartDate = @json($editingDowntime?->starts_at?->format('Y-m-d'));
+var activeDowntimeStartTime = @json($editingDowntime?->starts_at?->format('H:i'));
+var activeDowntimeDate      = @json($editingDowntime?->ends_at?->format('Y-m-d'));
+var activeDowntimeTime      = @json($editingDowntime?->ends_at?->format('H:i'));
+var activeDowntimeReason    = @json($editingDowntime->reason ?? '');
 
 function openDowntimeModal() {
     hideDowntimeJsError();
 
-    // Editing an already-active downtime: show its current date/time so
-    // the admin can see what they're changing, not blank fields.
+    // Editing an already-scheduled/active downtime: show its current
+    // start/end so the admin can see what they're changing, not blank
+    // fields. Otherwise, default the start to right now for the common
+    // "close immediately" case — the admin only needs to pick an end.
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    var now = new Date();
+    var nowDate = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    var nowTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    document.getElementById('downtimeStartDate').value = activeDowntimeStartDate || nowDate;
+    document.getElementById('downtimeStartTime').value = activeDowntimeStartTime || nowTime;
     document.getElementById('downtimeDate').value = activeDowntimeDate || '';
     document.getElementById('downtimeTime').value = activeDowntimeTime || '';
     document.getElementById('downtimeReason').value = activeDowntimeReason;
@@ -826,17 +886,21 @@ document.getElementById('downtimeModal').addEventListener('click', function (e) 
 function hideDowntimeJsError() { document.getElementById('downtimeJsError').style.display = 'none'; }
 
 function updateDowntimePreview() {
+    var startDateInput = document.getElementById('downtimeStartDate');
+    var startTimeInput = document.getElementById('downtimeStartTime');
     var dateInput = document.getElementById('downtimeDate');
     var timeInput = document.getElementById('downtimeTime');
     var preview   = document.getElementById('downtimePreview');
 
-    if (dateInput.value && timeInput.value) {
-        var resumeDate = new Date(dateInput.value + 'T' + timeInput.value);
-        if (! isNaN(resumeDate.getTime())) {
+    if (startDateInput.value && startTimeInput.value && dateInput.value && timeInput.value) {
+        var startsAt = new Date(startDateInput.value + 'T' + startTimeInput.value);
+        var endsAt   = new Date(dateInput.value + 'T' + timeInput.value);
+        if (! isNaN(startsAt.getTime()) && ! isNaN(endsAt.getTime())) {
+            var fmt = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
             preview.style.display = 'block';
-            preview.innerHTML = '<i class="fas fa-clock"></i> Service will resume <strong>' +
-                resumeDate.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) +
-                '</strong>';
+            preview.innerHTML = '<i class="fas fa-clock"></i> Unavailable from <strong>' +
+                startsAt.toLocaleString('en-US', fmt) + '</strong> until <strong>' +
+                endsAt.toLocaleString('en-US', fmt) + '</strong>';
             return;
         }
     }
@@ -844,17 +908,29 @@ function updateDowntimePreview() {
 }
 
 document.getElementById('downtimeForm').addEventListener('submit', function (e) {
+    var startDateInput = document.getElementById('downtimeStartDate');
+    var startTimeInput = document.getElementById('downtimeStartTime');
     var dateInput = document.getElementById('downtimeDate');
     var timeInput = document.getElementById('downtimeTime');
     var jsError   = document.getElementById('downtimeJsError');
     var message   = null;
 
-    if (! dateInput.value) {
-        message = 'Please choose a date.';
+    if (! startDateInput.value) {
+        message = 'Please choose a start date.';
+    } else if (! startTimeInput.value) {
+        message = 'Please choose a start time.';
+    } else if (! dateInput.value) {
+        message = 'Please choose an end date.';
     } else if (! timeInput.value) {
-        message = 'Please choose a time.';
-    } else if (new Date(dateInput.value + 'T' + timeInput.value).getTime() <= Date.now()) {
-        message = 'That date and time has already passed — please choose a time in the future.';
+        message = 'Please choose an end time.';
+    } else {
+        var startsAt = new Date(startDateInput.value + 'T' + startTimeInput.value);
+        var endsAt   = new Date(dateInput.value + 'T' + timeInput.value);
+        if (endsAt.getTime() <= Date.now()) {
+            message = 'That end date and time has already passed — please choose a time in the future.';
+        } else if (endsAt.getTime() <= startsAt.getTime()) {
+            message = 'The end date and time must be after the start.';
+        }
     }
 
     if (message) {

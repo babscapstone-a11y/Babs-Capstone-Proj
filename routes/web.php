@@ -138,8 +138,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // ── Restaurant Service Downtime (Admin dashboard control) ──────────
     Route::prefix('downtime')->name('downtime.')->group(function () {
-        Route::post('/',      [RestaurantDowntimeController::class, 'store']) ->name('store');
-        Route::put('/end',    [RestaurantDowntimeController::class, 'end'])   ->name('end');
+        Route::post('/',            [RestaurantDowntimeController::class, 'store'])  ->name('store');
+        Route::put('/end',          [RestaurantDowntimeController::class, 'end'])    ->name('end');
+        Route::delete('/{downtime}', [RestaurantDowntimeController::class, 'cancel']) ->name('cancel');
     });
 });
 

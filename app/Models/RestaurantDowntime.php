@@ -37,7 +37,13 @@ class RestaurantDowntime extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('ends_at', '>', now());
+        return $query->where('starts_at', '<=', now())->where('ends_at', '>', now());
+    }
+
+    /** Scheduled windows that haven't started yet (e.g. a holiday closure set up in advance). */
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where('starts_at', '>', now());
     }
 
     /** The downtime window (if any) that was in effect at a given moment. */
@@ -49,6 +55,12 @@ class RestaurantDowntime extends Model
     public static function current(): ?self
     {
         return static::active()->orderByDesc('starts_at')->first();
+    }
+
+    /** The soonest downtime scheduled to start in the future, if any. */
+    public static function next(): ?self
+    {
+        return static::upcoming()->orderBy('starts_at')->first();
     }
 
     public static function isRestaurantDown(): bool

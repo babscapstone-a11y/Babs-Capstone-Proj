@@ -11,50 +11,77 @@ use Illuminate\Validation\ValidationException;
 class RestaurantDowntimeController extends Controller
 {
     /**
-     * Mark the restaurant temporarily unavailable until a given date and
-     * time (picked as two separate dropdowns, not a duration — the admin
-     * sets the actual moment service resumes). If a downtime is already
-     * active, this just moves its end time / reason instead of stacking a
-     * second overlapping window.
+     * Mark the restaurant unavailable for a start/end window — e.g. right
+     * now until service resumes, or a holiday closure scheduled well in
+     * advance. If the new window overlaps one that's already stored, this
+     * just moves that window's start/end/reason instead of stacking a
+     * second overlapping one.
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'downtime_date' => ['required', 'date'],
-            'downtime_time' => ['required', 'date_format:H:i'],
-            'reason'        => ['nullable', 'string', 'max:255'],
+            'downtime_start_date' => ['required', 'date'],
+            'downtime_start_time' => ['required', 'date_format:H:i'],
+            'downtime_date'       => ['required', 'date'],
+            'downtime_time'       => ['required', 'date_format:H:i'],
+            'reason'              => ['nullable', 'string', 'max:255'],
         ], [
-            'downtime_date.required' => 'Please choose a date.',
-            'downtime_time.required' => 'Please choose a time.',
+            'downtime_start_date.required' => 'Please choose a start date.',
+            'downtime_start_time.required' => 'Please choose a start time.',
+            'downtime_date.required'       => 'Please choose an end date.',
+            'downtime_time.required'       => 'Please choose an end time.',
         ]);
 
-        $endsAt = Carbon::parse($validated['downtime_date'] . ' ' . $validated['downtime_time']);
+        $startsAt = Carbon::parse($validated['downtime_start_date'] . ' ' . $validated['downtime_start_time']);
+        $endsAt   = Carbon::parse($validated['downtime_date'] . ' ' . $validated['downtime_time']);
 
         if ($endsAt->lessThanOrEqualTo(now())) {
             throw ValidationException::withMessages([
-                'downtime_time' => 'That date and time has already passed — please choose a time in the future.',
+                'downtime_time' => 'That end date and time has already passed — please choose a time in the future.',
             ]);
         }
 
-        $active = RestaurantDowntime::current();
+        if ($endsAt->lessThanOrEqualTo($startsAt)) {
+            throw ValidationException::withMessages([
+                'downtime_time' => 'The end date and time must be after the start.',
+            ]);
+        }
 
-        if ($active) {
-            $active->update([
-                'ends_at' => $endsAt,
-                'reason'  => $validated['reason'] ?? $active->reason,
+        $overlapping = RestaurantDowntime::where('ends_at', '>', $startsAt)
+            ->where('starts_at', '<', $endsAt)
+            ->orderByDesc('starts_at')
+            ->first();
+
+        if ($overlapping) {
+            $overlapping->update([
+                'starts_at' => $startsAt,
+                'ends_at'   => $endsAt,
+                'reason'    => $validated['reason'] ?? $overlapping->reason,
             ]);
 
-            return back()->with('success', 'Downtime updated — service now resumes at ' . $active->fresh()->ends_at->format('M d, h:i A') . '.');
+            return back()->with('success', 'Downtime updated — restaurant unavailable from ' . $overlapping->fresh()->starts_at->format('M d, h:i A') . ' until ' . $overlapping->fresh()->ends_at->format('M d, h:i A') . '.');
         }
 
         $downtime = RestaurantDowntime::create([
-            'starts_at' => now(),
+            'starts_at' => $startsAt,
             'ends_at'   => $endsAt,
             'reason'    => $validated['reason'] ?? null,
             'set_by_id' => $request->user()->id,
         ]);
 
-        return back()->with('success', 'Restaurant marked temporarily unavailable until ' . $downtime->ends_at->format('M d, h:i A') . '.');
+        return back()->with('success', 'Restaurant scheduled unavailable from ' . $downtime->starts_at->format('M d, h:i A') . ' until ' . $downtime->ends_at->format('M d, h:i A') . '.');
+    }
+
+    /** Remove a downtime that hasn't started yet — e.g. a holiday closure the admin no longer needs. */
+    public function cancel(RestaurantDowntime $downtime): RedirectResponse
+    {
+        if (! $downtime->starts_at->isFuture()) {
+            return back()->with('error', 'That downtime has already started — use "End Downtime Now" instead.');
+        }
+
+        $downtime->delete();
+
+        return back()->with('success', 'Scheduled downtime cancelled.');
     }
 
     /** Resume service before the scheduled end time. */
