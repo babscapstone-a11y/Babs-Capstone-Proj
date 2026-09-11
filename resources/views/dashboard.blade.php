@@ -857,31 +857,37 @@ var activeDowntimeDate      = @json($editingDowntime?->ends_at?->format('Y-m-d')
 var activeDowntimeTime      = @json($editingDowntime?->ends_at?->format('H:i'));
 var activeDowntimeReason    = @json($editingDowntime->reason ?? '');
 
+var downtimeModalInitialized = false;
+
 function openDowntimeModal() {
     hideDowntimeJsError();
 
-    // Editing an already-scheduled/active downtime: show its current
-    // start/end so the admin can see what they're changing, not blank
-    // fields. Otherwise, default the start to right now for the common
-    // "close immediately" case — the admin only needs to pick an end.
-    var pad = function (n) { return String(n).padStart(2, '0'); };
-    var now = new Date();
-    var nowDate = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-    var nowTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    // Only prefill the first time the form is opened. If the admin has
+    // already typed something in this page load, leave it alone — don't
+    // stomp on it just because the modal got reopened.
+    if (! downtimeModalInitialized) {
+        // Editing an already-scheduled/active downtime: show its current
+        // start/end so the admin can see what they're changing, not blank
+        // fields. Otherwise, default the start to right now for the common
+        // "close immediately" case — the admin only needs to pick an end.
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        var now = new Date();
+        var nowDate = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+        var nowTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
 
-    document.getElementById('downtimeStartDate').value = activeDowntimeStartDate || nowDate;
-    document.getElementById('downtimeStartTime').value = activeDowntimeStartTime || nowTime;
-    document.getElementById('downtimeDate').value = activeDowntimeDate || '';
-    document.getElementById('downtimeTime').value = activeDowntimeTime || '';
-    document.getElementById('downtimeReason').value = activeDowntimeReason;
+        document.getElementById('downtimeStartDate').value = activeDowntimeStartDate || nowDate;
+        document.getElementById('downtimeStartTime').value = activeDowntimeStartTime || nowTime;
+        document.getElementById('downtimeDate').value = activeDowntimeDate || '';
+        document.getElementById('downtimeTime').value = activeDowntimeTime || '';
+        document.getElementById('downtimeReason').value = activeDowntimeReason;
+
+        downtimeModalInitialized = true;
+    }
 
     updateDowntimePreview();
     document.getElementById('downtimeModal').classList.add('open');
 }
 function closeDowntimeModal() { document.getElementById('downtimeModal').classList.remove('open'); }
-document.getElementById('downtimeModal').addEventListener('click', function (e) {
-    if (e.target === this) closeDowntimeModal();
-});
 
 function hideDowntimeJsError() { document.getElementById('downtimeJsError').style.display = 'none'; }
 
