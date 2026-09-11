@@ -200,6 +200,7 @@
     let gcashPollTimer = null;
     let specialDiscountState = null;
     let specialDiscountPollTimer = null;
+    let orderBoardPollTimer = null;
 
     /* ── Search ── */
     async function searchOrders() {
@@ -343,7 +344,6 @@
         panel.innerHTML = `
             <div id="summarySubtotal" class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
             <div id="summaryDiscountRow" class="billing-summary-row" style="display:none"><span>Less Discount</span><span class="neg">- <span id="summaryDiscountAmt">₱0.00</span></span></div>
-            <div id="summaryServiceRow" class="billing-summary-row" style="display:none"><span>Service Charge</span><span id="summaryServiceAmt">₱0.00</span></div>
             <div class="billing-summary-row total"><span>Grand Total</span><span id="summaryGrandTotal">${formatPeso(order.subtotal)}</span></div>
 
             <div class="form-group" style="margin-top:1.25rem">
@@ -370,11 +370,6 @@
                     </button>
                 </div>
                 <div id="specialDiscountStatusBox" style="display:none"></div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label"><i class="fas fa-receipt"></i> Service Charge <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-                <input type="number" class="form-input" id="serviceChargeInput" min="0" step="0.01" value="0">
             </div>
 
             <div class="form-group">
@@ -421,7 +416,6 @@
         `;
 
         document.getElementById('discountSelect').addEventListener('change', onDiscountSelectChange);
-        document.getElementById('serviceChargeInput').addEventListener('input', recomputeTotals);
         document.getElementById('amountReceivedInput').addEventListener('input', recomputeTotals);
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.addEventListener('change', recomputeTotals));
 
@@ -588,13 +582,10 @@
             discountAmount = Math.min(discountAmount, subtotal);
         }
 
-        const serviceCharge = Math.max(parseFloat(document.getElementById('serviceChargeInput').value) || 0, 0);
-        const grandTotal = Math.max(subtotal - discountAmount + serviceCharge, 0);
+        const grandTotal = Math.max(subtotal - discountAmount, 0);
 
         document.getElementById('summaryDiscountRow').style.display = discountAmount > 0 ? 'flex' : 'none';
         document.getElementById('summaryDiscountAmt').textContent = formatPeso(discountAmount);
-        document.getElementById('summaryServiceRow').style.display = serviceCharge > 0 ? 'flex' : 'none';
-        document.getElementById('summaryServiceAmt').textContent = formatPeso(serviceCharge);
         document.getElementById('summaryGrandTotal').textContent = formatPeso(grandTotal);
 
         document.getElementById('eligibilityBox').style.display = (discount && discount.requires_verification) ? 'flex' : 'none';
@@ -685,7 +676,6 @@
         const payload = {
             payment_method: isCash ? 'cash' : 'cashless',
             discount_id: discount ? discount.id : null,
-            service_charge: parseFloat(document.getElementById('serviceChargeInput').value) || 0,
             amount_received: isCash ? (parseFloat(document.getElementById('amountReceivedInput').value) || 0) : null,
             eligibility_confirmed: discount && discount.requires_verification
                 ? document.getElementById('eligibilityConfirmed').checked
@@ -744,7 +734,6 @@
 
         const payload = {
             discount_id: discount ? discount.id : null,
-            service_charge: parseFloat(document.getElementById('serviceChargeInput').value) || 0,
             eligibility_confirmed: discount && discount.requires_verification
                 ? document.getElementById('eligibilityConfirmed').checked
                 : false,
@@ -782,7 +771,6 @@
     async function showGcashQr(url, nextActionType) {
         document.getElementById('mainActionButtons').style.display = 'none';
         document.getElementById('discountSelect').disabled = true;
-        document.getElementById('serviceChargeInput').disabled = true;
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = true);
 
         const box = document.getElementById('gcashQrBox');
@@ -899,7 +887,6 @@
         document.getElementById('gcashQrBox').style.display = 'none';
         document.getElementById('mainActionButtons').style.display = 'flex';
         document.getElementById('discountSelect').disabled = false;
-        document.getElementById('serviceChargeInput').disabled = false;
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = false);
         resetPrimaryButton();
         recomputeTotals();
@@ -922,11 +909,58 @@
         currentOrder = null;
     }
 
+    /* ── Keep the board live without a manual page refresh ──
+       Re-runs the search (so orders that just became Ready/unavailable
+       show up) and, if an order is open, re-checks whether its readiness
+       has changed — e.g. the kitchen just marked it Ready — and only then
+       re-renders the panel, so it doesn't stomp on a discount/amount the
+       cashier is mid-typing. */
+    async function pollOrderBoard() {
+        searchOrders();
+        if (currentOrder && !currentGcashIntentId) {
+            await refreshCurrentOrderStatus();
+        }
+    }
+
+    async function refreshCurrentOrderStatus() {
+        try {
+            const res = await fetch(`${ORDERS_URL}/${currentOrder.id}`, { headers: { Accept: 'application/json' } });
+            if (!res.ok) {
+                showToast('This order is no longer available for billing.', 'info');
+                cancelBilling();
+                return;
+            }
+            const data = await res.json();
+            const changed = data.order.is_awaiting_payment !== currentOrder.is_awaiting_payment
+                || data.order.status_label !== currentOrder.status_label;
+            currentOrder = data.order;
+            if (changed) {
+                renderOrderDetail(currentOrder);
+                renderBillingPanel(currentOrder);
+            }
+        } catch (e) {
+            // Transient network hiccup — the next tick will retry.
+        }
+    }
+
+    function startOrderBoardPolling() {
+        stopOrderBoardPolling();
+        orderBoardPollTimer = setInterval(pollOrderBoard, 8000);
+    }
+
+    function stopOrderBoardPolling() {
+        if (orderBoardPollTimer) {
+            clearInterval(orderBoardPollTimer);
+            orderBoardPollTimer = null;
+        }
+    }
+
     /* ── Initial load ── */
     (async function init() {
         if (PRESELECT_Q) document.getElementById('searchInput').value = PRESELECT_Q;
         await searchOrders();
         if (PRESELECT_ORDER) selectOrder(PRESELECT_ORDER);
+        startOrderBoardPolling();
     })();
 </script>
 @endsection
