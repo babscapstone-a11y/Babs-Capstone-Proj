@@ -335,15 +335,16 @@
         $currentStatus = $order->status_name;
         $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
 
-        // The kitchen notifies the food server by marking an order
-        // "Completed" — before it's actually been served/packaged or paid.
-        // That status_name gets reused again later once the cashier takes
-        // payment, so a raw array_search($currentStatus, ...) can't tell
-        // those two moments apart. served_at/packaged_at and payment_status
-        // disambiguate which one this order is actually at.
+        // Payment can land before or after the food is actually served —
+        // CashierController::finalizeOrderPayment() never touches
+        // order_status_id, precisely so paying early doesn't fast-forward
+        // (or block) the service pipeline. So "paid" only advances this
+        // timeline to the final step once the order has *also* been handed
+        // off; paid-but-not-yet-served still shows wherever the raw status
+        // actually is (typically "Ready"), not jumped ahead.
         $handedOff  = $order->served_at !== null || $order->packaged_at !== null;
         $currentIdx = match (true) {
-            $order->payment_status === 'paid'                         => 4,
+            $order->payment_status === 'paid' && $handedOff           => 4,
             $handedOff                                                => 3,
             in_array($currentStatus, ['Ready', 'Completed'], true)    => 2,
             $currentStatus === 'Processing'                           => 1,

@@ -366,7 +366,12 @@ class ReportService
             'pending_orders'   => $statusCounts->get('Pending', 0),
             'preparing_orders' => $statusCounts->get('Processing', 0),
             'ready_orders'     => $statusCounts->get('Ready', 0),
-            'completed_orders' => $statusCounts->get('Completed', 0),
+            // Payment can land before or after an order is actually
+            // served/packaged (see CashierController::finalizeOrderPayment,
+            // which never touches order_status_id), so "Completed" is no
+            // longer a status_name to count on — payment_status is what
+            // actually means "done" now.
+            'completed_orders' => $orders->where('payment_status', 'paid')->count(),
             'cancelled_orders' => $statusCounts->get('Cancelled', 0),
         ];
 

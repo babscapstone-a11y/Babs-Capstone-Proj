@@ -93,9 +93,11 @@ class Order extends Model
 
     /**
      * Orders the cashier is allowed to bill: the kitchen/food-server has
-     * moved them to Ready, Served, or Packaged (or a cashier already flipped
-     * one to Completed at payment time, e.g. a retry), and no payment has
-     * been recorded for them yet.
+     * moved them to Ready, Served, or Packaged, and no payment has been
+     * recorded for them yet. "Completed" is kept in the list for any
+     * pre-existing order that still carries that legacy status; payment no
+     * longer sets it (see finalizeOrderPayment()) since a customer may pay
+     * before or after being served — payment_status alone tracks that.
      */
     public function scopeAwaitingPayment(Builder $q): Builder
     {
@@ -390,16 +392,18 @@ class Order extends Model
     }
 
     /**
-     * True once there's genuinely nothing left to happen — paid or
-     * cancelled. Deliberately distinct from isCompleted(): "Completed" is
-     * set by the cashier at payment time, which can happen as soon as an
-     * order is Ready — well before it's actually been served/packaged — so
-     * isCompleted() alone isn't reliable for "stop watching this order" in
-     * customer-facing polling/UI.
+     * True once there's genuinely nothing left to happen — cancelled, or
+     * paid AND handed off to the customer. Payment alone isn't enough: a
+     * customer may pay before being served (finalizeOrderPayment() never
+     * touches order_status_id, so paying early doesn't block or fast-forward
+     * the service pipeline), and customer-facing polling/UI needs to keep
+     * watching that order until it's actually been served/packaged too —
+     * otherwise a pay-first order would stop updating before the food ever
+     * arrives.
      */
     public function isFullyClosed(): bool
     {
-        return $this->isCancelled() || $this->payment_status === 'paid';
+        return $this->isCancelled() || ($this->payment_status === 'paid' && ($this->served_at !== null || $this->packaged_at !== null));
     }
 
     public function isDelivery(): bool
@@ -459,9 +463,10 @@ class Order extends Model
      * The food server can act on this order once the kitchen has marked it
      * "Ready" — that's the intended hand-off signal. served_at/packaged_at
      * (only ever set by serve()/package() below) confirm it hasn't already
-     * been handed off, since status_name = Completed gets reused again
-     * later once the cashier takes payment (which can happen from "Ready"
-     * directly, bypassing this handoff entirely).
+     * been handed off. Deliberately independent of payment_status: a
+     * customer may pay before or after being served, and
+     * CashierController::finalizeOrderPayment() never touches
+     * order_status_id, so paying early can't block this from also happening.
      */
     public function canBeFulfilled(): bool
     {

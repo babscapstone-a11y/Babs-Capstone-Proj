@@ -9,7 +9,6 @@ use App\Models\GcashPaymentIntent;
 use App\Models\Invoice;
 use App\Models\ModeOfPayment;
 use App\Models\Order;
-use App\Models\OrderStatus;
 use App\Models\Payment;
 use App\Models\PaymentStatus;
 use App\Services\PaymongoClient;
@@ -458,9 +457,8 @@ class CashierController extends Controller
                 return null;
             }
 
-            $paidStatusId      = PaymentStatus::where('status_name', 'Paid')->value('id');
-            $modeOfPaymentId   = ModeOfPayment::where('method_name', $paymentMethod === 'cash' ? 'Cash' : 'Cashless')->value('id');
-            $completedStatusId = OrderStatus::where('status_name', 'Completed')->value('id');
+            $paidStatusId    = PaymentStatus::where('status_name', 'Paid')->value('id');
+            $modeOfPaymentId = ModeOfPayment::where('method_name', $paymentMethod === 'cash' ? 'Cash' : 'Cashless')->value('id');
 
             $invoice = Invoice::create([
                 'order_id'          => $locked->id,
@@ -486,10 +484,16 @@ class CashierController extends Controller
                 'payment_date'       => now(),
             ]);
 
+            // Deliberately leaves order_status_id untouched: payment can happen
+            // whenever the customer is ready to pay — before the food server
+            // has served the order (still "Ready") or after (already
+            // "Served"/"Packaged") — and shouldn't force either path along.
+            // isFullyClosed()/isAwaitingPayment() key off payment_status
+            // directly, not a status row, so the service pipeline and the
+            // payment pipeline stay independent of each other.
             $locked->update([
-                'payment_status'  => 'paid',
-                'payment_method'  => $paymentMethod,
-                'order_status_id' => $completedStatusId ?? $locked->order_status_id,
+                'payment_status' => 'paid',
+                'payment_method' => $paymentMethod,
             ]);
 
             return $payment;
