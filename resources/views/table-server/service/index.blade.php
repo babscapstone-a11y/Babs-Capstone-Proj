@@ -25,16 +25,22 @@
     .summary-count { font-size: 1.7rem; font-weight: 800; color: var(--dark); line-height: 1; }
     .summary-label  { font-size: .78rem; color: var(--muted); font-weight: 600; margin-top: .2rem; }
 
-    /* ── Notification banner ────────────────────────────────── */
-    .notif-stack { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.25rem; }
+    /* ── Notification overlay ───────────────────────────────── */
+    .notif-stack {
+        position: fixed; top: 85px; right: 1.5rem; z-index: 500;
+        display: flex; flex-direction: column; gap: .6rem;
+        width: 360px; max-width: calc(100vw - 2.5rem);
+        max-height: calc(100vh - 110px); overflow-y: auto; padding: .1rem;
+    }
     .notif-banner {
         display: flex; align-items: center; gap: .8rem;
-        background: rgba(22,163,74,.08); border: 1.5px solid rgba(22,163,74,.3);
-        border-radius: 12px; padding: .8rem 1rem; cursor: pointer; transition: background .15s;
+        background: var(--white); border-left: 4px solid var(--status-ready);
+        border-radius: 12px; padding: .8rem 1rem; cursor: pointer; transition: transform .15s, box-shadow .15s;
+        box-shadow: 0 8px 24px rgba(17,24,39,0.14);
         animation: notifIn .3s ease both;
     }
-    .notif-banner:hover { background: rgba(22,163,74,.14); }
-    @keyframes notifIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+    .notif-banner:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(17,24,39,0.18); }
+    @keyframes notifIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
     .notif-icon {
         width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
         background: var(--status-ready); color: #fff; display: flex; align-items: center; justify-content: center;
@@ -102,7 +108,11 @@
     .service-empty i { font-size: 2.5rem; margin-bottom: .8rem; opacity: .35; display: block; }
 
     @media (max-width: 1100px) { .summary-row { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px) { .summary-row { grid-template-columns: 1fr; } .toolbar-row { flex-direction: column; align-items: stretch; } }
+    @media (max-width: 640px) {
+        .summary-row { grid-template-columns: 1fr; }
+        .toolbar-row { flex-direction: column; align-items: stretch; }
+        .notif-stack { top: 120px; right: 1rem; left: 1rem; width: auto; }
+    }
 </style>
 @endsection
 
