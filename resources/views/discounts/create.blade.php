@@ -285,6 +285,7 @@ function updateTypeUI() {
     const input = document.getElementById('discountValue');
     input.max  = isPct ? '100' : '';
     input.step = isPct ? '1' : '0.01';
+    input.min  = isSpecial ? '0' : '0.01';
     input.required = !isSpecial;
     if (isSpecial) input.value = '0';
 
