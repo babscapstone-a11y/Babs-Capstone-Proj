@@ -363,17 +363,8 @@
             </a>
 
             <a href="{{ route('discounts.index') }}"
-               class="nav-item {{ request()->routeIs('discounts.*') ? 'active' : '' }}">
+               class="nav-item {{ request()->routeIs('discounts.*', 'special-discount-requests.*') ? 'active' : '' }}">
                 <i class="fas fa-tag"></i> Discounts
-            </a>
-
-            <a href="{{ route('special-discount-requests.index') }}"
-               class="nav-item {{ request()->routeIs('special-discount-requests.*') ? 'active' : '' }}">
-                <i class="fas fa-hand-holding-dollar"></i> Special Discount Requests
-                @php $pendingSpecialDiscounts = \App\Models\SpecialDiscountRequest::where('review_status', 'pending')->count() @endphp
-                @if($pendingSpecialDiscounts > 0)
-                    <span class="nav-badge" id="specialDiscountNavBadge">{{ $pendingSpecialDiscounts }}</span>
-                @endif
             </a>
 
             <a href="{{ route('cancellations.index') }}"

@@ -67,9 +67,17 @@
             <div class="disc-title"><i class="fas fa-tag"></i> Discount Management</div>
             <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Create and manage discount rules for POS and Online Ordering</div>
         </div>
-        <a href="{{ route('discounts.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> New Discount
-        </a>
+        <div style="display:flex;gap:.6rem">
+            <a href="{{ route('special-discount-requests.index') }}" class="btn btn-outline">
+                <i class="fas fa-hand-holding-dollar"></i> Special Discount Requests
+                @if($pendingSpecialRequests > 0)
+                    <span class="badge badge-pending" style="margin-left:.2rem" id="specialDiscountNavBadge">{{ $pendingSpecialRequests }}</span>
+                @endif
+            </a>
+            <a href="{{ route('discounts.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Discount
+            </a>
+        </div>
     </div>
 
     {{-- Stat Cards --}}
