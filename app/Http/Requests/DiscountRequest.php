@@ -21,8 +21,8 @@ class DiscountRequest extends FormRequest
                 'required', 'string', 'max:150',
                 Rule::unique('discounts', 'discount_name')->ignore($discountId),
             ],
-            'discount_type'    => ['required', Rule::in(['percentage', 'fixed'])],
-            'discount_value'   => ['required', 'numeric', 'min:0.01'],
+            'discount_type'    => ['required', Rule::in(['percentage', 'fixed', 'special'])],
+            'discount_value'   => ['required', 'numeric', 'min:0'],
             'eligibility_type' => ['required', Rule::in([
                 'senior_citizen', 'pwd', 'promotional', 'employee',
                 'minimum_purchase', 'date_range', 'all_customers',
@@ -34,6 +34,13 @@ class DiscountRequest extends FormRequest
             'start_date'       => ['nullable', 'date'],
             'end_date'         => ['nullable', 'date', 'after_or_equal:start_date'],
         ];
+
+        // A 'special' discount has no preset value — the cashier types the
+        // amount per transaction — so it's exempt from the "must be > 0"
+        // rule that applies to percentage/fixed discounts.
+        if ($this->input('discount_type') !== 'special') {
+            $rules['discount_value'][] = 'min:0.01';
+        }
 
         if ($this->input('discount_type') === 'percentage') {
             $rules['discount_value'][] = 'max:100';

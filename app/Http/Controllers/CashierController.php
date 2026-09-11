@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateGcashIntentRequest;
 use App\Http\Requests\ProcessPaymentRequest;
+use App\Http\Requests\StoreSpecialDiscountRequestRequest;
 use App\Models\Discount;
 use App\Models\GcashPaymentIntent;
 use App\Models\Invoice;
@@ -11,6 +12,7 @@ use App\Models\ModeOfPayment;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentStatus;
+use App\Models\SpecialDiscountRequest;
 use App\Services\PaymongoClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -90,6 +92,7 @@ class CashierController extends Controller
                 'id'                    => $d->id,
                 'name'                  => $d->discount_name,
                 'type'                  => $d->discount_type,
+                'is_special'            => $d->isSpecial(),
                 'value'                 => (float) $d->discount_value,
                 'formatted_value'       => $d->formatted_value,
                 'eligibility_label'     => $d->eligibility_label,
@@ -99,6 +102,93 @@ class CashierController extends Controller
             ])->values();
 
         return response()->json(['discounts' => $discounts]);
+    }
+
+    /**
+     * GET /cashier/orders/{order}/special-discount-request — the billing
+     * screen polls this after submitting a Special Discount amount so it
+     * knows the moment an admin approves or rejects it, without the cashier
+     * having to refresh the page.
+     */
+    public function specialDiscountRequestStatus(Order $order): JsonResponse
+    {
+        $this->authorize('pay', $order);
+
+        $latest = $order->specialDiscountRequests()->latest()->first();
+
+        return response()->json(['request' => $this->serializeSpecialDiscountRequest($latest)]);
+    }
+
+    /**
+     * POST /cashier/orders/{order}/special-discount-request — REQ: a cashier
+     * types a custom amount for a "Special Discount" catalog entry; it sits
+     * pending until an admin approves it in the Discounts module before
+     * resolveDiscount() (and thus processPayment()/createGcashIntent()) will
+     * let it be deducted from the bill.
+     */
+    public function requestSpecialDiscount(StoreSpecialDiscountRequestRequest $request, Order $order): JsonResponse
+    {
+        $this->authorize('pay', $order);
+
+        $discount = Discount::find($request->discount_id);
+
+        if (! $discount || ! $discount->isSpecial() || ! $discount->isCurrentlyValid()) {
+            return response()->json(['message' => 'The selected special discount is not available.'], 422);
+        }
+
+        if ($order->specialDiscountRequests()->pending()->exists()) {
+            return response()->json(['message' => 'A special discount request for this order is already awaiting admin approval.'], 422);
+        }
+
+        $order->load('details');
+        $subtotal = (float) $order->details->sum('subtotal');
+        $amount   = round((float) $request->amount, 2);
+
+        if ($amount > $subtotal) {
+            return response()->json(['message' => 'The requested amount cannot exceed the order subtotal.'], 422);
+        }
+
+        if ($discount->maximum_discount !== null && $amount > (float) $discount->maximum_discount) {
+            return response()->json(['message' => 'The requested amount exceeds the maximum allowed for this discount (₱' . number_format($discount->maximum_discount, 2) . ').'], 422);
+        }
+
+        if (! $discount->meetsMinimumPurchase($subtotal)) {
+            return response()->json(['message' => 'This order does not meet the minimum purchase required for this discount.'], 422);
+        }
+
+        $specialDiscountRequest = SpecialDiscountRequest::create([
+            'request_number'   => SpecialDiscountRequest::generateRequestNumber(),
+            'order_id'         => $order->id,
+            'discount_id'      => $discount->id,
+            'cashier_id'       => auth()->id(),
+            'requested_amount' => $amount,
+            'reason'           => $request->reason,
+        ]);
+
+        return response()->json([
+            'message' => 'Special discount request submitted. Waiting for admin approval.',
+            'request' => $this->serializeSpecialDiscountRequest($specialDiscountRequest),
+        ]);
+    }
+
+    /**
+     * DELETE /cashier/orders/{order}/special-discount-request/{specialDiscountRequest}
+     * — lets the cashier withdraw their own still-pending request (e.g. they
+     * mistyped the amount) instead of waiting for an admin to reject it.
+     */
+    public function cancelSpecialDiscountRequest(Order $order, SpecialDiscountRequest $specialDiscountRequest): JsonResponse
+    {
+        $this->authorize('pay', $order);
+
+        if ($specialDiscountRequest->order_id !== $order->id) {
+            abort(404);
+        }
+
+        if ($specialDiscountRequest->isPending()) {
+            $specialDiscountRequest->delete();
+        }
+
+        return response()->json(['status' => 'cancelled']);
     }
 
     /**
@@ -113,7 +203,7 @@ class CashierController extends Controller
         $subtotal = (float) $order->details->sum('subtotal');
 
         ['discount' => $discount, 'discountAmount' => $discountAmount, 'error' => $error]
-            = $this->resolveDiscount($request->discount_id, $subtotal);
+            = $this->resolveDiscount($request->discount_id, $subtotal, $order);
 
         if ($error) {
             return response()->json(['message' => $error], 422);
@@ -164,7 +254,7 @@ class CashierController extends Controller
         $subtotal = (float) $order->details->sum('subtotal');
 
         ['discount' => $discount, 'discountAmount' => $discountAmount, 'error' => $error]
-            = $this->resolveDiscount($request->discount_id, $subtotal);
+            = $this->resolveDiscount($request->discount_id, $subtotal, $order);
 
         if ($error) {
             return response()->json(['message' => $error], 422);
@@ -409,7 +499,7 @@ class CashierController extends Controller
      * the checks previously inlined in processPayment() — shared with
      * createGcashIntent() so both payment paths enforce the same rules.
      */
-    private function resolveDiscount(?int $discountId, float $subtotal): array
+    private function resolveDiscount(?int $discountId, float $subtotal, Order $order): array
     {
         if (! $discountId) {
             return ['discount' => null, 'discountAmount' => 0.0, 'error' => null];
@@ -425,7 +515,58 @@ class CashierController extends Controller
             return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'This order does not meet the minimum purchase required for the selected discount.'];
         }
 
+        if ($discount->isSpecial()) {
+            return $this->resolveSpecialDiscount($discount, $order, $subtotal);
+        }
+
         return ['discount' => $discount, 'discountAmount' => $discount->computeDiscountAmount($subtotal), 'error' => null];
+    }
+
+    /**
+     * A 'special' discount has no preset value, so instead of computing an
+     * amount from discount_value it looks up this order's latest
+     * SpecialDiscountRequest — the amount only counts once an admin has
+     * approved it, which keeps a cashier from finalizing a bill with an
+     * unapproved custom deduction.
+     */
+    private function resolveSpecialDiscount(Discount $discount, Order $order, float $subtotal): array
+    {
+        $latest = $order->specialDiscountRequests()
+            ->where('discount_id', $discount->id)
+            ->latest()
+            ->first();
+
+        if (! $latest) {
+            return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'Please request an amount for this special discount before completing payment.'];
+        }
+
+        if ($latest->isPending()) {
+            return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'This special discount is still awaiting admin approval.'];
+        }
+
+        if ($latest->isRejected()) {
+            return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'The admin rejected this special discount request. Please request a new amount.'];
+        }
+
+        $amount = min((float) $latest->requested_amount, $subtotal);
+
+        return ['discount' => $discount, 'discountAmount' => round($amount, 2), 'error' => null];
+    }
+
+    private function serializeSpecialDiscountRequest(?SpecialDiscountRequest $request): ?array
+    {
+        if (! $request) {
+            return null;
+        }
+
+        return [
+            'id'                => $request->id,
+            'discount_id'       => $request->discount_id,
+            'request_number'    => $request->request_number,
+            'requested_amount'  => (float) $request->requested_amount,
+            'status'            => $request->review_status,
+            'rejection_reason'  => $request->rejection_reason,
+        ];
     }
 
     /**

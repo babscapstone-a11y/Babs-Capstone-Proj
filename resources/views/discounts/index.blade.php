@@ -43,11 +43,13 @@
 .badge-disc-expired{background:#FEE2E2;color:#B91C1C;display:inline-flex;align-items:center;gap:.28rem;padding:.2rem .6rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-type-pct{background:#EFF6FF;color:#1D4ED8;padding:.18rem .55rem;border-radius:6px;font-size:.66rem;font-weight:700;display:inline-block}
 .badge-type-fix{background:#F5F3FF;color:#7C3AED;padding:.18rem .55rem;border-radius:6px;font-size:.66rem;font-weight:700;display:inline-block}
+.badge-type-spec{background:#FEF3C7;color:#B45309;padding:.18rem .55rem;border-radius:6px;font-size:.66rem;font-weight:700;display:inline-block}
 .elig-badge{padding:.18rem .55rem;border-radius:6px;font-size:.66rem;font-weight:700;display:inline-block}
 .elig-senior{background:#EFF6FF;color:#1D4ED8}.elig-pwd{background:#F5F3FF;color:#7C3AED}.elig-promo{background:#FEF3C7;color:#92400E}
 .elig-employee{background:#F0FDF4;color:#15803D}.elig-min{background:#ECFEFF;color:#0E7490}.elig-date{background:#FFF7ED;color:#C2410C}.elig-all{background:#F3F4F6;color:#6B7280}
 .value-pct{font-size:1rem;font-weight:800;color:#16A34A}
 .value-fix{font-size:1rem;font-weight:800;color:#7C3AED}
+.value-spec{font-size:.82rem;font-weight:700;color:#B45309}
 .sort-icon{font-size:.65rem;margin-left:.25rem;opacity:.5}
 .sort-icon.active{opacity:1;color:var(--primary)}
 .empty-msg{text-align:center;color:var(--muted);padding:3rem;font-size:.84rem}
@@ -94,6 +96,7 @@
                 <option value="">All Types</option>
                 <option value="percentage" {{ request('type')==='percentage' ? 'selected' : '' }}>Percentage</option>
                 <option value="fixed"      {{ request('type')==='fixed'      ? 'selected' : '' }}>Fixed Amount</option>
+                <option value="special"    {{ request('type')==='special'    ? 'selected' : '' }}>Special Discount</option>
             </select>
             <select name="eligibility" class="flt-select" onchange="this.form.submit()">
                 <option value="">All Eligibility</option>
@@ -144,8 +147,13 @@
                             <a href="{{ route('discounts.show', $d) }}" style="font-weight:700;color:var(--dark)">{{ $d->discount_name }}</a>
                             @if($d->description)<div style="font-size:.74rem;color:var(--muted);margin-top:.15rem">{{ Str::limit($d->description,55) }}</div>@endif
                         </td>
-                        <td><span class="{{ $d->discount_type==='percentage' ? 'badge-type-pct' : 'badge-type-fix' }}">{{ $d->discount_type==='percentage' ? 'Percentage' : 'Fixed' }}</span></td>
-                        <td><span class="{{ $d->discount_type==='percentage' ? 'value-pct' : 'value-fix' }}">{{ $d->formatted_value }}</span></td>
+                        @php
+                            $typeClass = match($d->discount_type) { 'percentage' => 'badge-type-pct', 'fixed' => 'badge-type-fix', default => 'badge-type-spec' };
+                            $typeLabel = match($d->discount_type) { 'percentage' => 'Percentage', 'fixed' => 'Fixed', default => 'Special' };
+                            $valueClass = match($d->discount_type) { 'percentage' => 'value-pct', 'fixed' => 'value-fix', default => 'value-spec' };
+                        @endphp
+                        <td><span class="{{ $typeClass }}">{{ $typeLabel }}</span></td>
+                        <td><span class="{{ $valueClass }}">{{ $d->formatted_value }}</span></td>
                         <td><span class="elig-badge {{ $eligClass }}">{{ $d->eligibility_label }}</span></td>
                         <td style="font-size:.79rem;color:var(--muted)">{{ $d->validity_period }}</td>
                         <td><span class="{{ $d->status_badge_class }}"><i class="fas fa-circle" style="font-size:.4rem"></i> {{ $d->status_label }}</span></td>

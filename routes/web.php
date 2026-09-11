@@ -18,6 +18,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementOrderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RestaurantDowntimeController;
+use App\Http\Controllers\SpecialDiscountRequestController;
 use App\Http\Controllers\StaffPasswordResetController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\CustomerProfileController;
@@ -129,6 +130,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::put('/{cancellationRequest}/reject',   [CancellationRequestController::class, 'reject']) ->name('reject');
     });
 
+    // ── Special Discount Request Review (Discount Module) ──────────────
+    Route::prefix('special-discount-requests')->name('special-discount-requests.')->group(function () {
+        Route::get('/',                                    [SpecialDiscountRequestController::class, 'index'])          ->name('index');
+        Route::get('/pending-summary',                      [SpecialDiscountRequestController::class, 'pendingSummary'])->name('pending-summary');
+        Route::get('/{specialDiscountRequest}',             [SpecialDiscountRequestController::class, 'show'])          ->name('show');
+        Route::put('/{specialDiscountRequest}/approve',     [SpecialDiscountRequestController::class, 'approve'])       ->name('approve');
+        Route::put('/{specialDiscountRequest}/reject',      [SpecialDiscountRequestController::class, 'reject'])        ->name('reject');
+    });
+
     // ── Report Generation Module (REQ056–REQ060) — Module 10 ───────────
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/',        [ReportController::class, 'index'])  ->name('index');
@@ -163,6 +173,11 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
     Route::post('/orders/{order}/payment', [CashierController::class, 'processPayment'])->name('orders.pay');
     Route::get('/discounts', [CashierController::class, 'discounts'])     ->name('discounts.index');
     Route::get('/receipts/{payment}', [CashierController::class, 'receipt'])->name('receipts.show');
+
+    // ── Special Discount requests (cashier-requested amount, admin-approved) ──
+    Route::get('/orders/{order}/special-discount-request', [CashierController::class, 'specialDiscountRequestStatus'])->name('orders.special-discount-request.show');
+    Route::post('/orders/{order}/special-discount-request', [CashierController::class, 'requestSpecialDiscount'])     ->name('orders.special-discount-request.store');
+    Route::delete('/orders/{order}/special-discount-request/{specialDiscountRequest}', [CashierController::class, 'cancelSpecialDiscountRequest'])->name('orders.special-discount-request.cancel');
 
     // ── Cashier GCash QR payments ──────────────────────────────────
     Route::post('/orders/{order}/gcash-intent', [CashierController::class, 'createGcashIntent'])->name('orders.gcash-intent');

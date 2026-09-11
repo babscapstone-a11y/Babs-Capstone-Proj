@@ -36,14 +36,16 @@
 .val-prefix{padding:.62rem .85rem;background:#F8FAFC;border-right:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .val-suffix{padding:.62rem .85rem;background:#F8FAFC;border-left:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .val-input{flex:1;border:none!important;border-radius:0!important;box-shadow:none!important;outline:none;padding:.62rem .75rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:transparent}
-.type-radio-group{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.type-radio-group{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+@media(max-width:640px){.type-radio-group{grid-template-columns:1fr}}
 .type-radio{position:relative}
 .type-radio input{position:absolute;opacity:0;width:0;height:0}
 .type-radio-label{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff}
 .type-radio-label:hover{border-color:var(--primary);background:#FEF2F2}
 .type-radio input:checked + .type-radio-label{border-color:var(--primary);background:#FEF2F2}
 .type-radio-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
-.tr-pct{background:#EFF6FF;color:#1D4ED8}.tr-fix{background:#F5F3FF;color:#7C3AED}
+.tr-pct{background:#EFF6FF;color:#1D4ED8}.tr-fix{background:#F5F3FF;color:#7C3AED}.tr-spec{background:#FEF3C7;color:#B45309}
+.special-note{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:.85rem 1rem;font-size:.8rem;color:#92400E;line-height:1.6}
 .type-radio-text .t-label{font-size:.85rem;font-weight:700;color:var(--dark)}
 .type-radio-text .t-sub{font-size:.73rem;color:var(--muted);margin-top:.1rem}
 .status-toggle{display:flex;gap:.75rem}
@@ -115,9 +117,16 @@
                                         <div class="type-radio-text"><div class="t-label">Fixed Amount</div><div class="t-sub">e.g. ₱100 off</div></div>
                                     </label>
                                 </div>
+                                <div class="type-radio">
+                                    <input type="radio" name="discount_type" id="type_special" value="special" {{ old('discount_type',$discount->discount_type)==='special' ? 'checked' : '' }} onchange="updateTypeUI()">
+                                    <label class="type-radio-label" for="type_special">
+                                        <div class="type-radio-icon tr-spec"><i class="fas fa-hand-holding-dollar"></i></div>
+                                        <div class="type-radio-text"><div class="t-label">Special Discount</div><div class="t-sub">Cashier requests amount</div></div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                        <div class="field">
+                        <div class="field" id="valueFieldWrap">
                             <label id="valueLabel">Discount Value <span class="req">*</span></label>
                             <div class="val-wrap">
                                 <div class="val-prefix" id="valPrefix">₱</div>
@@ -125,6 +134,12 @@
                                 <div class="val-suffix" id="valSuffix">%</div>
                             </div>
                             @error('discount_value')<div class="err"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                        </div>
+                        <div class="field" id="specialNoteWrap" style="display:none">
+                            <div class="special-note">
+                                <i class="fas fa-circle-info"></i>
+                                No preset value — at checkout, the cashier picks this discount and types a peso amount for the current order. That amount stays "pending" until you approve it in <strong>Special Discount Requests</strong>; only then can it be deducted from the bill.
+                            </div>
                         </div>
                         <div class="field">
                             <label>Eligibility Condition <span class="req">*</span></label>
@@ -213,9 +228,9 @@
 @section('scripts')
 <script>
 const eligLabels = @json(\App\Models\Discount::ELIGIBILITY);
-function updateTypeUI(){const isPct=document.getElementById('type_pct').checked;document.getElementById('valueLabel').innerHTML=isPct?'Discount Percentage <span style="color:#DC2626">*</span>':'Fixed Discount Amount <span style="color:#DC2626">*</span>';document.getElementById('valPrefix').style.display=isPct?'none':'';document.getElementById('valSuffix').style.display=isPct?'':'none';const input=document.getElementById('discountValue');input.max=isPct?'100':'';input.step=isPct?'1':'0.01';updatePreview();}
+function updateTypeUI(){const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;document.getElementById('valueFieldWrap').style.display=isSpecial?'none':'';document.getElementById('specialNoteWrap').style.display=isSpecial?'':'none';document.getElementById('valueLabel').innerHTML=isPct?'Discount Percentage <span style="color:#DC2626">*</span>':'Fixed Discount Amount <span style="color:#DC2626">*</span>';document.getElementById('valPrefix').style.display=isPct?'none':'';document.getElementById('valSuffix').style.display=isPct?'':'none';const input=document.getElementById('discountValue');input.max=isPct?'100':'';input.step=isPct?'1':'0.01';input.required=!isSpecial;if(isSpecial)input.value='0';updatePreview();}
 function updateConditions(){const elig=document.getElementById('eligibilityType').value;const showMin=['minimum_purchase','date_range','promotional'].includes(elig);const showDate=['date_range','promotional'].includes(elig);document.getElementById('condMinPurchase').classList.toggle('visible',showMin);document.getElementById('condDateRange').classList.toggle('visible',showDate);}
-function updatePreview(){const name=document.querySelector('[name=discount_name]').value||'—';const val=parseFloat(document.getElementById('discountValue').value)||0;const isPct=document.getElementById('type_pct').checked;const elig=document.getElementById('eligibilityType').value;const fmtVal=isPct?val.toFixed(0)+'%':'₱'+val.toFixed(2);document.getElementById('prevName').textContent=name;document.getElementById('prevValue').textContent=fmtVal;document.getElementById('prevType').textContent=isPct?'Percentage Discount':'Fixed Amount Discount';document.getElementById('prevElig').textContent=elig?'Eligibility: '+(eligLabels[elig]||elig):'No eligibility selected';}
+function updatePreview(){const name=document.querySelector('[name=discount_name]').value||'—';const val=parseFloat(document.getElementById('discountValue').value)||0;const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;const elig=document.getElementById('eligibilityType').value;const fmtVal=isSpecial?'Custom Amount':(isPct?val.toFixed(0)+'%':'₱'+val.toFixed(2));document.getElementById('prevName').textContent=name;document.getElementById('prevValue').textContent=fmtVal;document.getElementById('prevType').textContent=isSpecial?'Special Discount (Requires Approval)':(isPct?'Percentage Discount':'Fixed Amount Discount');document.getElementById('prevElig').textContent=elig?'Eligibility: '+(eligLabels[elig]||elig):'No eligibility selected';}
 function updateStatusUI(){const isActive=document.getElementById('st_active').checked;document.getElementById('stBtnActive').className='status-btn'+(isActive?' active-s':'');document.getElementById('stBtnInactive').className='status-btn'+(!isActive?' inactive-s':'');document.getElementById('statusNote').textContent=isActive?'Active discounts are available in the POS and Online Ordering modules.':'Inactive discounts are stored but not available for selection.';}
 document.querySelector('[name=discount_name]').addEventListener('input',updatePreview);
 window.addEventListener('DOMContentLoaded',function(){updateTypeUI();updateConditions();updateStatusUI();updatePreview();});

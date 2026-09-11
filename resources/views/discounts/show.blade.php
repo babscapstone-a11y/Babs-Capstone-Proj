@@ -28,11 +28,13 @@
 .value-large{font-size:2rem;font-weight:900;line-height:1}
 .value-pct{color:#16A34A}
 .value-fix{color:#7C3AED}
+.value-spec{color:#B45309;font-size:1.4rem}
 .badge-disc-active{background:#DCFCE7;color:#15803D;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
 .badge-disc-inactive{background:#F3F4F6;color:#6B7280;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
 .badge-disc-expired{background:#FEE2E2;color:#B91C1C;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
 .badge-type-pct{background:#EFF6FF;color:#1D4ED8;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
 .badge-type-fix{background:#F5F3FF;color:#7C3AED;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
+.badge-type-spec{background:#FEF3C7;color:#B45309;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
 .elig-badge{padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
 .elig-senior{background:#EFF6FF;color:#1D4ED8}.elig-pwd{background:#F5F3FF;color:#7C3AED}.elig-promo{background:#FEF3C7;color:#92400E}
 .elig-employee{background:#F0FDF4;color:#15803D}.elig-min{background:#ECFEFF;color:#0E7490}.elig-date{background:#FFF7ED;color:#C2410C}.elig-all{background:#F3F4F6;color:#6B7280}
@@ -112,14 +114,28 @@
                         <div class="info-lbl">Discount Name</div>
                         <div class="info-val" style="font-weight:700">{{ $discount->discount_name }}</div>
                     </div>
+                    @php
+                        $typeClass = match($discount->discount_type) { 'percentage' => 'badge-type-pct', 'fixed' => 'badge-type-fix', default => 'badge-type-spec' };
+                        $valueClass = match($discount->discount_type) { 'percentage' => 'value-pct', 'fixed' => 'value-fix', default => 'value-spec' };
+                    @endphp
                     <div class="info-row">
                         <div class="info-lbl">Discount Type</div>
-                        <div class="info-val"><span class="{{ $discount->discount_type==='percentage' ? 'badge-type-pct' : 'badge-type-fix' }}">{{ $discount->type_label }}</span></div>
+                        <div class="info-val"><span class="{{ $typeClass }}">{{ $discount->type_label }}</span></div>
                     </div>
                     <div class="info-row">
                         <div class="info-lbl">Discount Value</div>
-                        <div class="info-val"><span class="value-large {{ $discount->discount_type==='percentage' ? 'value-pct' : 'value-fix' }}">{{ $discount->formatted_value }}</span></div>
+                        <div class="info-val"><span class="value-large {{ $valueClass }}">{{ $discount->formatted_value }}</span></div>
                     </div>
+                    @if($discount->isSpecial())
+                    <div class="info-row">
+                        <div class="info-lbl">Requests</div>
+                        <div class="info-val">
+                            <a href="{{ route('special-discount-requests.index') }}" style="color:var(--primary);font-weight:600">
+                                <i class="fas fa-hand-holding-dollar"></i> View Special Discount Requests
+                            </a>
+                        </div>
+                    </div>
+                    @endif
                     <div class="info-row">
                         <div class="info-lbl">Eligibility</div>
                         <div class="info-val"><span class="elig-badge {{ $eligClass }}">{{ $discount->eligibility_label }}</span></div>
