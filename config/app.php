@@ -60,12 +60,15 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions. Bab's Resto
+    | operates in the Philippines, so this is set to the restaurant's local
+    | time rather than UTC — every `now()`/timestamp column (order times,
+    | kitchen/food-server timelines, invoices, etc.) is written and displayed
+    | in this timezone throughout the app.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Manila',
 
     /*
     |--------------------------------------------------------------------------
