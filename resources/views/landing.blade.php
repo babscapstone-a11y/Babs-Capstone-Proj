@@ -28,9 +28,9 @@
         .btn-outline-custom{color:var(--primary-red);border-color:var(--primary-red)}
         .hero{
             background: linear-gradient(180deg, rgba(227,6,19,0.06), rgba(0,0,0,0.02));
-            padding: 6rem 0 4rem;
+            padding: 3rem 0 2rem;
         }
-        .hero .logo-large{font-size:3.25rem; font-weight:800; color:var(--primary-red);}
+        .hero .logo-large{font-size:2.5rem; font-weight:800; color:var(--primary-red);}
         .card-product{transition: transform .18s ease, box-shadow .18s ease;border:0}
         .card-product:hover{transform: translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.12)}
         .price{font-weight:700;color:var(--primary-red)}
@@ -39,8 +39,8 @@
         a.social{color:#cfcfcf;margin-right:.5rem}
         .contact-item{min-height:64px}
         @media (max-width:576px){
-            .hero{padding:4rem 1rem}
-            .hero .logo-large{font-size:2.25rem}
+            .hero{padding:2rem 1rem}
+            .hero .logo-large{font-size:1.75rem}
         }
     </style>
 </head>
@@ -78,11 +78,11 @@
 <header id="home" class="hero">
     <div class="container text-center">
         <div class="logo-large">BAB'S RESTO</div>
-        <h1 class="mt-3 mb-2 fw-bold">Delicious Food Delivered Fresh</h1>
-        <p class="lead text-muted">Order your favorite meals online and enjoy fast service.</p>
-        <div class="d-flex justify-content-center gap-2 mt-4">
-            <a href="#menu" class="btn btn-primary-custom btn-lg shadow-sm">Order Now <i class="fas fa-shopping-cart ms-2"></i></a>
-            <a href="#menu" class="btn btn-outline-custom btn-lg">View Menu <i class="fas fa-utensils ms-2"></i></a>
+        <h1 class="mt-2 mb-1 fw-bold h3">Delicious Food Delivered Fresh</h1>
+        <p class="lead text-muted mb-2">Order your favorite meals online and enjoy fast service.</p>
+        <div class="d-flex justify-content-center gap-2 mt-2">
+            <a href="#menu" class="btn btn-primary-custom shadow-sm">Order Now <i class="fas fa-shopping-cart ms-2"></i></a>
+            <a href="#menu" class="btn btn-outline-custom">View Menu <i class="fas fa-utensils ms-2"></i></a>
         </div>
     </div>
 </header>
