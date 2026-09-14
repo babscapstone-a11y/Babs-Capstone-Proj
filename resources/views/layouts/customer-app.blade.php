@@ -7,8 +7,8 @@
     <title>@yield('title', "Bab's Resto")</title>
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#DC2626">
-    <link rel="icon" href="{{ asset('images/icons/icon-192.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ asset('images/icons/icon-192.jpg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.jpg') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bab's Resto">
