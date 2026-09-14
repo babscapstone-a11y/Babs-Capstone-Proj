@@ -13,6 +13,10 @@
     <title>BAB'S RESTO — Delicious Food Delivered Fresh</title>
     <link rel="icon" type="image/png" href="{{ asset('images/BabsLandingPageLogo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.jpg') }}">
+    <link rel="manifest" href="{{ asset('manifest-landing.json') }}">
+    <meta name="theme-color" content="#E30613">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BAB'S RESTO">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">

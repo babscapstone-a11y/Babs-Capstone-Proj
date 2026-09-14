@@ -1,0 +1,22 @@
+{
+    "name": "BAB'S RESTO - Delicious Food Delivered Fresh",
+    "short_name": "BAB'S RESTO",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#E30613",
+    "icons": [
+        {
+            "src": "/images/icons/icon-192.jpg",
+            "sizes": "2048x2048",
+            "type": "image/jpeg",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/icons/icon-512.jpg",
+            "sizes": "2048x2048",
+            "type": "image/jpeg",
+            "purpose": "any"
+        }
+    ]
+}
