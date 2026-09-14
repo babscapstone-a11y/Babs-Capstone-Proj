@@ -54,8 +54,12 @@
         .nav-link{color:var(--text-primary) !important;font-weight:600}
         .btn-primary-custom{background:var(--primary-red);border:none}
         .btn-outline-custom{color:var(--primary-red);border-color:var(--primary-red)}
-        .theme-toggle-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border-color);background:transparent;color:var(--text-primary);display:flex;align-items:center;justify-content:center;}
+        .theme-toggle-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border-color);background:transparent;color:var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
         .theme-toggle-btn:hover{background:var(--bg-surface-alt);}
+        .nav-actions{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border-color);}
+        @media (min-width:992px){
+            .nav-actions{margin-top:0;padding-top:0;border-top:0;margin-left:.75rem;}
+        }
         .hero{
             background: linear-gradient(180deg, rgba(227,6,19,0.06), rgba(0,0,0,0.02));
             padding: 3rem 0 2rem;
@@ -98,14 +102,14 @@
                 <li class="nav-item"><a class="nav-link" href="#menu">Menu</a></li>
                 <li class="nav-item"><a class="nav-link" href="#about">About Us</a></li>
                 <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-                <li class="nav-item ms-3"><a class="btn btn-outline-custom btn-sm" href="{{ route('login') }}">Login</a></li>
-                <li class="nav-item ms-2"><a class="btn btn-primary-custom btn-sm text-white" href="{{ route('register') }}">Register</a></li>
-                <li class="nav-item ms-2">
-                    <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle light or dark mode">
-                        <i id="themeToggleIcon" class="fas fa-moon"></i>
-                    </button>
-                </li>
             </ul>
+            <div class="nav-actions d-flex align-items-center gap-2">
+                <a href="{{ route('login') }}" class="btn btn-outline-custom btn-sm flex-fill flex-lg-grow-0">Login</a>
+                <a href="{{ route('register') }}" class="btn btn-primary-custom btn-sm text-white flex-fill flex-lg-grow-0">Register</a>
+                <button type="button" id="themeToggle" class="theme-toggle-btn flex-shrink-0" aria-label="Toggle light or dark mode">
+                    <i id="themeToggleIcon" class="fas fa-moon"></i>
+                </button>
+            </div>
         </div>
     </div>
 </nav>
