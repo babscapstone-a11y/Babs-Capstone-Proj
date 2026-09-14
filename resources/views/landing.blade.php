@@ -67,6 +67,9 @@
         }
         html[data-theme="dark"] .hero{background: linear-gradient(180deg, rgba(227,6,19,0.16), rgba(0,0,0,0.35));}
         .hero .hero-logo{width:120px;height:120px;object-fit:contain;}
+        .theme-logo-dark{display:none;}
+        html[data-theme="dark"] .theme-logo-light{display:none;}
+        html[data-theme="dark"] .theme-logo-dark{display:inline-block;}
         .card-product{background:var(--bg-surface);color:var(--text-primary);transition: transform .18s ease, box-shadow .18s ease, background-color .2s ease;border:0}
         .card-product:hover{transform: translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.12)}
         .price{font-weight:700;color:var(--primary-red)}
@@ -89,7 +92,8 @@
 <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-            <img src="{{ asset('images/BabsLandingPageLogo.png') }}" alt="BAB'S RESTO" style="width:44px;height:44px;object-fit:contain;">
+            <img src="{{ asset('images/LandingPageBabsBlack.png') }}" alt="BAB'S RESTO" class="theme-logo theme-logo-light" style="width:44px;height:44px;object-fit:contain;">
+            <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO" class="theme-logo theme-logo-dark" style="width:44px;height:44px;object-fit:contain;">
             <div>
                 <div class="brand">BAB'S RESTO</div>
                 <small class="text-muted" style="font-size:.7rem">Taste the Love</small>
@@ -118,7 +122,8 @@
 <!-- Hero -->
 <header id="home" class="hero">
     <div class="container text-center">
-        <img src="{{ asset('images/BabsLandingPageLogo.png') }}" alt="BAB'S RESTO" class="hero-logo mb-2">
+        <img src="{{ asset('images/LandingPageBabsBlack.png') }}" alt="BAB'S RESTO" class="hero-logo theme-logo theme-logo-light mb-2">
+        <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO" class="hero-logo theme-logo theme-logo-dark mb-2">
         <h1 class="mt-2 mb-1 fw-bold h3">Delicious Food Delivered Fresh</h1>
         <p class="lead text-muted mb-2">Order your favorite meals online and enjoy fast service.</p>
         <div class="d-flex justify-content-center gap-2 mt-2">
