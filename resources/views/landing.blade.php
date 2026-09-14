@@ -37,7 +37,6 @@
         .feature-icon{font-size:1.5rem;color:var(--primary-red)}
         .footer{background:#0b0b0b;color:#cfcfcf;padding:2.5rem 0}
         a.social{color:#cfcfcf;margin-right:.5rem}
-        .contact-item{min-height:64px}
         @media (max-width:576px){
             .hero{padding:2rem 1rem}
             .hero .logo-large{font-size:1.75rem}
@@ -63,7 +62,6 @@
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
-                <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="#menu">Menu</a></li>
                 <li class="nav-item"><a class="nav-link" href="#about">About Us</a></li>
                 <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
@@ -167,68 +165,45 @@
     </div>
 </section>
 
-<!-- Contact -->
-<section id="contact" class="py-5 bg-light">
-    <div class="container">
-        <h4 class="mb-4">Contact Us</h4>
-        <div class="row gy-3">
-            <div class="col-md-4">
-                <div class="p-3 bg-white rounded shadow-sm contact-item">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="fs-4 text-danger"><i class="fas fa-phone-alt"></i></div>
-                        <div>
-                            <div class="small text-muted">Telephone</div>
-                            <div class="fw-bold">(02) 1234-5678</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="p-3 bg-white rounded shadow-sm contact-item">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="fs-4 text-danger"><i class="fas fa-mobile-alt"></i></div>
-                        <div>
-                            <div class="small text-muted">Mobile</div>
-                            <div class="fw-bold">+63 912 345 6789</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="p-3 bg-white rounded shadow-sm contact-item">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="fs-4 text-danger"><i class="fas fa-map-marker-alt"></i></div>
-                        <div>
-                            <div class="small text-muted">Address</div>
-                            <div class="fw-bold">123 Mabuhay St., Quezon City</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <div class="p-3 bg-white rounded shadow-sm">
-                    <div class="small text-muted">Business Hours</div>
-                    <div class="fw-bold">Mon - Sun: 9:00 AM — 9:00 PM</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <!-- Footer -->
-<footer class="footer mt-5">
-    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <div class="mb-3 mb-md-0">
-            <div class="fw-bold">BAB'S RESTO</div>
-            <small class="text-muted">&copy; {{ date('Y') }} BAB'S RESTO. All rights reserved.</small>
+<footer id="contact" class="footer mt-5">
+    <div class="container">
+        <div class="row gy-4">
+            <div class="col-md-3">
+                <div class="fw-bold text-white mb-1">BAB'S RESTO</div>
+                <small class="text-muted">&copy; {{ date('Y') }} BAB'S RESTO. All rights reserved.</small>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted mb-1"><i class="fas fa-phone-alt me-2"></i>Contact Number</div>
+                <div class="text-white">0910 741 2539</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted mb-1"><i class="fas fa-envelope me-2"></i>Email</div>
+                <div class="text-white">babsrestofficial@gmail.com</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted mb-1"><i class="fab fa-facebook-messenger me-2"></i>Messenger</div>
+                <div class="text-white">BABS RESTO II</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="small text-muted mb-1"><i class="fas fa-clock me-2"></i>Business Hours</div>
+                <div class="text-white">11:00 AM — 9:00 PM</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted mb-1"><i class="fas fa-map-marker-alt me-2"></i>Address</div>
+                <div class="text-white">Aguirre Subd, Purok Roamsciville, Agan Rd., Brgy. Sta. Cruz, Koronadal, Philippines, 9506</div>
+            </div>
         </div>
-        <div>
-            <a href="#" class="social"><i class="fab fa-facebook fa-lg"></i></a>
-            <a href="#" class="social"><i class="fab fa-instagram fa-lg"></i></a>
-            <a href="#" class="social"><i class="fab fa-twitter fa-lg"></i></a>
+
+        <hr class="border-secondary my-4">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <small class="text-muted mb-2 mb-md-0">Taste the Love</small>
+            <div>
+                <a href="#" class="social"><i class="fab fa-facebook fa-lg"></i></a>
+                <a href="#" class="social"><i class="fab fa-instagram fa-lg"></i></a>
+                <a href="#" class="social"><i class="fab fa-twitter fa-lg"></i></a>
+            </div>
         </div>
     </div>
 </footer>
