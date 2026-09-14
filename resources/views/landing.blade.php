@@ -11,7 +11,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BAB'S RESTO — Delicious Food Delivered Fresh</title>
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/BabsLogoFinal.jpg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/BabsLandingPageLogo.png') }}">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@
 <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-            <img src="{{ asset('images/BabsLogoFinal.jpg') }}" alt="BAB'S RESTO" style="width:44px;height:44px;object-fit:contain;">
+            <img src="{{ asset('images/BabsLandingPageLogo.png') }}" alt="BAB'S RESTO" style="width:44px;height:44px;object-fit:contain;">
             <div>
                 <div class="brand">BAB'S RESTO</div>
                 <small class="text-muted" style="font-size:.7rem">Taste the Love</small>
@@ -117,7 +117,7 @@
 <!-- Hero -->
 <header id="home" class="hero">
     <div class="container text-center">
-        <img src="{{ asset('images/BabsLogoFinal.jpg') }}" alt="BAB'S RESTO" class="hero-logo mb-2">
+        <img src="{{ asset('images/BabsLandingPageLogo.png') }}" alt="BAB'S RESTO" class="hero-logo mb-2">
         <h1 class="mt-2 mb-1 fw-bold h3">Delicious Food Delivered Fresh</h1>
         <p class="lead text-muted mb-2">Order your favorite meals online and enjoy fast service.</p>
         <div class="d-flex justify-content-center gap-2 mt-2">
