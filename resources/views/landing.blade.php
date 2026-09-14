@@ -37,7 +37,7 @@
         .price{font-weight:700;color:var(--primary-red)}
         .feature-icon{font-size:1.5rem;color:var(--primary-red)}
         .footer{background:#0b0b0b;color:#cfcfcf;padding:2.5rem 0}
-        .footer .text-muted{color:#9a9a9a !important}
+        .footer .text-muted{color:#ffffff !important}
         a.social{color:#cfcfcf;margin-right:.5rem}
         @media (max-width:576px){
             .hero{padding:2rem 1rem}
