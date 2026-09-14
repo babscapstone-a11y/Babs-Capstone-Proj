@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BAB'S RESTO — Delicious Food Delivered Fresh</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/BabsLogoFinal.jpg') }}">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -30,7 +31,7 @@
             background: linear-gradient(180deg, rgba(227,6,19,0.06), rgba(0,0,0,0.02));
             padding: 3rem 0 2rem;
         }
-        .hero .logo-large{font-size:2.5rem; font-weight:800; color:var(--primary-red);}
+        .hero .hero-logo{width:120px;height:120px;object-fit:contain;}
         .card-product{transition: transform .18s ease, box-shadow .18s ease;border:0}
         .card-product:hover{transform: translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.12)}
         .price{font-weight:700;color:var(--primary-red)}
@@ -39,7 +40,7 @@
         a.social{color:#cfcfcf;margin-right:.5rem}
         @media (max-width:576px){
             .hero{padding:2rem 1rem}
-            .hero .logo-large{font-size:1.75rem}
+            .hero .hero-logo{width:90px;height:90px}
         }
     </style>
 </head>
@@ -49,9 +50,7 @@
 <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-            <div class="rounded-circle bg-danger d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
-                <span class="text-white fw-bold">BR</span>
-            </div>
+            <img src="{{ asset('images/BabsLogoFinal.jpg') }}" alt="BAB'S RESTO" style="width:44px;height:44px;object-fit:contain;">
             <div>
                 <div class="brand">BAB'S RESTO</div>
                 <small class="text-muted" style="font-size:.7rem">Taste the Love</small>
@@ -75,7 +74,7 @@
 <!-- Hero -->
 <header id="home" class="hero">
     <div class="container text-center">
-        <div class="logo-large">BAB'S RESTO</div>
+        <img src="{{ asset('images/BabsLogoFinal.jpg') }}" alt="BAB'S RESTO" class="hero-logo mb-2">
         <h1 class="mt-2 mb-1 fw-bold h3">Delicious Food Delivered Fresh</h1>
         <p class="lead text-muted mb-2">Order your favorite meals online and enjoy fast service.</p>
         <div class="d-flex justify-content-center gap-2 mt-2">
