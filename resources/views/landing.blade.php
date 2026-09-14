@@ -52,8 +52,9 @@
             --bs-body-color: #f1f1f1;
             --bs-border-color: rgba(255,255,255,0.15);
         }
-        html,body{height:100%;font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+        html,body{height:100%;max-width:100%;overflow-x:hidden;font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
         body{background:var(--bg-page);color:var(--text-primary);transition:background-color .2s ease, color .2s ease;}
+        img{max-width:100%;}
         .brand{font-weight:700;color:var(--primary-red);letter-spacing:0.6px}
         .navbar{background:var(--navbar-bg) !important;transition:background-color .2s ease;}
         .nav-link{color:var(--text-primary) !important;font-weight:600}
@@ -112,7 +113,7 @@
                 <li class="nav-item"><a class="nav-link" href="#about">About Us</a></li>
                 <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
             </ul>
-            <div class="nav-actions d-flex align-items-center gap-2">
+            <div class="nav-actions d-flex flex-wrap align-items-center gap-2">
                 <a href="{{ route('login') }}" class="btn btn-outline-custom btn-sm flex-fill flex-lg-grow-0">Login</a>
                 <a href="{{ route('register') }}" class="btn btn-primary-custom btn-sm text-white flex-fill flex-lg-grow-0">Register</a>
                 <button type="button" id="themeToggle" class="theme-toggle-btn flex-shrink-0" aria-label="Toggle light or dark mode">
@@ -130,7 +131,7 @@
         <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO" class="hero-logo theme-logo theme-logo-dark mb-2">
         <h1 class="mt-2 mb-1 fw-bold h3">Delicious Food Delivered Fresh</h1>
         <p class="lead text-muted mb-2">Order your favorite meals online and enjoy fast service.</p>
-        <div class="d-flex justify-content-center gap-2 mt-2">
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
             <a href="#menu" class="btn btn-primary-custom shadow-sm">Order Now <i class="fas fa-shopping-cart ms-2"></i></a>
             <a href="#menu" class="btn btn-outline-custom">View Menu <i class="fas fa-utensils ms-2"></i></a>
         </div>
@@ -171,13 +172,13 @@
 <section id="about" class="py-5 bg-light">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-md-6 mb-4 mb-md-0">
+            <div class="col-12 col-md-6 mb-4 mb-md-0">
                 <h3>About BAB'S RESTO</h3>
                 <p class="text-muted">BAB'S RESTO is a family-owned restaurant focused on serving delicious, freshly prepared meals using the finest ingredients. Our menu blends classic comfort dishes with modern flavors to offer something for every palate.</p>
                 <p class="mb-1"><strong>Mission:</strong> To deliver high-quality, tasty meals quickly, delighting every customer at every order.</p>
                 <p class="mb-0"><strong>Vision:</strong> To be the community's favorite choice for comfort food and convenient online ordering.</p>
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <img src="https://via.placeholder.com/800x500?text=Restaurant+Interior" alt="Restaurant" class="img-fluid rounded shadow-sm">
             </div>
         </div>
@@ -221,7 +222,7 @@
 <footer id="contact" class="footer mt-5">
     <div class="container">
         <div class="row gy-4">
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <div class="fw-bold text-white mb-1">BAB'S RESTO</div>
                 <small class="text-muted">&copy; {{ date('Y') }} BAB'S RESTO. All rights reserved.</small>
             </div>
@@ -241,7 +242,7 @@
                 <div class="small text-muted mb-1"><i class="fas fa-clock me-2"></i>Business Hours</div>
                 <div class="text-white">11:00 AM — 9:00 PM</div>
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="small text-muted mb-1"><i class="fas fa-map-marker-alt me-2"></i>Address</div>
                 <div class="text-white">Aguirre Subd, Purok Roamsciville, Agan Rd., Brgy. Sta. Cruz, Koronadal, Philippines, 9506</div>
             </div>
