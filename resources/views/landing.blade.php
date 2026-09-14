@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            var saved = localStorage.getItem('babsResto-theme');
+            var theme = saved === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BAB'S RESTO — Delicious Food Delivered Fresh</title>
@@ -20,22 +27,48 @@
             --white: #ffffff;
             --muted: #6c757d;
             --max-width: 1200px;
+            --bg-page: #ffffff;
+            --bg-surface: #ffffff;
+            --bg-surface-alt: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: rgba(0,0,0,0.125);
+            --navbar-bg: #ffffff;
+        }
+        html[data-theme="dark"]{
+            --bg-page: #121212;
+            --bg-surface: #1e1e1e;
+            --bg-surface-alt: #181818;
+            --text-primary: #f1f1f1;
+            --text-secondary: #b0b0b0;
+            --border-color: rgba(255,255,255,0.15);
+            --navbar-bg: #1a1a1a;
+            --bs-body-bg: #121212;
+            --bs-body-color: #f1f1f1;
+            --bs-border-color: rgba(255,255,255,0.15);
         }
         html,body{height:100%;font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+        body{background:var(--bg-page);color:var(--text-primary);transition:background-color .2s ease, color .2s ease;}
         .brand{font-weight:700;color:var(--primary-red);letter-spacing:0.6px}
-        .navbar{background:var(--white);}
-        .nav-link{color:var(--black) !important;font-weight:600}
+        .navbar{background:var(--navbar-bg) !important;transition:background-color .2s ease;}
+        .nav-link{color:var(--text-primary) !important;font-weight:600}
         .btn-primary-custom{background:var(--primary-red);border:none}
         .btn-outline-custom{color:var(--primary-red);border-color:var(--primary-red)}
+        .theme-toggle-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border-color);background:transparent;color:var(--text-primary);display:flex;align-items:center;justify-content:center;}
+        .theme-toggle-btn:hover{background:var(--bg-surface-alt);}
         .hero{
             background: linear-gradient(180deg, rgba(227,6,19,0.06), rgba(0,0,0,0.02));
             padding: 3rem 0 2rem;
         }
+        html[data-theme="dark"] .hero{background: linear-gradient(180deg, rgba(227,6,19,0.16), rgba(0,0,0,0.35));}
         .hero .hero-logo{width:120px;height:120px;object-fit:contain;}
-        .card-product{transition: transform .18s ease, box-shadow .18s ease;border:0}
+        .card-product{background:var(--bg-surface);color:var(--text-primary);transition: transform .18s ease, box-shadow .18s ease, background-color .2s ease;border:0}
         .card-product:hover{transform: translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.12)}
         .price{font-weight:700;color:var(--primary-red)}
         .feature-icon{font-size:1.5rem;color:var(--primary-red)}
+        section.bg-light{background:var(--bg-surface-alt) !important;}
+        .border{border-color:var(--border-color) !important;}
+        .text-muted{color:var(--text-secondary) !important;}
         .footer{background:#0b0b0b;color:#cfcfcf;padding:2.5rem 0}
         .footer .text-muted{color:#ffffff !important}
         a.social{color:#cfcfcf;margin-right:.5rem}
@@ -67,6 +100,11 @@
                 <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
                 <li class="nav-item ms-3"><a class="btn btn-outline-custom btn-sm" href="{{ route('login') }}">Login</a></li>
                 <li class="nav-item ms-2"><a class="btn btn-primary-custom btn-sm text-white" href="{{ route('register') }}">Register</a></li>
+                <li class="nav-item ms-2">
+                    <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle light or dark mode">
+                        <i id="themeToggleIcon" class="fas fa-moon"></i>
+                    </button>
+                </li>
             </ul>
         </div>
     </div>
@@ -210,5 +248,25 @@
 
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var root = document.documentElement;
+        var toggleBtn = document.getElementById('themeToggle');
+        var toggleIcon = document.getElementById('themeToggleIcon');
+
+        function applyIcon(theme) {
+            toggleIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        applyIcon(root.getAttribute('data-theme'));
+
+        toggleBtn.addEventListener('click', function () {
+            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('babsResto-theme', next);
+            applyIcon(next);
+        });
+    })();
+</script>
 </body>
 </html>
