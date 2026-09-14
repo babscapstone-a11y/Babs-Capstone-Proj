@@ -12,6 +12,7 @@ use App\Http\Controllers\InventoryAdjustmentController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\MenuItemController;
+use App\Models\MenuItem;
 use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PaymongoWebhookController;
 use App\Http\Controllers\ProfileController;
@@ -28,13 +29,19 @@ use App\Http\Controllers\TableServerOrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('landing');
-});
+$landingView = function () {
+    $featuredMeals = MenuItem::where('is_active', true)
+        ->where('is_available', true)
+        ->orderBy('menu_name')
+        ->take(12)
+        ->get();
 
-Route::get('/landing', function () {
-    return view('landing');
-});
+    return view('landing', ['featuredMeals' => $featuredMeals]);
+};
+
+Route::get('/', $landingView);
+
+Route::get('/landing', $landingView);
 
 /* ── Admin Dashboard (admin only) ────────────────────────────── */
 Route::get('/dashboard', [DashboardController::class, 'index'])

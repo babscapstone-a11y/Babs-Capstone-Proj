@@ -92,67 +92,27 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="h4 mb-0">Featured Meals</h2>
-            <a href="#" class="text-decoration-none text-muted">View full menu <i class="fas fa-angle-right ms-1"></i></a>
+            <a href="{{ route('login') }}" class="text-decoration-none text-muted">View full menu <i class="fas fa-angle-right ms-1"></i></a>
         </div>
 
         <div class="row g-4">
-            <!-- Product Card -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card card-product h-100 shadow-sm">
-                    <img src="https://via.placeholder.com/600x400?text=Grilled+Chicken" class="card-img-top" alt="Grilled Chicken">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">Grilled Chicken Plate</h5>
-                        <p class="text-muted small mb-2">Comes with rice and side salad</p>
-                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                            <div class="price">₱199</div>
-                            <a href="#" class="btn btn-outline-custom btn-sm">Order <i class="fas fa-shopping-bag ms-1"></i></a>
+            @forelse ($featuredMeals as $meal)
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="card card-product h-100 shadow-sm">
+                        <img src="{{ $meal->image_url }}" class="card-img-top" alt="{{ $meal->menu_name }}" style="height:200px;object-fit:cover">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title mb-1">{{ $meal->menu_name }}</h5>
+                            <p class="text-muted small mb-2">{{ $meal->description }}</p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <div class="price">₱{{ number_format($meal->price, 2) }}</div>
+                                <a href="{{ route('login') }}" class="btn btn-outline-custom btn-sm">Order <i class="fas fa-shopping-bag ms-1"></i></a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <!-- Repeat sample cards -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card card-product h-100 shadow-sm">
-                    <img src="https://via.placeholder.com/600x400?text=Beef+Steak" class="card-img-top" alt="Beef Steak">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">Sizzling Beef Steak</h5>
-                        <p class="text-muted small mb-2">Served hot with garlic butter</p>
-                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                            <div class="price">₱289</div>
-                            <a href="#" class="btn btn-outline-custom btn-sm">Order <i class="fas fa-shopping-bag ms-1"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card card-product h-100 shadow-sm">
-                    <img src="https://via.placeholder.com/600x400?text=Pasta" class="card-img-top" alt="Creamy Pasta">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">Creamy Garlic Pasta</h5>
-                        <p class="text-muted small mb-2">Rich and creamy with herbs</p>
-                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                            <div class="price">₱169</div>
-                            <a href="#" class="btn btn-outline-custom btn-sm">Order <i class="fas fa-shopping-bag ms-1"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card card-product h-100 shadow-sm">
-                    <img src="https://via.placeholder.com/600x400?text=Salad" class="card-img-top" alt="Fresh Salad">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">Fresh Garden Salad</h5>
-                        <p class="text-muted small mb-2">Crisp vegetables with house dressing</p>
-                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                            <div class="price">₱129</div>
-                            <a href="#" class="btn btn-outline-custom btn-sm">Order <i class="fas fa-shopping-bag ms-1"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            @empty
+                <div class="col-12 text-center text-muted">No menu items available yet.</div>
+            @endforelse
         </div>
     </div>
 </section>
