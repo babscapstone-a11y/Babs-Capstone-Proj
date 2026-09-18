@@ -380,6 +380,23 @@ class Order extends Model
         return $this->payment_status === 'paid';
     }
 
+    /**
+     * Amount already settled online via GCash QR Ph before the customer
+     * reaches the counter (e.g. a "half payment" down payment at
+     * checkout) — the cashier's billing screen deducts this from what's
+     * still owed instead of re-charging the full total.
+     */
+    public function amountPaidOnline(): float
+    {
+        if (! $this->relationLoaded('paymentProof')) {
+            $this->load('paymentProof');
+        }
+
+        return $this->paymentProof && $this->paymentProof->status === 'paid'
+            ? (float) $this->paymentProof->amount
+            : 0.0;
+    }
+
     public function isAwaitingPayment(): bool
     {
         return $this->payment_status === 'pending'

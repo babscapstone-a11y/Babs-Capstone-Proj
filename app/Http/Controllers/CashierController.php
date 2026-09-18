@@ -44,7 +44,7 @@ class CashierController extends Controller
     public function orders(Request $request): JsonResponse
     {
         $query = Order::visibleForBilling()
-            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details']);
+            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details', 'paymentProof']);
 
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
@@ -76,7 +76,7 @@ class CashierController extends Controller
     {
         $this->authorize('view', $order);
 
-        $order->load(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem']);
+        $order->load(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem', 'paymentProof']);
 
         return response()->json(['order' => $this->serializeOrderDetail($order)]);
     }
@@ -212,18 +212,24 @@ class CashierController extends Controller
         $serviceCharge = round((float) ($request->service_charge ?? 0), 2);
         $grandTotal    = round(max($subtotal - $discountAmount + $serviceCharge, 0), 2);
 
-        $isCash         = $request->payment_method === 'cash';
-        $amountReceived = $isCash ? round((float) $request->amount_received, 2) : $grandTotal;
+        // A customer who already paid part of this order online (e.g. the
+        // guest checkout's "half payment" GCash QR flow) shouldn't be
+        // charged the full total again at the counter — only the balance.
+        $alreadyPaidOnline = $order->amountPaidOnline();
+        $amountDue         = round(max($grandTotal - $alreadyPaidOnline, 0), 2);
 
-        if ($isCash && $amountReceived < $grandTotal) {
+        $isCash         = $request->payment_method === 'cash';
+        $amountReceived = $isCash ? round((float) $request->amount_received, 2) : $amountDue;
+
+        if ($isCash && $amountReceived < $amountDue) {
             return response()->json(['message' => 'Insufficient payment amount.'], 422);
         }
 
-        $changeAmount = round($amountReceived - $grandTotal, 2);
+        $changeAmount = round($amountReceived - $amountDue, 2);
 
         $payment = $this->finalizeOrderPayment(
             $order, $discount, $subtotal, $discountAmount, $serviceCharge,
-            $grandTotal, $request->payment_method, $amountReceived, $changeAmount,
+            $grandTotal, $amountDue, $request->payment_method, $amountReceived, $changeAmount,
             $request->reference_number
         );
 
@@ -263,8 +269,13 @@ class CashierController extends Controller
         $serviceCharge = round((float) ($request->service_charge ?? 0), 2);
         $grandTotal    = round(max($subtotal - $discountAmount + $serviceCharge, 0), 2);
 
-        if ($grandTotal <= 0) {
-            return response()->json(['message' => 'The payable amount must be greater than zero.'], 422);
+        // Deduct anything already settled online (e.g. a "half payment" GCash
+        // QR down payment at checkout) — the cashier only collects the rest.
+        $alreadyPaidOnline = $order->amountPaidOnline();
+        $amountDue         = round(max($grandTotal - $alreadyPaidOnline, 0), 2);
+
+        if ($amountDue <= 0) {
+            return response()->json(['message' => 'This order has already been paid in full.'], 422);
         }
 
         $intent = GcashPaymentIntent::create([
@@ -274,7 +285,7 @@ class CashierController extends Controller
             'subtotal'        => $subtotal,
             'discount_amount' => $discountAmount,
             'service_charge'  => $serviceCharge,
-            'grand_total'     => $grandTotal,
+            'grand_total'     => $amountDue,
             'status'          => 'pending',
         ]);
 
@@ -282,7 +293,7 @@ class CashierController extends Controller
 
         try {
             $paymongoIntent = $this->paymongo->createPaymentIntent(
-                (int) round($grandTotal * 100),
+                (int) round($amountDue * 100),
                 "Order {$order->order_number} — Cashier {$method} Payment",
                 [$method]
             );
@@ -315,7 +326,7 @@ class CashierController extends Controller
                 'intent_id'        => $intent->id,
                 'checkout_url'     => $nextAction['value'],
                 'next_action_type' => $nextAction['type'],
-                'grand_total'      => $grandTotal,
+                'grand_total'      => $amountDue,
             ]);
         } catch (\Throwable $e) {
             Log::error('PayMongo cashier GCash intent failed', [
@@ -455,12 +466,22 @@ class CashierController extends Controller
 
         $referenceNumber = $paymongoIntent['attributes']['payments'][0]['id'] ?? $intent->paymongo_payment_intent_id;
 
+        // $intent->grand_total is the amount this QR actually charged (the
+        // remaining balance, after any online down payment) — the invoice's
+        // full_total is recomputed here since it may differ when an online
+        // payment was deducted at creation time. See createGcashIntent().
+        $fullTotal = round(max(
+            (float) $intent->subtotal - (float) $intent->discount_amount + (float) $intent->service_charge,
+            0
+        ), 2);
+
         $payment = $this->finalizeOrderPayment(
             $intent->order,
             $intent->discount,
             (float) $intent->subtotal,
             (float) $intent->discount_amount,
             (float) $intent->service_charge,
+            $fullTotal,
             (float) $intent->grand_total,
             'cashless',
             (float) $intent->grand_total,
@@ -575,6 +596,14 @@ class CashierController extends Controller
      * sale. The row is re-locked and re-checked inside the transaction to
      * guard against a double submit racing this same order past the policy
      * check.
+     *
+     * $fullTotal is the order's true total (subtotal − discount + service
+     * charge) and is what the Invoice records, so receipts and reports
+     * always reflect the real bill. $amountDue is what's actually being
+     * collected in *this* transaction — it's less than $fullTotal whenever
+     * the customer already settled part of it online (see
+     * Order::amountPaidOnline()) — and is what the Payment records as
+     * having been paid/received just now.
      */
     private function finalizeOrderPayment(
         Order $order,
@@ -582,7 +611,8 @@ class CashierController extends Controller
         float $subtotal,
         float $discountAmount,
         float $serviceCharge,
-        float $grandTotal,
+        float $fullTotal,
+        float $amountDue,
         string $paymentMethod,
         float $amountReceived,
         float $changeAmount,
@@ -590,7 +620,7 @@ class CashierController extends Controller
     ): ?Payment {
         return DB::transaction(function () use (
             $order, $discount, $subtotal, $discountAmount,
-            $serviceCharge, $grandTotal, $paymentMethod, $amountReceived, $changeAmount, $referenceNumber
+            $serviceCharge, $fullTotal, $amountDue, $paymentMethod, $amountReceived, $changeAmount, $referenceNumber
         ) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
@@ -608,7 +638,7 @@ class CashierController extends Controller
                 'subtotal'          => $subtotal,
                 'discount_amount'   => $discountAmount,
                 'service_charge'    => $serviceCharge,
-                'final_total'       => $grandTotal,
+                'final_total'       => $fullTotal,
             ]);
 
             $payment = Payment::create([
@@ -616,7 +646,7 @@ class CashierController extends Controller
                 'order_id'           => $locked->id,
                 'cashier_id'         => auth()->id(),
                 'mode_of_payment_id' => $modeOfPaymentId,
-                'amount_paid'        => $grandTotal,
+                'amount_paid'        => $amountDue,
                 'amount_received'    => $amountReceived,
                 'change_amount'      => $changeAmount,
                 'reference_number'   => $referenceNumber,
@@ -659,6 +689,7 @@ class CashierController extends Controller
             'payment_status_label' => $order->payment_status_label,
             'item_count'        => $order->item_count,
             'total_amount'      => (float) $order->details->sum('subtotal'),
+            'amount_paid_online' => $order->amountPaidOnline(),
         ];
     }
 
@@ -681,6 +712,7 @@ class CashierController extends Controller
             'special_instructions' => $order->special_instructions,
             'item_count'           => $order->item_count,
             'subtotal'             => $subtotal,
+            'amount_paid_online'   => $order->amountPaidOnline(),
             'items' => $order->details->map(fn ($d) => [
                 'name'      => $d->item_name,
                 'image_url' => $d->menuItem?->image_url,

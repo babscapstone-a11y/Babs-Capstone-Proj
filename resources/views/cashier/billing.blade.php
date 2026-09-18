@@ -343,8 +343,9 @@
 
         panel.innerHTML = `
             <div id="summarySubtotal" class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
+            <div id="summaryPaidOnlineRow" class="billing-summary-row" style="display:none"><span>Paid Online (GCash)</span><span class="neg">- <span id="summaryPaidOnlineAmt">₱0.00</span></span></div>
             <div id="summaryDiscountRow" class="billing-summary-row" style="display:none"><span>Less Discount</span><span class="neg">- <span id="summaryDiscountAmt">₱0.00</span></span></div>
-            <div class="billing-summary-row total"><span>Grand Total</span><span id="summaryGrandTotal">${formatPeso(order.subtotal)}</span></div>
+            <div class="billing-summary-row total"><span id="summaryGrandTotalLabel">Grand Total</span><span id="summaryGrandTotal">${formatPeso(order.subtotal)}</span></div>
 
             <div class="form-group" style="margin-top:1.25rem">
                 <label class="form-label"><i class="fas fa-tag"></i> Discount</label>
@@ -564,6 +565,7 @@
     function recomputeTotals() {
         if (!currentOrder) return;
         const subtotal = currentOrder.subtotal;
+        const alreadyPaidOnline = currentOrder.amount_paid_online || 0;
         const discount = currentDiscount();
 
         let discountAmount = 0;
@@ -582,11 +584,15 @@
             discountAmount = Math.min(discountAmount, subtotal);
         }
 
-        const grandTotal = Math.max(subtotal - discountAmount, 0);
+        const fullTotal = Math.max(subtotal - discountAmount, 0);
+        const amountDue = Math.max(fullTotal - alreadyPaidOnline, 0);
 
+        document.getElementById('summaryPaidOnlineRow').style.display = alreadyPaidOnline > 0 ? 'flex' : 'none';
+        document.getElementById('summaryPaidOnlineAmt').textContent = formatPeso(alreadyPaidOnline);
         document.getElementById('summaryDiscountRow').style.display = discountAmount > 0 ? 'flex' : 'none';
         document.getElementById('summaryDiscountAmt').textContent = formatPeso(discountAmount);
-        document.getElementById('summaryGrandTotal').textContent = formatPeso(grandTotal);
+        document.getElementById('summaryGrandTotalLabel').textContent = alreadyPaidOnline > 0 ? 'Balance Due' : 'Grand Total';
+        document.getElementById('summaryGrandTotal').textContent = formatPeso(amountDue);
 
         document.getElementById('eligibilityBox').style.display = (discount && discount.requires_verification) ? 'flex' : 'none';
 
@@ -606,7 +612,7 @@
         const paymentError = document.getElementById('paymentError');
 
         if (isCash && amountReceivedInput.value !== '') {
-            const change = amountReceived - grandTotal;
+            const change = amountReceived - amountDue;
             if (change < 0) {
                 changeBox.style.display = 'none';
                 paymentError.style.display = 'block';
