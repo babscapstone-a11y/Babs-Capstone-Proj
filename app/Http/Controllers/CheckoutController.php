@@ -409,6 +409,69 @@ class CheckoutController extends Controller
     }
 
     /**
+     * GET /checkout/qrph/{order}/status — polled by the QR page while it's
+     * waiting, mirroring CashierController::gcashIntentStatus(). The moment
+     * PayMongo reports the QR Ph payment as succeeded, this auto-confirms
+     * it — no screenshot needed. The upload form on the same page stays
+     * available as a fallback for customers who close the tab before this
+     * catches it, or if the webhook/poll never resolves.
+     */
+    public function qrphStatus(Order $order): JsonResponse
+    {
+        $customer = auth('customer')->user();
+
+        if (! $customer || $order->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $paymentProof = $order->paymentProof;
+
+        if (! $paymentProof || ! $paymentProof->paymongo_payment_intent_id) {
+            return response()->json(['status' => 'unknown'], 404);
+        }
+
+        if ($paymentProof->status !== 'awaiting_payment') {
+            return response()->json(['status' => $paymentProof->status]);
+        }
+
+        if ($paymentProof->isQrExpired()) {
+            return response()->json(['status' => 'expired']);
+        }
+
+        try {
+            $intent = $this->paymongo->retrievePaymentIntent($paymentProof->paymongo_payment_intent_id);
+            $resolved = $this->paymongo->interpretIntentStatus($intent);
+
+            if ($resolved === 'succeeded') {
+                $paymentId = $intent['attributes']['payments'][0]['id'] ?? $paymentProof->paymongo_payment_intent_id;
+
+                $paymentProof->update([
+                    'status'           => 'paid',
+                    'paid_at'          => now(),
+                    'reference_number' => $paymentProof->reference_number ?: $paymentId,
+                ]);
+
+                return response()->json(['status' => 'paid']);
+            }
+
+            if ($resolved === 'failed') {
+                $paymentProof->update(['status' => 'failed']);
+
+                return response()->json(['status' => 'failed']);
+            }
+
+            return response()->json(['status' => 'pending']);
+        } catch (\Throwable $e) {
+            Log::error('PayMongo QR Ph status check failed', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return response()->json(['status' => 'pending']);
+        }
+    }
+
+    /**
      * POST /checkout/qrph/{order}/proof — stores the customer's uploaded
      * payment screenshot so a cashier can manually verify it against the
      * amount due before approving the order.

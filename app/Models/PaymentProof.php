@@ -38,6 +38,9 @@ class PaymentProof extends Model
         'failed'            => 'Failed',
     ];
 
+    /** How long a QR Ph code stays scannable before PayMongo expires it. */
+    const QR_EXPIRY_MINUTES = 30;
+
     /* ── Relationships ── */
 
     public function order(): BelongsTo
@@ -70,5 +73,17 @@ class PaymentProof extends Model
     public function getProofImageUrlAttribute(): ?string
     {
         return $this->proof_image ? Storage::url($this->proof_image) : null;
+    }
+
+    /**
+     * PayMongo doesn't reliably surface QR Ph's 30-minute code expiry on the
+     * Payment Intent's own status, so it's tracked here off created_at
+     * instead, same as GcashPaymentIntent::isExpired() on the cashier side.
+     */
+    public function isQrExpired(): bool
+    {
+        return $this->status === 'awaiting_payment'
+            && $this->paymongo_checkout_url
+            && $this->created_at->addMinutes(self::QR_EXPIRY_MINUTES)->isPast();
     }
 }

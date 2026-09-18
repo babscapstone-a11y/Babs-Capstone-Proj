@@ -251,8 +251,10 @@
                         <div class="info-item" style="grid-column:1/-1"><div class="label">Reference Number</div><div class="value" style="word-break:break-all">{{ $order->paymentProof->reference_number ?: '—' }}</div></div>
                     </div>
                     <div class="proof-caption">
-                        @if($order->paymentProof->proof_image)
-                            This payment was verified manually from the customer's screenshot above (temporary QR Ph flow) — it was not auto-confirmed by PayMongo.
+                        @if($order->paymentProof->proof_image && $order->paymentProof->status !== 'paid')
+                            This payment was not auto-confirmed by PayMongo — verify it manually from the customer's screenshot above (temporary QR Ph flow).
+                        @elseif($order->paymentProof->proof_image)
+                            PayMongo auto-confirmed this payment; the customer's screenshot above is available as a backup reference.
                         @else
                             Cross-check this transaction in the PayMongo Dashboard if needed.
                         @endif

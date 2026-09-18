@@ -31,16 +31,18 @@
 .qr-box { text-align: center; }
 .qr-box img {
     max-width: 240px; width: 100%; border: 1.5px solid var(--border);
-    border-radius: 12px; padding: .6rem; background: #fff;
+    border-radius: 12px; padding: .6rem; background: #fff; transition: opacity .2s;
 }
 .qr-amount { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-top: .9rem; }
 .qr-amount-label { font-size: .76rem; color: var(--muted); }
 .qr-order-number { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+.qr-waiting { font-size: .8rem; color: var(--muted); margin-top: .6rem; display: flex; align-items: center; justify-content: center; gap: .4rem; }
 
 .hint-box {
     background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px;
     padding: .75rem .9rem; margin-top: 1.1rem; font-size: .84rem; color: #92400E; text-align: left;
 }
+.hint-box.error { background: rgba(220,38,38,.08); border-color: rgba(220,38,38,.25); color: #B91C1C; }
 
 .field { margin-top: 1rem; }
 .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--dark); margin-bottom: .4rem; }
@@ -68,6 +70,7 @@
     width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
     border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite;
 }
+.spin-muted { border: 2px solid rgba(107,114,128,.25); border-top-color: var(--muted); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .submitted-box {
@@ -78,20 +81,42 @@
 @endsection
 
 @section('content')
-<div class="page-wrap qrph-wrap">
+<div class="page-wrap qrph-wrap" id="qrphWrap">
     <div class="page-title"><i class="fas fa-qrcode"></i> Scan to Pay</div>
 
+@if($paymentProof->status === 'paid')
     <div class="card">
+        <div class="card-body">
+            <div class="submitted-box">
+                <i class="fas fa-circle-check"></i>
+                <div style="font-weight:700;font-size:1.05rem">Payment Confirmed!</div>
+                <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order is now awaiting cashier review.</div>
+            </div>
+        </div>
+    </div>
+@else
+    @php $qrIssue = $paymentProof->status === 'failed' ? 'failed' : ($paymentProof->isQrExpired() ? 'expired' : null); @endphp
+
+    <div class="card" id="qrCard">
         <div class="card-header"><h2><i class="fas fa-mobile-screen-button"></i> GCash QR Code</h2></div>
         <div class="card-body">
             <div class="qr-box">
-                <img src="{{ $paymentProof->paymongo_checkout_url }}" alt="Scan with GCash to pay">
+                <img src="{{ $paymentProof->paymongo_checkout_url }}" alt="Scan with GCash to pay" id="qrImage" style="{{ $qrIssue ? 'opacity:.35' : '' }}">
                 <div class="qr-amount">₱{{ number_format($paymentProof->amount, 2) }}</div>
                 <div class="qr-amount-label">{{ $paymentProof->payment_type_label }}</div>
                 <div class="qr-order-number">Order #{{ $order->order_number }}</div>
+                @unless($qrIssue)
+                <div class="qr-waiting" id="qrWaiting"><span class="spin spin-muted"></span> Waiting for payment confirmation…</div>
+                @endunless
             </div>
-            <div class="hint-box">
-                <i class="fas fa-circle-info"></i> Open your GCash app, scan this QR code, and pay the exact amount above. Then take a screenshot of the payment confirmation and upload it below — our cashier will verify it and confirm your order shortly.
+            <div id="qrStatusBanner">
+                @if($qrIssue === 'failed')
+                    <div class="hint-box error"><i class="fas fa-triangle-exclamation"></i> We couldn't confirm this payment automatically. If you already paid, upload a screenshot below.</div>
+                @elseif($qrIssue === 'expired')
+                    <div class="hint-box error"><i class="fas fa-clock"></i> This QR code has expired. If you already paid, upload a screenshot below — otherwise please contact us.</div>
+                @else
+                    <div class="hint-box"><i class="fas fa-circle-info"></i> Open your GCash app and scan this QR code to pay the exact amount above. We'll confirm it automatically — no need to stay on this page. If it doesn't confirm within a few minutes, upload a screenshot below as backup.</div>
+                @endif
             </div>
         </div>
     </div>
@@ -106,7 +131,7 @@
                 </div>
             </div>
         @else
-            <div class="card-header"><h2><i class="fas fa-upload"></i> Upload Payment Proof</h2></div>
+            <div class="card-header"><h2><i class="fas fa-upload"></i> Upload Payment Proof (Backup)</h2></div>
             <div class="card-body">
                 <form id="proofForm" enctype="multipart/form-data">
                     @csrf
@@ -127,6 +152,7 @@
             </div>
         @endif
     </div>
+@endif
 
     <a href="{{ route('account.orders.show', $order) }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> View Order
@@ -169,6 +195,62 @@ if (proofForm) {
             btn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Submit Payment Proof</span>';
         }
     });
+}
+
+/* Auto-confirmation polling — mirrors the cashier billing screen's QR
+   polling. Only runs while the payment is still awaiting confirmation. */
+const initialStatus = @json($paymentProof->status);
+let qrphPollTimer = null;
+
+if (initialStatus === 'awaiting_payment') {
+    qrphPollTimer = setInterval(checkQrphStatus, 3000);
+}
+
+async function checkQrphStatus() {
+    try {
+        const res = await fetch('{{ route("checkout.qrph.status", $order) }}', {
+            headers: { Accept: 'application/json' },
+        });
+        if (! res.ok) return;
+        const data = await res.json();
+
+        if (data.status === 'paid') {
+            clearInterval(qrphPollTimer);
+            showQrphPaidState();
+        } else if (data.status === 'failed' || data.status === 'expired') {
+            clearInterval(qrphPollTimer);
+            showQrphIssueState(data.status);
+        }
+    } catch (err) {
+        // Transient network hiccup — just try again on the next tick.
+    }
+}
+
+function showQrphPaidState() {
+    document.getElementById('qrphWrap').innerHTML = `
+        <div class="page-title"><i class="fas fa-qrcode"></i> Scan to Pay</div>
+        <div class="card"><div class="card-body"><div class="submitted-box">
+            <i class="fas fa-circle-check"></i>
+            <div style="font-weight:700;font-size:1.05rem">Payment Confirmed!</div>
+            <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order is now awaiting cashier review.</div>
+        </div></div></div>
+        <a href="{{ route('account.orders.show', $order) }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> View Order</a>
+    `;
+    showToast('Payment confirmed!', 'success');
+}
+
+function showQrphIssueState(status) {
+    const banner = document.getElementById('qrStatusBanner');
+    const waiting = document.getElementById('qrWaiting');
+    const img = document.getElementById('qrImage');
+    if (waiting) waiting.remove();
+    if (img) img.style.opacity = '.35';
+    if (banner) {
+        const msg = status === 'expired'
+            ? 'This QR code has expired. If you already paid, upload a screenshot below — otherwise please contact us.'
+            : "We couldn't confirm this payment automatically. If you already paid, upload a screenshot below.";
+        banner.innerHTML = `<div class="hint-box error"><i class="fas fa-triangle-exclamation"></i> ${msg}</div>`;
+    }
 }
 </script>
 @endsection

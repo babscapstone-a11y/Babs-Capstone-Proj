@@ -251,6 +251,7 @@ Route::middleware(['auth:customer', 'customer'])->group(function () {
     // above while GCash's e-wallet is still pending PayMongo approval.
     Route::post('/checkout/qrph', [CheckoutController::class, 'payWithQrph']) ->name('checkout.qrph.create');
     Route::get('/checkout/qrph/{order}', [CheckoutController::class, 'showQrph']) ->name('checkout.qrph.show');
+    Route::get('/checkout/qrph/{order}/status', [CheckoutController::class, 'qrphStatus']) ->name('checkout.qrph.status');
     Route::post('/checkout/qrph/{order}/proof', [CheckoutController::class, 'uploadQrphProof']) ->name('checkout.qrph.proof');
 });
 

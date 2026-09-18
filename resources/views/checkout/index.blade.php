@@ -180,7 +180,7 @@
                             </label>
                         </div>
                         <div class="hint" style="margin-top:.9rem">
-                            You'll be shown a QR code to scan with your GCash app. After paying, upload a screenshot of the payment for our cashier to confirm. Any remaining balance is settled at pickup.
+                            You'll be shown a QR code to scan with your GCash app — payment is confirmed automatically. If it doesn't confirm right away, you can upload a screenshot as backup. Any remaining balance is settled at pickup.
                         </div>
                     </div>
                 </div>
