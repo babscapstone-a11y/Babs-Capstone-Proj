@@ -225,6 +225,19 @@
             </div>
         </div>
 
+        {{-- Proof of Payment (temporary manual QR Ph verification) --}}
+        @if($order->paymentProof && $order->paymentProof->proof_image)
+        <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-receipt"></i> Proof of Payment</h3></div>
+            <div class="card-body" style="text-align:center">
+                <img src="{{ $order->paymentProof->proof_image_url }}" alt="Payment proof screenshot"
+                     style="max-width:100%;max-height:340px;border:1.5px solid var(--border);border-radius:10px;cursor:zoom-in"
+                     onclick="openImageModal(this.src)">
+                <div class="proof-caption">Tap to enlarge. Compare the amount and reference number against the order total.</div>
+            </div>
+        </div>
+        @endif
+
         {{-- PayMongo Transaction --}}
         <div class="card" style="margin-bottom:1.25rem">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-qrcode"></i> PayMongo Transaction</h3></div>
@@ -237,7 +250,13 @@
                         <div class="info-item" style="grid-column:1/-1"><div class="label">PayMongo Payment Intent ID</div><div class="value" style="word-break:break-all">{{ $order->paymentProof->paymongo_payment_intent_id ?: '—' }}</div></div>
                         <div class="info-item" style="grid-column:1/-1"><div class="label">Reference Number</div><div class="value" style="word-break:break-all">{{ $order->paymentProof->reference_number ?: '—' }}</div></div>
                     </div>
-                    <div class="proof-caption">Cross-check this transaction in the PayMongo Dashboard if needed.</div>
+                    <div class="proof-caption">
+                        @if($order->paymentProof->proof_image)
+                            This payment was verified manually from the customer's screenshot above (temporary QR Ph flow) — it was not auto-confirmed by PayMongo.
+                        @else
+                            Cross-check this transaction in the PayMongo Dashboard if needed.
+                        @endif
+                    </div>
                 @else
                     <div style="text-align:center;color:var(--muted);padding:1.5rem 0"><i class="fas fa-qrcode" style="font-size:1.8rem;opacity:.3;display:block;margin-bottom:.5rem"></i>No PayMongo payment was recorded for this order.</div>
                 @endif
@@ -285,6 +304,11 @@
     </div>
 </div>
 
+{{-- Image lightbox for payment proof --}}
+<div class="modal-overlay" id="imageModal" role="dialog" aria-modal="true" onclick="if(event.target===this) closeImageModal()">
+    <img id="imageModalPic" src="" alt="Payment proof screenshot" style="max-width:100%;max-height:90vh;border-radius:12px;box-shadow:0 24px 64px rgba(0,0,0,.35)">
+</div>
+
 {{-- Reject reason modal --}}
 <div class="modal-overlay" id="rejectModal" role="dialog" aria-modal="true">
     <div class="modal-box">
@@ -310,6 +334,15 @@
 <script>
     const orderId = {{ $order->id }};
     const orderNumber = @json($order->order_number);
+
+    function openImageModal(src) {
+        document.getElementById('imageModalPic').src = src;
+        document.getElementById('imageModal').classList.add('open');
+    }
+    function closeImageModal() {
+        document.getElementById('imageModal').classList.remove('open');
+        document.getElementById('imageModalPic').src = '';
+    }
 
     document.querySelectorAll('.reason-preset').forEach(btn => {
         btn.addEventListener('click', () => { document.getElementById('rejectReasonInput').value = btn.dataset.reason; });

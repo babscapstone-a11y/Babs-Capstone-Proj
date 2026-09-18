@@ -161,9 +161,9 @@
                     </div>
                 </div>
 
-                {{-- Payment via GCash --}}
+                {{-- Payment via GCash QR --}}
                 <div class="card" id="paymentCard">
-                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay with GCash</h2></div>
+                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay with GCash (Scan QR)</h2></div>
                     <div class="card-body">
                         <div class="option-grid">
                             <label class="option-card selected" data-payment-type="half">
@@ -180,7 +180,7 @@
                             </label>
                         </div>
                         <div class="hint" style="margin-top:.9rem">
-                            You'll be redirected to GCash (via PayMongo) to complete this payment securely. Any remaining balance is settled at pickup.
+                            You'll be shown a QR code to scan with your GCash app. After paying, upload a screenshot of the payment for our cashier to confirm. Any remaining balance is settled at pickup.
                         </div>
                     </div>
                 </div>
@@ -218,7 +218,7 @@
                     <div class="summary-row total"><span>Grand Total</span><span class="amt">₱{{ number_format($cart->total, 2) }}</span></div>
 
                     <button type="submit" class="btn btn-primary" id="confirmOrderBtn" style="margin-top:1.1rem">
-                        <i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>
+                        <i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>
                     </button>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline" style="margin-top:.6rem">
                         <i class="fas fa-arrow-left"></i> Back to Cart
@@ -297,13 +297,13 @@ async function submitCheckout() {
     closeConfirmModal();
 
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<span class="spin"></span> <span>Starting GCash Payment...</span>';
+    confirmBtn.innerHTML = '<span class="spin"></span> <span>Generating QR Code...</span>';
 
     const orderType = form.querySelector('input[name="order_type"]:checked').value;
     const paymentType = form.querySelector('input[name="payment_type"]:checked').value;
 
     try {
-        const res = await fetch('{{ route("checkout.paymongo.create") }}', {
+        const res = await fetch('{{ route("checkout.qrph.create") }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -318,7 +318,7 @@ async function submitCheckout() {
         if (! res.ok) {
             showToast(data.message || 'Something went wrong. Please try again.', 'error');
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>';
             return;
         }
 
@@ -326,7 +326,7 @@ async function submitCheckout() {
     } catch (err) {
         showToast('Something went wrong. Please try again.', 'error');
         confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Proceed to GCash Payment</span>';
+        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>';
     }
 }
 </script>

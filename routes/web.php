@@ -246,6 +246,12 @@ Route::middleware(['auth:customer', 'customer'])->group(function () {
     Route::get('/checkout',  [CheckoutController::class, 'index']) ->name('checkout.index');
     Route::post('/checkout/paymongo', [CheckoutController::class, 'payWithGcash']) ->name('checkout.paymongo.create');
     Route::get('/checkout/paymongo/return/{order}', [CheckoutController::class, 'paymongoReturn']) ->name('checkout.paymongo.return');
+
+    // Temporary QR Ph + manual screenshot flow, used in place of the routes
+    // above while GCash's e-wallet is still pending PayMongo approval.
+    Route::post('/checkout/qrph', [CheckoutController::class, 'payWithQrph']) ->name('checkout.qrph.create');
+    Route::get('/checkout/qrph/{order}', [CheckoutController::class, 'showQrph']) ->name('checkout.qrph.show');
+    Route::post('/checkout/qrph/{order}/proof', [CheckoutController::class, 'uploadQrphProof']) ->name('checkout.qrph.proof');
 });
 
 /* ── PayMongo webhook — server-to-server, no auth/CSRF ─────────── */
