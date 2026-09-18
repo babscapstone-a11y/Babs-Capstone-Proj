@@ -326,10 +326,6 @@
                 <span style="width:6px;height:6px;border-radius:50%;background:#4ADE80;display:inline-block"></span>
                 System Online
             </span>
-            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#FCD34D;border-radius:50px;font-size:.72rem;font-weight:600;padding:.22rem .7rem">
-                <i class="fas fa-wrench" style="font-size:.6rem"></i>
-                Modules in Development
-            </span>
         </div>
     </div>
     <div style="display:flex;gap:.75rem;position:relative;z-index:1;flex-shrink:0">
@@ -443,16 +439,16 @@
         <span class="status-label">Customer Accounts:</span> Active
     </div>
     <div class="status-item">
-        <span class="status-dot warning"></span>
-        <span class="status-label">Order Module:</span> In Development
+        <span class="status-dot online"></span>
+        <span class="status-label">Order Module:</span> Active
     </div>
     <div class="status-item">
-        <span class="status-dot warning"></span>
-        <span class="status-label">Inventory Module:</span> In Development
+        <span class="status-dot online"></span>
+        <span class="status-label">Inventory Module:</span> Active
     </div>
     <div class="status-item">
-        <span class="status-dot warning"></span>
-        <span class="status-label">POS Module:</span> In Development
+        <span class="status-dot online"></span>
+        <span class="status-label">POS Module:</span> Active
     </div>
 </div>
 
@@ -465,9 +461,9 @@
             <i class="fas fa-peso-sign"></i>
         </div>
         <div class="stat-label">Today's Sales</div>
-        <div class="stat-value" style="color:var(--primary)">₱0.00</div>
-        <div class="stat-note stat-placeholder">
-            Sales data will appear once the Order and Payment modules are implemented.
+        <div class="stat-value" style="color:var(--primary)">₱{{ number_format($todaySales, 2) }}</div>
+        <div class="stat-note">
+            {{ $todayTransactions }} {{ \Illuminate\Support\Str::plural('transaction', $todayTransactions) }} today
         </div>
     </div>
 
@@ -477,10 +473,8 @@
             <i class="fas fa-fire-flame-curved"></i>
         </div>
         <div class="stat-label">Active Orders</div>
-        <div class="stat-value" style="color:#2563EB">0</div>
-        <div class="stat-note stat-placeholder">
-            Order statistics will become available after the Order Management Module is completed.
-        </div>
+        <div class="stat-value" style="color:#2563EB">{{ $activeOrders }}</div>
+        <div class="stat-note">Pending, preparing, or ready to hand off</div>
     </div>
 
     {{-- Completed Orders (REQ005 – placeholder) --}}
@@ -489,10 +483,8 @@
             <i class="fas fa-circle-check"></i>
         </div>
         <div class="stat-label">Completed Orders</div>
-        <div class="stat-value" style="color:#16A34A">0</div>
-        <div class="stat-note stat-placeholder">
-            Order statistics will become available after the Order Management Module is completed.
-        </div>
+        <div class="stat-value" style="color:#16A34A">{{ $completedOrdersToday }}</div>
+        <div class="stat-note">Served or packaged today</div>
     </div>
 
     {{-- Staff Accounts (REQ007 – real data) --}}
@@ -611,7 +603,7 @@
     <div class="section-heading">
         <span><i class="fas fa-th-large" style="margin-right:.4rem;color:var(--primary)"></i> Available Modules</span>
         <span style="font-size:.7rem;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0">
-            More modules will appear as development progresses
+            Quick access to management modules
         </span>
     </div>
     <div class="modules-grid">
@@ -722,17 +714,22 @@
                     <i class="fas fa-receipt"></i>
                 </div>
                 <div class="widget-title">Orders Overview</div>
+                <span style="margin-left:auto;font-size:.7rem;color:var(--muted);font-weight:500">Last 7 days</span>
             </div>
-            <div class="widget-body">
-                <div class="widget-placeholder-icon" style="background:rgba(37,99,235,0.08);color:#2563EB">
-                    <i class="fas fa-receipt"></i>
+            @if(array_sum($ordersChartData) > 0)
+                <div class="widget-body has-chart">
+                    <div class="chart-box"><canvas id="ordersOverviewChart"></canvas></div>
                 </div>
-                <div class="widget-placeholder-title">No Order Data Available</div>
-                <div class="widget-placeholder-desc">
-                    Order statistics and trends will appear here after the Order Management Module is completed.
+            @else
+                <div class="widget-body">
+                    <div class="widget-placeholder-icon" style="background:rgba(37,99,235,0.08);color:#2563EB">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="widget-placeholder-title">No Order Data Available</div>
+                    <div class="widget-placeholder-desc">Order trends will appear here once orders are placed.</div>
+                    <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> No Data</span>
                 </div>
-                <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> Coming Soon</span>
-            </div>
+            @endif
         </div>
 
         {{-- Inventory Overview --}}
@@ -742,17 +739,50 @@
                     <i class="fas fa-boxes-stacked"></i>
                 </div>
                 <div class="widget-title">Inventory Status</div>
+                <a href="{{ route('inventory.index') }}" style="margin-left:auto;font-size:.7rem;color:var(--primary);font-weight:600">View <i class="fas fa-arrow-right" style="font-size:.6rem"></i></a>
             </div>
-            <div class="widget-body">
-                <div class="widget-placeholder-icon" style="background:rgba(22,163,74,0.08);color:#16A34A">
-                    <i class="fas fa-boxes-stacked"></i>
+            @if($inventoryTotal > 0)
+                <div class="widget-body has-chart">
+                    <div style="display:flex;gap:.5rem;margin-bottom:.9rem;text-align:center">
+                        <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(22,163,74,0.08)">
+                            <div style="font-size:1.3rem;font-weight:800;color:#16A34A">{{ $inventoryOk }}</div>
+                            <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase">In Stock</div>
+                        </div>
+                        <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(217,119,6,0.10)">
+                            <div style="font-size:1.3rem;font-weight:800;color:#D97706">{{ $inventoryLow }}</div>
+                            <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase">Low</div>
+                        </div>
+                        <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(220,38,38,0.08)">
+                            <div style="font-size:1.3rem;font-weight:800;color:var(--primary)">{{ $inventoryOut }}</div>
+                            <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase">Out</div>
+                        </div>
+                    </div>
+                    @if($lowStockItems->isEmpty())
+                        <div style="text-align:center;color:var(--muted);font-size:.8rem;padding:.9rem 0">
+                            <i class="fas fa-circle-check" style="color:#16A34A"></i> All items are sufficiently stocked.
+                        </div>
+                    @else
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.35rem">Needs attention</div>
+                        @foreach($lowStockItems as $item)
+                            <div style="display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem">
+                                <span style="font-weight:600;color:var(--dark)">{{ $item->item_name }}</span>
+                                <span style="color:{{ $item->stock_status === 'out_of_stock' ? 'var(--primary)' : '#D97706' }};font-weight:600;white-space:nowrap">
+                                    {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} {{ $item->unit }}
+                                </span>
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
-                <div class="widget-placeholder-title">No Inventory Records</div>
-                <div class="widget-placeholder-desc">
-                    Inventory monitoring will be available after the Inventory Management Module is implemented.
+            @else
+                <div class="widget-body">
+                    <div class="widget-placeholder-icon" style="background:rgba(22,163,74,0.08);color:#16A34A">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    <div class="widget-placeholder-title">No Inventory Records</div>
+                    <div class="widget-placeholder-desc">Add stock items in Stock Inventory to monitor levels here.</div>
+                    <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> No Data</span>
                 </div>
-                <span class="coming-soon-pill"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> Coming Soon</span>
-            </div>
+            @endif
         </div>
 
     </div>
@@ -962,6 +992,22 @@ new Chart(document.getElementById('salesOverviewChart'), {
         }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+@endif
+
+@if(array_sum($ordersChartData) > 0)
+new Chart(document.getElementById('ordersOverviewChart'), {
+    type: 'bar',
+    data: {
+        labels: @json($salesChartLabels),
+        datasets: [{
+            label: 'Orders',
+            data: @json($ordersChartData),
+            backgroundColor: 'rgba(37,99,235,0.75)',
+            borderRadius: 6,
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
 });
 @endif
 </script>
