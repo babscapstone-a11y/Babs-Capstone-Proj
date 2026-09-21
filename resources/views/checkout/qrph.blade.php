@@ -28,10 +28,11 @@
 .card-header h2 i { color: var(--primary); }
 .card-body { padding: 1.25rem 1.4rem; }
 
-.qr-box { text-align: center; }
+.qr-box { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .qr-box img {
-    max-width: 240px; width: 100%; border: 1.5px solid var(--border);
-    border-radius: 12px; padding: .6rem; background: #fff; transition: opacity .2s;
+    display: block; max-width: 240px; width: 100%; aspect-ratio: 1 / 1; object-fit: contain;
+    border: 1.5px solid var(--border); border-radius: 12px; padding: 1rem; background: #fff;
+    margin: 0 auto; transition: opacity .2s;
 }
 .qr-amount { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-top: .9rem; }
 .qr-amount-label { font-size: .76rem; color: var(--muted); }
