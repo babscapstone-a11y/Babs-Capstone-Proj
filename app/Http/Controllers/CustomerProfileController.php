@@ -101,7 +101,7 @@ class CustomerProfileController extends Controller
             abort(403, 'You are not authorized to view this order.');
         }
 
-        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder', 'dineInOrder', 'cancellationRequest']);
+        $order->load(['orderStatus', 'details.menuItem', 'onlineOrder', 'dineInOrder', 'cancellationRequest', 'paymentProof']);
 
         return view('customer.profile.order-show', [
             'order'     => $order,

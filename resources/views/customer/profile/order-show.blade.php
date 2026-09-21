@@ -217,8 +217,36 @@
         </div>
     </div>
 
+    @php
+        // "awaiting_payment" covers two different real states: the customer
+        // never finished paying (no proof on file yet — needs a "Resume
+        // Payment" CTA back to the QR page), or they already uploaded a
+        // screenshot and are just waiting on the cashier to check it (the
+        // "Awaiting Payment Verification" banner below, unchanged).
+        $needsPayment = $order->isOnline() && $order->paymentProof
+            && in_array($order->paymentProof->status, ['awaiting_payment', 'failed'], true)
+            && ! $order->paymentProof->proof_image;
+        $qrExpired = $needsPayment && ($order->paymentProof->status === 'failed' || $order->paymentProof->isQrExpired());
+    @endphp
+
+    {{-- Online pre-order: payment never completed — resume it --}}
+    @if($needsPayment)
+    <div class="cancel-banner fade-up" style="background:#FEF2F2;border-color:#FECACA;color:#B91C1C">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div style="flex:1">
+            <strong>Payment Not Completed</strong><br>
+            Your order is saved, but we haven't received your GCash payment yet.
+            <div style="margin-top:.65rem">
+                <a href="{{ route('checkout.qrph.show', $order) }}" class="btn btn-primary">
+                    <i class="fas fa-qrcode"></i> {{ $qrExpired ? 'Upload Payment Proof' : 'Resume Payment' }}
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Online pre-order: awaiting cashier verification --}}
-    @if($order->isOnline() && $order->approval_status === 'pending')
+    @if(! $needsPayment && $order->isOnline() && $order->approval_status === 'pending')
     <div class="cancel-banner fade-up" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
         <i class="fas fa-hourglass-half"></i>
         <div>
