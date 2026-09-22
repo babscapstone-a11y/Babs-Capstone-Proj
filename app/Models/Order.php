@@ -201,8 +201,25 @@ class Order extends Model
         };
     }
 
+    /**
+     * True once a cancelled order's payment status should read "Cancelled"
+     * instead of its literal column value: the down-payment was never
+     * completed (still pending/failed) and now never will be. Once money
+     * has actually changed hands ('paid'/'refunded'), that fact stays
+     * displayed as-is — cancellation doesn't erase it, only a real refund
+     * moves it to 'refunded'.
+     */
+    public function getPaymentCancelledForDisplayAttribute(): bool
+    {
+        return $this->isCancelled() && in_array($this->payment_status, ['pending', 'failed'], true);
+    }
+
     public function getPaymentStatusLabelAttribute(): string
     {
+        if ($this->payment_cancelled_for_display) {
+            return 'Cancelled';
+        }
+
         return match($this->payment_status) {
             'paid'     => 'Paid',
             'failed'   => 'Failed',
@@ -213,6 +230,10 @@ class Order extends Model
 
     public function getPaymentStatusClassAttribute(): string
     {
+        if ($this->payment_cancelled_for_display) {
+            return 'badge-cancelled';
+        }
+
         return match($this->payment_status) {
             'paid'     => 'badge-paid',
             'failed'   => 'badge-failed',

@@ -234,10 +234,11 @@
 }
 
 /* Payment status badge */
-.badge-paid     { background: #DCFCE7; color: #15803D; }
-.badge-pending  { background: #FEF3C7; color: #92400E; }
-.badge-failed   { background: #FEE2E2; color: #B91C1C; }
-.badge-refunded { background: #EDE9FE; color: #6D28D9; }
+.badge-paid      { background: #DCFCE7; color: #15803D; }
+.badge-pending   { background: #FEF3C7; color: #92400E; }
+.badge-failed    { background: #FEE2E2; color: #B91C1C; }
+.badge-refunded  { background: #EDE9FE; color: #6D28D9; }
+.badge-cancelled { background: #FEE2E2; color: #B91C1C; }
 
 /* ══ EMPTY STATE ══════════════════════════════════════════ */
 .empty-state {
