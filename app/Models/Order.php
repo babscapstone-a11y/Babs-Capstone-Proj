@@ -233,6 +233,14 @@ class Order extends Model
 
     public function getCustomerStatusLabelAttribute(): string
     {
+        // Cancellation always wins: approval_status stays whatever it was
+        // when the cancellation was approved (it's a separate workflow), so
+        // without this check a cancelled order would keep showing its old
+        // pre-cancellation approval state (e.g. "Awaiting Payment Verification").
+        if ($this->isCancelled()) {
+            return 'Cancelled';
+        }
+
         if ($this->isOnline() && $this->approval_status && $this->approval_status !== 'approved') {
             return match ($this->approval_status) {
                 'pending'   => 'Awaiting Payment Verification',
