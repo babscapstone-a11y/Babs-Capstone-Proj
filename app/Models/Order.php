@@ -32,6 +32,10 @@ class Order extends Model
     /** Percentage of the order total the "pay half now" GCash checkout option charges. */
     const HALF_PAYMENT_PERCENT = 50;
 
+    /** Restaurant operating hours (24h), used to bound customer-scheduled pickup times. */
+    const OPEN_HOUR  = 11; // 11:00 AM
+    const CLOSE_HOUR = 21; // 9:00 PM
+
     /* ── Relationships ── */
 
     public function customer(): BelongsTo

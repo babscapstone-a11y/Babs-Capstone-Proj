@@ -153,10 +153,10 @@
                             <label for="pickup_date">Scheduled Pick-up Date &amp; Time</label>
                             <div style="display:flex;gap:.6rem">
                                 <input type="date" id="pickup_date" placeholder="Date" style="flex:1">
-                                <input type="time" id="pickup_time" placeholder="Time" style="flex:1">
+                                <input type="time" id="pickup_time" placeholder="Time" style="flex:1" min="11:00" max="21:00">
                             </div>
                             <input type="hidden" name="pickup_at" id="pickup_at">
-                            <div class="hint">Choose when you'll pick up your order.</div>
+                            <div class="hint">We're open 11:00 AM – 9:00 PM. Please choose a pick-up time within our hours, at least 30 minutes from now.</div>
                         </div>
                     </div>
                 </div>
@@ -263,14 +263,62 @@ const halfAmount = (cartTotal * halfPaymentPercent / 100).toFixed(2);
 document.querySelector('.payment-amount[data-type="half"]').textContent = '₱' + halfAmount;
 document.querySelector('.payment-amount[data-type="full"]').textContent = '₱' + cartTotal.toFixed(2);
 
+/* Restaurant hours: pickup can only be scheduled between these hours (24h). */
+const OPEN_HOUR = 11;  // 11:00 AM
+const CLOSE_HOUR = 21; // 9:00 PM
+const MIN_LEAD_MINUTES = 30; // kitchen needs at least this much notice
+
+const pickupDateInput = document.getElementById('pickup_date');
+const pickupTimeInput = document.getElementById('pickup_time');
+pickupDateInput.min = new Date().toISOString().split('T')[0];
+
 /* Combine pickup date + time into a single datetime field before submit */
 function syncPickupAt() {
-    const date = document.getElementById('pickup_date').value;
-    const time = document.getElementById('pickup_time').value;
+    const date = pickupDateInput.value;
+    const time = pickupTimeInput.value;
     document.getElementById('pickup_at').value = (date && time) ? `${date} ${time}:00` : '';
 }
-document.getElementById('pickup_date').addEventListener('change', syncPickupAt);
-document.getElementById('pickup_time').addEventListener('change', syncPickupAt);
+
+function isWithinBusinessHours(time) {
+    if (! time) return true;
+    const [hour, minute] = time.split(':').map(Number);
+    const minutes = hour * 60 + minute;
+    return minutes >= OPEN_HOUR * 60 && minutes <= CLOSE_HOUR * 60;
+}
+
+function meetsLeadTime(date, time) {
+    if (! date || ! time) return true;
+    const pickup = new Date(`${date}T${time}:00`);
+    const minAllowed = new Date(Date.now() + MIN_LEAD_MINUTES * 60000);
+    return pickup >= minAllowed;
+}
+
+/* Re-validates the current date + time together; clears and warns if either
+   the business-hours or lead-time rule is broken. Returns whether it's valid. */
+function validatePickupFields() {
+    const date = pickupDateInput.value;
+    const time = pickupTimeInput.value;
+
+    if (time && ! isWithinBusinessHours(time)) {
+        showToast("Please choose a pick-up time between 11:00 AM and 9:00 PM, our restaurant hours.", 'error');
+        pickupTimeInput.value = '';
+        syncPickupAt();
+        return false;
+    }
+
+    if (date && time && ! meetsLeadTime(date, time)) {
+        showToast(`Please choose a pick-up time at least ${MIN_LEAD_MINUTES} minutes from now, so the kitchen has time to prepare your order.`, 'error');
+        pickupTimeInput.value = '';
+        syncPickupAt();
+        return false;
+    }
+
+    syncPickupAt();
+    return true;
+}
+
+pickupDateInput.addEventListener('change', validatePickupFields);
+pickupTimeInput.addEventListener('change', validatePickupFields);
 
 /* Confirm & submit to PayMongo with duplicate-prevention */
 const form = document.getElementById('checkoutForm');
@@ -278,10 +326,13 @@ const confirmBtn = document.getElementById('confirmOrderBtn');
 
 form.addEventListener('submit', (e) => {
     e.preventDefault();
-    syncPickupAt();
 
-    if (! document.getElementById('pickup_at').value) {
+    if (! pickupDateInput.value || ! pickupTimeInput.value) {
         showToast('Please choose a pick-up date and time.', 'error');
+        return;
+    }
+
+    if (! validatePickupFields()) {
         return;
     }
 
