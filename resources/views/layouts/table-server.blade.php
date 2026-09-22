@@ -29,7 +29,8 @@
             --status-packaged:  #F59E0B;
         }
         *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: 'Poppins', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--dark); }
+        html, body { overflow-x: hidden; }
+        body { font-family: 'Poppins', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--dark); width: 100%; }
         a { text-decoration: none; }
 
         /* ── Top nav ─────────────────────────────────────────── */
@@ -37,7 +38,8 @@
             background: var(--dark);
             padding: .85rem 1.75rem;
             display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; z-index: 100;
+            position: sticky; top: 0; left: 0; right: 0; z-index: 100;
+            width: 100%;
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
         }
         .kds-brand { display: flex; align-items: center; gap: .75rem; }
