@@ -204,7 +204,7 @@
                 </a>
                 <a href="{{ route('cashier.online-orders.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.online-orders.*') ? 'active' : '' }}">
                     <i class="fas fa-mobile-screen-button"></i> Online Orders
-                    @php $pendingOnlineOrders = \App\Models\Order::onlineOrders()->where('approval_status', 'pending')->count() @endphp
+                    @php $pendingOnlineOrders = \App\Models\Order::onlineOrders()->where('approval_status', 'pending')->whereNull('cancelled_at')->count() @endphp
                     @if($pendingOnlineOrders > 0)
                         <span class="nav-badge-cb">{{ $pendingOnlineOrders }}</span>
                     @endif
