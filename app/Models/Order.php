@@ -448,7 +448,7 @@ class Order extends Model
      */
     public function needsApproval(): bool
     {
-        return $this->isOnline() && $this->approval_status === 'pending';
+        return $this->isOnline() && $this->approval_status === 'pending' && $this->cancelled_at === null;
     }
 
     /**

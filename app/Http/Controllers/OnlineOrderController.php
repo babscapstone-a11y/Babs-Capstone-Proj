@@ -22,7 +22,11 @@ class OnlineOrderController extends Controller
             ? $request->input('status')
             : 'pending';
 
+        // Once a customer's cancellation request is approved, the order is
+        // done for good and shouldn't linger in the approval queue anymore —
+        // even if it was still "pending" review when that happened.
         $query = Order::onlineOrders()->where('approval_status', $status)
+            ->whereNull('cancelled_at')
             ->with(['customer', 'paymentProof', 'details']);
 
         if ($search = trim((string) $request->input('q'))) {
@@ -129,7 +133,8 @@ class OnlineOrderController extends Controller
     private function summaryCounts(): array
     {
         return [
-            'pendingCount'   => Order::onlineOrders()->where('approval_status', 'pending')->count(),
+            'pendingCount'   => Order::onlineOrders()->where('approval_status', 'pending')
+                                    ->whereNull('cancelled_at')->count(),
             'approvedToday'  => Order::onlineOrders()->where('approval_status', 'approved')
                                     ->whereDate('reviewed_at', today())->count(),
             'rejectedToday'  => Order::onlineOrders()->where('approval_status', 'rejected')
