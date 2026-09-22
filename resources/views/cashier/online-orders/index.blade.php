@@ -264,6 +264,28 @@
                 totalVerified: '#statTotalVerified',
             },
         });
+
+        // Auto-refresh so incoming online orders show up without a manual reload.
+        let onlineOrdersPollTimer = null;
+
+        function startOnlineOrdersPolling() {
+            stopOnlineOrdersPolling();
+            onlineOrdersPollTimer = setInterval(refreshTable, 5000);
+        }
+        function stopOnlineOrdersPolling() {
+            if (onlineOrdersPollTimer) { clearInterval(onlineOrdersPollTimer); onlineOrdersPollTimer = null; }
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stopOnlineOrdersPolling();
+            } else {
+                refreshTable();
+                startOnlineOrdersPolling();
+            }
+        });
+
+        startOnlineOrdersPolling();
     });
 </script>
 @endsection

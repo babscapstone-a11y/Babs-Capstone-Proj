@@ -56,6 +56,18 @@ class OnlineOrderController extends Controller
     }
 
     /**
+     * GET /cashier/online-orders/pending-count — lightweight poll target for
+     * the "Online Orders" nav badge, shown on every cashier page.
+     */
+    public function pendingCount(): JsonResponse
+    {
+        return response()->json([
+            'pendingCount' => Order::onlineOrders()->where('approval_status', 'pending')
+                ->whereNull('cancelled_at')->count(),
+        ]);
+    }
+
+    /**
      * GET /cashier/online-orders/{order} — REQ104/105: full detail panel.
      */
     public function show(Order $order): View

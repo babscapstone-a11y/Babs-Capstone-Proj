@@ -202,12 +202,10 @@
                 <a href="{{ route('cashier.billing') }}" class="nav-link-cb {{ request()->routeIs('cashier.index', 'cashier.billing') ? 'active' : '' }}">
                     <i class="fas fa-cash-register"></i> Billing
                 </a>
-                <a href="{{ route('cashier.online-orders.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.online-orders.*') ? 'active' : '' }}">
+                <a href="{{ route('cashier.online-orders.index') }}" class="nav-link-cb {{ request()->routeIs('cashier.online-orders.*') ? 'active' : '' }}" id="onlineOrdersNavLink">
                     <i class="fas fa-mobile-screen-button"></i> Online Orders
                     @php $pendingOnlineOrders = \App\Models\Order::onlineOrders()->where('approval_status', 'pending')->whereNull('cancelled_at')->count() @endphp
-                    @if($pendingOnlineOrders > 0)
-                        <span class="nav-badge-cb">{{ $pendingOnlineOrders }}</span>
-                    @endif
+                    <span class="nav-badge-cb" id="onlineOrdersNavBadge" style="{{ $pendingOnlineOrders > 0 ? '' : 'display:none' }}">{{ $pendingOnlineOrders }}</span>
                 </a>
             </nav>
             <div class="cb-datetime">
@@ -302,6 +300,28 @@
         }
         tickClock();
         setInterval(tickClock, 1000);
+
+        // Live "Online Orders" nav badge — polled from every cashier page so
+        // an incoming order is noticed even off the online-orders screen.
+        function pollOnlineOrdersBadge() {
+            fetch('{{ route('cashier.online-orders.pending-count') }}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('onlineOrdersNavBadge');
+                    if (!badge) return;
+                    const count = data.pendingCount || 0;
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? '' : 'none';
+                })
+                .catch(() => {});
+        }
+        pollOnlineOrdersBadge();
+        setInterval(pollOnlineOrdersBadge, 8000);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) pollOnlineOrdersBadge();
+        });
     </script>
 
     @yield('scripts')

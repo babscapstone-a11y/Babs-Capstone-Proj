@@ -193,10 +193,11 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
 
     // ── Online Order Management Module (REQ103–REQ106) — Module 23 ────
     Route::prefix('online-orders')->name('online-orders.')->group(function () {
-        Route::get('/',                  [OnlineOrderController::class, 'index'])   ->name('index');
-        Route::get('/{order}',           [OnlineOrderController::class, 'show'])    ->name('show');
-        Route::post('/{order}/approve',  [OnlineOrderController::class, 'approve']) ->name('approve');
-        Route::post('/{order}/reject',   [OnlineOrderController::class, 'reject'])  ->name('reject');
+        Route::get('/',                  [OnlineOrderController::class, 'index'])        ->name('index');
+        Route::get('/pending-count',     [OnlineOrderController::class, 'pendingCount'])  ->name('pending-count');
+        Route::get('/{order}',           [OnlineOrderController::class, 'show'])          ->name('show');
+        Route::post('/{order}/approve',  [OnlineOrderController::class, 'approve'])       ->name('approve');
+        Route::post('/{order}/reject',   [OnlineOrderController::class, 'reject'])        ->name('reject');
     });
 });
 
