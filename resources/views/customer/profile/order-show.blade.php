@@ -250,7 +250,8 @@
     @endif
 
     {{-- Online pre-order: awaiting cashier verification --}}
-    @if(! $needsPayment && $order->isOnline() && $order->approval_status === 'pending')
+    @if(! $needsPayment && $order->isOnline() && $order->approval_status === 'pending'
+        && ! $order->isCancelled() && ! $order->cancellationRequest?->isPending())
     <div class="cancel-banner fade-up" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
         <i class="fas fa-hourglass-half"></i>
         <div>
