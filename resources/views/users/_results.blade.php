@@ -99,7 +99,7 @@
         Showing {{ $users->firstItem() }}–{{ $users->lastItem() }} of {{ $users->total() }} staff
     </div>
     <div class="pagination-links">
-        {{ $users->onEachSide(1)->links('pagination::simple-default') }}
+        {{ $users->onEachSide(1)->links() }}
     </div>
 </div>
 @endif
