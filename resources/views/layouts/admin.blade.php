@@ -330,7 +330,7 @@
                 <i class="fas fa-gauge-high"></i> Dashboard
             </a>
 
-            <div class="nav-label" style="margin-top:.5rem">Management</div>
+            <div class="nav-label" style="margin-top:.5rem">Accounts</div>
 
             <a href="{{ route('users.index') }}"
                class="nav-item {{ request()->routeIs('users.*', 'password-reset-requests.*') ? 'active' : '' }}">
@@ -341,15 +341,12 @@
                 @endif
             </a>
 
-            <a href="{{ route('menu.index') }}"
-               class="nav-item {{ request()->routeIs('menu.*') ? 'active' : '' }}">
-                <i class="fas fa-utensils"></i> Menu Catalog
-            </a>
-
             <a href="{{ route('customers.index') }}"
                class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                 <i class="fas fa-user-group"></i> Customer Accounts
             </a>
+
+            <div class="nav-label" style="margin-top:.5rem">Inventory</div>
 
             <a href="{{ route('inventory.index') }}"
                class="nav-item {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
@@ -364,6 +361,13 @@
                     <span class="nav-badge">{{ $draftPos }}</span>
                 @endif
             </a>
+
+            <a href="{{ route('menu.index') }}"
+               class="nav-item {{ request()->routeIs('menu.*') ? 'active' : '' }}">
+                <i class="fas fa-utensils"></i> Menu Catalog
+            </a>
+
+            <div class="nav-label" style="margin-top:.5rem">Others</div>
 
             <a href="{{ route('discounts.index') }}"
                class="nav-item {{ request()->routeIs('discounts.*', 'special-discount-requests.*') ? 'active' : '' }}">
