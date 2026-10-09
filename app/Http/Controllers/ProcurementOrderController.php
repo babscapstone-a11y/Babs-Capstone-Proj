@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\InventoryItem;
 use App\Models\ProcurementOrder;
 use App\Models\ProcurementOrderItem;
+use App\Services\StockInService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ProcurementOrderController extends Controller
@@ -31,6 +33,7 @@ class ProcurementOrderController extends Controller
         $orders         = $query->latest()->paginate(10)->withQueryString();
         $draftCount     = ProcurementOrder::where('status', 'draft')->count();
         $finalizedCount = ProcurementOrder::where('status', 'finalized')->count();
+        $stockedInCount = ProcurementOrder::where('status', 'stocked_in')->count();
         $lowStockCount  = InventoryItem::lowStock()->count();
         $outOfStockCount= InventoryItem::outOfStock()->count();
 
@@ -44,7 +47,7 @@ class ProcurementOrderController extends Controller
         $recentOrders = ProcurementOrder::with('preparedBy')->latest()->limit(5)->get();
 
         return view('purchase-orders.index', compact(
-            'orders', 'draftCount', 'finalizedCount',
+            'orders', 'draftCount', 'finalizedCount', 'stockedInCount',
             'lowStockCount', 'outOfStockCount',
             'needsRestocking', 'recentOrders'
         ));
@@ -122,25 +125,41 @@ class ProcurementOrderController extends Controller
         $rules = [
             'notes'      => ['nullable', 'string', 'max:1000'],
             'quantities' => ['required', 'array'],
+            'received'   => ['nullable', 'array'],
+            'paid'       => ['nullable', 'array'],
         ];
         $messages = [];
         foreach ($purchaseOrder->items as $item) {
             $min = max((float) $item->threshold, 0.01);
             $rules["quantities.{$item->id}"] = ['required', 'numeric', "min:{$min}"];
+            $rules["received.{$item->id}"]   = ['nullable', 'numeric', 'min:0'];
+            $rules["paid.{$item->id}"]       = ['nullable', 'numeric', 'min:0'];
             $messages["quantities.{$item->id}.min"] = "{$item->item_name}: quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit}).";
+            $messages["received.{$item->id}.min"]   = "{$item->item_name}: quantity bought cannot be negative.";
+            $messages["paid.{$item->id}.min"]       = "{$item->item_name}: amount paid cannot be negative.";
         }
 
         $request->validate($rules, $messages);
 
         $purchaseOrder->update(['notes' => $request->notes]);
 
-        foreach ($request->quantities as $itemId => $qty) {
-            $purchaseOrder->items()->where('id', $itemId)->update([
-                'quantity_to_purchase' => (float) $qty,
+        foreach ($purchaseOrder->items as $item) {
+            $received = $request->input("received.{$item->id}");
+            $paid     = $request->input("paid.{$item->id}");
+
+            $item->update([
+                'quantity_to_purchase' => (float) $request->input("quantities.{$item->id}"),
+                'quantity_received'    => $received === null || $received === '' ? null : (float) $received,
+                'amount_paid'          => $paid === null || $paid === '' ? null : (float) $paid,
             ]);
         }
 
-        return back()->with('success', 'Purchase order quantities updated successfully.');
+        // "Save & Finalize" from the edit page: save first, then run the normal finalize checks
+        if ($request->input('intent') === 'finalize') {
+            return $this->finalize($purchaseOrder->fresh());
+        }
+
+        return back()->with('success', 'Purchase order saved successfully.');
     }
 
     public function addItem(Request $request, ProcurementOrder $purchaseOrder): RedirectResponse
@@ -208,8 +227,25 @@ class ProcurementOrderController extends Controller
         if ($purchaseOrder->isFinalized()) {
             return back()->with('error', 'This purchase order is already finalized.');
         }
-        if ($purchaseOrder->items()->count() === 0) {
+        $purchaseOrder->load('items');
+
+        if ($purchaseOrder->items->isEmpty()) {
             return back()->with('error', 'Cannot finalize an empty purchase order. Add items first.');
+        }
+
+        // Every item must have its bought quantity and amount paid recorded before finalizing
+        $incomplete = $purchaseOrder->incompleteItems();
+        if ($incomplete->isNotEmpty()) {
+            $names = $incomplete->pluck('item_name')->take(5)->implode(', ');
+            $more  = $incomplete->count() > 5 ? ' and ' . ($incomplete->count() - 5) . ' more' : '';
+
+            return redirect()->route('purchase-orders.edit', $purchaseOrder)
+                ->with('error', "Enter the quantity bought and amount paid for every item before finalizing. Missing: {$names}{$more}. (Enter 0 bought if an item was not purchased.)");
+        }
+
+        if ($purchaseOrder->items->every(fn ($item) => (float) $item->quantity_received <= 0)) {
+            return redirect()->route('purchase-orders.edit', $purchaseOrder)
+                ->with('error', 'Cannot finalize: no items were bought. Enter the quantity bought for at least one item.');
         }
 
         $purchaseOrder->update([
@@ -218,7 +254,72 @@ class ProcurementOrderController extends Controller
         ]);
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
-            ->with('success', "Purchase Order {$purchaseOrder->po_number} has been finalized successfully. You can now print it.");
+            ->with('success', "Purchase Order {$purchaseOrder->po_number} has been finalized. Click \"Record Stock-In\" to add the bought items to inventory.");
+    }
+
+    /**
+     * Adds every bought item of a finalized PO to inventory in one step,
+     * creating a stock-in transaction per item linked back to this PO.
+     */
+    public function stockIn(ProcurementOrder $purchaseOrder, StockInService $stockIn): RedirectResponse
+    {
+        $result = DB::transaction(function () use ($purchaseOrder, $stockIn) {
+            // Lock the PO row so a double-click cannot stock the same order in twice
+            $po = ProcurementOrder::whereKey($purchaseOrder->id)->lockForUpdate()->first();
+
+            if ($po->isStockedIn()) {
+                return ['error' => "Purchase Order {$po->po_number} has already been stocked in."];
+            }
+            if (! $po->awaitingStockIn()) {
+                return ['error' => 'Only finalized purchase orders can be stocked in.'];
+            }
+
+            $stocked = 0;
+            $skipped = [];
+
+            foreach ($po->items()->with('inventoryItem')->get() as $line) {
+                $qty = (float) $line->quantity_received;
+                if ($qty <= 0) {
+                    continue;
+                }
+                if (! $line->inventoryItem) {
+                    $skipped[] = $line->item_name;
+                    continue;
+                }
+
+                $stockIn->record(
+                    $line->inventoryItem,
+                    $qty,
+                    $line->unit,
+                    $line->amount_paid !== null ? (float) $line->amount_paid : null,
+                    now()->toDateString(),
+                    [
+                        'procurement_order_id' => $po->id,
+                        'remarks'              => "Stocked in from {$po->po_number}",
+                    ],
+                );
+                $stocked++;
+            }
+
+            $po->update([
+                'status'        => 'stocked_in',
+                'stocked_in_at' => now(),
+                'stocked_in_by' => auth()->id(),
+            ]);
+
+            return ['po' => $po, 'stocked' => $stocked, 'skipped' => $skipped];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
+        }
+
+        $message = "{$result['stocked']} item(s) from {$result['po']->po_number} were added to inventory.";
+        if ($result['skipped']) {
+            $message .= ' Skipped (no longer in inventory): ' . implode(', ', $result['skipped']) . '.';
+        }
+
+        return redirect()->route('purchase-orders.show', $purchaseOrder)->with('success', $message);
     }
 
     public function print(ProcurementOrder $purchaseOrder): View

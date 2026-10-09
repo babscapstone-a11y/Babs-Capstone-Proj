@@ -32,6 +32,7 @@
 .mini-table tr:hover td{background:#FAFAFA}
 .badge-po-draft{background:#FEF3C7;color:#B45309;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-finalized{background:#DCFCE7;color:#15803D;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-stocked{background:#DBEAFE;color:#1D4ED8;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-out{background:#FEE2E2;color:#B91C1C;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-low{background:#FEF3C7;color:#B45309;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-rtc{background:#EFF6FF;color:#1D4ED8;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
@@ -98,7 +99,11 @@
         </div>
         <div class="stat-card">
             <div class="stat-icon-wrap si-green"><i class="fas fa-file-circle-check"></i></div>
-            <div class="stat-content"><div class="stat-val">{{ $finalizedCount }}</div><div class="stat-lbl">Finalized Orders</div></div>
+            <div class="stat-content"><div class="stat-val">{{ $finalizedCount }}</div><div class="stat-lbl">Awaiting Stock-In</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-wrap si-blue"><i class="fas fa-boxes-stacked"></i></div>
+            <div class="stat-content"><div class="stat-val">{{ $stockedInCount }}</div><div class="stat-lbl">Stocked In</div></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon-wrap si-amber"><i class="fas fa-triangle-exclamation"></i></div>
@@ -194,7 +199,8 @@
                 <select name="status" class="flt-select" onchange="this.form.submit()">
                     <option value="">All Status</option>
                     <option value="draft"     {{ request('status')==='draft'     ? 'selected':'' }}>Draft</option>
-                    <option value="finalized" {{ request('status')==='finalized' ? 'selected':'' }}>Finalized</option>
+                    <option value="finalized" {{ request('status')==='finalized' ? 'selected':'' }}>Finalized (Awaiting Stock-In)</option>
+                    <option value="stocked_in" {{ request('status')==='stocked_in' ? 'selected':'' }}>Stocked In</option>
                 </select>
                 <input type="date" name="from" value="{{ request('from') }}" class="flt-date" title="From">
                 <input type="date" name="to"   value="{{ request('to') }}"   class="flt-date" title="To">
@@ -232,17 +238,9 @@
                         <td>
                             <div style="display:flex;gap:.4rem;flex-wrap:wrap">
                                 <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-outline btn-sm" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="btn btn-blue btn-sm" title="Print"><i class="fas fa-print"></i></a>
                                 @if($order->isDraft())
-                                <a href="{{ route('purchase-orders.edit', $order) }}" class="btn btn-outline btn-sm" title="Edit"><i class="fas fa-pen"></i></a>
-                                <button type="button" class="btn btn-green btn-sm" title="Finalize" onclick="openModal({
-                                        type: 'warn',
-                                        iconClass: 'fas fa-check-double',
-                                        title: 'Finalize Purchase Order?',
-                                        desc: 'Finalize ' + {{ Js::from($order->po_number) }} + '? This cannot be undone.',
-                                        action: '{{ route('purchase-orders.finalize', $order) }}',
-                                        method: 'POST',
-                                        confirmText: 'Finalize'
-                                    })"><i class="fas fa-check-double"></i></button>
+                                <a href="{{ route('purchase-orders.edit', $order) }}" class="btn btn-outline btn-sm" title="Edit / Record Purchase"><i class="fas fa-pen"></i></a>
                                 <button type="button" class="btn btn-sm" style="background:#FEF2F2;color:#DC2626" title="Delete" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
@@ -252,8 +250,8 @@
                                         method: 'DELETE',
                                         confirmText: 'Delete'
                                     })"><i class="fas fa-trash"></i></button>
-                                @else
-                                <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="btn btn-blue btn-sm" title="Print"><i class="fas fa-print"></i></a>
+                                @elseif($order->awaitingStockIn())
+                                <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-green btn-sm" title="Review and record stock-in"><i class="fas fa-arrow-down-to-bracket"></i> Stock-In</a>
                                 @endif
                             </div>
                         </td>

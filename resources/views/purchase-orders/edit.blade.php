@@ -67,6 +67,27 @@
 .field input:focus,.field select:focus{border-color:var(--primary)}
 .field-hint{font-size:.76rem;color:var(--muted);margin-top:.3rem}
 .error-msg{background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:.7rem 1rem;font-size:.8rem;color:#B91C1C;margin-bottom:1.1rem}
+
+/* Actual purchase (receiving) columns */
+.po-table th.rcv-col{background:#EFF6FF;color:#1D4ED8}
+.po-table td.rcv-col{background:#F8FBFF}
+.rcv-input{width:100px}
+.rcv-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.peso-wrap{display:flex;align-items:center;gap:.25rem;font-weight:700;color:var(--muted)}
+.unit-cost-hint{font-size:.7rem;color:var(--muted);text-align:center;min-height:1em}
+.badge-rcv-pending,.badge-rcv-match,.badge-rcv-short,.badge-rcv-over,.badge-rcv-none{padding:.2rem .55rem;border-radius:50px;font-size:.66rem;font-weight:700;text-transform:uppercase;display:inline-block;white-space:nowrap}
+.badge-rcv-pending{background:#F3F4F6;color:#6B7280}
+.badge-rcv-match{background:#DCFCE7;color:#15803D}
+.badge-rcv-short{background:#FEF3C7;color:#B45309}
+.badge-rcv-over{background:#DBEAFE;color:#1D4ED8}
+.badge-rcv-none{background:#FEE2E2;color:#B91C1C}
+.steps{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.step{flex:1;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:.78rem;color:var(--muted);display:flex;gap:.65rem;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step strong{color:var(--dark);display:block;font-size:.8rem}
+.summary-row{display:flex;gap:2rem;flex-wrap:wrap;padding:1rem 1.4rem;font-size:.85rem}
+.summary-row .lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.summary-row .val{font-size:1.1rem;font-weight:800;color:var(--dark)}
 </style>
 @endsection
 
@@ -76,10 +97,11 @@
     <div class="po-header">
         <div>
             <div class="po-title"><i class="fas fa-file-pen"></i> {{ $po->po_number }}</div>
-            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Review and edit quantities before finalizing</div>
+            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Plan the order, print it, then record what was actually bought</div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <button type="button" class="btn btn-primary" onclick="openLocalModal('addPoItemModal')"><i class="fas fa-plus"></i> Add Item</button>
+            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-outline" title="Save your changes first so the printout is up to date"><i class="fas fa-print"></i> Print</a>
             <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-outline"><i class="fas fa-eye"></i> View</a>
             <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
@@ -92,6 +114,14 @@
         <div class="info-item"><div class="info-label">Total Items</div><div class="info-value">{{ $po->items->count() }}</div></div>
         <div class="info-item"><div class="info-label">Created</div><div class="info-value">{{ $po->created_at->format('M d, Y h:i A') }}</div></div>
         <div class="info-item"><div class="info-label">Prepared By</div><div class="info-value">{{ $po->preparedBy?->name ?? 'Admin' }}</div></div>
+    </div>
+
+    {{-- Workflow guide --}}
+    <div class="steps">
+        <div class="step"><span class="step-num">1</span><div><strong>Plan the order</strong>Adjust quantities, add or remove items, then Save.</div></div>
+        <div class="step"><span class="step-num">2</span><div><strong>Print &amp; buy</strong>Print the PO and bring it when buying the items.</div></div>
+        <div class="step"><span class="step-num">3</span><div><strong>Record the purchase</strong>Enter the quantity bought and amount paid per item (0 if not bought).</div></div>
+        <div class="step"><span class="step-num">4</span><div><strong>Finalize &amp; stock in</strong>Finalize, then click Record Stock-In to update inventory.</div></div>
     </div>
 
     @if($errors->any())
@@ -127,8 +157,10 @@
                             <th>Threshold</th>
                             <th>Recommended</th>
                             <th>Qty to Purchase *</th>
-                            <th>Unit</th>
                             <th>Status</th>
+                            <th class="rcv-col">Qty Bought</th>
+                            <th class="rcv-col">Amount Paid</th>
+                            <th class="rcv-col">Check</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -149,12 +181,12 @@
                                            data-original="{{ number_format($item->quantity_to_purchase,2,'.','') }}"
                                            title="Must be at least the minimum threshold ({{ number_format($rtcMin,2) }} {{ $item->unit }})"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }}</span>
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }} {{ $item->unit }}</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
-                            <td class="ro-val">{{ $item->unit }}</td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
+                            @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '0.01', 'decimals' => 2])
                             <td>
                                 <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
                                         type: 'danger',
@@ -192,8 +224,10 @@
                             <th>Threshold</th>
                             <th>Recommended</th>
                             <th>Qty to Purchase *</th>
-                            <th>Unit</th>
                             <th>Status</th>
+                            <th class="rcv-col">Qty Bought</th>
+                            <th class="rcv-col">Amount Paid</th>
+                            <th class="rcv-col">Check</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -214,12 +248,12 @@
                                            data-original="{{ number_format($item->quantity_to_purchase,0,'.','') }}"
                                            title="Must be at least the minimum threshold ({{ number_format($bevMin,0) }} {{ $item->unit }})"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }}</span>
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }} {{ $item->unit }}</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
-                            <td class="ro-val">{{ $item->unit }}</td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
+                            @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '1', 'decimals' => 0])
                             <td>
                                 <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
                                         type: 'danger',
@@ -249,8 +283,14 @@
         </div>
         @endif
 
-        {{-- Action bar --}}
+        {{-- Purchase summary + action bar --}}
         <div class="card">
+            <div class="card-hd"><h3><i class="fas fa-receipt"></i> Actual Purchase Summary</h3></div>
+            <div class="summary-row">
+                <div><div class="lbl">Items Recorded</div><div class="val"><span id="sumRecorded">0</span> / {{ $po->items->count() }}</div></div>
+                <div><div class="lbl">Items Bought</div><div class="val" id="sumBought">0</div></div>
+                <div><div class="lbl">Total Amount Paid</div><div class="val" style="color:var(--primary)">₱<span id="sumPaid">0.00</span></div></div>
+            </div>
             <div class="action-bar">
                 <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
                 <div class="divider"></div>
@@ -258,14 +298,12 @@
                     <i class="fas fa-floppy-disk"></i> Save Changes
                 </button>
                 <button type="button" class="btn btn-green" onclick="doFinalize()">
-                    <i class="fas fa-check-double"></i> Finalize Purchase Order
+                    <i class="fas fa-check-double"></i> Save &amp; Finalize
                 </button>
             </div>
         </div>
+        <input type="hidden" name="intent" id="formIntent" value="save">
     </form>
-
-    {{-- Finalize hidden form --}}
-    <form method="POST" action="{{ route('purchase-orders.finalize', $po) }}" id="finalizeForm">@csrf</form>
 
 </div>
 
@@ -327,16 +365,83 @@ function markChanged(input) {
 }
 
 function doFinalize() {
+    var missing = document.querySelectorAll('.js-rcv-badge.badge-rcv-pending').length;
+    if (missing > 0) {
+        openModal({
+            type: 'warn',
+            iconClass: 'fas fa-circle-exclamation',
+            title: 'Purchase Not Fully Recorded',
+            desc: missing + ' item(s) still need the quantity bought and amount paid. Enter 0 bought for items that were not purchased.',
+            confirmText: 'OK',
+            onConfirm: function () {}
+        });
+        return;
+    }
+    if (!document.getElementById('editForm').reportValidity()) return;
+
     openModal({
         type: 'warn',
         iconClass: 'fas fa-check-double',
         title: 'Finalize Purchase Order?',
-        desc: 'Once "' + {{ Js::from($po->po_number) }} + '" is finalized, it becomes read-only and cannot be edited.',
-        action: {{ Js::from(route('purchase-orders.finalize', $po)) }},
-        method: 'POST',
-        confirmText: 'Finalize'
+        desc: 'Your entries will be saved and "' + {{ Js::from($po->po_number) }} + '" will become read-only. You can then record the stock-in.',
+        confirmText: 'Save & Finalize',
+        onConfirm: function () {
+            document.getElementById('formIntent').value = 'finalize';
+            document.getElementById('editForm').submit();
+        }
     });
 }
+
+/* ── Actual purchase: live check of bought vs ordered ── */
+var RCV_CLASSES = ['badge-rcv-pending', 'badge-rcv-match', 'badge-rcv-short', 'badge-rcv-over', 'badge-rcv-none'];
+
+function receivingStatus(row) {
+    var orderedEl = row.querySelector('input[name^="quantities"]');
+    var recvEl    = row.querySelector('.js-received');
+    var paidEl    = row.querySelector('.js-paid');
+    if (recvEl.value === '') return ['badge-rcv-pending', 'Pending'];
+
+    var received = parseFloat(recvEl.value) || 0;
+    var ordered  = parseFloat(orderedEl.value) || 0;
+    if (received <= 0) return ['badge-rcv-none', 'Not Bought'];
+    if (paidEl.value === '') return ['badge-rcv-pending', 'Enter Amount'];
+    if (Math.abs(received - ordered) < 0.0001) return ['badge-rcv-match', 'Complete'];
+    return received < ordered ? ['badge-rcv-short', 'Short'] : ['badge-rcv-over', 'Over'];
+}
+
+function updateReceivingRow(input) {
+    var row = input.closest('tr');
+    var status = receivingStatus(row);
+    var badge = row.querySelector('.js-rcv-badge');
+    RCV_CLASSES.forEach(function (c) { badge.classList.remove(c); });
+    badge.classList.add('js-rcv-badge', status[0]);
+    badge.textContent = status[1];
+
+    var received = parseFloat(row.querySelector('.js-received').value) || 0;
+    var paid     = parseFloat(row.querySelector('.js-paid').value);
+    var hint     = row.querySelector('.js-unit-cost');
+    hint.textContent = (received > 0 && !isNaN(paid)) ? '₱' + (paid / received).toFixed(2) + ' / ' + hint.dataset.unit : '';
+
+    updateSummary();
+}
+
+function updateSummary() {
+    var recorded = 0, bought = 0, total = 0;
+    document.querySelectorAll('.js-received').forEach(function (recvEl) {
+        var row = recvEl.closest('tr');
+        if (!row.querySelector('.js-rcv-badge').classList.contains('badge-rcv-pending')) recorded++;
+        if ((parseFloat(recvEl.value) || 0) > 0) bought++;
+        total += parseFloat(row.querySelector('.js-paid').value) || 0;
+    });
+    document.getElementById('sumRecorded').textContent = recorded;
+    document.getElementById('sumBought').textContent = bought;
+    document.getElementById('sumPaid').textContent = total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+document.querySelectorAll('.js-received').forEach(function (el) { updateReceivingRow(el); });
+document.querySelectorAll('input[name^="quantities"]').forEach(function (el) {
+    el.addEventListener('input', function () { updateReceivingRow(el); });
+});
 
 function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }

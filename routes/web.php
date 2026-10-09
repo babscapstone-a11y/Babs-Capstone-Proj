@@ -120,6 +120,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/{purchaseOrder}/items',          [ProcurementOrderController::class, 'addItem'])  ->name('items.store');
         Route::delete('/{purchaseOrder}/items/{item}', [ProcurementOrderController::class, 'removeItem'])->name('items.destroy');
         Route::post('/{purchaseOrder}/finalize',       [ProcurementOrderController::class, 'finalize']) ->name('finalize');
+        Route::post('/{purchaseOrder}/stock-in',       [ProcurementOrderController::class, 'stockIn'])  ->name('stock-in');
         Route::get('/{purchaseOrder}/print',           [ProcurementOrderController::class, 'print'])    ->name('print');
         Route::delete('/{purchaseOrder}',              [ProcurementOrderController::class, 'destroy'])  ->name('destroy');
     });

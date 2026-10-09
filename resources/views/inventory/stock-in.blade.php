@@ -98,7 +98,12 @@
                     @forelse($transactions as $tx)
                     <tr>
                         <td style="color:var(--muted);font-size:.78rem">#{{ $tx->id }}</td>
-                        <td><div style="font-weight:700">{{ $tx->inventoryItem?->item_name ?? '—' }}</div></td>
+                        <td>
+                            <div style="font-weight:700">{{ $tx->inventoryItem?->item_name ?? '—' }}</div>
+                            @if($tx->procurementOrder)
+                            <a href="{{ route('purchase-orders.show', $tx->procurementOrder) }}" style="font-size:.72rem;color:#2563EB;font-weight:600"><i class="fas fa-file-invoice"></i> via {{ $tx->procurementOrder->po_number }}</a>
+                            @endif
+                        </td>
                         <td><span class="badge {{ $tx->po_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($tx->po_type) }}</span></td>
                         <td style="color:var(--muted)">{{ number_format($tx->previous_quantity, 2) }} {{ $tx->unit }}</td>
                         <td><span style="color:#16A34A;font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</span></td>

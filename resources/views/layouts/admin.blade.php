@@ -526,6 +526,11 @@
         var methodInput = form.querySelector('input[name="_method"]');
         if (methodInput) methodInput.value = opts.method || 'PUT';
 
+        // Optional: run a callback instead of submitting the modal's own form
+        form.onsubmit = opts.onConfirm
+            ? function (e) { e.preventDefault(); closeModal(); opts.onConfirm(); }
+            : null;
+
         modal.classList.add('open');
     }
     function closeModal() {

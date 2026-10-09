@@ -53,6 +53,7 @@
     .po-meta .status-pill { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .7rem; border-radius: 50px; font-size: .68rem; font-weight: 700; text-transform: uppercase; margin-top: .35rem; }
     .status-finalized { background: #DCFCE7; color: #15803D; }
     .status-draft { background: #FEF3C7; color: #B45309; }
+    .status-stocked { background: #DBEAFE; color: #1D4ED8; }
 
     /* Details row */
     .details-row { display: flex; gap: 2rem; margin-bottom: 1.75rem; padding: 1rem 1.25rem; background: #F8FAFC; border-radius: 10px; border: 1px solid rgba(17,24,39,0.07); flex-wrap: wrap; }
@@ -76,6 +77,11 @@
     .type-pill-bev { background: #F5F3FF; color: #6D28D9; padding: .15rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 700; text-transform: uppercase; }
     .status-low { background: #FEF3C7; color: #B45309; padding: .15rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 700; }
     .status-out { background: #FEE2E2; color: #B91C1C; padding: .15rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 700; }
+
+    /* Blank line to hand-write the actual purchase on a draft printout */
+    .write-in { display: inline-block; min-width: 90px; border-bottom: 1px solid #9CA3AF; height: 1.2em; text-align: left; color: #9CA3AF; font-weight: 400; }
+    .grand-total { display: flex; justify-content: flex-end; align-items: center; gap: 1.25rem; padding: .85rem 1rem; background: #F8FAFC; border-radius: 8px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6B7280; }
+    .grand-total strong { font-size: 1.1rem; color: #DC2626; letter-spacing: 0; }
 
     /* Notes */
     .notes-section { background: #FFFBEB; border-left: 3px solid #F59E0B; border-radius: 0 8px 8px 0; padding: .85rem 1rem; margin-bottom: 1.5rem; font-size: .82rem; color: #111827; line-height: 1.6; }
@@ -142,7 +148,7 @@
                 <div class="po-num">{{ $po->po_number }}</div>
                 <div class="po-date">{{ $po->created_at->format('F d, Y') }}</div>
                 <div>
-                    <span class="status-pill {{ $po->isFinalized() ? 'status-finalized' : 'status-draft' }}">
+                    <span class="status-pill {{ $po->isStockedIn() ? 'status-stocked' : ($po->isFinalized() ? 'status-finalized' : 'status-draft') }}">
                         {{ $po->status_label }}
                     </span>
                 </div>
@@ -168,77 +174,56 @@
         </div>
         @endif
 
-        {{-- RTC Items --}}
-        @php $rtcItems = $po->items->where('item_type', 'rtc'); @endphp
-        @if($rtcItems->isNotEmpty())
-        <div class="section-title">RTC Raw Meat</div>
+        {{-- Items: drafts print blank "Qty Bought / Amount Paid" columns to fill in while buying --}}
+        @foreach([
+            ['type' => 'rtc',      'label' => 'RTC Raw Meat', 'decimals' => 2],
+            ['type' => 'beverage', 'label' => 'Beverages',    'decimals' => 0],
+        ] as $section)
+        @php $sectionItems = $po->items->where('item_type', $section['type'])->values(); @endphp
+        @if($sectionItems->isNotEmpty())
+        <div class="section-title" @if(! $loop->first) style="margin-top:1.5rem" @endif>{{ $section['label'] }}</div>
         <table class="po-tbl">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Item Name</th>
-                    <th>Category</th>
                     <th>Current Stock</th>
-                    <th>Reorder Level</th>
                     <th>Qty to Purchase</th>
+                    <th>Qty Bought</th>
+                    <th>Amount Paid</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($rtcItems as $i => $item)
+                @foreach($sectionItems as $i => $item)
                 <tr>
                     <td style="color:#9CA3AF;font-size:.78rem">{{ $i+1 }}</td>
-                    <td><strong>{{ $item->item_name }}</strong></td>
-                    <td>{{ $item->category ?? '—' }}</td>
-                    <td style="color:#6B7280">{{ number_format($item->current_stock,2) }} {{ $item->unit }}</td>
-                    <td style="color:#6B7280">{{ number_format($item->threshold,2) }} {{ $item->unit }}</td>
-                    <td>{{ number_format($item->quantity_to_purchase,2) }} {{ $item->unit }}</td>
+                    <td><strong>{{ $item->item_name }}</strong>@if($item->category)<div style="font-size:.7rem;color:#9CA3AF">{{ $item->category }}</div>@endif</td>
+                    <td style="color:#6B7280">{{ number_format($item->current_stock, $section['decimals']) }} {{ $item->unit }}</td>
+                    <td style="font-weight:700">{{ number_format($item->quantity_to_purchase, $section['decimals']) }} {{ $item->unit }}</td>
+                    @if($item->quantity_received !== null)
+                    <td>{{ number_format($item->quantity_received, $section['decimals']) }} {{ $item->unit }}</td>
+                    <td>{{ $item->amount_paid !== null ? '₱' . number_format($item->amount_paid, 2) : '—' }}</td>
+                    @else
+                    <td><span class="write-in"></span></td>
+                    <td><span class="write-in">₱</span></td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5" style="text-align:right;font-size:.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.06em">Total RTC Items</td>
-                    <td>{{ $rtcItems->count() }} items</td>
+                    <td colspan="5" style="text-align:right;font-size:.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.06em">{{ $sectionItems->count() }} item(s) &nbsp;·&nbsp; Subtotal Paid</td>
+                    <td>@if($sectionItems->whereNotNull('amount_paid')->isNotEmpty())₱{{ number_format($sectionItems->sum('amount_paid'), 2) }}@else<span class="write-in">₱</span>@endif</td>
                 </tr>
             </tfoot>
         </table>
         @endif
+        @endforeach
 
-        {{-- Beverage Items --}}
-        @php $bevItems = $po->items->where('item_type', 'beverage'); @endphp
-        @if($bevItems->isNotEmpty())
-        <div class="section-title" style="margin-top:1.5rem">Beverages</div>
-        <table class="po-tbl">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Item Name</th>
-                    <th>Category</th>
-                    <th>Current Stock</th>
-                    <th>Reorder Level</th>
-                    <th>Qty to Purchase</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($bevItems as $i => $item)
-                <tr>
-                    <td style="color:#9CA3AF;font-size:.78rem">{{ $i+1 }}</td>
-                    <td><strong>{{ $item->item_name }}</strong></td>
-                    <td>{{ $item->category ?? '—' }}</td>
-                    <td style="color:#6B7280">{{ number_format($item->current_stock,0) }} {{ $item->unit }}</td>
-                    <td style="color:#6B7280">{{ number_format($item->threshold,0) }} {{ $item->unit }}</td>
-                    <td>{{ number_format($item->quantity_to_purchase,0) }} {{ $item->unit }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5" style="text-align:right;font-size:.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.06em">Total Beverage Items</td>
-                    <td>{{ $bevItems->count() }} items</td>
-                </tr>
-            </tfoot>
-        </table>
-        @endif
+        <div class="grand-total">
+            <span>Total Amount Paid</span>
+            <strong>@if($po->items->whereNotNull('amount_paid')->isNotEmpty())₱{{ number_format($po->total_amount_paid, 2) }}@else<span class="write-in" style="min-width:140px">₱</span>@endif</strong>
+        </div>
 
         {{-- Signature section --}}
         <div class="sig-section">
@@ -263,7 +248,11 @@
         <div class="doc-footer">
             <strong>BAB'S RESTO</strong> — Purchase Order {{ $po->po_number }}<br>
             This document was generated on {{ now()->format('F d, Y h:i A') }}<br>
+            @if($po->isStockedIn())
+            Items on this purchase order were stocked in on {{ $po->stocked_in_at?->format('F d, Y') }}.
+            @else
             This purchase order is for reference only. Inventory quantities will be updated after actual stock-in.
+            @endif
         </div>
     </div>
 </div>

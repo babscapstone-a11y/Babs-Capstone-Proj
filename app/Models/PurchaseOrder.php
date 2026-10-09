@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PurchaseOrder extends Model
 {
     protected $fillable = [
-        'inventory_item_id', 'po_type', 'supplier',
+        'procurement_order_id', 'inventory_item_id', 'po_type', 'supplier',
         'quantity_purchased', 'unit', 'unit_cost', 'total_cost',
         'previous_quantity', 'new_quantity',
         'purchase_date', 'remarks', 'recorded_by',
@@ -27,6 +27,12 @@ class PurchaseOrder extends Model
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
+    }
+
+    /** The purchase order this stock-in came from (null when entered manually) */
+    public function procurementOrder(): BelongsTo
+    {
+        return $this->belongsTo(ProcurementOrder::class);
     }
 
     public function recorder(): BelongsTo
