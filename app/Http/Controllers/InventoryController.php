@@ -166,8 +166,22 @@ class InventoryController extends Controller
             ? ['Box', 'Piece', 'Case']
             : ['Gram', 'Kilogram'];
 
+        // Tidy the name first ("  chicken   breast " → "chicken breast") so spacing can't sneak past the duplicate check
+        $request->merge([
+            'item_name' => preg_replace('/\s+/', ' ', trim((string) $request->input('item_name'))),
+        ]);
+
         $validated = $request->validate([
-            'item_name'       => ['required', 'string', 'max:255'],
+            'item_name'       => [
+                'required', 'string', 'max:255',
+                // No duplicates regardless of capitalization: "chicken" blocks "Chicken" and "CHICKEN"
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $existing = InventoryItem::whereRaw('LOWER(item_name) = ?', [mb_strtolower($value)])->first();
+                    if ($existing) {
+                        $fail("\"{$existing->item_name}\" is already in the inventory. Use the existing item instead of adding a duplicate.");
+                    }
+                },
+            ],
             'item_type'       => ['required', 'in:rtc,beverage'],
             'unit'            => ['required', Rule::in($allowedUnits)],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
