@@ -215,7 +215,7 @@
             <div class="info-card-body">
                 @if($customer->address)
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-                        @foreach(['street' => 'Street / Building', 'barangay' => 'Barangay', 'municipality' => 'Municipality / City', 'province' => 'Province'] as $field => $label)
+                        @foreach(['street' => 'Street / Building', 'barangay' => 'Barangay', 'municipality' => 'Municipality / City', 'province' => 'Province', 'postal_code' => 'Postal Code'] as $field => $label)
                         <div style="padding:.75rem .9rem;background:var(--bg);border-radius:10px;border:1.5px solid var(--border)">
                             <div style="font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.25rem">{{ $label }}</div>
                             <div style="font-size:.85rem;font-weight:600;color:var(--dark)">{{ $customer->address->$field ?: '—' }}</div>

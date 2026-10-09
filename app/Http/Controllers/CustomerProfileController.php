@@ -54,15 +54,23 @@ class CustomerProfileController extends Controller
                 ->store('profile-pictures', 'public');
         }
 
-        // Update or create address record
-        $addrFields = array_filter(
-            $request->only(['street', 'barangay', 'municipality', 'province']),
-            fn($v) => $v !== null && $v !== '',
+        // Update or create the address as one complete set, so changing the province/city
+        // never leaves an old barangay behind and fields can be cleared (blank → null)
+        $addrFields = array_map(
+            fn ($v) => $v === '' ? null : $v,
+            $request->only([
+                'street', 'barangay', 'municipality', 'province', 'postal_code',
+                'province_code', 'municipality_code', 'barangay_code',
+            ]) + array_fill_keys([
+                'street', 'barangay', 'municipality', 'province', 'postal_code',
+                'province_code', 'municipality_code', 'barangay_code',
+            ], null),
         );
+        $hasAddress = count(array_filter($addrFields, fn ($v) => $v !== null)) > 0;
 
         if ($customer->address_id && $customer->address) {
             $customer->address->update($addrFields);
-        } elseif (! empty($addrFields)) {
+        } elseif ($hasAddress) {
             $address             = Address::create($addrFields);
             $customer->address_id = $address->id;
         }

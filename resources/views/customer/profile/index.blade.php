@@ -438,22 +438,52 @@
                             <input type="text" name="street" value="{{ old('street', $customer->address?->street) }}" placeholder="e.g. 123 Mabini St.">
                             @error('street')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
                         </div>
-                        <div class="form-row">
-                            <div class="field">
-                                <label>Barangay</label>
-                                <input type="text" name="barangay" value="{{ old('barangay', $customer->address?->barangay) }}" placeholder="Barangay">
-                                @error('barangay')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                        {{-- Province → City/Municipality → Barangay dropdowns (official PSGC lists, loaded live).
+                             The dropdowns are not submitted themselves: the script copies each choice into
+                             the hidden inputs below, which start with the saved address — so saving without
+                             touching the dropdowns (or when the lists can't load) never erases it. --}}
+                        @php $addr = $customer->address; @endphp
+                        <div id="psgcAddress">
+                            <input type="hidden" name="province"     id="addrProvinceName"     value="{{ old('province', $addr?->province) }}">
+                            <input type="hidden" name="municipality" id="addrMunicipalityName" value="{{ old('municipality', $addr?->municipality) }}">
+                            <input type="hidden" name="barangay"     id="addrBarangayName"     value="{{ old('barangay', $addr?->barangay) }}">
+                            <input type="hidden" name="province_code"     id="addrProvinceCode"     value="{{ old('province_code', $addr?->province_code) }}">
+                            <input type="hidden" name="municipality_code" id="addrMunicipalityCode" value="{{ old('municipality_code', $addr?->municipality_code) }}">
+                            <input type="hidden" name="barangay_code"     id="addrBarangayCode"     value="{{ old('barangay_code', $addr?->barangay_code) }}">
+
+                            <div class="form-row">
+                                <div class="field">
+                                    <label for="addrProvince">Province</label>
+                                    <select id="addrProvince" disabled>
+                                        <option value="">Loading provinces…</option>
+                                    </select>
+                                    @error('province')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                                </div>
+                                <div class="field">
+                                    <label for="addrMunicipality">City / Municipality</label>
+                                    <select id="addrMunicipality" disabled>
+                                        <option value="">Select a province first</option>
+                                    </select>
+                                    @error('municipality')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                                </div>
                             </div>
-                            <div class="field">
-                                <label>Municipality / City</label>
-                                <input type="text" name="municipality" value="{{ old('municipality', $customer->address?->municipality) }}" placeholder="Municipality or City">
-                                @error('municipality')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                            <div class="form-row">
+                                <div class="field">
+                                    <label for="addrBarangay">Barangay</label>
+                                    <select id="addrBarangay" disabled>
+                                        <option value="">Select a city / municipality first</option>
+                                    </select>
+                                    @error('barangay')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                                </div>
+                                <div class="field">
+                                    <label for="addrPostal">Postal Code</label>
+                                    <input type="text" name="postal_code" id="addrPostal" value="{{ old('postal_code', $addr?->postal_code) }}"
+                                           placeholder="e.g. 6000" inputmode="numeric" maxlength="4" pattern="[0-9]{4}"
+                                           oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+                                    @error('postal_code')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                                </div>
                             </div>
-                        </div>
-                        <div class="field">
-                            <label>Province</label>
-                            <input type="text" name="province" value="{{ old('province', $customer->address?->province) }}" placeholder="Province">
-                            @error('province')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
+                            <div class="help" id="addrNotice" style="display:none;margin:-.4rem 0 1rem"></div>
                         </div>
 
                         {{-- Profile picture upload hint --}}
@@ -712,6 +742,10 @@ function resetPwdForm() {
     document.getElementById('matchMsg').textContent = '';
 }
 
+/* Address dropdowns: see partials/psgc-address-script */
+</script>
+@include('customer.profile.partials.psgc-address-script')
+<script>
 /* Tabs: Profile Information / Security / Order History */
 (function () {
     const tabs = Array.from(document.querySelectorAll('.profile-tab'));

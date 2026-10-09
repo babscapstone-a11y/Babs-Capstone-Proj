@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Address extends Model
 {
-    protected $fillable = ['street', 'barangay', 'municipality', 'province'];
+    protected $fillable = [
+        'street', 'barangay', 'municipality', 'province', 'postal_code',
+        // PSGC codes of the dropdown selections (names above are kept for display)
+        'province_code', 'municipality_code', 'barangay_code',
+    ];
 
     public function customers(): HasMany
     {
@@ -20,7 +24,7 @@ class Address extends Model
             $this->street,
             $this->barangay,
             $this->municipality,
-            $this->province,
+            trim($this->province . ' ' . $this->postal_code),
         ]));
     }
 }
