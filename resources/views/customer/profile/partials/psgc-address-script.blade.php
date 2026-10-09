@@ -124,14 +124,9 @@
             const provinces = (await getList('/provinces.json')).concat([NCR]);
             fill(sel.province, provinces, 'Select province');
 
-            if (!preselect('province', target.province)) {
-                if (target.province.name) {
-                    showNotice('<i class="fas fa-circle-info"></i> Your saved address (<strong>'
-                        + [target.barangay.name, target.municipality.name, target.province.name].filter(Boolean).join(', ').replace(/</g, '&lt;')
-                        + '</strong>) isn\'t from the official list. Please select it again below.');
-                }
-                return;
-            }
+            // An old typed-in address that isn't in the official list stays saved (hidden inputs)
+            // until the customer picks a new one; the dropdowns simply start unselected.
+            if (!preselect('province', target.province)) return;
             await loadMunicipalities(sel.province.value);
             if (!preselect('municipality', target.municipality)) return;
             await loadBarangays(sel.municipality.value);
