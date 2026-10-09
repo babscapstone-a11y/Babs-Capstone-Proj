@@ -52,12 +52,12 @@
                         </span>
                     </td>
                     <td>
-                        <div class="action-group">
-                            <a href="{{ route('special-discount-requests.show', $sdr) }}" class="btn-action btn-view">
-                                <i class="fas fa-eye"></i> Review
+                        <div class="row-acts" style="justify-content:flex-end">
+                            <a href="{{ route('special-discount-requests.show', $sdr) }}" class="act-btn act-view" title="Review" aria-label="Review">
+                                <i class="fas fa-eye"></i>
                             </a>
                             @if($sdr->isPending())
-                                <button type="button" class="btn-action btn-appr"
+                                <button type="button" class="act-btn act-success" title="Approve" aria-label="Approve"
                                     onclick="openModal({
                                         type: 'warn',
                                         iconClass: 'fas fa-circle-check',
@@ -67,11 +67,11 @@
                                         method: 'PUT',
                                         confirmText: 'Approve',
                                     })">
-                                    <i class="fas fa-check"></i> Approve
+                                    <i class="fas fa-check"></i>
                                 </button>
-                                <button type="button" class="btn-action btn-rej"
+                                <button type="button" class="act-btn act-danger" title="Reject" aria-label="Reject"
                                     onclick="openRejectModal({{ $sdr->id }}, '{{ route('special-discount-requests.reject', $sdr) }}', '{{ addslashes($sdr->request_number ?? '#'.$sdr->id) }}')">
-                                    <i class="fas fa-xmark"></i> Reject
+                                    <i class="fas fa-xmark"></i>
                                 </button>
                             @endif
                         </div>

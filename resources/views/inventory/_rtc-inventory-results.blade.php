@@ -44,8 +44,8 @@
                         </span>
                     </td>
                     <td>
-                        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                            <button class="btn btn-outline btn-sm" style="color:#2563EB;border-color:#BFDBFE" onclick="openConvertFor({{ $item->id }}, {{ $item->rtc_quantity ?? 0.25 }}, '{{ $item->rtc_unit ?? '' }}')">
+                        <div class="row-acts">
+                            <button type="button" class="act-btn act-edit" title="Convert to Servings" aria-label="Convert to servings" onclick="openConvertFor({{ $item->id }}, {{ $item->rtc_quantity ?? 0.25 }}, '{{ $item->rtc_unit ?? '' }}')">
                                 <i class="fas fa-arrows-rotate"></i>
                             </button>
                         </div>

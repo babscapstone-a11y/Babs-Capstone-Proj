@@ -62,16 +62,16 @@
                     </td>
                     <td><span class="badge {{ $order->approval_status_badge_class }}">{{ $order->approval_status_label }}</span></td>
                     <td>
-                        <div class="action-group">
-                            <a href="{{ route('cashier.online-orders.show', $order) }}" class="btn-action btn-view">
-                                <i class="fas fa-eye"></i> Review
+                        <div class="row-acts" style="justify-content:flex-end">
+                            <a href="{{ route('cashier.online-orders.show', $order) }}" class="act-btn act-view" title="Review" aria-label="Review">
+                                <i class="fas fa-eye"></i>
                             </a>
                             @if($order->approval_status === 'pending')
-                                <button type="button" class="btn-action btn-approve" onclick="confirmApprove({{ $order->id }}, '{{ $order->order_number }}')">
-                                    <i class="fas fa-check"></i> Approve
+                                <button type="button" class="act-btn act-success" title="Approve" aria-label="Approve" onclick="confirmApprove({{ $order->id }}, '{{ $order->order_number }}')">
+                                    <i class="fas fa-check"></i>
                                 </button>
-                                <button type="button" class="btn-action btn-reject" onclick="openRejectModal({{ $order->id }})">
-                                    <i class="fas fa-xmark"></i> Reject
+                                <button type="button" class="act-btn act-danger" title="Reject" aria-label="Reject" onclick="openRejectModal({{ $order->id }})">
+                                    <i class="fas fa-xmark"></i>
                                 </button>
                             @endif
                         </div>

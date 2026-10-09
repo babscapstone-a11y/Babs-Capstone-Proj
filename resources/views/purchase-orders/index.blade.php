@@ -236,12 +236,12 @@
                         <td style="font-size:.82rem">{{ $order->preparedBy?->name ?? '—' }}</td>
                         <td style="color:var(--muted);font-size:.78rem">{{ $order->updated_at->diffForHumans() }}</td>
                         <td>
-                            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                                <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-outline btn-sm" title="View"><i class="fas fa-eye"></i></a>
-                                <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="btn btn-blue btn-sm" title="Print"><i class="fas fa-print"></i></a>
+                            <div class="row-acts">
+                                <a href="{{ route('purchase-orders.show', $order) }}" class="act-btn act-view" title="View" aria-label="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="act-btn act-edit" title="Print" aria-label="Print"><i class="fas fa-print"></i></a>
                                 @if($order->isDraft())
-                                <a href="{{ route('purchase-orders.edit', $order) }}" class="btn btn-outline btn-sm" title="Edit / Record Purchase"><i class="fas fa-pen"></i></a>
-                                <button type="button" class="btn btn-sm" style="background:#FEF2F2;color:#DC2626" title="Delete" onclick="openModal({
+                                <a href="{{ route('purchase-orders.edit', $order) }}" class="act-btn act-edit" title="Edit / Record Purchase" aria-label="Edit or record purchase"><i class="fas fa-pen"></i></a>
+                                <button type="button" class="act-btn act-danger" title="Delete" aria-label="Delete" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
                                         title: 'Delete Draft PO?',
@@ -251,7 +251,7 @@
                                         confirmText: 'Delete'
                                     })"><i class="fas fa-trash"></i></button>
                                 @elseif($order->awaitingStockIn())
-                                <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-green btn-sm" title="Review and record stock-in"><i class="fas fa-arrow-down-to-bracket"></i> Stock-In</a>
+                                <a href="{{ route('purchase-orders.show', $order) }}" class="act-btn act-success" title="Record Stock-In" aria-label="Record stock-in"><i class="fas fa-dolly"></i></a>
                                 @endif
                             </div>
                         </td>

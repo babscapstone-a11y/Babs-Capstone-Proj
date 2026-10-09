@@ -52,7 +52,7 @@
 <div class="inv-page">
     <div class="page-header">
         <div>
-            <div class="page-title"><i class="fas fa-arrow-down-to-bracket"></i> Stock-In Transactions</div>
+            <div class="page-title"><i class="fas fa-dolly"></i> Stock-In Transactions</div>
             <div class="page-sub">History of all inventory stock-in records</div>
         </div>
         <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>

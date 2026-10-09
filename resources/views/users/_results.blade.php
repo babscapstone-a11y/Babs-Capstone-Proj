@@ -47,17 +47,17 @@
                 <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->created_at->format('M d, Y') }}</td>
                 <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">{{ $user->updated_at->format('M d, Y') }}</td>
                 <td>
-                    <div class="actions">
-                        <a href="{{ route('users.show', $user) }}" class="btn btn-outline btn-icon btn-sm" title="View">
+                    <div class="row-acts">
+                        <a href="{{ route('users.show', $user) }}" class="act-btn act-view" title="View" aria-label="View">
                             <i class="fas fa-eye"></i>
                         </a>
                         @can('update', $user)
-                        <a href="{{ route('users.edit', $user) }}" class="btn btn-secondary btn-icon btn-sm" title="Edit">
+                        <a href="{{ route('users.edit', $user) }}" class="act-btn act-edit" title="Edit" aria-label="Edit">
                             <i class="fas fa-pen"></i>
                         </a>
                         <button type="button"
-                            class="btn btn-icon btn-sm {{ $user->status === 'active' ? 'btn-danger' : 'btn-success' }}"
-                            title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}"
+                            class="act-btn {{ $user->status === 'active' ? 'act-danger' : 'act-success' }}"
+                            title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}" aria-label="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}"
                             onclick="openToggleModal(
                                 '{{ route('users.toggle-status', $user) }}',
                                 '{{ addslashes($user->name) }}',

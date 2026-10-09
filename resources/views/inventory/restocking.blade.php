@@ -207,7 +207,7 @@
                 <i class="fas fa-file-invoice"></i> Generate Purchase Order
             </button>
         </form>
-        <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-outline"><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In</a>
+        <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-outline"><i class="fas fa-dolly"></i> Record Stock-In</a>
         <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-list"></i> View Purchase Orders</a>
     </div>
     @endif

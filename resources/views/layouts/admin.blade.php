@@ -307,6 +307,7 @@
         }
 
     </style>
+    @include('partials.row-actions-css')
 
     @yield('styles')
 </head>

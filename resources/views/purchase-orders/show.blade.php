@@ -61,7 +61,7 @@
 @php
     $stockInConfirm = [
         'type'        => 'warn',
-        'iconClass'   => 'fas fa-arrow-down-to-bracket',
+        'iconClass'   => 'fas fa-dolly',
         'title'       => 'Record Stock-In?',
         'desc'        => "All bought items on {$po->po_number} (" . $po->items->where('quantity_received', '>', 0)->count() . " item(s), ₱" . number_format($po->total_amount_paid, 2) . ") will be added to inventory. This can only be done once.",
         'action'      => route('purchase-orders.stock-in', $po),
@@ -92,7 +92,7 @@
             @if($po->isDraft())
             <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline"><i class="fas fa-pen"></i> Edit Draft</a>
             @elseif($po->awaitingStockIn())
-            <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In</button>
+            <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
             @endif
             <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
@@ -108,7 +108,7 @@
     <div class="notice notice-amber">
         <i class="fas fa-circle-info" style="font-size:1.1rem"></i>
         <div class="grow">Finalized on <strong>{{ $po->finalized_at?->format('F d, Y h:i A') }}</strong>. The bought items have <strong>not been added to inventory yet</strong>.</div>
-        <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In</button>
+        <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
     </div>
     @else
     <div class="notice notice-amber">
@@ -155,7 +155,7 @@
             @if($po->isDraft())
             <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline" style="border-color:var(--primary);color:var(--primary)"><i class="fas fa-pen"></i> Edit / Record Purchase</a>
             @elseif($po->awaitingStockIn())
-            <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-arrow-down-to-bracket"></i> Record Stock-In</button>
+            <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
             @endif
         </div>
     </div>

@@ -60,21 +60,21 @@
                     @endif
                 </td>
                 <td>
-                    <div class="action-group" style="justify-content:flex-end">
-                        <a href="{{ route('menu.show', $item) }}" class="btn-action btn-view">
-                            <i class="fas fa-eye"></i> View
+                    <div class="row-acts" style="justify-content:flex-end">
+                        <a href="{{ route('menu.show', $item) }}" class="act-btn act-view" title="View" aria-label="View">
+                            <i class="fas fa-eye"></i>
                         </a>
                         @can('update', $item)
-                        <a href="{{ route('menu.edit', $item) }}" class="btn-action btn-edit">
-                            <i class="fas fa-pen"></i> Edit
+                        <a href="{{ route('menu.edit', $item) }}" class="act-btn act-edit" title="Edit" aria-label="Edit">
+                            <i class="fas fa-pen"></i>
                         </a>
                         @endcan
                         @can('toggleStatus', $item)
                         <button type="button"
-                            class="btn-action {{ $item->is_active ? 'btn-deactivate' : 'btn-activate' }}"
+                            class="act-btn {{ $item->is_active ? 'act-danger' : 'act-success' }}"
+                            title="{{ $item->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $item->is_active ? 'Deactivate' : 'Activate' }}"
                             onclick="openToggleModal({{ $item->id }}, '{{ addslashes($item->menu_name) }}', {{ $item->is_active ? 'true' : 'false' }})">
-                            <i class="fas fa-{{ $item->is_active ? 'ban' : 'check' }}"></i>
-                            {{ $item->is_active ? 'Deactivate' : 'Activate' }}
+                            <i class="fas fa-{{ $item->is_active ? 'ban' : 'circle-check' }}"></i>
                         </button>
                         @endcan
                     </div>

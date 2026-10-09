@@ -167,14 +167,14 @@
                         <td><span class="{{ $d->status_badge_class }}"><i class="fas fa-circle" style="font-size:.4rem"></i> {{ $d->status_label }}</span></td>
                         <td style="font-size:.78rem;color:var(--muted)">{{ $d->updated_at->diffForHumans() }}</td>
                         <td>
-                            <div style="display:flex;gap:.35rem;flex-wrap:wrap">
-                                <a href="{{ route('discounts.show', $d) }}" class="btn btn-outline btn-sm" title="View"><i class="fas fa-eye"></i></a>
-                                <a href="{{ route('discounts.edit', $d) }}" class="btn btn-outline btn-sm" title="Edit"><i class="fas fa-pen"></i></a>
+                            <div class="row-acts">
+                                <a href="{{ route('discounts.show', $d) }}" class="act-btn act-view" title="View" aria-label="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('discounts.edit', $d) }}" class="act-btn act-edit" title="Edit" aria-label="Edit"><i class="fas fa-pen"></i></a>
                                 <form method="POST" action="{{ route('discounts.toggle-status', $d) }}"
                                       onsubmit="return confirm('{{ $d->is_active ? 'Deactivate' : 'Activate' }} discount \"{{ addslashes($d->discount_name) }}\"?')">
                                     @csrf @method('PUT')
-                                    <button type="submit" class="btn btn-sm {{ $d->is_active ? 'btn-amber' : 'btn-green' }}" title="{{ $d->is_active ? 'Deactivate' : 'Activate' }}">
-                                        <i class="fas {{ $d->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
+                                    <button type="submit" class="act-btn {{ $d->is_active ? 'act-danger' : 'act-success' }}" title="{{ $d->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $d->is_active ? 'Deactivate' : 'Activate' }}">
+                                        <i class="fas {{ $d->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i>
                                     </button>
                                 </form>
                             </div>

@@ -65,18 +65,18 @@
                         @endif
                     </td>
                     <td>
-                        <div class="action-group">
+                        <div class="row-acts" style="justify-content:flex-end">
                             @can('view', $customer)
-                            <a href="{{ route('customers.show', $customer) }}" class="btn-action btn-view">
-                                <i class="fas fa-eye"></i> View
+                            <a href="{{ route('customers.show', $customer) }}" class="act-btn act-view" title="View" aria-label="View">
+                                <i class="fas fa-eye"></i>
                             </a>
                             @endcan
                             @can('toggleStatus', $customer)
                             <button type="button"
-                                class="btn-action {{ $customer->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
+                                class="act-btn {{ $customer->status === 'active' ? 'act-danger' : 'act-success' }}"
+                                title="{{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}" aria-label="{{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}"
                                 onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
-                                <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'check' }}"></i>
-                                {{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'circle-check' }}"></i>
                             </button>
                             @endcan
                         </div>

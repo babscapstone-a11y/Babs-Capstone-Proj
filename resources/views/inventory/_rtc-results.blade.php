@@ -44,8 +44,8 @@
                         </span>
                     </td>
                     <td>
-                        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                            <a href="{{ route('inventory.edit', $item) }}" class="btn btn-outline btn-sm">
+                        <div class="row-acts">
+                            <a href="{{ route('inventory.edit', $item) }}" class="act-btn act-edit" title="Edit Settings" aria-label="Edit settings">
                                 <i class="fas fa-sliders"></i>
                             </a>
                         </div>

@@ -48,8 +48,6 @@
 .ro-val{font-size:.85rem;color:var(--muted)}
 .changed-hint{font-size:.72rem;color:#16A34A;display:none}
 .qty-wrap{display:flex;flex-direction:column;align-items:center;gap:.2rem}
-.row-remove-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:#B91C1C;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.78rem}
-.row-remove-btn:hover{background:#FEF2F2;border-color:#FECACA}
 
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-backdrop.open{display:flex}
@@ -188,7 +186,7 @@
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
                             @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '0.01', 'decimals' => 2])
                             <td>
-                                <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
+                                <button type="button" class="act-btn act-danger" title="Remove item" aria-label="Remove item" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
                                         title: 'Remove Item?',
@@ -255,7 +253,7 @@
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
                             @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '1', 'decimals' => 0])
                             <td>
-                                <button type="button" class="row-remove-btn" title="Remove item" onclick="openModal({
+                                <button type="button" class="act-btn act-danger" title="Remove item" aria-label="Remove item" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
                                         title: 'Remove Item?',

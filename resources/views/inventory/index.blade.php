@@ -153,7 +153,7 @@
         {{-- Recent Stock-Ins --}}
         <div class="section-card">
             <div class="section-hd">
-                <h2><i class="fas fa-arrow-down-to-bracket"></i> Recent Stock-In</h2>
+                <h2><i class="fas fa-dolly"></i> Recent Stock-In</h2>
                 <a href="{{ route('inventory.stock-in.index') }}">View All →</a>
             </div>
             <div class="activity-list">
@@ -259,7 +259,7 @@
 <div class="modal-backdrop" id="stockInModal">
     <div class="modal">
         <div class="modal-hd">
-            <h3><i class="fas fa-arrow-down-to-bracket"></i> New Stock-In Transaction</h3>
+            <h3><i class="fas fa-dolly"></i> New Stock-In Transaction</h3>
             <button class="modal-close-btn" onclick="closeLocalModal('stockInModal')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="{{ route('inventory.stock-in.store') }}" id="stockInForm">

@@ -145,21 +145,21 @@
                         </td>
                         <td>
                             @if($req->isPending())
-                            <div style="display:flex;gap:.35rem">
+                            <div class="row-acts">
                                 {{-- Approve --}}
                                 <form method="POST"
                                       action="{{ route('password-reset-requests.approve', $req) }}"
                                       onsubmit="return confirm('Approve this request and send the password reset email to {{ addslashes($req->user?->email ?? '') }}?')">
                                     @csrf @method('PUT')
-                                    <button type="submit" class="btn btn-success btn-sm" title="Approve & Send Email">
-                                        <i class="fas fa-check"></i> Approve
+                                    <button type="submit" class="act-btn act-success" title="Approve & Send Email" aria-label="Approve and send email">
+                                        <i class="fas fa-check"></i>
                                     </button>
                                 </form>
 
                                 {{-- Reject --}}
-                                <button type="button" class="btn btn-danger btn-sm" title="Reject"
+                                <button type="button" class="act-btn act-danger" title="Reject" aria-label="Reject"
                                     onclick="openRejectModal({{ $req->id }}, '{{ route('password-reset-requests.reject', $req) }}', '{{ addslashes($req->user?->name ?? '') }}')">
-                                    <i class="fas fa-xmark"></i> Reject
+                                    <i class="fas fa-xmark"></i>
                                 </button>
                             </div>
                             @else

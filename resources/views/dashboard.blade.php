@@ -574,18 +574,18 @@
                             <td style="font-size:.78rem;color:var(--muted);white-space:nowrap">{{ $cr->created_at->format('M d, Y h:i A') }}</td>
                             <td><span class="badge {{ $cr->review_status_badge_class }}">{{ $cr->review_status_label }}</span></td>
                             <td>
-                                <div style="display:flex;gap:.35rem;justify-content:flex-end;flex-wrap:wrap">
-                                    <a href="{{ route('cancellations.show', $cr) }}" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> Review</a>
+                                <div class="row-acts" style="justify-content:flex-end">
+                                    <a href="{{ route('cancellations.show', $cr) }}" class="act-btn act-view" title="Review" aria-label="Review"><i class="fas fa-eye"></i></a>
                                     @if($cr->isPending())
-                                    <button type="button" class="btn btn-success btn-sm"
+                                    <button type="button" class="act-btn act-success" title="Approve" aria-label="Approve"
                                         onclick="openModal({
                                             type: 'warn', iconClass: 'fas fa-circle-check',
                                             title: 'Approve Cancellation?',
                                             desc: 'Are you sure you want to approve this cancellation request?',
                                             action: '{{ route('cancellations.approve', $cr) }}',
                                             method: 'PUT', confirmText: 'Approve',
-                                        })"><i class="fas fa-check"></i> Approve</button>
-                                    <a href="{{ route('cancellations.show', $cr) }}" class="btn btn-danger btn-sm"><i class="fas fa-xmark"></i> Reject</a>
+                                        })"><i class="fas fa-check"></i></button>
+                                    <a href="{{ route('cancellations.show', $cr) }}" class="act-btn act-danger" title="Reject" aria-label="Reject"><i class="fas fa-xmark"></i></a>
                                     @endif
                                 </div>
                             </td>
