@@ -16,7 +16,6 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width:50px">ID</th>
                     <th>Customer</th>
                     <th>Contact Number</th>
                     <th>
@@ -35,9 +34,6 @@
             <tbody>
                 @forelse($customers as $customer)
                 <tr>
-                    <td style="font-size:.75rem;color:var(--muted);font-weight:600">
-                        #{{ str_pad($customer->id, 4, '0', STR_PAD_LEFT) }}
-                    </td>
                     <td>
                         <div class="avatar-cell">
                             <div class="customer-avatar">{{ $customer->initials }}</div>
@@ -84,7 +80,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7">
+                    <td colspan="6">
                         <div class="empty-state">
                             <i class="fas fa-users" style="color:var(--muted);opacity:.4"></i>
                             <h3>No Customers Found</h3>

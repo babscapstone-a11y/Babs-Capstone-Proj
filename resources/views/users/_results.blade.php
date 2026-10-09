@@ -7,7 +7,6 @@
     <table class="data-table" aria-label="Staff accounts table">
         <thead>
             <tr>
-                <th>#</th>
                 <th>Staff Member</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -20,7 +19,6 @@
         <tbody>
             @forelse($users as $user)
             <tr>
-                <td style="color:var(--muted);font-size:.78rem;font-weight:600">#{{ $user->id }}</td>
                 <td>
                     <div class="staff-cell">
                         <div class="staff-avatar">{{ $user->initials }}</div>
@@ -71,7 +69,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8">
+                <td colspan="7">
                     <div class="empty-state">
                         <i class="fas fa-users-slash"></i>
                         @if(request()->hasAny(['search','role','status']))
