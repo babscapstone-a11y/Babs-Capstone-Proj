@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Rules\PersonName;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -16,12 +17,13 @@ class StoreStaffRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'max:100', new PersonName],
+            'last_name'  => ['required', 'string', 'max:100', new PersonName],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'username'   => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
             'phone'      => ['nullable', 'digits:11'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
+            // Strong password rule is defined once in AppServiceProvider (Password::defaults)
             'password'   => ['required', 'confirmed', Password::defaults()],
         ];
     }

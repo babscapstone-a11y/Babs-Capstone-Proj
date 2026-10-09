@@ -309,14 +309,14 @@
                             required
                             autofocus
                             autocomplete="new-password"
-                            placeholder="Min. 8 characters"
-                            aria-describedby="password-error"
+                            placeholder="Create a strong password"
                             aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
                         >
                         <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password">
                             <i class="fas fa-eye" id="togglePwdIcon"></i>
                         </button>
                     </div>
+                    @include('partials.password-checklist', ['inputId' => 'password'])
                     @error('password')
                         <div class="field-error" id="password-error" role="alert">
                             <i class="fas fa-circle-exclamation" aria-hidden="true"></i>

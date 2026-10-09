@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Rules\PersonName;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,8 +20,8 @@ class UpdateStaffRequest extends FormRequest
         $userId = $this->route('user')?->id;
 
         return [
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'max:100', new PersonName],
+            'last_name'  => ['required', 'string', 'max:100', new PersonName],
             'email'   => [
                 'required', 'string', 'lowercase', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),

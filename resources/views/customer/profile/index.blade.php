@@ -184,7 +184,7 @@
     display: flex; justify-content: flex-end; gap: .75rem;
 }
 
-/* ══ PASSWORD STRENGTH ════════════════════════════════════ */
+/* ══ PASSWORD FIELDS ══════════════════════════════════════ */
 .pwd-wrap { position: relative; }
 .pwd-wrap input { padding-right: 2.5rem; }
 .pwd-toggle {
@@ -192,10 +192,6 @@
     background: none; border: none; cursor: pointer;
     color: var(--muted); font-size: .85rem; padding: .2rem;
 }
-.pwd-strength { margin-top: .4rem; }
-.pwd-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
-.pwd-bar-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; width: 0; }
-.pwd-label { font-size: .7rem; margin-top: .2rem; color: var(--muted); }
 
 /* ══ ORDER TABLE ══════════════════════════════════════════ */
 .orders-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
@@ -369,12 +365,16 @@
                         <div class="form-row">
                             <div class="field">
                                 <label>First Name <span class="req">*</span></label>
-                                <input type="text" name="first_name" value="{{ old('first_name', $customer->first_name) }}" required>
+                                <input type="text" name="first_name" value="{{ old('first_name', $customer->first_name) }}" required
+                                       pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                       oninput="this.value=this.value.replace(/[0-9]/g,'')">
                                 @error('first_name')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
                             </div>
                             <div class="field">
                                 <label>Last Name</label>
-                                <input type="text" name="last_name" value="{{ old('last_name', $customer->last_name) }}">
+                                <input type="text" name="last_name" value="{{ old('last_name', $customer->last_name) }}"
+                                       pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                       oninput="this.value=this.value.replace(/[0-9]/g,'')">
                                 @error('last_name')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -469,13 +469,10 @@
                         <div class="field">
                             <label>New Password <span class="req">*</span></label>
                             <div class="pwd-wrap">
-                                <input type="password" name="new_password" id="newPwd" placeholder="Minimum 8 characters" required oninput="checkStrength(this.value)">
+                                <input type="password" name="new_password" id="newPwd" placeholder="Create a strong password" required oninput="checkMatch()">
                                 <button type="button" class="pwd-toggle" onclick="togglePwd('newPwd', this)"><i class="fas fa-eye"></i></button>
                             </div>
-                            <div class="pwd-strength">
-                                <div class="pwd-bar"><div class="pwd-bar-fill" id="pwdBar"></div></div>
-                                <div class="pwd-label" id="pwdLabel"></div>
-                            </div>
+                            @include('partials.password-checklist', ['inputId' => 'newPwd'])
                             @error('new_password')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
                         </div>
                         <div class="field">
@@ -623,29 +620,6 @@ function togglePwd(id, btn) {
     btn.querySelector('i').className = `fas fa-eye${isText ? '' : '-slash'}`;
 }
 
-/* Password strength checker */
-function checkStrength(val) {
-    const bar   = document.getElementById('pwdBar');
-    const label = document.getElementById('pwdLabel');
-    let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-    const levels = [
-        { pct: '20%', bg: '#DC2626', text: 'Very Weak' },
-        { pct: '40%', bg: '#F59E0B', text: 'Weak' },
-        { pct: '65%', bg: '#F59E0B', text: 'Fair' },
-        { pct: '85%', bg: '#16A34A', text: 'Strong' },
-        { pct: '100%', bg: '#15803D', text: 'Very Strong' },
-    ];
-    const l = val.length === 0 ? null : levels[score];
-    bar.style.width  = l ? l.pct : '0';
-    bar.style.background = l ? l.bg : '';
-    label.textContent = l ? l.text : '';
-    label.style.color = l ? l.bg : '';
-    checkMatch();
-}
 
 /* Password match */
 document.getElementById('confPwd').addEventListener('input', checkMatch);
@@ -678,6 +652,12 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
 document.getElementById('updatePwdBtn').addEventListener('click', () => {
     const np = document.getElementById('newPwd').value;
     const cp = document.getElementById('confPwd').value;
+    if (!window.checkPasswordChecklist(document.getElementById('newPwd'))) {
+        document.getElementById('newPwdRules').classList.add('show-missing');
+        showToast('Your new password does not meet all the requirements yet.', 'error');
+        document.getElementById('newPwd').focus();
+        return;
+    }
     if (np !== cp) {
         showToast('New passwords do not match. Please check and try again.', 'error');
         return;
@@ -698,8 +678,9 @@ function resetForm() {
 }
 function resetPwdForm() {
     ['currPwd','newPwd','confPwd'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('pwdBar').style.width = '0';
-    document.getElementById('pwdLabel').textContent = '';
+    const newPwd = document.getElementById('newPwd');
+    window.checkPasswordChecklist(newPwd);
+    document.getElementById('newPwdRules').classList.remove('show-missing');
     document.getElementById('matchMsg').textContent = '';
 }
 

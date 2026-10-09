@@ -21,7 +21,7 @@
         padding-bottom:.6rem; border-bottom:1px solid var(--border);
         margin-bottom:1rem;
     }
-    .role-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.65rem; }
+    .role-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.65rem; }
     .role-option { display:none; }
     .role-label {
         display:flex; flex-direction:column; align-items:center;
@@ -35,13 +35,12 @@
         border-color:var(--primary);
         background:rgba(220,38,38,0.05);
     }
-    .role-option:checked + .role-label .role-name { color:var(--primary); }
-    @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2 { grid-column:auto; } }
+    .role-option:checked + .role-label .role-name { color:var(--primary); }    @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2 { grid-column:auto; } }
 </style>
 @endsection
 
 @section('content')
-<div style="max-width:760px">
+<div>
 
     <div class="card">
         <div class="card-header">
@@ -66,6 +65,8 @@
                         <div class="input-wrap @error('first_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
                             <input id="first_name" name="first_name" type="text" class="form-input"
+                                   pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                   oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                    value="{{ old('first_name') }}" required autofocus
                                    placeholder="Juan"
                                    aria-invalid="{{ $errors->has('first_name') ? 'true' : 'false' }}">
@@ -82,6 +83,8 @@
                         <div class="input-wrap @error('last_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
                             <input id="last_name" name="last_name" type="text" class="form-input"
+                                   pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                   oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                    value="{{ old('last_name') }}" required
                                    placeholder="dela Cruz"
                                    aria-invalid="{{ $errors->has('last_name') ? 'true' : 'false' }}">
@@ -144,12 +147,13 @@
                         <div class="input-wrap @error('password') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-lock"></i></span>
                             <input id="password" name="password" type="password" class="form-input"
-                                   required placeholder="Min. 8 characters" autocomplete="new-password"
+                                   required placeholder="Create a strong password" autocomplete="new-password"
                                    aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}">
                             <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password">
                                 <i class="fas fa-eye" id="togglePwdIcon"></i>
                             </button>
                         </div>
+                        @include('partials.password-checklist', ['inputId' => 'password'])
                         @error('password')
                             <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
                         @enderror

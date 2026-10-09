@@ -23,7 +23,7 @@
         padding-bottom:.6rem; border-bottom:1px solid var(--border);
         margin-bottom:1rem;
     }
-    .role-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.65rem; }
+    .role-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.65rem; }
     .role-option { display:none; }
     .role-label {
         display:flex; flex-direction:column; align-items:center;
@@ -63,7 +63,7 @@
 @endsection
 
 @section('content')
-<div style="max-width:760px">
+<div>
     <div class="card">
         <div class="card-header">
             <div style="display:flex;align-items:center;gap:.75rem">
@@ -110,6 +110,8 @@
                         <div class="input-wrap @error('first_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
                             <input id="first_name" name="first_name" type="text" class="form-input"
+                                   pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                   oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                    value="{{ old('first_name', $user->staff->first_name ?? '') }}" required
                                    placeholder="Juan">
                         </div>
@@ -125,6 +127,8 @@
                         <div class="input-wrap @error('last_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
                             <input id="last_name" name="last_name" type="text" class="form-input"
+                                   pattern="[\p{L}\s'.\-]+" title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                   oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                    value="{{ old('last_name', $user->staff->last_name ?? '') }}" required
                                    placeholder="dela Cruz">
                         </div>

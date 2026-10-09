@@ -333,31 +333,6 @@
     }
     .field-error i { flex-shrink: 0; font-size: .72rem; }
 
-    /* ── Password strength ── */
-    .strength-track {
-        display: flex; gap: 4px;
-        margin-top: .48rem;
-    }
-    .strength-bar {
-        flex: 1; height: 4px; border-radius: 2px;
-        background: rgba(17,24,39,0.09);
-        transition: background .35s ease;
-        transform-origin: left;
-    }
-    .strength-bar.weak   { background: var(--error); }
-    .strength-bar.fair   { background: var(--warn); }
-    .strength-bar.good   { background: #2563EB; }
-    .strength-bar.strong { background: var(--success); }
-
-    .strength-hint {
-        font-size: .75rem; font-weight: 600; margin-top: .22rem;
-        height: 1rem;
-    }
-    .strength-hint.weak   { color: var(--error); }
-    .strength-hint.fair   { color: var(--warn); }
-    .strength-hint.good   { color: #2563EB; }
-    .strength-hint.strong { color: var(--success); }
-
     /* ── Terms row ── */
     .terms-row {
         display: flex; align-items: flex-start; gap: .52rem;
@@ -537,6 +512,9 @@
                                 autocomplete="given-name"
                                 placeholder="Juan"
                                 class="input-field"
+                                pattern="[\p{L}\s'.\-]+"
+                                title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                 aria-describedby="{{ $errors->has('first_name') ? 'first-name-error' : '' }}"
                                 aria-invalid="{{ $errors->has('first_name') ? 'true' : 'false' }}"
                             >
@@ -565,6 +543,9 @@
                                 autocomplete="family-name"
                                 placeholder="dela Cruz"
                                 class="input-field"
+                                pattern="[\p{L}\s'.\-]+"
+                                title="Letters only — spaces, hyphens, apostrophes and periods are allowed"
+                                oninput="this.value=this.value.replace(/[0-9]/g,'')"
                                 aria-describedby="{{ $errors->has('last_name') ? 'last-name-error' : '' }}"
                                 aria-invalid="{{ $errors->has('last_name') ? 'true' : 'false' }}"
                             >
@@ -646,9 +627,8 @@
                             type="password"
                             required
                             autocomplete="new-password"
-                            placeholder="Min. 8 characters"
+                            placeholder="Create a strong password"
                             class="input-field"
-                            aria-describedby="pwd-strength-hint {{ $errors->has('password') ? 'pwd-error' : '' }}"
                             aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
                         >
                         <button
@@ -662,14 +642,7 @@
                         </button>
                     </div>
 
-                    <!-- Strength meter -->
-                    <div class="strength-track" id="strengthTrack" aria-hidden="true">
-                        <div class="strength-bar" id="sBar1"></div>
-                        <div class="strength-bar" id="sBar2"></div>
-                        <div class="strength-bar" id="sBar3"></div>
-                        <div class="strength-bar" id="sBar4"></div>
-                    </div>
-                    <div class="strength-hint" id="pwd-strength-hint" aria-live="polite"></div>
+                    @include('partials.password-checklist', ['inputId' => 'password'])
 
                     @error('password')
                         <div class="field-error" id="pwd-error" role="alert">
@@ -775,42 +748,7 @@
 <script>
 (function () {
 
-    /* ── Password strength scorer ── */
-    function scorePassword(val) {
-        if (!val) return 0;
-        var score = 0;
-        if (val.length >= 8)  score++;
-        if (val.length >= 12) score++;
-        if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
-        if (/[0-9]/.test(val)) score++;
-        if (/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>\/?`~]/.test(val)) score++;
-        if (score <= 1) return 1;
-        if (score <= 2) return 2;
-        if (score <= 3) return 3;
-        return 4;
-    }
-
-    var LEVELS = ['', 'weak', 'fair', 'good', 'strong'];
-    var LABELS = ['', 'Weak password', 'Fair password', 'Good password', 'Strong password'];
-
-    var pwdInput    = document.getElementById('password');
-    var bars        = [
-        document.getElementById('sBar1'),
-        document.getElementById('sBar2'),
-        document.getElementById('sBar3'),
-        document.getElementById('sBar4'),
-    ];
-    var strengthHint = document.getElementById('pwd-strength-hint');
-
-    pwdInput && pwdInput.addEventListener('input', function () {
-        var score = scorePassword(this.value);
-        var level = this.value ? LEVELS[score] : '';
-        bars.forEach(function (bar, i) {
-            bar.className = 'strength-bar' + (i < score ? ' ' + level : '');
-        });
-        strengthHint.textContent  = this.value ? LABELS[score] : '';
-        strengthHint.className    = 'strength-hint' + (level ? ' ' + level : '');
-    });
+    var pwdInput = document.getElementById('password');
 
     /* ── Show / hide password (main) ── */
     var togglePwd     = document.getElementById('togglePwd');

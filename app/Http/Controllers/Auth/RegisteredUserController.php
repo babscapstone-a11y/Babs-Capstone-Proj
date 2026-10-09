@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\EmailVerificationOtp;
 use App\Models\User;
 use App\Notifications\EmailVerificationOtpNotification;
+use App\Rules\PersonName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -24,8 +25,8 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'max:100', new PersonName],
+            'last_name'  => ['required', 'string', 'max:100', new PersonName],
             'email'      => [
                 'required', 'string', 'lowercase', 'email', 'max:255',
                 Rule::unique(Customer::class),

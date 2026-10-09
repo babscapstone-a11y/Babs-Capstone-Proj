@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
 
 class UpdateCustomerPasswordRequest extends FormRequest
 {
@@ -15,15 +16,20 @@ class UpdateCustomerPasswordRequest extends FormRequest
     {
         return [
             'current_password' => ['required', 'string'],
-            'new_password'     => ['required', 'string', 'min:8', 'confirmed'],
+            // Strong password rule is defined once in AppServiceProvider (Password::defaults)
+            'new_password'     => ['required', 'string', 'confirmed', Password::defaults()],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'new_password.min'       => 'New password must be at least 8 characters.',
             'new_password.confirmed' => 'Password confirmation does not match.',
         ];
+    }
+
+    public function attributes(): array
+    {
+        return ['new_password' => 'new password'];
     }
 }
