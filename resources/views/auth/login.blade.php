@@ -108,18 +108,13 @@
 
     /* Logo */
     .logo-wrap { display: flex; align-items: center; gap: .9rem; }
-    .logo-badge {
-        width: 70px; height: 70px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, var(--primary) 0%, #F97316 100%);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--white); font-weight: 900; font-size: 21px;
-        letter-spacing: -.5px;
-        box-shadow: 0 18px 48px rgba(220,38,38,0.38), 0 0 0 1px rgba(255,255,255,0.08) inset;
+    .logo-img {
+        width: 96px; height: 96px;
+        object-fit: contain;
         flex-shrink: 0;
+        filter: drop-shadow(0 10px 28px rgba(220,38,38,0.35));
     }
-    .brand-name { color: var(--white); font-weight: 800; font-size: 1rem; line-height: 1.2; }
-    .brand-sub  { color: rgba(255,255,255,0.42); font-size: .76rem; margin-top: .1rem; }
+    .brand-name { color: var(--white); font-weight: 800; font-size: 1.1rem; line-height: 1.2; }
 
     /* Accent divider */
     .left-divider {
@@ -142,14 +137,6 @@
     .left-heading .line:nth-child(2) span { animation-delay: .55s; }
     .left-heading .accent-word  { color: var(--accent); }
 
-    .left-desc {
-        color: rgba(255,255,255,0.52);
-        margin-top: 1.1rem;
-        line-height: 1.72;
-        font-size: .91rem;
-        max-width: 400px;
-    }
-
     /* Tagline pill */
     .tagline-pill {
         display: inline-flex; align-items: center; gap: .55rem;
@@ -168,20 +155,6 @@
         animation: pulse 2s ease-in-out infinite;
         flex-shrink: 0;
     }
-
-    /* Feature chips */
-    .feature-row { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 2rem; }
-    .feat-chip {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.09);
-        border-radius: 10px;
-        padding: .38rem .82rem;
-        color: rgba(255,255,255,0.58);
-        font-size: .77rem; font-weight: 500;
-        display: inline-flex; align-items: center; gap: .38rem;
-        backdrop-filter: blur(4px);
-    }
-    .feat-chip i { color: var(--accent); font-size: .72rem; }
 
     /* ════════════════════════════════
        RIGHT SIDE
@@ -421,8 +394,7 @@
         .right-side { padding: 1.25rem; }
         .login-card { padding: 1.75rem 1.25rem; border-radius: 20px; }
         .left-heading { font-size: 1.7rem; }
-        .feature-row { display: none; }
-        .left-desc  { font-size: .87rem; }
+        .logo-img { width: 76px; height: 76px; }
     }
 </style>
 
@@ -448,11 +420,8 @@
         <div class="left-inner">
             <!-- Logo -->
             <div class="logo-wrap">
-                <div class="logo-badge" aria-label="BAB'S RESTO logo initials">BR</div>
-                <div>
-                    <div class="brand-name">BAB'S RESTO</div>
-                    <div class="brand-sub">Web-based Ordering&nbsp;•&nbsp;POS&nbsp;•&nbsp;Inventory</div>
-                </div>
+                <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO logo" class="logo-img">
+                <div class="brand-name">BAB'S RESTO</div>
             </div>
 
             <div class="left-divider" aria-hidden="true"></div>
@@ -463,21 +432,10 @@
                 <span class="line"><span><span class="accent-word">Back!</span></span></span>
             </h1>
 
-            <p class="left-desc">
-                Sign in to order delicious meals, manage restaurant operations, and enjoy a seamless dining experience.
-            </p>
-
             <!-- Tagline -->
             <div class="tagline-pill">
                 <span class="tagline-dot" aria-hidden="true"></span>
                 Be Always Busog Saraap
-            </div>
-
-            <!-- Feature chips -->
-            <div class="feature-row" aria-hidden="true">
-                <span class="feat-chip"><i class="fas fa-utensils"></i> Online Ordering</span>
-                <span class="feat-chip"><i class="fas fa-cash-register"></i> POS System</span>
-                <span class="feat-chip"><i class="fas fa-boxes-stacked"></i> Inventory</span>
             </div>
         </div>
     </div>
