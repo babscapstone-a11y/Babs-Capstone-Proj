@@ -42,7 +42,7 @@
         }
         .sidebar-logo {
             display: flex; align-items: center; gap: .75rem;
-            padding: 1.4rem 1.25rem 1.2rem;
+            padding: 1rem 1.25rem .9rem;
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
         .logo-badge {
@@ -55,17 +55,17 @@
         .logo-text { color: var(--white); font-weight: 700; font-size: .9rem; line-height: 1.2; }
         .logo-sub  { color: rgba(255,255,255,0.38); font-size: .68rem; margin-top: .1rem; }
 
-        .nav-section { padding: .75rem 0; flex: 1; }
+        .nav-section { padding: .5rem 0; flex: 1; }
         .nav-label {
-            padding: .5rem 1.25rem .2rem;
-            font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+            padding: .4rem 1.25rem .15rem;
+            font-size: .6rem; font-weight: 700; letter-spacing: .08em;
             color: rgba(255,255,255,0.28); text-transform: uppercase;
         }
         .nav-item {
-            display: flex; align-items: center; gap: .72rem;
-            padding: .62rem 1.25rem;
+            display: flex; align-items: center; gap: .65rem;
+            padding: .45rem 1.25rem;
             color: rgba(255,255,255,0.55);
-            font-size: .845rem; font-weight: 500;
+            font-size: .79rem; font-weight: 500;
             transition: all .18s ease;
             border-left: 3px solid transparent;
             cursor: pointer;
@@ -76,7 +76,7 @@
             background: rgba(220,38,38,0.18);
             border-left-color: var(--primary);
         }
-        .nav-item i { width: 18px; text-align: center; font-size: .85rem; }
+        .nav-item i { width: 18px; text-align: center; font-size: .8rem; }
         .nav-badge {
             margin-left: auto; background: var(--primary);
             color: var(--white); font-size: .65rem; font-weight: 700;
@@ -84,14 +84,14 @@
         }
 
         .sidebar-footer {
-            padding: 1rem 1.25rem;
+            padding: .75rem 1.25rem;
             border-top: 1px solid rgba(255,255,255,0.07);
         }
         .user-chip {
             display: flex; align-items: center; gap: .65rem;
-            padding: .55rem .7rem; border-radius: 10px;
+            padding: .45rem .7rem; border-radius: 10px;
             background: rgba(255,255,255,0.05);
-            margin-bottom: .6rem;
+            margin-bottom: .5rem;
         }
         .user-avatar {
             width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
@@ -330,23 +330,7 @@
                 <i class="fas fa-gauge-high"></i> Dashboard
             </a>
 
-            <div class="nav-label" style="margin-top:.5rem">Accounts</div>
-
-            <a href="{{ route('users.index') }}"
-               class="nav-item {{ request()->routeIs('users.*', 'password-reset-requests.*') ? 'active' : '' }}">
-                <i class="fas fa-users"></i> User Management
-                @php $pending = \App\Models\StaffPasswordResetRequest::pending()->count() @endphp
-                @if($pending > 0)
-                    <span class="nav-badge">{{ $pending }}</span>
-                @endif
-            </a>
-
-            <a href="{{ route('customers.index') }}"
-               class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                <i class="fas fa-user-group"></i> Customer Accounts
-            </a>
-
-            <div class="nav-label" style="margin-top:.5rem">Inventory</div>
+            <div class="nav-label" style="margin-top:.35rem">Inventory</div>
 
             <a href="{{ route('inventory.index') }}"
                class="nav-item {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
@@ -367,7 +351,7 @@
                 <i class="fas fa-utensils"></i> Menu Catalog
             </a>
 
-            <div class="nav-label" style="margin-top:.5rem">Others</div>
+            <div class="nav-label" style="margin-top:.35rem">Others</div>
 
             <a href="{{ route('discounts.index') }}"
                class="nav-item {{ request()->routeIs('discounts.*', 'special-discount-requests.*') ? 'active' : '' }}">
@@ -383,7 +367,23 @@
                 @endif
             </a>
 
-            <div class="nav-label" style="margin-top:.5rem">Reports</div>
+            <div class="nav-label" style="margin-top:.35rem">Accounts</div>
+
+            <a href="{{ route('users.index') }}"
+               class="nav-item {{ request()->routeIs('users.*', 'password-reset-requests.*') ? 'active' : '' }}">
+                <i class="fas fa-users"></i> User Management
+                @php $pending = \App\Models\StaffPasswordResetRequest::pending()->count() @endphp
+                @if($pending > 0)
+                    <span class="nav-badge">{{ $pending }}</span>
+                @endif
+            </a>
+
+            <a href="{{ route('customers.index') }}"
+               class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+                <i class="fas fa-user-group"></i> Customer Accounts
+            </a>
+
+            <div class="nav-label" style="margin-top:.35rem">Reports</div>
 
             <a href="{{ route('reports.index') }}"
                class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
