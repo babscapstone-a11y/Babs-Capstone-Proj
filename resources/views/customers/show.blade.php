@@ -166,7 +166,7 @@
                 <div class="qa-title">Account Actions</div>
                 <button type="button"
                     class="action-btn {{ $customer->status === 'active' ? 'btn-deact' : 'btn-activ' }}"
-                    onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
+                    onclick="openToggleModal('{{ route('customers.toggle-status', $customer) }}', '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
                     <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'check' }}"></i>
                     {{ $customer->status === 'active' ? 'Deactivate Account' : 'Activate Account' }}
                 </button>
@@ -325,7 +325,7 @@
 
 @section('scripts')
 <script>
-function openToggleModal(id, name, isActive) {
+function openToggleModal(action, name, isActive) {
     var icon   = document.getElementById('toggleIcon');
     var title  = document.getElementById('toggleTitle');
     var body   = document.getElementById('toggleBody');
@@ -346,7 +346,7 @@ function openToggleModal(id, name, isActive) {
         submit.style.background = 'linear-gradient(90deg,#16A34A,#059669)';
         submit.textContent = 'Activate Account';
     }
-    form.action = '/customers/' + id + '/toggle-status';
+    form.action = action;
     document.getElementById('toggleModal').style.display = 'flex';
 }
 function closeToggleModal() {

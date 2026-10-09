@@ -264,7 +264,7 @@
 
 @section('scripts')
 <script>
-function openToggleModal(id, name, isActive) {
+function openToggleModal(action, name, isActive) {
     var icon   = document.getElementById('toggleIcon');
     var title  = document.getElementById('toggleTitle');
     var body   = document.getElementById('toggleBody');
@@ -285,7 +285,7 @@ function openToggleModal(id, name, isActive) {
         submit.style.background = 'linear-gradient(90deg,#16A34A,#059669)';
         submit.textContent = 'Activate Account';
     }
-    form.action = '/customers/' + id + '/toggle-status';
+    form.action = action;
     document.getElementById('toggleModal').style.display = 'flex';
 }
 function closeToggleModal() {

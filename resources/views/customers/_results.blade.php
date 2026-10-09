@@ -71,7 +71,7 @@
                             <button type="button"
                                 class="act-btn {{ $customer->status === 'active' ? 'act-danger' : 'act-success' }}"
                                 title="{{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}" aria-label="{{ $customer->status === 'active' ? 'Deactivate' : 'Activate' }}"
-                                onclick="openToggleModal({{ $customer->id }}, '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
+                                onclick="openToggleModal('{{ route('customers.toggle-status', $customer) }}', '{{ addslashes($customer->full_name) }}', {{ $customer->status === 'active' ? 'true' : 'false' }})">
                                 <i class="fas fa-{{ $customer->status === 'active' ? 'ban' : 'circle-check' }}"></i>
                             </button>
                             @endcan
