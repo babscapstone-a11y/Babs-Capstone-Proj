@@ -144,10 +144,6 @@
 
             <div class="detail-body">
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-hashtag" style="color:var(--primary)"></i> Customer ID</span>
-                    <span class="detail-value">#{{ str_pad($customer->id, 4, '0', STR_PAD_LEFT) }}</span>
-                </div>
-                <div class="detail-row">
                     <span class="detail-label"><i class="fas fa-phone" style="color:var(--violet-600)"></i> Contact</span>
                     <span class="detail-value">{{ $customer->contact_no ?: '—' }}</span>
                 </div>
