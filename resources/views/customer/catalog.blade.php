@@ -157,12 +157,6 @@
 .hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; line-height: 1.15; margin-bottom: .8rem; }
 .hero-title span { color: var(--accent); }
 .hero-sub { font-size: .95rem; font-weight: 400; opacity: .8; line-height: 1.7; max-width: 400px; }
-.hero-stats {
-    display: flex; gap: 2rem; margin-top: 2rem;
-}
-.hero-stat-value { font-size: 1.4rem; font-weight: 800; }
-.hero-stat-label { font-size: .75rem; opacity: .7; font-weight: 500; margin-top: .1rem; }
-
 .hero-icons {
     display: flex; flex-direction: column; gap: 1rem;
     opacity: .15; font-size: 5rem; color: var(--accent);
@@ -173,7 +167,6 @@
     .hero { padding: 2.25rem 1.25rem; }
     .hero-inner { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
     .hero-icons { display: none; }
-    .hero-stats { flex-wrap: wrap; gap: 1.25rem; }
 }
 
 /* ══════════════════════════════════════════════
@@ -181,66 +174,40 @@
 ══════════════════════════════════════════════ */
 .catalog-layout {
     max-width: 1280px; margin: 0 auto;
-    display: grid; grid-template-columns: 240px 1fr;
-    gap: 2rem; padding: 2rem 1.5rem;
-    align-items: start;
-}
-@media (max-width: 900px) {
-    .catalog-layout { grid-template-columns: 1fr; }
-    .cat-sidebar { display: none !important; }
+    padding: 1.75rem 1.5rem 2rem;
 }
 
-/* ── Category Sidebar ── */
-.cat-sidebar {
-    position: sticky; top: 80px;
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-    overflow: hidden;
+/* ── Category tabs (top, all screen sizes) — stick under the nav bar while scrolling ── */
+.cat-tabs-bar {
+    position: sticky; top: var(--nav-h, 72px); z-index: 800;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
 }
-.cat-sidebar-header {
-    padding: 1rem 1.2rem .6rem;
-    font-size: .78rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: var(--muted);
-}
-.cat-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: .7rem 1.2rem; cursor: pointer;
-    transition: background .15s, color .15s;
-    border-left: 3px solid transparent;
-    font-size: .86rem; font-weight: 500; color: var(--text);
-}
-.cat-item:hover { background: var(--bg); color: var(--primary); }
-.cat-item.active {
-    background: #fee2e2; color: var(--primary);
-    border-left-color: var(--primary); font-weight: 600;
-}
-.cat-item-count {
-    background: var(--bg); color: var(--muted);
-    font-size: .72rem; font-weight: 600; padding: .15rem .45rem;
-    border-radius: 50px; min-width: 24px; text-align: center;
-}
-.cat-item.active .cat-item-count { background: rgba(220,38,38,.1); color: var(--primary); }
-
-/* ── Category chips (mobile) ── */
 .cat-chips-row {
-    display: none; gap: .5rem; overflow-x: auto; padding: 1.25rem 1.5rem 1rem;
+    max-width: 1280px; margin: 0 auto;
+    display: flex; gap: .5rem; overflow-x: auto; padding: .9rem 1.5rem;
     scrollbar-width: none; -ms-overflow-style: none;
 }
 .cat-chips-row::-webkit-scrollbar { display: none; }
-@media (max-width: 900px) { .cat-chips-row { display: flex; } }
 .cat-chip {
-    flex-shrink: 0; padding: .42rem 1.1rem; border-radius: 50px;
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: .45rem;
+    padding: .45rem 1rem; border-radius: 50px;
     border: 1.5px solid var(--border); background: var(--white);
-    font-size: .81rem; font-weight: 600; color: var(--text);
+    font-size: .82rem; font-weight: 600; color: var(--text);
     cursor: pointer; transition: all .2s; white-space: nowrap;
 }
-.cat-chip.active, .cat-chip:hover {
-    background: var(--primary); border-color: var(--primary); color: #fff;
+.cat-chip:hover { border-color: var(--primary); color: var(--primary); }
+.cat-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cat-chip-count {
+    background: var(--bg); color: var(--muted);
+    font-size: .7rem; font-weight: 700; padding: .05rem .45rem;
+    border-radius: 50px; min-width: 20px; text-align: center;
 }
+.cat-chip.active .cat-chip-count { background: rgba(255,255,255,.22); color: #fff; }
 
 /* ── Main feed ── */
 .menu-feed { min-width: 0; }
-.section-block { margin-bottom: 3rem; }
+.section-block { margin-bottom: 3rem; scroll-margin-top: calc(var(--nav-h, 72px) + var(--tabs-h, 70px) + 12px); }
 .section-heading {
     display: flex; align-items: center; gap: .75rem;
     margin-bottom: 1.25rem; padding-bottom: .75rem;
@@ -536,20 +503,6 @@
             <p class="hero-sub">
                 Browse our full menu, add your favorites to the cart, and enjoy a seamless ordering experience right from your table.
             </p>
-            <div class="hero-stats">
-                <div>
-                    <div class="hero-stat-value">{{ $menuItems->count() }}</div>
-                    <div class="hero-stat-label">Menu Items</div>
-                </div>
-                <div>
-                    <div class="hero-stat-value">{{ $categories->count() }}</div>
-                    <div class="hero-stat-label">Categories</div>
-                </div>
-                <div>
-                    <div class="hero-stat-value" style="color:var(--accent);">₱</div>
-                    <div class="hero-stat-label">Best Prices</div>
-                </div>
-            </div>
         </div>
         <div class="hero-icons" aria-hidden="true">
             <i class="fas fa-bowl-food"></i>
@@ -557,41 +510,30 @@
     </div>
 </section>
 
-{{-- ── Category chips (mobile) ── --}}
-<div class="cat-chips-row" id="catChipsMobile">
-    <a href="{{ route('catalog.index', array_filter(['q' => request('q')])) }}"
-       class="cat-chip {{ !request('category') ? 'active' : '' }}">All</a>
-    @foreach($categories as $cat)
-        @if($cat->menu_items_count > 0)
-        <a href="{{ route('catalog.index', array_filter(['q' => request('q'), 'category' => $cat->id])) }}"
-           class="cat-chip {{ request('category') == $cat->id ? 'active' : '' }}">
-            {{ $cat->category_name }}
-        </a>
-        @endif
-    @endforeach
-</div>
-
-{{-- ══ MAIN CATALOG LAYOUT ══ --}}
-<div class="catalog-layout">
-
-    {{-- ── Sidebar: Categories ── --}}
-    <aside class="cat-sidebar">
-        <div class="cat-sidebar-header">Categories</div>
+{{-- ── Category tabs ── --}}
+<div class="cat-tabs-bar">
+    <nav class="cat-chips-row" id="catChips" aria-label="Menu categories">
         <a href="{{ route('catalog.index', array_filter(['q' => request('q')])) }}"
-           class="cat-item {{ !request('category') ? 'active' : '' }}">
-            <span><i class="fas fa-th-large" style="margin-right:.5rem;opacity:.6;"></i> All Items</span>
-            <span class="cat-item-count">{{ $menuItems->count() }}</span>
+           data-cat="all" class="cat-chip {{ !request('category') ? 'active' : '' }}"
+           @if(!request('category')) aria-current="page" @endif>
+            <i class="fas fa-th-large" style="font-size:.75rem;opacity:.75"></i> All Items
+            <span class="cat-chip-count">{{ $menuItems->count() }}</span>
         </a>
         @foreach($categories as $cat)
             @if($cat->menu_items_count > 0)
             <a href="{{ route('catalog.index', array_filter(['q' => request('q'), 'category' => $cat->id])) }}"
-               class="cat-item {{ request('category') == $cat->id ? 'active' : '' }}">
-                <span>{{ $cat->category_name }}</span>
-                <span class="cat-item-count">{{ $cat->menu_items_count }}</span>
+               data-cat="{{ $cat->id }}" class="cat-chip {{ request('category') == $cat->id ? 'active' : '' }}"
+               @if(request('category') == $cat->id) aria-current="page" @endif>
+                {{ $cat->category_name }}
+                <span class="cat-chip-count">{{ $cat->menu_items_count }}</span>
             </a>
             @endif
         @endforeach
-    </aside>
+    </nav>
+</div>
+
+{{-- ══ MAIN CATALOG LAYOUT ══ --}}
+<div class="catalog-layout">
 
     {{-- ── Menu Feed ── --}}
     <main class="menu-feed">
@@ -748,6 +690,75 @@
 
 @section('scripts')
 <script>
+/* Category tabs: stick under the nav bar; on "All Items" they jump to sections and follow the scroll */
+(function () {
+    const root    = document.documentElement;
+    const nav     = document.querySelector('.top-nav');
+    const tabsBar = document.querySelector('.cat-tabs-bar');
+    const row     = document.getElementById('catChips');
+    const chips   = Array.from(row.querySelectorAll('.cat-chip'));
+
+    const measure = () => {
+        if (nav) root.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+        if (tabsBar) root.style.setProperty('--tabs-h', tabsBar.offsetHeight + 'px');
+    };
+    measure();
+    window.addEventListener('resize', measure);
+
+    // Scroll only the tab row sideways (never the page) so the highlighted tab is visible
+    function revealChip(chip, smooth) {
+        const left = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+        row.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function highlight(cat) {
+        chips.forEach(c => {
+            const on = c.dataset.cat === cat;
+            c.classList.toggle('active', on);
+            on ? c.setAttribute('aria-current', 'true') : c.removeAttribute('aria-current');
+            if (on) revealChip(c, true);
+        });
+    }
+
+    const active = row.querySelector('.cat-chip.active');
+    if (active) revealChip(active, false);
+
+    // Section-following only applies to the grouped "All Items" view (not a single category or a search)
+    const sections = Array.from(document.querySelectorAll('.menu-feed .section-block[id^="cat-"]'));
+    if (!sections.length) return;
+
+    chips.forEach(chip => chip.addEventListener('click', e => {
+        e.preventDefault();
+        if (chip.dataset.cat === 'all') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            document.getElementById('cat-' + chip.dataset.cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        highlight(chip.dataset.cat);
+    }));
+
+    // Highlight the section whose heading has passed under the sticky tabs
+    let ticking = false;
+    function onScroll() {
+        ticking = false;
+        const line = (nav ? nav.offsetHeight : 0) + (tabsBar ? tabsBar.offsetHeight : 0) + 24;
+        let current = 'all';
+        for (const s of sections) {
+            if (s.getBoundingClientRect().top <= line) current = s.id.replace('cat-', '');
+        }
+        // At the very bottom, the last section may never reach the line — select it anyway
+        if (window.innerHeight + window.scrollY >= root.scrollHeight - 2) {
+            current = sections[sections.length - 1].id.replace('cat-', '');
+        }
+        const shown = row.querySelector('.cat-chip.active');
+        if (!shown || shown.dataset.cat !== current) highlight(current);
+    }
+    window.addEventListener('scroll', () => {
+        if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
+    }, { passive: true });
+    onScroll();
+})();
+
 /* ══════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════ */
