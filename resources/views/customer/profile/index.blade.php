@@ -469,7 +469,7 @@
                         <div class="field">
                             <label>New Password <span class="req">*</span></label>
                             <div class="pwd-wrap">
-                                <input type="password" name="new_password" id="newPwd" placeholder="Create a strong password" required oninput="checkMatch()">
+                                <input type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false" name="new_password" id="newPwd" placeholder="Create a strong password" required oninput="checkMatch()">
                                 <button type="button" class="pwd-toggle" onclick="togglePwd('newPwd', this)"><i class="fas fa-eye"></i></button>
                             </div>
                             @include('partials.password-checklist', ['inputId' => 'newPwd'])
@@ -478,7 +478,7 @@
                         <div class="field">
                             <label>Confirm New Password <span class="req">*</span></label>
                             <div class="pwd-wrap">
-                                <input type="password" name="new_password_confirmation" id="confPwd" placeholder="Re-enter new password" required>
+                                <input type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false" name="new_password_confirmation" id="confPwd" placeholder="Re-enter new password" required>
                                 <button type="button" class="pwd-toggle" onclick="togglePwd('confPwd', this)"><i class="fas fa-eye"></i></button>
                             </div>
                             <div id="matchMsg" style="font-size:.74rem;margin-top:.3rem"></div>

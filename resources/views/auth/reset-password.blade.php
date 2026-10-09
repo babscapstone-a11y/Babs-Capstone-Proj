@@ -332,7 +332,7 @@
                         <span class="icon" aria-hidden="true"><i class="fas fa-lock"></i></span>
                         <input
                             id="password"
-                            type="password"
+                            type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
                             name="password"
                             required
                             autofocus
@@ -360,7 +360,7 @@
                         <span class="icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
                         <input
                             id="password_confirmation"
-                            type="password"
+                            type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
                             name="password_confirmation"
                             required
                             autocomplete="new-password"

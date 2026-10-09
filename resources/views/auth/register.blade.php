@@ -624,7 +624,7 @@
                         <input
                             id="password"
                             name="password"
-                            type="password"
+                            type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
                             required
                             autocomplete="new-password"
                             placeholder="Create a strong password"
@@ -663,7 +663,7 @@
                         <input
                             id="password_confirmation"
                             name="password_confirmation"
-                            type="password"
+                            type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
                             required
                             autocomplete="new-password"
                             placeholder="Re-enter your password"

@@ -146,7 +146,7 @@
                         </label>
                         <div class="input-wrap @error('password') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-lock"></i></span>
-                            <input id="password" name="password" type="password" class="form-input"
+                            <input id="password" name="password" type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false" class="form-input"
                                    required placeholder="Create a strong password" autocomplete="new-password"
                                    aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}">
                             <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password">
@@ -165,7 +165,7 @@
                         </label>
                         <div class="input-wrap" id="confirmWrap">
                             <span class="input-icon"><i class="fas fa-shield-halved"></i></span>
-                            <input id="password_confirmation" name="password_confirmation" type="password"
+                            <input id="password_confirmation" name="password_confirmation" type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
                                    class="form-input" required placeholder="Re-enter password" autocomplete="new-password">
                             <button type="button" class="toggle-pwd" id="toggleConfirm" aria-label="Show confirm password">
                                 <i class="fas fa-eye" id="toggleConfirmIcon"></i>
