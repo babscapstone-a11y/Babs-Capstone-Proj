@@ -18,7 +18,7 @@ class MenuItemController extends Controller
     {
         $this->authorize('viewAny', MenuItem::class);
 
-        $query = MenuItem::with(['category', 'rtcItem']);
+        $query = MenuItem::with('category');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {

@@ -11,11 +11,8 @@
                 <th>Category</th>
                 <th>Type</th>
                 <th>Price</th>
-                <th>RTC Material</th>
-                <th>RTC Servings</th>
                 <th>Availability</th>
                 <th>Status</th>
-                <th>Created</th>
                 <th style="text-align:right">Actions</th>
             </tr>
         </thead>
@@ -49,25 +46,6 @@
                 </td>
                 <td class="price-val">₱{{ number_format($item->price, 2) }}</td>
                 <td>
-                    @if($item->rtcItem)
-                        <div class="rtc-cell">
-                            <div style="font-weight:600">{{ $item->rtcItem->item_name }}</div>
-                            <div style="font-size:.72rem;color:var(--muted)">{{ $item->rtcItem->unit }}</div>
-                        </div>
-                    @else
-                        <span class="rtc-none">{{ $item->item_type === 'beverage' ? 'N/A' : '—' }}</span>
-                    @endif
-                </td>
-                <td>
-                    @if($item->rtc_quantity)
-                        <span class="rtc-cell">{{ number_format($item->rtc_servings, 0) }}
-                            <span style="color:var(--muted);font-size:.72rem">servings</span>
-                        </span>
-                    @else
-                        <span class="rtc-none">—</span>
-                    @endif
-                </td>
-                <td>
                     @if($item->is_available)
                         <span class="badge badge-avail-yes"><i class="fas fa-circle" style="font-size:.45rem"></i> Available</span>
                     @else
@@ -80,9 +58,6 @@
                     @else
                         <span class="badge badge-inactive"><i class="fas fa-circle" style="font-size:.45rem"></i> Inactive</span>
                     @endif
-                </td>
-                <td style="white-space:nowrap;font-size:.75rem;color:var(--muted)">
-                    {{ $item->created_at->format('M d, Y') }}
                 </td>
                 <td>
                     <div class="action-group" style="justify-content:flex-end">
@@ -107,7 +82,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="11">
+                <td colspan="8">
                     <div class="empty-state">
                         <i class="fas fa-utensils" style="color:var(--muted)"></i>
                         <h3>No Menu Items Found</h3>
