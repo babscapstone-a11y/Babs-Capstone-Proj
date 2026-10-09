@@ -52,6 +52,7 @@
         background: linear-gradient(145deg, #1a0505 0%, #2a0808 35%, #111827 70%, #0d1117 100%);
         display: flex;
         align-items: center;
+        justify-content: center;
         padding: 3.5rem;
     }
 
@@ -100,33 +101,34 @@
 
     /* Inner content */
     .left-inner {
-        max-width: 500px;
+        max-width: 520px;
         position: relative;
         z-index: 1;
-        margin-left: 5rem;
+        display: flex; flex-direction: column; align-items: center;
+        text-align: center;
     }
 
-    /* Logo */
-    .logo-wrap { display: flex; align-items: center; gap: .9rem; }
+    /* Logo — stacked above the name, large enough that the lettering is readable */
+    .logo-wrap { display: flex; flex-direction: column; align-items: center; gap: .75rem; }
     .logo-img {
-        width: 96px; height: 96px;
+        width: 160px; height: 160px;
         object-fit: contain;
         flex-shrink: 0;
-        filter: drop-shadow(0 10px 28px rgba(220,38,38,0.35));
+        filter: drop-shadow(0 12px 32px rgba(220,38,38,0.35));
     }
-    .brand-name { color: var(--white); font-weight: 800; font-size: 1.1rem; line-height: 1.2; }
+    .brand-name { color: var(--white); font-weight: 800; font-size: 1.6rem; line-height: 1.2; letter-spacing: .04em; }
 
     /* Accent divider */
     .left-divider {
-        width: 48px; height: 3px;
+        width: 56px; height: 3px;
         background: linear-gradient(90deg, var(--primary), var(--accent));
         border-radius: 2px;
-        margin: 1.65rem 0 1.25rem;
+        margin: 1.5rem auto 1.4rem;
     }
 
     /* Heading with staggered word reveal */
     .left-heading {
-        font-size: 2.75rem; font-weight: 900;
+        font-size: 3.1rem; font-weight: 900;
         color: var(--white);
         line-height: 1.08;
         margin: 0;
@@ -394,7 +396,8 @@
         .right-side { padding: 1.25rem; }
         .login-card { padding: 1.75rem 1.25rem; border-radius: 20px; }
         .left-heading { font-size: 1.7rem; }
-        .logo-img { width: 76px; height: 76px; }
+        .logo-img { width: 110px; height: 110px; }
+        .brand-name { font-size: 1.3rem; }
     }
 </style>
 
@@ -435,7 +438,7 @@
             <!-- Tagline -->
             <div class="tagline-pill">
                 <span class="tagline-dot" aria-hidden="true"></span>
-                Be Always Busog Saraap
+                Be Always Busog Sarap
             </div>
         </div>
     </div>
