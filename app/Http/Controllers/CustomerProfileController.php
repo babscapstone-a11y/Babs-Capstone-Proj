@@ -30,7 +30,8 @@ class CustomerProfileController extends Controller
         $orders = Order::where('customer_id', $customer->id)
             ->with(['orderStatus', 'details', 'cancellationRequest'])
             ->orderByDesc('created_at')
-            ->paginate(8, ['*'], 'page');
+            ->paginate(8, ['*'], 'page')
+            ->appends(['tab' => 'orders']);   // page links stay on the Order History tab
 
         return view('customer.profile.index', [
             'customer'  => $customer,
@@ -73,7 +74,7 @@ class CustomerProfileController extends Controller
             'profile_picture' => $picturePath,
         ])->save();
 
-        return redirect()->route('account.index', ['#profile'])
+        return redirect()->route('account.index', ['tab' => 'profile'])
             ->with('success', 'Profile updated successfully!');
     }
 
@@ -82,14 +83,13 @@ class CustomerProfileController extends Controller
         $customer = auth('customer')->user();
 
         if (! Hash::check($request->current_password, $customer->password)) {
-            return back()
-                ->withErrors(['current_password' => 'The current password is incorrect.'])
-                ->withFragment('password');
+            return redirect()->route('account.index', ['tab' => 'security'])
+                ->withErrors(['current_password' => 'The current password is incorrect.']);
         }
 
         $customer->update(['password' => Hash::make($request->new_password)]);
 
-        return redirect()->route('account.index', ['#password'])
+        return redirect()->route('account.index', ['tab' => 'security'])
             ->with('success', 'Password changed successfully!');
     }
 

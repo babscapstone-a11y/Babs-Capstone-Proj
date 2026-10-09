@@ -501,7 +501,7 @@
                     <a href="{{ route('account.index') }}" class="dropdown-item">
                         <i class="fas fa-user"></i> My Profile
                     </a>
-                    <a href="{{ route('account.index', ['#orders']) }}" class="dropdown-item">
+                    <a href="{{ route('account.index', ['tab' => 'orders']) }}" class="dropdown-item">
                         <i class="fas fa-receipt"></i> Order History
                     </a>
                     <div style="height:1px;background:var(--border)"></div>

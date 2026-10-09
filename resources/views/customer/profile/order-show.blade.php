@@ -210,7 +210,7 @@
 
     {{-- Top bar --}}
     <div class="top-bar fade-up">
-        <a href="{{ route('account.index', ['#orders']) }}" class="back-link">
+        <a href="{{ route('account.index', ['tab' => 'orders']) }}" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Orders
         </a>
         <div style="display:flex;gap:.6rem">
@@ -614,7 +614,7 @@
                 <i class="fas fa-ban"></i> Request Cancellation
             </button>
             @endif
-            <a href="{{ route('account.index', ['#orders']) }}" class="btn btn-outline" style="justify-content:center">
+            <a href="{{ route('account.index', ['tab' => 'orders']) }}" class="btn btn-outline" style="justify-content:center">
                 <i class="fas fa-arrow-left"></i> Back to Orders
             </a>
             <a href="{{ route('catalog.index') }}" class="btn btn-primary" style="justify-content:center">

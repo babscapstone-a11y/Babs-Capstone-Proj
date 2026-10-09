@@ -80,16 +80,34 @@
 .profile-meta-row i { width: 16px; text-align: center; color: var(--primary); font-size: .8rem; }
 .profile-meta-row span { color: var(--text); font-weight: 500; }
 
-/* ══ QUICK NAV ════════════════════════════════════════════ */
-.quick-nav .qn-item {
-    display: flex; align-items: center; gap: .75rem;
-    padding: .75rem 1.25rem; font-size: .85rem; font-weight: 500;
-    color: var(--text); cursor: pointer; transition: all .17s;
-    border-left: 3px solid transparent;
+/* ══ TABS ═════════════════════════════════════════════════ */
+.profile-tabs {
+    display: flex; gap: .35rem;
+    background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+    padding: .35rem; margin-bottom: 1.25rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06);
+    overflow-x: auto;
 }
-.quick-nav .qn-item:hover { background: #FEF2F2; color: var(--primary); border-left-color: var(--primary); }
-.quick-nav .qn-item i { width: 18px; text-align: center; color: var(--muted); font-size: .9rem; transition: color .17s; }
-.quick-nav .qn-item:hover i { color: var(--primary); }
+.profile-tab {
+    flex: 1; min-width: max-content;
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    padding: .7rem 1rem; border: none; border-radius: 10px;
+    background: transparent; color: var(--muted);
+    font-family: inherit; font-size: .86rem; font-weight: 600;
+    cursor: pointer; transition: background .17s, color .17s;
+}
+.profile-tab:hover { background: #FEF2F2; color: var(--primary); }
+.profile-tab.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(220,38,38,.25); }
+.profile-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tab-count {
+    background: rgba(0,0,0,.08); color: inherit;
+    font-size: .7rem; font-weight: 700; border-radius: 50px; padding: .05rem .5rem;
+}
+.profile-tab.active .tab-count { background: rgba(255,255,255,.25); }
+.tab-panel { animation: fadeUp .3s cubic-bezier(.22,1,.36,1) both; }
+@media (max-width: 520px) {
+    .profile-tab { padding: .65rem .75rem; font-size: .8rem; }
+}
 
 /* ══ SECTION HEADERS ══════════════════════════════════════ */
 .card-header {
@@ -307,10 +325,6 @@
 
                     <div class="profile-meta">
                         <div class="profile-meta-row">
-                            <i class="fas fa-id-badge"></i>
-                            Customer ID: <span>#{{ str_pad($customer->id, 5, '0', STR_PAD_LEFT) }}</span>
-                        </div>
-                        <div class="profile-meta-row">
                             <i class="fas fa-calendar"></i>
                             Joined: <span>{{ $customer->created_at->format('M d, Y') }}</span>
                         </div>
@@ -330,24 +344,42 @@
                 </div>
             </div>
 
-            {{-- Quick Nav --}}
-            <div class="card quick-nav fade-up-2">
-                <div class="card-header">
-                    <h2><i class="fas fa-bars"></i> Quick Navigation</h2>
-                </div>
-                <a href="#profile"   class="qn-item"><i class="fas fa-user"></i> Profile Information</a>
-                <a href="#password"  class="qn-item"><i class="fas fa-lock"></i> Change Password</a>
-                <a href="#orders"    class="qn-item"><i class="fas fa-receipt"></i> Order History</a>
-                <a href="{{ route('catalog.index') }}" class="qn-item"><i class="fas fa-utensils"></i> Browse Menu</a>
-            </div>
-
         </div>
 
-        {{-- ═══ RIGHT CONTENT ═══════════════════════════════════════ --}}
+        {{-- ═══ RIGHT CONTENT (tabs) ═══════════════════════════════ --}}
+        @php
+            // Open the tab that matches any validation error, otherwise the ?tab= in the URL
+            $tabs = [
+                'profile'  => ['icon' => 'fa-user-pen',  'label' => 'Profile Information'],
+                'security' => ['icon' => 'fa-lock',      'label' => 'Security'],
+                'orders'   => ['icon' => 'fa-receipt',   'label' => 'Order History'],
+            ];
+            if ($errors->hasAny(['current_password', 'new_password'])) {
+                $activeTab = 'security';
+            } elseif ($errors->any()) {
+                $activeTab = 'profile';
+            } else {
+                $activeTab = array_key_exists(request('tab'), $tabs) ? request('tab') : 'profile';
+            }
+        @endphp
         <div>
 
+            <div class="profile-tabs fade-up" role="tablist" aria-label="My profile sections">
+                @foreach($tabs as $key => $tab)
+                <button type="button" role="tab" class="profile-tab {{ $activeTab === $key ? 'active' : '' }}"
+                        id="tab-{{ $key }}" data-tab="{{ $key }}"
+                        aria-controls="panel-{{ $key }}" aria-selected="{{ $activeTab === $key ? 'true' : 'false' }}"
+                        tabindex="{{ $activeTab === $key ? '0' : '-1' }}">
+                    <i class="fas {{ $tab['icon'] }}"></i> <span>{{ $tab['label'] }}</span>
+                    @if($key === 'orders' && $orders->total() > 0)
+                        <span class="tab-count">{{ $orders->total() }}</span>
+                    @endif
+                </button>
+                @endforeach
+            </div>
+
             {{-- ─── PROFILE INFORMATION ─────────────────────────────── --}}
-            <div class="card fade-up" id="profile">
+            <div class="card tab-panel" id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" @if($activeTab !== 'profile') hidden @endif>
                 <div class="card-header">
                     <h2><i class="fas fa-user-pen"></i> Profile Information</h2>
                     <span class="hd-sub">Update your personal details</span>
@@ -393,10 +425,6 @@
 
                         {{-- Read-only fields --}}
                         <div class="form-row">
-                            <div class="field">
-                                <label>Customer ID</label>
-                                <input type="text" value="#{{ str_pad($customer->id, 5, '0', STR_PAD_LEFT) }}" readonly>
-                            </div>
                             <div class="field">
                                 <label>Date Registered</label>
                                 <input type="text" value="{{ $customer->created_at->format('F d, Y') }}" readonly>
@@ -447,8 +475,8 @@
                 </form>
             </div>
 
-            {{-- ─── CHANGE PASSWORD ──────────────────────────────────── --}}
-            <div class="card fade-up-2" id="password">
+            {{-- ─── SECURITY (change password) ───────────────────────── --}}
+            <div class="card tab-panel" id="panel-security" role="tabpanel" aria-labelledby="tab-security" @if($activeTab !== 'security') hidden @endif>
                 <div class="card-header">
                     <h2><i class="fas fa-lock"></i> Change Password</h2>
                     <span class="hd-sub">Keep your account secure</span>
@@ -495,7 +523,7 @@
             </div>
 
             {{-- ─── ORDER HISTORY ────────────────────────────────────── --}}
-            <div class="card fade-up-3" id="orders">
+            <div class="card tab-panel" id="panel-orders" role="tabpanel" aria-labelledby="tab-orders" @if($activeTab !== 'orders') hidden @endif>
                 <div class="card-header">
                     <h2><i class="fas fa-receipt"></i> Order History</h2>
                     <span class="hd-sub">{{ $orders->total() }} {{ Str::plural('order', $orders->total()) }}</span>
@@ -684,20 +712,42 @@ function resetPwdForm() {
     document.getElementById('matchMsg').textContent = '';
 }
 
-/* Smooth scroll for quick nav links */
-document.querySelectorAll('.qn-item[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-        e.preventDefault();
-        const el = document.querySelector(a.getAttribute('href'));
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-});
+/* Tabs: Profile Information / Security / Order History */
+(function () {
+    const tabs = Array.from(document.querySelectorAll('.profile-tab'));
 
-/* Auto-scroll to error section */
-@if($errors->has('current_password') || $errors->has('new_password'))
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-@endif
+    function activate(tab, focus) {
+        tabs.forEach(t => {
+            const on = t === tab;
+            t.classList.toggle('active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+            document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+        });
+        if (focus) tab.focus();
+
+        // Keep the open tab in the URL so refresh / back keeps you on it
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tab.dataset.tab);
+        url.hash = '';
+        history.replaceState(null, '', url);
+    }
+
+    tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => activate(tab, false));
+        // Arrow keys move between tabs (standard tab keyboard behaviour)
+        tab.addEventListener('keydown', e => {
+            const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+            if (step) {
+                e.preventDefault();
+                activate(tabs[(i + step + tabs.length) % tabs.length], true);
+            }
+        });
+    });
+
+    // Old links that used #password / #orders still open the right tab
+    const legacy = { '#profile': 'profile', '#password': 'security', '#orders': 'orders' }[window.location.hash];
+    if (legacy) activate(document.getElementById('tab-' + legacy), false);
+})();
 </script>
 @endsection
