@@ -5,8 +5,8 @@
 <style>
 @media print {
     .no-print{display:none!important}
-    body,.inv-page{background:#fff!important}
-    .card{box-shadow:none!important;border:1px solid #ddd!important}
+    body,.inv-page{background:var(--surface)!important}
+    .card{box-shadow:none!important;border:1px solid var(--line-2)!important}
     .page-header{margin-bottom:1rem!important}
     .print-header{display:block!important}
 }
@@ -17,29 +17,29 @@
 .page-sub{font-size:.83rem;color:var(--muted);margin-top:.25rem}
 .print-header{display:none;text-align:center;margin-bottom:1.5rem}
 .print-header h2{font-size:1.2rem;font-weight:800;margin:0}
-.print-header p{font-size:.8rem;color:#666;margin:.25rem 0 0}
+.print-header p{font-size:.8rem;color:var(--muted);margin:.25rem 0 0}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
 .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.badge-low{background:#FEF3C7;color:#B45309}.badge-out{background:#FEE2E2;color:#B91C1C}
-.badge-rtc{background:#EFF6FF;color:#1D4ED8}.badge-bev{background:#F5F3FF;color:#6D28D9}
-.section-hd{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--dark);padding:.7rem 1.25rem;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
-.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:1.5rem}
+.badge-low{background:var(--amber-100);color:var(--amber-700)}.badge-out{background:var(--red-100);color:var(--red-700)}
+.badge-rtc{background:var(--blue-50);color:var(--blue-700)}.badge-bev{background:var(--violet-50);color:var(--violet-700)}
+.section-hd{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--dark);padding:.7rem 1.25rem;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:1.5rem}
 .table-wrap{overflow-x:auto}
 .inv-table{width:100%;border-collapse:collapse;font-size:.83rem}
-.inv-table th{padding:.6rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#F8FAFC;border-bottom:1px solid var(--border)}
-.inv-table td{padding:.8rem 1rem;border-bottom:1px solid #F3F4F6;color:var(--dark);vertical-align:middle}
+.inv-table th{padding:.6rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.inv-table td{padding:.8rem 1rem;border-bottom:1px solid var(--line);color:var(--dark);vertical-align:middle}
 .inv-table tr:last-child td{border-bottom:none}
-.inv-table tr.out td{background:#FFF5F5}
+.inv-table tr.out td{background:var(--red-25)}
 .empty-row td{text-align:center;color:var(--muted);padding:2rem;font-size:.84rem}
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:#fff;border-radius:14px;padding:1rem 1.2rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat-card{background:var(--surface);border-radius:14px;padding:1rem 1.2rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07)}
 .stat-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;margin-bottom:.6rem}
 .stat-value{font-size:1.5rem;font-weight:800;color:var(--dark);line-height:1}
 .stat-label{font-size:.72rem;font-weight:600;color:var(--muted);margin-top:.2rem;text-transform:uppercase;letter-spacing:.04em}
-.stat-icon.amber{background:#FFFBEB;color:#D97706}.stat-icon.red{background:#FEF2F2;color:#DC2626}.stat-icon.blue{background:#EFF6FF;color:#2563EB}
+.stat-icon.amber{background:var(--amber-50);color:var(--amber-600)}.stat-icon.red{background:var(--red-50);color:var(--red-600)}.stat-icon.blue{background:var(--blue-50);color:var(--blue-600)}
 .reorder-qty{font-weight:700;color:var(--primary)}
 </style>
 @endsection
@@ -99,7 +99,7 @@
 
     @if((!$statusFilter || $statusFilter === 'out_of_stock') && $outOfStockItems->isNotEmpty())
     <div class="card">
-        <div class="section-hd" style="background:#FFF5F5;border-bottom-color:#FECACA;color:#B91C1C"><i class="fas fa-circle-xmark"></i> Out of Stock — Urgent Repurchase Needed</div>
+        <div class="section-hd" style="background:var(--red-25);border-bottom-color:var(--red-200);color:var(--red-700)"><i class="fas fa-circle-xmark"></i> Out of Stock — Urgent Repurchase Needed</div>
         <div class="table-wrap">
             <table class="inv-table">
                 <thead>
@@ -137,7 +137,7 @@
 
     @if((!$statusFilter || $statusFilter === 'low_stock') && $lowStockItems->isNotEmpty())
     <div class="card">
-        <div class="section-hd" style="background:#FFFBEB;border-bottom-color:#FDE68A;color:#B45309"><i class="fas fa-triangle-exclamation"></i> Low Stock — Replenish Soon</div>
+        <div class="section-hd" style="background:var(--amber-50);border-bottom-color:var(--amber-200);color:var(--amber-700)"><i class="fas fa-triangle-exclamation"></i> Low Stock — Replenish Soon</div>
         <div class="table-wrap">
             <table class="inv-table">
                 <thead>
@@ -184,7 +184,7 @@
     @endphp
     @if($showEmpty)
     <div class="card" style="padding:3rem;text-align:center">
-        <i class="fas fa-circle-check" style="font-size:2.5rem;color:#16A34A;margin-bottom:1rem;display:block"></i>
+        <i class="fas fa-circle-check" style="font-size:2.5rem;color:var(--green-600);margin-bottom:1rem;display:block"></i>
         <div style="font-size:1.1rem;font-weight:700;color:var(--dark)">
             @if($statusFilter === 'out_of_stock')
                 No items are out of stock!

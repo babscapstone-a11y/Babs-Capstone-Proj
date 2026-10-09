@@ -10,12 +10,12 @@
         cursor: pointer; text-decoration: none; flex-shrink: 0;
         transition: background .18s ease, color .18s ease, border-color .18s ease;
     }
-    .act-btn.act-view    { background: var(--white); border-color: var(--border); color: var(--dark); }
+    .act-btn.act-view    { background: var(--surface); border-color: var(--border); color: var(--dark); }
     .act-btn.act-view:hover    { border-color: var(--primary); color: var(--primary); }
-    .act-btn.act-edit    { background: rgba(17,24,39,0.07); color: var(--dark); }
-    .act-btn.act-edit:hover    { background: rgba(17,24,39,0.14); }
+    .act-btn.act-edit    { background: rgba(var(--ink-rgb),0.07); color: var(--dark); }
+    .act-btn.act-edit:hover    { background: rgba(var(--ink-rgb),0.14); }
     .act-btn.act-danger  { background: rgba(220,38,38,0.1); color: var(--primary); }
     .act-btn.act-danger:hover  { background: var(--primary); color: var(--white); }
-    .act-btn.act-success { background: rgba(22,163,74,0.1); color: #16A34A; }
+    .act-btn.act-success { background: rgba(22,163,74,0.1); color: var(--green-600); }
     .act-btn.act-success:hover { background: #16A34A; color: var(--white); }
 </style>

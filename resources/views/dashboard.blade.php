@@ -11,7 +11,7 @@
 <style>
     /* ── Welcome banner ─────────────────────────────────────── */
     .welcome-banner {
-        background: linear-gradient(135deg, var(--dark) 0%, #1F2937 55%, #2D1515 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, #1F2937 55%, #2D1515 100%);
         border-radius: 20px;
         padding: 2rem 2.25rem;
         display: flex;
@@ -68,11 +68,11 @@
         margin-bottom: 1.75rem;
     }
     .stat-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 1.35rem 1.4rem;
         border: 1.5px solid var(--border);
-        box-shadow: 0 2px 12px rgba(17,24,39,0.05);
+        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05);
         position: relative;
         overflow: hidden;
         transition: transform .22s ease, box-shadow .22s ease;
@@ -80,7 +80,7 @@
     }
     .stat-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 28px rgba(17,24,39,0.10);
+        box-shadow: 0 10px 28px rgba(var(--ink-rgb),0.10);
     }
     .stat-card::after {
         content: '';
@@ -125,11 +125,11 @@
         margin-bottom: 1.75rem;
     }
     .widget-card {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(17,24,39,0.04);
+        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.04);
     }
     .widget-header {
         padding: .9rem 1.2rem;
@@ -168,7 +168,7 @@
     .coming-soon-pill {
         display: inline-flex; align-items: center; gap: .3rem;
         background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.25);
-        color: #D97706; border-radius: 50px; font-size: .68rem; font-weight: 700;
+        color: var(--amber-600); border-radius: 50px; font-size: .68rem; font-weight: 700;
         padding: .2rem .6rem; margin-top: .75rem; letter-spacing: .04em;
         text-transform: uppercase;
     }
@@ -213,7 +213,7 @@
     }
     .cancel-table td { padding: .7rem .9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .cancel-table tbody tr:last-child td { border-bottom: none; }
-    .cancel-table tbody tr:hover { background: #FAFAFA; }
+    .cancel-table tbody tr:hover { background: var(--surface-2); }
 
     /* ── Responsive ─────────────────────────────────────────── */
     @media (max-width: 1100px) {
@@ -303,7 +303,7 @@
                 <i class="fas fa-play"></i> End Downtime Now
             </button>
         @else
-            <button type="button" class="btn btn-secondary btn-sm" style="color:#D97706;border-color:rgba(217,119,6,.3)" onclick="openDowntimeModal()">
+            <button type="button" class="btn btn-secondary btn-sm" style="color:var(--amber-600);border-color:rgba(217,119,6,.3)" onclick="openDowntimeModal()">
                 <i class="fas fa-store-slash"></i> Set Downtime
             </button>
         @endif
@@ -311,7 +311,7 @@
 </div>
 
 @if(!$activeDowntime && $upcomingDowntime)
-<div class="anim-2" style="margin:0 0 1.25rem;padding:.65rem 1rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.82rem;color:#92400E;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+<div class="anim-2" style="margin:0 0 1.25rem;padding:.65rem 1rem;background:var(--amber-50);border:1px solid var(--amber-200);border-radius:10px;font-size:.82rem;color:var(--amber-800);display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
     <div>
         <i class="fas fa-calendar-days"></i>
         <strong>Downtime scheduled</strong> — closed from
@@ -325,7 +325,7 @@
         <button type="button" class="btn btn-secondary btn-sm" onclick="openDowntimeModal()">
             <i class="fas fa-pen"></i> Edit
         </button>
-        <button type="button" class="btn btn-secondary btn-sm" style="color:#B91C1C;border-color:rgba(185,28,28,.3)"
+        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--red-700);border-color:rgba(185,28,28,.3)"
             onclick="openModal({
                 type: 'warn', iconClass: 'fas fa-calendar-xmark',
                 title: 'Cancel Scheduled Downtime?',
@@ -356,33 +356,33 @@
 
     {{-- Active Orders (REQ005 – placeholder) --}}
     <div class="stat-card" style="--card-accent: linear-gradient(90deg, #2563EB, #06B6D4)">
-        <div class="stat-icon" style="background:rgba(37,99,235,0.10);color:#2563EB">
+        <div class="stat-icon" style="background:rgba(37,99,235,0.10);color:var(--blue-600)">
             <i class="fas fa-fire-flame-curved"></i>
         </div>
         <div class="stat-label">Active Orders</div>
-        <div class="stat-value" style="color:#2563EB">{{ $activeOrders }}</div>
+        <div class="stat-value" style="color:var(--blue-600)">{{ $activeOrders }}</div>
         <div class="stat-note">Pending, preparing, or ready to hand off</div>
     </div>
 
     {{-- Completed Orders (REQ005 – placeholder) --}}
     <div class="stat-card" style="--card-accent: linear-gradient(90deg, #16A34A, #059669)">
-        <div class="stat-icon" style="background:rgba(22,163,74,0.10);color:#16A34A">
+        <div class="stat-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)">
             <i class="fas fa-circle-check"></i>
         </div>
         <div class="stat-label">Completed Orders</div>
-        <div class="stat-value" style="color:#16A34A">{{ $completedOrdersToday }}</div>
+        <div class="stat-value" style="color:var(--green-600)">{{ $completedOrdersToday }}</div>
         <div class="stat-note">Served or packaged today</div>
     </div>
 
     {{-- Staff Accounts (REQ007 – real data) --}}
     <div class="stat-card" style="--card-accent: linear-gradient(90deg, #F59E0B, #F97316)">
-        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#D97706">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:var(--amber-600)">
             <i class="fas fa-users"></i>
         </div>
         <div class="stat-label">Staff Accounts</div>
-        <div class="stat-value" style="color:#D97706">{{ $totalStaff }}</div>
+        <div class="stat-value" style="color:var(--amber-600)">{{ $totalStaff }}</div>
         <div class="stat-note">
-            <span style="color:#16A34A;font-weight:600">{{ $activeStaff }} active</span>
+            <span style="color:var(--green-600);font-weight:600">{{ $activeStaff }} active</span>
             · {{ $totalStaff - $activeStaff }} inactive
             @if($pendingResets > 0)
                 · <a href="{{ route('password-reset-requests.index') }}" style="color:var(--primary);font-weight:600">{{ $pendingResets }} reset pending</a>
@@ -403,14 +403,14 @@
 
     <div class="stats-grid" style="margin-bottom:1.1rem">
         <div class="stat-card" style="--card-accent: linear-gradient(90deg, #F59E0B, #F97316)">
-            <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#D97706"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:var(--amber-600)"><i class="fas fa-hourglass-half"></i></div>
             <div class="stat-label">Pending Cancellation Requests</div>
-            <div class="stat-value" style="color:#D97706">{{ $pendingCancellations }}</div>
+            <div class="stat-value" style="color:var(--amber-600)">{{ $pendingCancellations }}</div>
         </div>
         <div class="stat-card" style="--card-accent: linear-gradient(90deg, #16A34A, #059669)">
-            <div class="stat-icon" style="background:rgba(22,163,74,0.10);color:#16A34A"><i class="fas fa-circle-check"></i></div>
+            <div class="stat-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)"><i class="fas fa-circle-check"></i></div>
             <div class="stat-label">Approved Today</div>
-            <div class="stat-value" style="color:#16A34A">{{ $approvedCancellationsToday }}</div>
+            <div class="stat-value" style="color:var(--green-600)">{{ $approvedCancellationsToday }}</div>
         </div>
         <div class="stat-card" style="--card-accent: linear-gradient(90deg, #DC2626, #F97316)">
             <div class="stat-icon" style="background:rgba(220,38,38,0.10);color:var(--primary)"><i class="fas fa-circle-xmark"></i></div>
@@ -418,9 +418,9 @@
             <div class="stat-value" style="color:var(--primary)">{{ $rejectedCancellationsToday }}</div>
         </div>
         <div class="stat-card" style="--card-accent: linear-gradient(90deg, #6B7280, #111827)">
-            <div class="stat-icon" style="background:rgba(107,114,128,0.12);color:#374151"><i class="fas fa-ban"></i></div>
+            <div class="stat-icon" style="background:rgba(107,114,128,0.12);color:var(--text-2)"><i class="fas fa-ban"></i></div>
             <div class="stat-label">Cancelled Orders</div>
-            <div class="stat-value" style="color:#374151">{{ $cancelledOrders }}</div>
+            <div class="stat-value" style="color:var(--text-2)">{{ $cancelledOrders }}</div>
         </div>
     </div>
 
@@ -522,7 +522,7 @@
         {{-- Orders Overview --}}
         <div class="widget-card">
             <div class="widget-header">
-                <div class="widget-header-icon" style="background:rgba(37,99,235,0.10);color:#2563EB">
+                <div class="widget-header-icon" style="background:rgba(37,99,235,0.10);color:var(--blue-600)">
                     <i class="fas fa-receipt"></i>
                 </div>
                 <div class="widget-title">Orders Overview</div>
@@ -534,7 +534,7 @@
                 </div>
             @else
                 <div class="widget-body">
-                    <div class="widget-placeholder-icon" style="background:rgba(37,99,235,0.08);color:#2563EB">
+                    <div class="widget-placeholder-icon" style="background:rgba(37,99,235,0.08);color:var(--blue-600)">
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div class="widget-placeholder-title">No Order Data Available</div>
@@ -547,7 +547,7 @@
         {{-- Inventory Overview --}}
         <div class="widget-card">
             <div class="widget-header">
-                <div class="widget-header-icon" style="background:rgba(22,163,74,0.10);color:#16A34A">
+                <div class="widget-header-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)">
                     <i class="fas fa-boxes-stacked"></i>
                 </div>
                 <div class="widget-title">Inventory Status</div>
@@ -557,11 +557,11 @@
                 <div class="widget-body has-chart">
                     <div style="display:flex;gap:.5rem;margin-bottom:.9rem;text-align:center">
                         <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(22,163,74,0.08)">
-                            <div style="font-size:1.3rem;font-weight:800;color:#16A34A">{{ $inventoryOk }}</div>
+                            <div style="font-size:1.3rem;font-weight:800;color:var(--green-600)">{{ $inventoryOk }}</div>
                             <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase">In Stock</div>
                         </div>
                         <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(217,119,6,0.10)">
-                            <div style="font-size:1.3rem;font-weight:800;color:#D97706">{{ $inventoryLow }}</div>
+                            <div style="font-size:1.3rem;font-weight:800;color:var(--amber-600)">{{ $inventoryLow }}</div>
                             <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase">Low</div>
                         </div>
                         <div style="flex:1;padding:.55rem;border-radius:10px;background:rgba(220,38,38,0.08)">
@@ -571,7 +571,7 @@
                     </div>
                     @if($lowStockItems->isEmpty())
                         <div style="text-align:center;color:var(--muted);font-size:.8rem;padding:.9rem 0">
-                            <i class="fas fa-circle-check" style="color:#16A34A"></i> All items are sufficiently stocked.
+                            <i class="fas fa-circle-check" style="color:var(--green-600)"></i> All items are sufficiently stocked.
                         </div>
                     @else
                         <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.35rem">Needs attention</div>
@@ -587,7 +587,7 @@
                 </div>
             @else
                 <div class="widget-body">
-                    <div class="widget-placeholder-icon" style="background:rgba(22,163,74,0.08);color:#16A34A">
+                    <div class="widget-placeholder-icon" style="background:rgba(22,163,74,0.08);color:var(--green-600)">
                         <i class="fas fa-boxes-stacked"></i>
                     </div>
                     <div class="widget-placeholder-title">No Inventory Records</div>
@@ -626,12 +626,12 @@
                        min="{{ now()->format('Y-m-d') }}" value="{{ $selectedStartDate }}"
                        oninput="hideDowntimeJsError();updateDowntimePreview()"
                        class="{{ $errors->has('downtime_start_date') ? 'has-error' : '' }}"
-                       style="flex:1.3;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                       style="flex:1.3;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
                 <input type="time" name="downtime_start_time" id="downtimeStartTime" required
                        value="{{ $selectedStartTime }}"
                        oninput="hideDowntimeJsError();updateDowntimePreview()"
                        class="{{ $errors->has('downtime_start_time') ? 'has-error' : '' }}"
-                       style="flex:1;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                       style="flex:1;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
             </div>
             @error('downtime_start_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             @error('downtime_start_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
@@ -642,23 +642,23 @@
                        min="{{ now()->format('Y-m-d') }}" value="{{ $selectedDate }}"
                        oninput="hideDowntimeJsError();updateDowntimePreview()"
                        class="{{ $errors->has('downtime_date') ? 'has-error' : '' }}"
-                       style="flex:1.3;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                       style="flex:1.3;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
                 <input type="time" name="downtime_time" id="downtimeTime" required
                        value="{{ $selectedTime }}"
                        oninput="hideDowntimeJsError();updateDowntimePreview()"
                        class="{{ $errors->has('downtime_time') ? 'has-error' : '' }}"
-                       style="flex:1;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+                       style="flex:1;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
             </div>
             @error('downtime_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             @error('downtime_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
-            <div id="downtimePreview" style="display:none;margin-top:.7rem;padding:.55rem .8rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.78rem;color:#92400E"></div>
+            <div id="downtimePreview" style="display:none;margin-top:.7rem;padding:.55rem .8rem;background:var(--amber-50);border:1px solid var(--amber-200);border-radius:10px;font-size:.78rem;color:var(--amber-800)"></div>
             <div id="downtimeJsError" class="field-error" style="display:none;margin-top:.5rem"><i class="fas fa-circle-exclamation"></i> <span></span></div>
 
             <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional — shown to customers who try to order)</label>
             <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. We're temporarily closed for staff shortage…"
                       class="{{ $errors->has('reason') ? 'has-error' : '' }}"
-                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $editingDowntime->reason ?? '') }}</textarea>
+                      style="width:100%;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $editingDowntime->reason ?? '') }}</textarea>
             <div class="hint" style="font-size:.72rem;color:var(--muted);margin-top:.3rem">If left blank, customers will just see a generic "temporarily unavailable" message.</div>
             @error('reason')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
@@ -681,6 +681,7 @@
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+@include('partials.chart-theme')
 <script>
 function updateClock() {
     var now  = new Date();

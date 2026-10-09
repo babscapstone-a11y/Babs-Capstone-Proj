@@ -21,12 +21,12 @@
         margin-bottom: 1.5rem;
     }
     .cr-stat {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 14px;
         padding: 1.1rem 1.2rem;
         display: flex; align-items: center; gap: .85rem;
-        box-shadow: 0 2px 8px rgba(17,24,39,0.04);
+        box-shadow: 0 2px 8px rgba(var(--ink-rgb),0.04);
         position: relative; overflow: hidden;
     }
     .cr-stat::after {
@@ -44,7 +44,7 @@
 
     /* ── Filter bar ─────────────────────────────────────────── */
     .filter-bar {
-        background: #fff; border: 1.5px solid var(--border); border-radius: 14px;
+        background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
         padding: .9rem 1.1rem; margin-bottom: 1.25rem;
         display: flex; align-items: center; gap: .65rem; flex-wrap: wrap;
     }
@@ -75,7 +75,7 @@
     .btn-reset:hover { border-color: var(--primary); color: var(--primary); }
 
     /* ── Table ──────────────────────────────────────────────── */
-    .table-card { background: #fff; border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(17,24,39,0.05); }
+    .table-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05); }
     .table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
     .table-header h2 { font-size: .95rem; font-weight: 700; color: var(--dark); margin: 0; }
     .table-wrap { overflow-x: auto; }
@@ -88,7 +88,7 @@
     }
     tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #FAFAFA; }
+    tbody tr:hover { background: var(--surface-2); }
     td { padding: .7rem .9rem; color: var(--dark); vertical-align: middle; }
 
     .cust-name { font-weight: 600; color: var(--dark); font-size: .84rem; }
@@ -102,11 +102,11 @@
         border: 1.5px solid; cursor: pointer; font-family: inherit;
         text-decoration: none; white-space: nowrap; transition: all .18s; background: none;
     }
-    .btn-view  { color: #2563EB; border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); }
+    .btn-view  { color: var(--blue-600); border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); }
     .btn-view:hover { background: rgba(37,99,235,0.12); }
-    .btn-appr  { color: #15803D; border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
+    .btn-appr  { color: var(--green-700); border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
     .btn-appr:hover { background: rgba(22,163,74,0.12); }
-    .btn-rej   { color: #B91C1C; border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+    .btn-rej   { color: var(--red-700); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
     .btn-rej:hover { background: rgba(220,38,38,0.12); }
 
     .empty-state { text-align: center; padding: 3.5rem 2rem; color: var(--muted); }
@@ -127,16 +127,16 @@
 {{-- Summary cards --}}
 <div class="cr-stats anim-1">
     <div class="cr-stat" style="--stat-bar: linear-gradient(90deg,#F59E0B,#F97316)" id="statPendingCard">
-        <div class="cr-stat-icon" style="background:rgba(245,158,11,0.12);color:#D97706"><i class="fas fa-hourglass-half"></i></div>
+        <div class="cr-stat-icon" style="background:rgba(245,158,11,0.12);color:var(--amber-600)"><i class="fas fa-hourglass-half"></i></div>
         <div>
-            <div class="cr-stat-val" id="statPending" style="color:#D97706">{{ $pendingCount }}</div>
+            <div class="cr-stat-val" id="statPending" style="color:var(--amber-600)">{{ $pendingCount }}</div>
             <div class="cr-stat-lbl">Pending Requests</div>
         </div>
     </div>
     <div class="cr-stat" style="--stat-bar: linear-gradient(90deg,#16A34A,#059669)">
-        <div class="cr-stat-icon" style="background:rgba(22,163,74,0.10);color:#16A34A"><i class="fas fa-circle-check"></i></div>
+        <div class="cr-stat-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)"><i class="fas fa-circle-check"></i></div>
         <div>
-            <div class="cr-stat-val" id="statApproved" style="color:#16A34A">{{ $approvedCount }}</div>
+            <div class="cr-stat-val" id="statApproved" style="color:var(--green-600)">{{ $approvedCount }}</div>
             <div class="cr-stat-lbl">Approved Requests</div>
         </div>
     </div>
@@ -183,14 +183,14 @@
         <p class="modal-desc">Provide a reason for rejecting <strong id="rejectReqNumber"></strong>. This will be visible in the request's history.</p>
         <form id="rejectForm" method="POST">
             @csrf @method('PUT')
-            <select id="rejectReasonPreset" style="width:100%;margin-bottom:.6rem;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+            <select id="rejectReasonPreset" style="width:100%;margin-bottom:.6rem;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
                 <option value="">Choose a common reason…</option>
                 <option value="Requested amount is too high for this order.">Requested amount is too high for this order.</option>
                 <option value="No valid business reason provided for this discount.">No valid business reason provided for this discount.</option>
                 <option value="Please use an existing discount rule instead.">Please use an existing discount rule instead.</option>
             </select>
             <textarea name="rejection_reason" id="rejectReasonText" class="reject-note-input" placeholder="Rejection reason…" rows="3" required
-                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:72px"></textarea>
+                      style="width:100%;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:72px"></textarea>
             <div class="modal-actions" style="margin-top:1rem">
                 <button type="button" class="btn-modal-cancel" onclick="closeRejectModal()">Cancel</button>
                 <button type="submit" class="btn-modal-confirm" style="background:#DC2626">

@@ -18,52 +18,52 @@
 .disc-title i{color:var(--primary)}
 .form-grid{display:grid;grid-template-columns:1fr 340px;gap:1.25rem;align-items:start}
 @media(max-width:900px){.form-grid{grid-template-columns:1fr}}
-.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.1rem}
-.card-hd{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);background:#FAFBFC;display:flex;align-items:center;justify-content:space-between}
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.1rem}
+.card-hd{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between}
 .card-hd h3{font-size:.9rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:.5rem;margin:0}
 .card-hd h3 i{color:var(--primary)}
 .card-body{padding:1.4rem}
 .field{margin-bottom:1.15rem}
 .field label{display:block;font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:.38rem}
 .field label .req{color:var(--primary);margin-left:.15rem}
-.field input[type=text],.field input[type=number],.field input[type=date],.field select,.field textarea{width:100%;padding:.62rem .95rem;border:1.5px solid var(--border);border-radius:10px;font-size:.85rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;transition:border-color .18s}
+.field input[type=text],.field input[type=number],.field input[type=date],.field select,.field textarea{width:100%;padding:.62rem .95rem;border:1.5px solid var(--border);border-radius:10px;font-size:.85rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface);transition:border-color .18s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
 .field .help{font-size:.74rem;color:var(--muted);margin-top:.3rem}
-.err{font-size:.76rem;color:#DC2626;margin-top:.3rem;display:flex;align-items:center;gap:.25rem}
+.err{font-size:.76rem;color:var(--red-600);margin-top:.3rem;display:flex;align-items:center;gap:.25rem}
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
-.val-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .18s;background:#fff}
+.val-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .18s;background:var(--surface)}
 .val-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
-.val-prefix{padding:.62rem .85rem;background:#F8FAFC;border-right:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
-.val-suffix{padding:.62rem .85rem;background:#F8FAFC;border-left:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.val-prefix{padding:.62rem .85rem;background:var(--surface-2);border-right:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.val-suffix{padding:.62rem .85rem;background:var(--surface-2);border-left:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .val-input{flex:1;border:none!important;border-radius:0!important;box-shadow:none!important;outline:none;padding:.62rem .75rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:transparent}
 .type-radio-group{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
 @media(max-width:640px){.type-radio-group{grid-template-columns:1fr}}
 .type-radio{position:relative}
 .type-radio input{position:absolute;opacity:0;width:0;height:0}
-.type-radio-label{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff}
-.type-radio-label:hover{border-color:var(--primary);background:#FEF2F2}
-.type-radio input:checked + .type-radio-label{border-color:var(--primary);background:#FEF2F2}
+.type-radio-label{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .18s;background:var(--surface)}
+.type-radio-label:hover{border-color:var(--primary);background:var(--red-50)}
+.type-radio input:checked + .type-radio-label{border-color:var(--primary);background:var(--red-50)}
 .type-radio-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
-.tr-pct{background:#EFF6FF;color:#1D4ED8}.tr-fix{background:#F5F3FF;color:#7C3AED}.tr-spec{background:#FEF3C7;color:#B45309}
-.special-note{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:.85rem 1rem;font-size:.8rem;color:#92400E;line-height:1.6}
+.tr-pct{background:var(--blue-50);color:var(--blue-700)}.tr-fix{background:var(--violet-50);color:var(--violet-600)}.tr-spec{background:var(--amber-100);color:var(--amber-700)}
+.special-note{background:var(--amber-50);border:1.5px solid var(--amber-200);border-radius:10px;padding:.85rem 1rem;font-size:.8rem;color:var(--amber-800);line-height:1.6}
 .type-radio-text .t-label{font-size:.85rem;font-weight:700;color:var(--dark)}
 .type-radio-text .t-sub{font-size:.73rem;color:var(--muted);margin-top:.1rem}
 .status-toggle{display:flex;gap:.75rem}
-.status-btn{flex:1;padding:.65rem;border-radius:10px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:.84rem;font-weight:600;font-family:inherit;text-align:center;transition:all .18s}
-.status-btn.active-s{border-color:#16A34A;background:#F0FDF4;color:#15803D}
-.status-btn.inactive-s{border-color:#6B7280;background:#F3F4F6;color:#6B7280}
+.status-btn{flex:1;padding:.65rem;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.84rem;font-weight:600;font-family:inherit;text-align:center;transition:all .18s}
+.status-btn.active-s{border-color:#16A34A;background:var(--green-50);color:var(--green-700)}
+.status-btn.inactive-s{border-color:#6B7280;background:var(--surface-3);color:var(--muted)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.58rem 1.15rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .cond-section{display:none}
 .cond-section.visible{display:block}
-.preview-card{background:linear-gradient(135deg,var(--dark),#1F2937);border-radius:14px;padding:1.25rem;color:#fff;margin-bottom:1rem}
+.preview-card{background:linear-gradient(135deg,var(--ink),#1F2937);border-radius:14px;padding:1.25rem;color:#fff;margin-bottom:1rem}
 .preview-card .p-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:.75rem}
 .preview-card .p-name{font-size:1rem;font-weight:800;margin-bottom:.35rem}
 .preview-card .p-value{font-size:1.65rem;font-weight:900;color:var(--accent);line-height:1}
 .preview-card .p-type{font-size:.73rem;color:rgba(255,255,255,.55);margin-top:.15rem}
 .preview-card .p-elig{margin-top:.65rem;padding-top:.65rem;border-top:1px solid rgba(255,255,255,.1);font-size:.79rem;color:rgba(255,255,255,.7)}
-.meta-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:.78rem;color:var(--muted);padding:.75rem 1.4rem;border-top:1px solid var(--border);background:#FAFBFC}
+.meta-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:.78rem;color:var(--muted);padding:.75rem 1.4rem;border-top:1px solid var(--border);background:var(--surface-2)}
 .meta-row span{display:flex;align-items:center;gap:.35rem}
 </style>
 @endsection
@@ -228,7 +228,7 @@
 @section('scripts')
 <script>
 const eligLabels = @json(\App\Models\Discount::ELIGIBILITY);
-function updateTypeUI(){const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;document.getElementById('valueFieldWrap').style.display=isSpecial?'none':'';document.getElementById('specialNoteWrap').style.display=isSpecial?'':'none';document.getElementById('valueLabel').innerHTML=isPct?'Discount Percentage <span style="color:#DC2626">*</span>':'Fixed Discount Amount <span style="color:#DC2626">*</span>';document.getElementById('valPrefix').style.display=isPct?'none':'';document.getElementById('valSuffix').style.display=isPct?'':'none';const input=document.getElementById('discountValue');input.max=isPct?'100':'';input.step=isPct?'1':'0.01';input.min=isSpecial?'0':'0.01';input.required=!isSpecial;if(isSpecial)input.value='0';updatePreview();}
+function updateTypeUI(){const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;document.getElementById('valueFieldWrap').style.display=isSpecial?'none':'';document.getElementById('specialNoteWrap').style.display=isSpecial?'':'none';document.getElementById('valueLabel').innerHTML=isPct?'Discount Percentage <span style="color:var(--red-600)">*</span>':'Fixed Discount Amount <span style="color:var(--red-600)">*</span>';document.getElementById('valPrefix').style.display=isPct?'none':'';document.getElementById('valSuffix').style.display=isPct?'':'none';const input=document.getElementById('discountValue');input.max=isPct?'100':'';input.step=isPct?'1':'0.01';input.min=isSpecial?'0':'0.01';input.required=!isSpecial;if(isSpecial)input.value='0';updatePreview();}
 function updateConditions(){const elig=document.getElementById('eligibilityType').value;const showMin=['minimum_purchase','date_range','promotional'].includes(elig);const showDate=['date_range','promotional'].includes(elig);document.getElementById('condMinPurchase').classList.toggle('visible',showMin);document.getElementById('condDateRange').classList.toggle('visible',showDate);}
 function updatePreview(){const name=document.querySelector('[name=discount_name]').value||'—';const val=parseFloat(document.getElementById('discountValue').value)||0;const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;const elig=document.getElementById('eligibilityType').value;const fmtVal=isSpecial?'Custom Amount':(isPct?val.toFixed(0)+'%':'₱'+val.toFixed(2));document.getElementById('prevName').textContent=name;document.getElementById('prevValue').textContent=fmtVal;document.getElementById('prevType').textContent=isSpecial?'Special Discount (Requires Approval)':(isPct?'Percentage Discount':'Fixed Amount Discount');document.getElementById('prevElig').textContent=elig?'Eligibility: '+(eligLabels[elig]||elig):'No eligibility selected';}
 function updateStatusUI(){const isActive=document.getElementById('st_active').checked;document.getElementById('stBtnActive').className='status-btn'+(isActive?' active-s':'');document.getElementById('stBtnInactive').className='status-btn'+(!isActive?' inactive-s':'');document.getElementById('statusNote').textContent=isActive?'Active discounts are available in the POS and Online Ordering modules.':'Inactive discounts are stored but not available for selection.';}

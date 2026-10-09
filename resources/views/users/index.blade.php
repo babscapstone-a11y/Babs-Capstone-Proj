@@ -12,7 +12,7 @@
 @section('styles')
 <style>
     .stats-row  { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
-    .stat-card  { flex:1; min-width:140px; background:#fff; border-radius:14px; padding:1.1rem 1.3rem; border:1px solid var(--border); box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+    .stat-card  { flex:1; min-width:140px; background:var(--surface); border-radius:14px; padding:1.1rem 1.3rem; border:1px solid var(--border); box-shadow:0 2px 10px rgba(0,0,0,0.05); }
     .stat-label { font-size:.72rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
     .stat-value { font-size:1.6rem; font-weight:800; color:var(--dark); margin-top:.15rem; line-height:1; }
     .stat-icon  { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:.6rem; font-size:.95rem; }
@@ -21,9 +21,9 @@
     .filter-row .filter-item { display:flex; flex-direction:column; gap:.35rem; }
     .filter-row .filter-item label { font-size:.78rem; font-weight:600; color:var(--dark); }
     .filter-row input, .filter-row select {
-        border:1.5px solid rgba(17,24,39,0.1); border-radius:10px;
+        border:1.5px solid rgba(var(--ink-rgb),0.1); border-radius:10px;
         padding:.52rem .85rem; font-size:.855rem; color:var(--dark);
-        font-family:inherit; background:#fff; outline:none;
+        font-family:inherit; background:var(--surface); outline:none;
         transition:border-color .2s, box-shadow .2s;
     }
     .filter-row input:focus, .filter-row select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
@@ -31,7 +31,7 @@
 
     /* ── Live search ── */
     .search-wrap { position:relative; min-width:240px; }
-    .search-input { width:100%; padding:.55rem 2.3rem .55rem .85rem; border:1.5px solid rgba(17,24,39,0.1); border-radius:10px; font-size:.855rem; font-family:inherit; color:var(--dark); outline:none; transition:border-color .2s, box-shadow .2s; }
+    .search-input { width:100%; padding:.55rem 2.3rem .55rem .85rem; border:1.5px solid rgba(var(--ink-rgb),0.1); border-radius:10px; font-size:.855rem; font-family:inherit; color:var(--dark); outline:none; transition:border-color .2s, box-shadow .2s; }
     .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
     .search-clear { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:.25rem; display:none; }
     .search-wrap.has-value .search-clear { display:block; }
@@ -43,12 +43,12 @@
     .data-table thead th {
         padding:.85rem 1rem; text-align:left;
         font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-        color:var(--muted); background:#F8FAFC;
+        color:var(--muted); background:var(--surface-2);
         border-bottom:1px solid var(--border);
     }
     .data-table tbody tr { transition:background .15s; }
     .data-table tbody tr:hover { background:rgba(220,38,38,0.02); }
-    .data-table td { padding:.9rem 1rem; border-bottom:1px solid rgba(17,24,39,0.05); vertical-align:middle; }
+    .data-table td { padding:.9rem 1rem; border-bottom:1px solid rgba(var(--ink-rgb),0.05); vertical-align:middle; }
     .data-table tbody tr:last-child td { border-bottom:none; }
 
     .staff-cell { display:flex; align-items:center; gap:.65rem; }
@@ -64,7 +64,7 @@
     .actions { display:flex; gap:.35rem; align-items:center; }
 
     .empty-state { text-align:center; padding:3.5rem 1rem; }
-    .empty-state i { font-size:2.5rem; color:rgba(17,24,39,0.15); margin-bottom:.75rem; display:block; }
+    .empty-state i { font-size:2.5rem; color:rgba(var(--ink-rgb),0.15); margin-bottom:.75rem; display:block; }
     .empty-state p { color:var(--muted); font-size:.88rem; margin:0; }
 
     .pagination-bar { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-top:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
@@ -84,8 +84,8 @@
         padding:.8rem 1.1rem; border-radius:12px; margin-bottom:1.25rem;
         font-size:.855rem; font-weight:500;
     }
-    .alert-success { background:#ECFDF5; border:1.5px solid #86EFAC; color:#166534; }
-    .alert-error   { background:#FEF2F2; border:1.5px solid #FCA5A5; color:#991B1B; }
+    .alert-success { background:var(--emerald-50); border:1.5px solid var(--green-300); color:var(--green-800); }
+    .alert-error   { background:var(--red-50); border:1.5px solid var(--red-300); color:var(--red-800); }
 </style>
 @endsection
 
@@ -109,11 +109,11 @@
         <div class="stat-value" id="statTotal">{{ $users->total() }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:rgba(22,163,74,0.1);color:#16A34A">
+        <div class="stat-icon" style="background:rgba(22,163,74,0.1);color:var(--green-600)">
             <i class="fas fa-circle-check"></i>
         </div>
         <div class="stat-label">Active</div>
-        <div class="stat-value" style="color:#16A34A" id="statActive">{{ $users->getCollection()->where('status','active')->count() }}</div>
+        <div class="stat-value" style="color:var(--green-600)" id="statActive">{{ $users->getCollection()->where('status','active')->count() }}</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon" style="background:rgba(107,114,128,0.1);color:var(--muted)">
@@ -124,11 +124,11 @@
     </div>
     @if($pendingResetCount > 0)
     <div class="stat-card">
-        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#D97706">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:var(--amber-600)">
             <i class="fas fa-key"></i>
         </div>
         <div class="stat-label">Pending Resets</div>
-        <div class="stat-value" style="color:#D97706" id="statPendingResets">{{ $pendingResetCount }}</div>
+        <div class="stat-value" style="color:var(--amber-600)" id="statPendingResets">{{ $pendingResetCount }}</div>
     </div>
     @endif
 </div>

@@ -16,34 +16,34 @@
 .disc-title i{color:var(--primary)}
 .show-grid{display:grid;grid-template-columns:1fr 300px;gap:1.25rem;align-items:start}
 @media(max-width:800px){.show-grid{grid-template-columns:1fr}}
-.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.1rem}
-.card-hd{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#FAFBFC}
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.1rem}
+.card-hd{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
 .card-hd h3{font-size:.9rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:.5rem;margin:0}
 .card-hd h3 i{color:var(--primary)}
 .info-list{padding:0}
-.info-row{display:flex;align-items:flex-start;padding:.95rem 1.4rem;border-bottom:1px solid #F3F4F6;gap:1rem}
+.info-row{display:flex;align-items:flex-start;padding:.95rem 1.4rem;border-bottom:1px solid var(--line);gap:1rem}
 .info-row:last-child{border-bottom:none}
 .info-lbl{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);min-width:160px;flex-shrink:0;padding-top:.05rem}
 .info-val{font-size:.9rem;color:var(--dark);flex:1}
 .value-large{font-size:2rem;font-weight:900;line-height:1}
-.value-pct{color:#16A34A}
-.value-fix{color:#7C3AED}
-.value-spec{color:#B45309;font-size:1.4rem}
-.badge-disc-active{background:#DCFCE7;color:#15803D;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
-.badge-disc-inactive{background:#F3F4F6;color:#6B7280;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
-.badge-disc-expired{background:#FEE2E2;color:#B91C1C;display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
-.badge-type-pct{background:#EFF6FF;color:#1D4ED8;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
-.badge-type-fix{background:#F5F3FF;color:#7C3AED;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
-.badge-type-spec{background:#FEF3C7;color:#B45309;padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
+.value-pct{color:var(--green-600)}
+.value-fix{color:var(--violet-600)}
+.value-spec{color:var(--amber-700);font-size:1.4rem}
+.badge-disc-active{background:var(--green-100);color:var(--green-700);display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.badge-disc-inactive{background:var(--surface-3);color:var(--muted);display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.badge-disc-expired{background:var(--red-100);color:var(--red-700);display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.badge-type-pct{background:var(--blue-50);color:var(--blue-700);padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
+.badge-type-fix{background:var(--violet-50);color:var(--violet-600);padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
+.badge-type-spec{background:var(--amber-100);color:var(--amber-700);padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
 .elig-badge{padding:.22rem .7rem;border-radius:8px;font-size:.78rem;font-weight:700;display:inline-block}
-.elig-senior{background:#EFF6FF;color:#1D4ED8}.elig-pwd{background:#F5F3FF;color:#7C3AED}.elig-promo{background:#FEF3C7;color:#92400E}
-.elig-employee{background:#F0FDF4;color:#15803D}.elig-min{background:#ECFEFF;color:#0E7490}.elig-date{background:#FFF7ED;color:#C2410C}.elig-all{background:#F3F4F6;color:#6B7280}
+.elig-senior{background:var(--blue-50);color:var(--blue-700)}.elig-pwd{background:var(--violet-50);color:var(--violet-600)}.elig-promo{background:var(--amber-100);color:var(--amber-800)}
+.elig-employee{background:var(--green-50);color:var(--green-700)}.elig-min{background:var(--cyan-50);color:var(--cyan-700)}.elig-date{background:var(--orange-50);color:var(--orange-700)}.elig-all{background:var(--surface-3);color:var(--muted)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
 .btn-amber{background:#D97706;color:#fff}.btn-amber:hover{background:#B45309}
-.highlight-card{background:linear-gradient(135deg,var(--dark),#1F2937);border-radius:16px;padding:1.75rem;color:#fff;margin-bottom:1.1rem;position:relative;overflow:hidden}
+.highlight-card{background:linear-gradient(135deg,var(--ink),#1F2937);border-radius:16px;padding:1.75rem;color:#fff;margin-bottom:1.1rem;position:relative;overflow:hidden}
 .highlight-card::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(220,38,38,.15);right:-40px;top:-40px}
 .hl-type{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:.5rem}
 .hl-name{font-size:1.2rem;font-weight:800;margin-bottom:.75rem}
@@ -51,10 +51,10 @@
 .hl-elig{margin-top:.85rem;font-size:.82rem;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:.4rem}
 .meta-info{font-size:.75rem;color:var(--muted);margin-top:.6rem;display:flex;flex-direction:column;gap:.35rem}
 .meta-info span{display:flex;align-items:center;gap:.4rem}
-.notice-box{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:1rem 1.2rem;font-size:.82rem;color:#1D4ED8;line-height:1.6;display:flex;gap:.65rem}
+.notice-box{background:var(--blue-50);border:1.5px solid var(--blue-200);border-radius:12px;padding:1rem 1.2rem;font-size:.82rem;color:var(--blue-700);line-height:1.6;display:flex;gap:.65rem}
 .notice-box i{color:#60A5FA;font-size:.95rem;flex-shrink:0;margin-top:.05rem}
-.expired-banner{background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.65rem;font-size:.83rem;color:#B91C1C;font-weight:500}
-.section-divider{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:.7rem 1.4rem;background:#F8FAFC;border-bottom:1px solid var(--border)}
+.expired-banner{background:var(--red-50);border:1.5px solid var(--red-200);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.65rem;font-size:.83rem;color:var(--red-700);font-weight:500}
+.section-divider{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:.7rem 1.4rem;background:var(--surface-2);border-bottom:1px solid var(--border)}
 </style>
 @endsection
 
@@ -176,9 +176,9 @@
                         <div class="info-lbl">Days Remaining</div>
                         <div class="info-val">
                             @if($discount->is_expired)
-                            <span style="color:#DC2626;font-weight:700"><i class="fas fa-clock"></i> Expired {{ $discount->end_date->diffForHumans() }}</span>
+                            <span style="color:var(--red-600);font-weight:700"><i class="fas fa-clock"></i> Expired {{ $discount->end_date->diffForHumans() }}</span>
                             @else
-                            <span style="color:#16A34A;font-weight:700"><i class="fas fa-calendar-check"></i> Expires {{ $discount->end_date->diffForHumans() }}</span>
+                            <span style="color:var(--green-600);font-weight:700"><i class="fas fa-calendar-check"></i> Expires {{ $discount->end_date->diffForHumans() }}</span>
                             @endif
                         </div>
                     </div>

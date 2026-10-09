@@ -15,11 +15,11 @@
 <style>
     .profile-grid { display:grid; grid-template-columns:280px 1fr; gap:1.25rem; }
     .profile-card {
-        background:#fff; border-radius:16px; border:1px solid var(--border);
-        box-shadow:0 2px 16px rgba(17,24,39,0.06); overflow:hidden;
+        background:var(--surface); border-radius:16px; border:1px solid var(--border);
+        box-shadow:0 2px 16px rgba(var(--ink-rgb),0.06); overflow:hidden;
     }
     .profile-hero {
-        background:linear-gradient(135deg, var(--dark) 0%, #1F2937 100%);
+        background:linear-gradient(135deg, var(--ink) 0%, #1F2937 100%);
         padding:2rem 1.5rem; text-align:center; position:relative;
     }
     .profile-hero::before {
@@ -39,7 +39,7 @@
     .profile-body  { padding:1.25rem; }
     .detail-row {
         display:flex; align-items:center; gap:.65rem;
-        padding:.65rem 0; border-bottom:1px solid rgba(17,24,39,0.05);
+        padding:.65rem 0; border-bottom:1px solid rgba(var(--ink-rgb),0.05);
     }
     .detail-row:last-child { border-bottom:none; }
     .detail-icon  { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(220,38,38,0.08); color:var(--primary); font-size:.8rem; flex-shrink:0; }
@@ -49,18 +49,18 @@
     .info-section-title { font-size:.72rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:.85rem; padding-bottom:.5rem; border-bottom:1px solid var(--border); }
     .action-grid { display:flex; flex-direction:column; gap:.55rem; }
     .action-btn-full { width:100%; display:flex; align-items:center; gap:.55rem; padding:.62rem .9rem; border-radius:10px; font-size:.84rem; font-weight:600; font-family:inherit; cursor:pointer; transition:all .18s; border:none; }
-    .action-btn-full.edit     { background:rgba(37,99,235,0.08); color:#1D4ED8; }
+    .action-btn-full.edit     { background:rgba(37,99,235,0.08); color:var(--blue-700); }
     .action-btn-full.edit:hover{ background:#2563EB; color:#fff; }
-    .action-btn-full.reset    { background:rgba(245,158,11,0.08); color:#D97706; }
+    .action-btn-full.reset    { background:rgba(245,158,11,0.08); color:var(--amber-600); }
     .action-btn-full.reset:hover { background:#D97706; color:#fff; }
-    .action-btn-full.activate { background:rgba(22,163,74,0.08); color:#16A34A; }
+    .action-btn-full.activate { background:rgba(22,163,74,0.08); color:var(--green-600); }
     .action-btn-full.activate:hover { background:#16A34A; color:#fff; }
     .action-btn-full.deactivate { background:rgba(220,38,38,0.08); color:var(--primary); }
     .action-btn-full.deactivate:hover { background:var(--primary); color:#fff; }
 
     .history-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.835rem; }
-    .history-table th { padding:.7rem .9rem; text-align:left; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:#F8FAFC; border-bottom:1px solid var(--border); }
-    .history-table td { padding:.75rem .9rem; border-bottom:1px solid rgba(17,24,39,0.04); vertical-align:middle; }
+    .history-table th { padding:.7rem .9rem; text-align:left; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--border); }
+    .history-table td { padding:.75rem .9rem; border-bottom:1px solid rgba(var(--ink-rgb),0.04); vertical-align:middle; }
     .history-table tbody tr:last-child td { border-bottom:none; }
 
     @media(max-width:900px) { .profile-grid { grid-template-columns:1fr; } }
@@ -121,7 +121,7 @@
                 </a>
 
                 @if($pendingReset)
-                    <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.2);font-size:.83rem;color:#D97706;display:flex;align-items:center;gap:.5rem">
+                    <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.2);font-size:.83rem;color:var(--amber-600);display:flex;align-items:center;gap:.5rem">
                         <i class="fas fa-clock" style="width:16px;text-align:center"></i>
                         Reset request pending approval
                     </div>
@@ -148,7 +148,7 @@
 
         {{-- Inactive warning --}}
         @if($user->status === 'inactive')
-        <div style="padding:.9rem 1.1rem;border-radius:12px;background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.2);display:flex;align-items:center;gap:.65rem;font-size:.86rem;color:#991B1B;font-weight:500">
+        <div style="padding:.9rem 1.1rem;border-radius:12px;background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.2);display:flex;align-items:center;gap:.65rem;font-size:.86rem;color:var(--red-800);font-weight:500">
             <i class="fas fa-ban"></i>
             This account is <strong>inactive</strong>. This staff member cannot log in or perform any operations.
         </div>

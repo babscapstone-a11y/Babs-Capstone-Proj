@@ -29,7 +29,7 @@
         display:flex; flex-direction:column; align-items:center;
         gap:.4rem; padding:.9rem .75rem; border-radius:12px;
         border:2px solid var(--border); cursor:pointer;
-        transition:all .2s; text-align:center; background:#fff;
+        transition:all .2s; text-align:center; background:var(--surface);
     }
     .role-label .role-icon { font-size:1.3rem; }
     .role-label .role-name { font-size:.8rem; font-weight:600; color:var(--muted); }
@@ -41,22 +41,22 @@
         flex:1; display:flex; align-items:center; justify-content:center; gap:.5rem;
         padding:.65rem; border-radius:10px; border:2px solid var(--border);
         cursor:pointer; font-size:.84rem; font-weight:600; color:var(--muted);
-        transition:all .2s; background:#fff;
+        transition:all .2s; background:var(--surface);
     }
-    .status-option[value="active"]:checked + .status-label   { border-color:#16A34A; background:rgba(22,163,74,0.06); color:#16A34A; }
-    .status-option[value="inactive"]:checked + .status-label { border-color:#6B7280; background:rgba(107,114,128,0.06); color:#6B7280; }
+    .status-option[value="active"]:checked + .status-label   { border-color:#16A34A; background:rgba(22,163,74,0.06); color:var(--green-600); }
+    .status-option[value="inactive"]:checked + .status-label { border-color:#6B7280; background:rgba(107,114,128,0.06); color:var(--muted); }
 
     .pwd-notice {
         display:flex; align-items:center; gap:.6rem;
         padding:.75rem 1rem; border-radius:10px;
         background:rgba(37,99,235,0.06); border:1.5px solid rgba(37,99,235,0.18);
-        color:#1D4ED8; font-size:.83rem; margin-bottom:1rem;
+        color:var(--blue-700); font-size:.83rem; margin-bottom:1rem;
     }
     .self-notice {
         display:flex; align-items:center; gap:.6rem;
         padding:.75rem 1rem; border-radius:10px;
         background:rgba(245,158,11,0.08); border:1.5px solid rgba(245,158,11,0.28);
-        color:#92400E; font-size:.83rem; margin-bottom:1rem;
+        color:var(--amber-800); font-size:.83rem; margin-bottom:1rem;
     }
     @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2 { grid-column:auto; } }
 </style>

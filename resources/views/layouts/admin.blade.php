@@ -4,6 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        // Apply the saved light/dark choice before anything paints (shared with the landing page)
+        (function () {
+            try {
+                var saved = localStorage.getItem('babsResto-theme');
+                document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+            } catch (e) {}
+        })();
+    </script>
     <title>@yield('title', 'Admin') – BAB'S RESTO</title>
     <link rel="icon" type="image/png" href="{{ asset('images/BabsLandingPageLogo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.jpg') }}">
@@ -13,6 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.admin-theme-css')
 
     <style>
         :root {
@@ -23,7 +33,7 @@
             --white:      #ffffff;
             --bg:         #F8FAFC;
             --muted:      #6B7280;
-            --border:     rgba(17,24,39,0.08);
+            --border:     rgba(var(--ink-rgb),0.08);
             --sidebar-w:  260px;
         }
         *, *::before, *::after { box-sizing: border-box; }
@@ -33,7 +43,7 @@
         /* ── Sidebar ─────────────────────────────────────────── */
         .sidebar {
             width: var(--sidebar-w);
-            background: var(--dark);
+            background: var(--ink);
             position: fixed; left: 0; top: 0; bottom: 0;
             display: flex; flex-direction: column;
             z-index: 200;
@@ -119,7 +129,7 @@
 
         /* ── Top bar ────────────────────────────────────────── */
         .topbar {
-            background: var(--white);
+            background: var(--surface);
             border-bottom: 1px solid var(--border);
             padding: .9rem 2rem;
             display: flex; align-items: center; justify-content: space-between;
@@ -164,15 +174,15 @@
             animation: toastIn .3s ease both;
         }
         @keyframes toastIn { from { opacity: 0; transform: translateX(20px) } to { opacity: 1; transform: none } }
-        .toast-success { background: #ECFDF5; border: 1.5px solid #86EFAC; color: #166534; }
-        .toast-error   { background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #991B1B; }
-        .toast-info    { background: #EFF6FF; border: 1.5px solid #93C5FD; color: #1E40AF; }
+        .toast-success { background: var(--emerald-50); border: 1.5px solid var(--green-300); color: var(--green-800); }
+        .toast-error   { background: var(--red-50); border: 1.5px solid var(--red-300); color: var(--red-800); }
+        .toast-info    { background: var(--blue-50); border: 1.5px solid var(--blue-300); color: var(--blue-700); }
         .toast i { font-size: .9rem; }
 
         /* ── Shared card ────────────────────────────────────── */
         .card {
-            background: var(--white); border-radius: 16px;
-            box-shadow: 0 2px 16px rgba(17,24,39,0.06);
+            background: var(--surface); border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(var(--ink-rgb),0.06);
             border: 1px solid var(--border);
             overflow: hidden;
         }
@@ -194,7 +204,7 @@
         }
         .modal-overlay.open { display: flex; }
         .modal-box {
-            background: var(--white); border-radius: 20px;
+            background: var(--surface); border-radius: 20px;
             padding: 2rem; max-width: 420px; width: 100%;
             box-shadow: 0 24px 64px rgba(0,0,0,0.15);
             animation: modalIn .3s cubic-bezier(.22,.68,0,1.2) both;
@@ -216,8 +226,8 @@
             cursor: pointer; text-align: center;
             transition: all .18s ease; border: none;
         }
-        .btn-modal-cancel { background: rgba(17,24,39,0.07); color: var(--dark); }
-        .btn-modal-cancel:hover { background: rgba(17,24,39,0.12); }
+        .btn-modal-cancel { background: rgba(var(--ink-rgb),0.07); color: var(--dark); }
+        .btn-modal-cancel:hover { background: rgba(var(--ink-rgb),0.12); }
         .btn-modal-confirm { background: var(--primary); color: var(--white); }
         .btn-modal-confirm:hover { background: var(--primary-dk); }
 
@@ -229,15 +239,15 @@
         }
         .badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 
-        .badge-admin        { background: rgba(220,38,38,0.10);  color: #DC2626; }
-        .badge-cashier      { background: rgba(37,99,235,0.10);  color: #2563EB; }
-        .badge-kitchen_staff{ background: rgba(217,119,6,0.10);  color: #D97706; }
-        .badge-table_server { background: rgba(22,163,74,0.10);  color: #16A34A; }
-        .badge-active       { background: rgba(22,163,74,0.10);  color: #16A34A; }
-        .badge-inactive     { background: rgba(107,114,128,0.10);color: #6B7280; }
-        .badge-pending      { background: rgba(245,158,11,0.12); color: #D97706; }
-        .badge-approved     { background: rgba(22,163,74,0.10);  color: #16A34A; }
-        .badge-rejected     { background: rgba(220,38,38,0.10);  color: #DC2626; }
+        .badge-admin        { background: rgba(220,38,38,0.10);  color: var(--red-600); }
+        .badge-cashier      { background: rgba(37,99,235,0.10);  color: var(--blue-600); }
+        .badge-kitchen_staff{ background: rgba(217,119,6,0.10);  color: var(--amber-600); }
+        .badge-table_server { background: rgba(22,163,74,0.10);  color: var(--green-600); }
+        .badge-active       { background: rgba(22,163,74,0.10);  color: var(--green-600); }
+        .badge-inactive     { background: rgba(107,114,128,0.10);color: var(--muted); }
+        .badge-pending      { background: rgba(245,158,11,0.12); color: var(--amber-600); }
+        .badge-approved     { background: rgba(22,163,74,0.10);  color: var(--green-600); }
+        .badge-rejected     { background: rgba(220,38,38,0.10);  color: var(--red-600); }
 
         /* ── Action buttons ─────────────────────────────────── */
         .btn {
@@ -249,13 +259,13 @@
         }
         .btn-primary { background: linear-gradient(90deg, var(--primary), #F97316); color: var(--white); box-shadow: 0 4px 14px rgba(220,38,38,0.22); }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(220,38,38,0.3); }
-        .btn-secondary { background: rgba(17,24,39,0.07); color: var(--dark); }
-        .btn-secondary:hover { background: rgba(17,24,39,0.12); }
+        .btn-secondary { background: rgba(var(--ink-rgb),0.07); color: var(--dark); }
+        .btn-secondary:hover { background: rgba(var(--ink-rgb),0.12); }
         .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--dark); }
         .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
         .btn-danger { background: rgba(220,38,38,0.1); color: var(--primary); }
         .btn-danger:hover { background: var(--primary); color: var(--white); }
-        .btn-success { background: rgba(22,163,74,0.1); color: #16A34A; }
+        .btn-success { background: rgba(22,163,74,0.1); color: var(--green-600); }
         .btn-success:hover { background: #16A34A; color: var(--white); }
         .btn-sm { padding: .32rem .65rem; font-size: .76rem; border-radius: 7px; }
         .btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; border-radius: 8px; }
@@ -266,7 +276,7 @@
         .form-label-opt { font-size: .72rem; font-weight: 500; color: var(--muted); background: rgba(107,114,128,0.1); border-radius: 50px; padding: .05rem .4rem; }
         .input-wrap {
             display: flex; align-items: center;
-            background: var(--white); border: 1.5px solid rgba(17,24,39,0.1);
+            background: var(--surface); border: 1.5px solid rgba(var(--ink-rgb),0.1);
             border-radius: 12px; transition: all .22s ease;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
@@ -278,11 +288,11 @@
             padding: .68rem .5rem .68rem 0; font-size: .9rem; color: var(--dark); font-family: inherit;
         }
         .form-input:focus, .form-input:focus-visible { outline: none; box-shadow: none; }
-        .form-input::placeholder { color: rgba(17,24,39,0.28); }
+        .form-input::placeholder { color: rgba(var(--ink-rgb),0.28); }
         .form-select {
-            width: 100%; border: 1.5px solid rgba(17,24,39,0.1); border-radius: 12px;
+            width: 100%; border: 1.5px solid rgba(var(--ink-rgb),0.1); border-radius: 12px;
             padding: .68rem .9rem; font-size: .9rem; color: var(--dark);
-            font-family: inherit; background: var(--white); outline: none;
+            font-family: inherit; background: var(--surface); outline: none;
             transition: all .22s ease; cursor: pointer; appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%236B7280' d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right .75rem center; background-size: 16px;
@@ -432,6 +442,9 @@
                 </div>
             </div>
             <div class="topbar-right">
+                <button type="button" id="themeToggle" class="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
+                    <i id="themeToggleIcon" class="fas fa-moon"></i>
+                </button>
                 <div class="topbar-user">
                     <div class="topbar-avatar">{{ auth()->user()->initials }}</div>
                     <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
@@ -485,6 +498,29 @@
     </div>
 
     <script>
+    // Light / dark mode toggle (choice saved under the same key the landing page uses)
+    (function () {
+        var root = document.documentElement;
+        var btn  = document.getElementById('themeToggle');
+        var icon = document.getElementById('themeToggleIcon');
+
+        function applyIcon(theme) {
+            var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('title', label);
+        }
+        applyIcon(root.getAttribute('data-theme'));
+
+        btn.addEventListener('click', function () {
+            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('babsResto-theme', next); } catch (e) {}
+            applyIcon(next);
+            document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+        });
+    })();
+
     // Sidebar toggle
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');

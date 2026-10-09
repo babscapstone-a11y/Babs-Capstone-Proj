@@ -32,9 +32,9 @@
     .items-table th {
         padding: .65rem 1rem; text-align: left;
         font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
-        color: var(--muted); background: #F8FAFC; border-bottom: 1px solid var(--border);
+        color: var(--muted); background: var(--surface-2); border-bottom: 1px solid var(--border);
     }
-    .items-table td { padding: .8rem 1rem; border-bottom: 1px solid #F5F5F5; vertical-align: middle; }
+    .items-table td { padding: .8rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
     .items-table tr:last-child td { border-bottom: none; }
     .order-summary { border-top: 1px solid var(--border); padding: 1rem 1.5rem; }
     .summary-row { display: flex; justify-content: space-between; padding: .4rem 0; font-size: .85rem; }
@@ -42,7 +42,7 @@
     .summary-row.discount { color: var(--primary); }
 
     .amount-hero {
-        background: linear-gradient(135deg, var(--dark), #1F2937); border-radius: 14px;
+        background: linear-gradient(135deg, var(--ink), #1F2937); border-radius: 14px;
         padding: 1.25rem; color: #fff; text-align: center; margin-bottom: 0;
     }
     .amount-hero .ah-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); margin-bottom: .5rem; }
@@ -52,12 +52,12 @@
         border-radius: 12px; padding: 1rem 1.25rem; font-size: .84rem;
         display: flex; gap: .75rem; align-items: flex-start;
     }
-    .decision-box.approved { background: #F0FDF4; border: 1.5px solid #BBF7D0; color: #15803D; }
-    .decision-box.rejected { background: #FEF2F2; border: 1.5px solid #FECACA; color: #B91C1C; }
+    .decision-box.approved { background: var(--green-50); border: 1.5px solid var(--green-200); color: var(--green-700); }
+    .decision-box.rejected { background: var(--red-50); border: 1.5px solid var(--red-200); color: var(--red-700); }
     .decision-box i { font-size: 1.1rem; margin-top: .05rem; flex-shrink: 0; }
 
     .reason-quote {
-        background: #FAFBFC; border: 1.5px solid var(--border); border-radius: 12px;
+        background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 12px;
         padding: 1rem 1.25rem; font-size: .85rem; color: var(--dark); display: flex; gap: .65rem;
     }
     .reason-quote i { color: var(--muted); margin-top: .1rem; flex-shrink: 0; }
@@ -257,14 +257,14 @@
         <p class="modal-desc">Provide a reason for rejecting <strong id="rejectReqNumber"></strong>.</p>
         <form id="rejectForm" method="POST">
             @csrf @method('PUT')
-            <select id="rejectReasonPreset" style="width:100%;margin-bottom:.6rem;height:40px;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:#fff">
+            <select id="rejectReasonPreset" style="width:100%;margin-bottom:.6rem;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .7rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
                 <option value="">Choose a common reason…</option>
                 <option value="Requested amount is too high for this order.">Requested amount is too high for this order.</option>
                 <option value="No valid business reason provided for this discount.">No valid business reason provided for this discount.</option>
                 <option value="Please use an existing discount rule instead.">Please use an existing discount rule instead.</option>
             </select>
             <textarea name="rejection_reason" id="rejectReasonText" placeholder="Rejection reason…" rows="3" required
-                      style="width:100%;border:1.5px solid rgba(17,24,39,0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:72px"></textarea>
+                      style="width:100%;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:72px"></textarea>
             <div class="modal-actions" style="margin-top:1rem">
                 <button type="button" class="btn-modal-cancel" onclick="closeRejectModal()">Cancel</button>
                 <button type="submit" class="btn-modal-confirm" style="background:#DC2626">

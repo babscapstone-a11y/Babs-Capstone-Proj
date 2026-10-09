@@ -23,7 +23,7 @@
                     </td>
                     <td>
                         @if($item->rtc_servings > 0)
-                        <span style="font-weight:700;color:#1D4ED8">{{ number_format($item->rtc_servings, 0) }}</span>
+                        <span style="font-weight:700;color:var(--blue-700)">{{ number_format($item->rtc_servings, 0) }}</span>
                         <span style="font-size:.75rem;color:var(--muted)"> servings</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">—</span>

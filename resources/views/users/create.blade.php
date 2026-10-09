@@ -27,7 +27,7 @@
         display:flex; flex-direction:column; align-items:center;
         gap:.4rem; padding:.9rem .75rem; border-radius:12px;
         border:2px solid var(--border); cursor:pointer;
-        transition:all .2s; text-align:center; background:#fff;
+        transition:all .2s; text-align:center; background:var(--surface);
     }
     .role-label .role-icon { font-size:1.3rem; }
     .role-label .role-name { font-size:.8rem; font-weight:600; color:var(--muted); }

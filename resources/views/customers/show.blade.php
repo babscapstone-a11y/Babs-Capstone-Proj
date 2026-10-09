@@ -15,9 +15,9 @@
 
     /* Profile card */
     .profile-card {
-        background: #fff; border: 1.5px solid var(--border);
+        background: var(--surface); border: 1.5px solid var(--border);
         border-radius: 18px; overflow: hidden;
-        box-shadow: 0 4px 20px rgba(17,24,39,0.07);
+        box-shadow: 0 4px 20px rgba(var(--ink-rgb),0.07);
         position: sticky; top: 90px;
     }
     .profile-hero {
@@ -77,17 +77,17 @@
         margin-bottom: .4rem; box-sizing: border-box;
     }
     .action-btn:last-child { margin-bottom: 0; }
-    .btn-deact { color: #B91C1C; border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+    .btn-deact { color: var(--red-700); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
     .btn-deact:hover { background: rgba(220,38,38,0.12); }
-    .btn-activ { color: #15803D; border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
+    .btn-activ { color: var(--green-700); border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
     .btn-activ:hover { background: rgba(22,163,74,0.12); }
 
     /* Right content */
     .content-stack { display: flex; flex-direction: column; gap: 1.1rem; }
     .info-card {
-        background: #fff; border: 1.5px solid var(--border);
+        background: var(--surface); border: 1.5px solid var(--border);
         border-radius: 16px; overflow: hidden;
-        box-shadow: 0 2px 10px rgba(17,24,39,0.04);
+        box-shadow: 0 2px 10px rgba(var(--ink-rgb),0.04);
     }
     .info-card-header {
         padding: .85rem 1.2rem; border-bottom: 1px solid var(--border);
@@ -148,15 +148,15 @@
                     <span class="detail-value">#{{ str_pad($customer->id, 4, '0', STR_PAD_LEFT) }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-phone" style="color:#7C3AED"></i> Contact</span>
+                    <span class="detail-label"><i class="fas fa-phone" style="color:var(--violet-600)"></i> Contact</span>
                     <span class="detail-value">{{ $customer->contact_no ?: '—' }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-calendar-plus" style="color:#2563EB"></i> Registered</span>
+                    <span class="detail-label"><i class="fas fa-calendar-plus" style="color:var(--blue-600)"></i> Registered</span>
                     <span class="detail-value">{{ $customer->created_at->format('M d, Y') }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-clock" style="color:#16A34A"></i> Last Login</span>
+                    <span class="detail-label"><i class="fas fa-clock" style="color:var(--green-600)"></i> Last Login</span>
                     <span class="detail-value">—</span>
                 </div>
             </div>
@@ -226,7 +226,7 @@
                         </div>
                         @endforeach
                     </div>
-                    <div style="margin-top:.85rem;padding:.75rem 1rem;background:rgba(124,58,237,0.05);border:1.5px solid rgba(124,58,237,0.15);border-radius:10px;font-size:.82rem;color:#5B21B6">
+                    <div style="margin-top:.85rem;padding:.75rem 1rem;background:rgba(124,58,237,0.05);border:1.5px solid rgba(124,58,237,0.15);border-radius:10px;font-size:.82rem;color:var(--violet-800)">
                         <i class="fas fa-map-marker-alt" style="margin-right:.35rem"></i>
                         {{ $customer->address->full_address ?: '—' }}
                     </div>
@@ -247,7 +247,7 @@
                 <span style="margin-left:auto;font-size:.7rem;font-weight:500;color:var(--muted)">Order Module not yet implemented</span>
             </div>
             <div class="info-card-body">
-                <div style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.2);border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.55rem;font-size:.8rem;color:#92400E;margin-bottom:1rem">
+                <div style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.2);border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.55rem;font-size:.8rem;color:var(--amber-800);margin-bottom:1rem">
                     <i class="fas fa-hourglass-half" style="flex-shrink:0"></i>
                     <span>Order history will be available once the Order Management Module is implemented.</span>
                 </div>
@@ -295,7 +295,7 @@
 
         {{-- Navigation footer --}}
         <div style="display:flex;justify-content:flex-end">
-            <a href="{{ route('customers.index') }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-weight:600;color:var(--dark);text-decoration:none;background:#fff;transition:border-color .18s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="{{ route('customers.index') }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-weight:600;color:var(--dark);text-decoration:none;background:var(--surface);transition:border-color .18s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
                 <i class="fas fa-arrow-left"></i> Back to Customer List
             </a>
         </div>
@@ -305,7 +305,7 @@
 
 {{-- Toggle Modal --}}
 <div id="toggleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
         <div style="text-align:center;margin-bottom:1.25rem">
             <div id="toggleIcon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem"></div>
             <h3 id="toggleTitle" style="font-size:1.05rem;font-weight:700;color:var(--dark);margin:0 0 .5rem"></h3>

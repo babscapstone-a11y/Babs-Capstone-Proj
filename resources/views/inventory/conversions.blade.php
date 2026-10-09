@@ -11,44 +11,44 @@
 .filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .search-wrap{position:relative;flex:1;min-width:220px}
 .search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
-.search-input{width:100%;padding:.55rem .9rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.search-input{width:100%;padding:.55rem .9rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .search-input:focus{border-color:var(--primary)}
-.filter-date{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.filter-date{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
 .btn-sm{padding:.38rem .75rem;font-size:.78rem}
-.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
 .table-wrap{overflow-x:auto}
 .inv-table{width:100%;border-collapse:collapse;font-size:.83rem}
-.inv-table th{padding:.65rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#F8FAFC;border-bottom:1px solid var(--border)}
-.inv-table td{padding:.8rem 1rem;border-bottom:1px solid #F3F4F6;color:var(--dark);vertical-align:middle}
+.inv-table th{padding:.65rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.inv-table td{padding:.8rem 1rem;border-bottom:1px solid var(--line);color:var(--dark);vertical-align:middle}
 .inv-table tr:last-child td{border-bottom:none}
-.inv-table tr:hover td{background:#FAFAFA}
+.inv-table tr:hover td{background:var(--surface-2)}
 .empty-row td{text-align:center;color:var(--muted);padding:2rem;font-size:.84rem}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-backdrop.open{display:flex}
-.modal{background:#fff;border-radius:20px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both}
+.modal{background:var(--surface);border-radius:20px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes slideUp{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
 .modal-hd h3{font-size:1rem;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:.5rem}
-.modal-hd h3 i{color:#2563EB}
-.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:#F8FAFC;cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
-.modal-close-btn:hover{background:#fee2e2;color:var(--primary)}
+.modal-hd h3 i{color:var(--blue-600)}
+.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:var(--surface-2);cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close-btn:hover{background:var(--red-100);color:var(--primary)}
 .modal-body{padding:1.5rem}
 .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end}
 .field{margin-bottom:1.1rem}
 .field label{display:block;font-size:.8rem;font-weight:600;color:var(--dark);margin-bottom:.35rem}
-.field input,.field select,.field textarea{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;transition:border-color .18s}
+.field input,.field select,.field textarea{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface);transition:border-color .18s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#2563EB}
-.error-msg{background:#FEF2F2;border:1.5px solid #FECACA;color:#B91C1C;border-radius:10px;padding:.7rem 1rem;font-size:.82rem;margin-bottom:1.1rem}
-.conv-calc{background:#EFF6FF;border-radius:12px;padding:1rem 1.2rem;margin-top:.75rem;border:1px solid #BFDBFE}
-.conv-calc .calc-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1D4ED8;margin-bottom:.4rem}
-.conv-result{font-size:1.5rem;font-weight:900;color:#1D4ED8}
+.error-msg{background:var(--red-50);border:1.5px solid var(--red-200);color:var(--red-700);border-radius:10px;padding:.7rem 1rem;font-size:.82rem;margin-bottom:1.1rem}
+.conv-calc{background:var(--blue-50);border-radius:12px;padding:1rem 1.2rem;margin-top:.75rem;border:1px solid var(--blue-200)}
+.conv-calc .calc-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue-700);margin-bottom:.4rem}
+.conv-result{font-size:1.5rem;font-weight:900;color:var(--blue-700)}
 .conv-flow{display:flex;align-items:center;gap:.75rem;margin-top:.6rem;flex-wrap:wrap}
-.flow-box{background:#fff;border:1px solid #BFDBFE;border-radius:10px;padding:.5rem .85rem;text-align:center}
-.flow-box .fl-val{font-size:.92rem;font-weight:700;color:#1D4ED8}
+.flow-box{background:var(--surface);border:1px solid var(--blue-200);border-radius:10px;padding:.5rem .85rem;text-align:center}
+.flow-box .fl-val{font-size:.92rem;font-weight:700;color:var(--blue-700)}
 .flow-box .fl-lbl{font-size:.7rem;color:#93C5FD;font-weight:600}
 .flow-arrow{color:#93C5FD;font-size:1rem}
 </style>
@@ -68,7 +68,7 @@
     </div>
 
     @if(session('success'))
-    <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:#166534;font-weight:500;"><i class="fas fa-check-circle" style="color:#16A34A;"></i> {{ session('success') }}</div>
+    <div style="background:var(--green-50);border:1.5px solid var(--green-300);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:var(--green-800);font-weight:500;"><i class="fas fa-check-circle" style="color:var(--green-600);"></i> {{ session('success') }}</div>
     @endif
 
     <form method="GET" action="{{ route('inventory.conversions.index') }}" class="filter-bar">
@@ -105,14 +105,14 @@
                     <tr>
                         <td style="color:var(--muted);font-size:.78rem">#{{ $log->id }}</td>
                         <td><div style="font-weight:700">{{ $log->inventoryItem?->item_name ?? '—' }}</div></td>
-                        <td><div style="font-weight:700;color:#1D4ED8">{{ $log->menuItem?->menu_name ?? '—' }}</div></td>
-                        <td style="color:#DC2626;font-weight:700">{{ number_format($log->raw_quantity_used,3) }} {{ $log->unit }}</td>
+                        <td><div style="font-weight:700;color:var(--blue-700)">{{ $log->menuItem?->menu_name ?? '—' }}</div></td>
+                        <td style="color:var(--red-600);font-weight:700">{{ number_format($log->raw_quantity_used,3) }} {{ $log->unit }}</td>
                         <td style="color:var(--muted)">{{ number_format($log->portion_size,3) }}/srv</td>
-                        <td><span style="font-weight:800;color:#1D4ED8;font-size:.95rem">{{ number_format($log->rtc_units_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
+                        <td><span style="font-weight:800;color:var(--blue-700);font-size:.95rem">{{ number_format($log->rtc_units_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
                         <td style="color:var(--muted)">{{ number_format($log->previous_raw_stock,3) }} {{ $log->unit }}</td>
                         <td style="font-weight:600">{{ number_format($log->remaining_raw_stock,3) }} {{ $log->unit }}</td>
                         <td style="color:var(--muted)">{{ number_format($log->previous_rtc_servings,0) }}</td>
-                        <td style="font-weight:700;color:#16A34A">{{ number_format($log->new_rtc_servings,0) }}</td>
+                        <td style="font-weight:700;color:var(--green-600)">{{ number_format($log->new_rtc_servings,0) }}</td>
                         <td>{{ $log->converter?->name ?? 'Admin' }}</td>
                         <td style="font-size:.78rem;color:var(--muted)">{{ $log->created_at->format('M d, Y H:i') }}</td>
                     </tr>

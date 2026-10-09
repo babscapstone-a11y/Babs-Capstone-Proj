@@ -14,10 +14,10 @@
 @section('styles')
 <style>
     .form-card {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 18px;
-        box-shadow: 0 4px 20px rgba(17,24,39,0.06);
+        box-shadow: 0 4px 20px rgba(var(--ink-rgb),0.06);
         overflow: hidden;
     }
     .form-card-header {
@@ -35,7 +35,7 @@
         width: 100%; padding: .62rem .85rem;
         border: 1.5px solid var(--border); border-radius: 10px;
         font-size: .88rem; font-family: inherit; color: var(--dark);
-        background: #fff; outline: none;
+        background: var(--surface); outline: none;
         transition: border-color .18s, box-shadow .18s;
         box-sizing: border-box;
     }
@@ -141,18 +141,18 @@
 <div class="form-card">
     <div class="form-card-header">
         <div style="display:flex;align-items:center;gap:.75rem">
-            <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(249,115,22,0.08));display:flex;align-items:center;justify-content:center;color:#D97706">
+            <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(249,115,22,0.08));display:flex;align-items:center;justify-content:center;color:var(--amber-600)">
                 <i class="fas fa-pen"></i>
             </div>
             <h2>Edit: {{ $menu->menu_name }}</h2>
         </div>
         <div style="display:flex;gap:.5rem">
             @if($menu->is_active)
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(22,163,74,0.10);border:1px solid rgba(22,163,74,0.25);color:#15803D;border-radius:50px;font-size:.72rem;font-weight:700;padding:.22rem .65rem">
+                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(22,163,74,0.10);border:1px solid rgba(22,163,74,0.25);color:var(--green-700);border-radius:50px;font-size:.72rem;font-weight:700;padding:.22rem .65rem">
                     <i class="fas fa-circle" style="font-size:.4rem"></i> Active
                 </span>
             @else
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(220,38,38,0.10);border:1px solid rgba(220,38,38,0.25);color:#B91C1C;border-radius:50px;font-size:.72rem;font-weight:700;padding:.22rem .65rem">
+                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(220,38,38,0.10);border:1px solid rgba(220,38,38,0.25);color:var(--red-700);border-radius:50px;font-size:.72rem;font-weight:700;padding:.22rem .65rem">
                     <i class="fas fa-circle" style="font-size:.4rem"></i> Inactive
                 </span>
             @endif
@@ -167,7 +167,7 @@
             <input type="radio" name="item_type" id="type_food" value="food" class="tile-input"
                 {{ old('item_type', $menu->item_type) === 'food' ? 'checked' : '' }}>
             <label for="type_food" class="tile-label">
-                <div class="tile-icon" style="background:rgba(37,99,235,0.10);color:#2563EB"><i class="fas fa-bowl-food"></i></div>
+                <div class="tile-icon" style="background:rgba(37,99,235,0.10);color:var(--blue-600)"><i class="fas fa-bowl-food"></i></div>
                 <div>
                     <div class="tile-text">Food</div>
                 </div>
@@ -175,7 +175,7 @@
             <input type="radio" name="item_type" id="type_beverage" value="beverage" class="tile-input"
                 {{ old('item_type', $menu->item_type) === 'beverage' ? 'checked' : '' }}>
             <label for="type_beverage" class="tile-label">
-                <div class="tile-icon" style="background:rgba(139,92,246,0.10);color:#7C3AED"><i class="fas fa-glass-water"></i></div>
+                <div class="tile-icon" style="background:rgba(139,92,246,0.10);color:var(--violet-600)"><i class="fas fa-glass-water"></i></div>
                 <div>
                     <div class="tile-text">Beverage</div>
                 </div>
@@ -237,13 +237,13 @@
                     <input type="radio" name="is_active" id="active_yes" value="1" class="tile-input"
                         {{ old('is_active', $menu->is_active ? '1' : '0') === '1' ? 'checked' : '' }}>
                     <label for="active_yes" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(22,163,74,0.10);color:#16A34A;width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-on"></i></div>
+                        <div class="tile-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600);width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-on"></i></div>
                         <div class="tile-text" style="font-size:.82rem">Active</div>
                     </label>
                     <input type="radio" name="is_active" id="active_no" value="0" class="tile-input"
                         {{ old('is_active', $menu->is_active ? '1' : '0') === '0' ? 'checked' : '' }}>
                     <label for="active_no" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(220,38,38,0.10);color:#DC2626;width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-off"></i></div>
+                        <div class="tile-icon" style="background:rgba(220,38,38,0.10);color:var(--red-600);width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-off"></i></div>
                         <div class="tile-text" style="font-size:.82rem">Inactive</div>
                     </label>
                 </div>
@@ -299,9 +299,9 @@
 
 {{-- Confirm dialog --}}
 <div id="confirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:18px;padding:2rem;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
         <div style="text-align:center;margin-bottom:1.25rem">
-            <div style="width:52px;height:52px;border-radius:13px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#D97706;margin:0 auto .85rem">
+            <div style="width:52px;height:52px;border-radius:13px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:var(--amber-600);margin:0 auto .85rem">
                 <i class="fas fa-pen"></i>
             </div>
             <h3 style="font-size:1rem;font-weight:700;color:var(--dark);margin:0 0 .5rem">Save Changes?</h3>

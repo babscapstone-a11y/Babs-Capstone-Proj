@@ -17,11 +17,11 @@
     .req-table thead th {
         padding:.85rem 1.1rem; text-align:left;
         font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-        color:var(--muted); background:#F8FAFC; border-bottom:1px solid var(--border);
+        color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--border);
     }
     .req-table tbody tr { transition:background .15s; }
     .req-table tbody tr:hover { background:rgba(220,38,38,0.02); }
-    .req-table td { padding:.9rem 1.1rem; border-bottom:1px solid rgba(17,24,39,0.05); vertical-align:middle; }
+    .req-table td { padding:.9rem 1.1rem; border-bottom:1px solid rgba(var(--ink-rgb),0.05); vertical-align:middle; }
     .req-table tbody tr:last-child td { border-bottom:none; }
 
     .staff-mini { display:flex; align-items:center; gap:.55rem; }
@@ -46,7 +46,7 @@
     .tab-btn:hover  { color:var(--dark); }
 
     .reject-note-input {
-        width:100%; border:1.5px solid rgba(17,24,39,0.1); border-radius:10px;
+        width:100%; border:1.5px solid rgba(var(--ink-rgb),0.1); border-radius:10px;
         padding:.55rem .85rem; font-size:.85rem; color:var(--dark);
         font-family:inherit; resize:vertical; outline:none; min-height:72px;
         transition:border-color .2s;
@@ -54,7 +54,7 @@
     .reject-note-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(220,38,38,0.08); }
 
     .empty-state { text-align:center; padding:3.5rem 1rem; }
-    .empty-state i { font-size:2.5rem; color:rgba(17,24,39,0.12); margin-bottom:.65rem; display:block; }
+    .empty-state i { font-size:2.5rem; color:rgba(var(--ink-rgb),0.12); margin-bottom:.65rem; display:block; }
     .empty-state p { color:var(--muted); font-size:.88rem; margin:0; }
 </style>
 @endsection
@@ -65,7 +65,7 @@
 <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
     @foreach([['pending','Pending','D97706'],['approved','Approved','16A34A'],['rejected','Rejected','DC2626']] as [$s,$l,$c])
     @php $cnt = $requests->getCollection()->where('status',$s)->count() @endphp
-    <div style="flex:1;min-width:110px;background:#fff;border-radius:12px;border:1px solid var(--border);padding:.9rem 1.1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+    <div style="flex:1;min-width:110px;background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:.9rem 1.1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
         <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">{{ $l }}</div>
         <div style="font-size:1.5rem;font-weight:800;color:#{{ $c }};margin-top:.1rem">{{ $cnt }}</div>
     </div>

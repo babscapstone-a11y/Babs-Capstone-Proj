@@ -11,38 +11,38 @@
 .filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .search-wrap{position:relative;flex:1;min-width:220px}
 .search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
-.search-input{width:100%;padding:.55rem .9rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.search-input{width:100%;padding:.55rem .9rem .55rem 2.3rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .search-input:focus{border-color:var(--primary)}
-.filter-select,.filter-date{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.filter-select,.filter-date{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-sm{padding:.38rem .75rem;font-size:.78rem}
-.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
 .table-wrap{overflow-x:auto}
 .inv-table{width:100%;border-collapse:collapse;font-size:.83rem}
-.inv-table th{padding:.65rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#F8FAFC;border-bottom:1px solid var(--border)}
-.inv-table td{padding:.8rem 1rem;border-bottom:1px solid #F3F4F6;color:var(--dark);vertical-align:middle}
+.inv-table th{padding:.65rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.inv-table td{padding:.8rem 1rem;border-bottom:1px solid var(--line);color:var(--dark);vertical-align:middle}
 .inv-table tr:last-child td{border-bottom:none}
-.inv-table tr:hover td{background:#FAFAFA}
+.inv-table tr:hover td{background:var(--surface-2)}
 .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.badge-rtc{background:#EFF6FF;color:#1D4ED8}.badge-bev{background:#F5F3FF;color:#6D28D9}
+.badge-rtc{background:var(--blue-50);color:var(--blue-700)}.badge-bev{background:var(--violet-50);color:var(--violet-700)}
 .empty-row td{text-align:center;color:var(--muted);padding:2rem;font-size:.84rem}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-backdrop.open{display:flex}
-.modal{background:#fff;border-radius:20px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both}
+.modal{background:var(--surface);border-radius:20px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes slideUp{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
 .modal-hd h3{font-size:1rem;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:.5rem}
-.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:#F8FAFC;cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
-.modal-close-btn:hover{background:#fee2e2;color:var(--primary)}
+.modal-close-btn{width:32px;height:32px;border-radius:8px;border:none;background:var(--surface-2);cursor:pointer;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close-btn:hover{background:var(--red-100);color:var(--primary)}
 .modal-body{padding:1.5rem}
 .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end}
 .field{margin-bottom:1.1rem}
 .field label{display:block;font-size:.8rem;font-weight:600;color:var(--dark);margin-bottom:.35rem}
-.field input,.field select,.field textarea{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:#fff;transition:border-color .18s}
+.field input,.field select,.field textarea{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface);transition:border-color .18s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
-.preview-box{background:#F8FAFC;border-radius:12px;padding:1rem 1.2rem;margin:.75rem 0;border:1px solid var(--border)}
+.preview-box{background:var(--surface-2);border-radius:12px;padding:1rem 1.2rem;margin:.75rem 0;border:1px solid var(--border)}
 .preview-row{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem}
 .preview-row:last-child{margin-bottom:0;font-weight:700;color:var(--primary)}
 </style>
@@ -59,7 +59,7 @@
     </div>
 
     @if(session('success'))
-    <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:#166534;font-weight:500;"><i class="fas fa-check-circle" style="color:#16A34A;"></i> {{ session('success') }}</div>
+    <div style="background:var(--green-50);border:1.5px solid var(--green-300);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:var(--green-800);font-weight:500;"><i class="fas fa-check-circle" style="color:var(--green-600);"></i> {{ session('success') }}</div>
     @endif
 
     <form method="GET" action="{{ route('inventory.stock-in.index') }}" class="filter-bar">
@@ -101,12 +101,12 @@
                         <td>
                             <div style="font-weight:700">{{ $tx->inventoryItem?->item_name ?? '—' }}</div>
                             @if($tx->procurementOrder)
-                            <a href="{{ route('purchase-orders.show', $tx->procurementOrder) }}" style="font-size:.72rem;color:#2563EB;font-weight:600"><i class="fas fa-file-invoice"></i> via {{ $tx->procurementOrder->po_number }}</a>
+                            <a href="{{ route('purchase-orders.show', $tx->procurementOrder) }}" style="font-size:.72rem;color:var(--blue-600);font-weight:600"><i class="fas fa-file-invoice"></i> via {{ $tx->procurementOrder->po_number }}</a>
                             @endif
                         </td>
                         <td><span class="badge {{ $tx->po_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($tx->po_type) }}</span></td>
                         <td style="color:var(--muted)">{{ number_format($tx->previous_quantity, 2) }} {{ $tx->unit }}</td>
-                        <td><span style="color:#16A34A;font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</span></td>
+                        <td><span style="color:var(--green-600);font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</span></td>
                         <td style="font-weight:700">{{ number_format($tx->new_quantity, 2) }} {{ $tx->unit }}</td>
                         <td>
                             @if($tx->unit_cost !== null)

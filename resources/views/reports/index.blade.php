@@ -24,9 +24,9 @@
 <style>
     .type-select-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
     .type-card {
-        display: block; background: var(--white); border: 2px solid var(--border); border-radius: 16px;
+        display: block; background: var(--surface); border: 2px solid var(--border); border-radius: 16px;
         padding: 1.4rem 1.5rem; text-decoration: none; transition: all .18s ease; cursor: pointer;
-        box-shadow: 0 2px 12px rgba(17,24,39,0.05);
+        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05);
     }
     .type-card:hover { border-color: rgba(220,38,38,0.35); transform: translateY(-2px); }
     .type-card.active { border-color: var(--primary); background: linear-gradient(180deg, rgba(220,38,38,0.05), transparent); box-shadow: 0 8px 20px rgba(220,38,38,0.12); }
@@ -39,12 +39,12 @@
     .filter-check { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: var(--dark); font-weight: 500; padding: .68rem 0; }
 
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
-    .stat-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border); padding: 1.15rem 1.3rem; box-shadow: 0 2px 12px rgba(17,24,39,0.05); }
+    .stat-card { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); padding: 1.15rem 1.3rem; box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05); }
     .stat-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .4rem; }
     .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--dark); line-height: 1.1; }
     .stat-card.accent-primary .stat-value { color: var(--primary); }
     .stat-card.accent-amber .stat-value { color: var(--accent); }
-    .stat-card.accent-green .stat-value { color: #16A34A; }
+    .stat-card.accent-green .stat-value { color: var(--green-600); }
 
     .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
     .charts-grid.two-col { grid-template-columns: 1fr 1fr; }
@@ -53,20 +53,20 @@
 
     .report-table-wrap { overflow-x: auto; }
     table.report-table { width: 100%; border-collapse: collapse; font-size: .84rem; white-space: nowrap; }
-    table.report-table thead th { text-align: left; padding: .7rem .9rem; background: #F8FAFC; color: var(--muted); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+    table.report-table thead th { text-align: left; padding: .7rem .9rem; background: var(--surface-2); color: var(--muted); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
     table.report-table tbody td { padding: .7rem .9rem; border-bottom: 1px solid var(--border); color: var(--dark); }
-    table.report-table tbody tr:hover td { background: #FAFAFA; }
+    table.report-table tbody tr:hover td { background: var(--surface-2); }
     table.report-table tbody tr.row-excluded td { color: #9CA3AF; font-style: italic; }
     .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .table-search { max-width: 320px; flex: 1; min-width: 220px; }
     .empty-row td { text-align: center; padding: 2rem; color: var(--muted); }
 
-    .badge-instock, .badge-available { background: rgba(22,163,74,0.1); color: #16A34A; }
-    .badge-lowstock, .badge-low_stock { background: rgba(245,158,11,0.12); color: #B45309; }
-    .badge-outofstock, .badge-out_of_stock { background: rgba(220,38,38,0.1); color: #DC2626; }
-    .badge-paid { background: rgba(22,163,74,0.1); color: #16A34A; }
-    .badge-cancelled { background: rgba(220,38,38,0.1); color: #DC2626; }
-    .badge-failed, .badge-refunded { background: rgba(107,114,128,0.1); color: #6B7280; }
+    .badge-instock, .badge-available { background: rgba(22,163,74,0.1); color: var(--green-600); }
+    .badge-lowstock, .badge-low_stock { background: rgba(245,158,11,0.12); color: var(--amber-700); }
+    .badge-outofstock, .badge-out_of_stock { background: rgba(220,38,38,0.1); color: var(--red-600); }
+    .badge-paid { background: rgba(22,163,74,0.1); color: var(--green-600); }
+    .badge-cancelled { background: rgba(220,38,38,0.1); color: var(--red-600); }
+    .badge-failed, .badge-refunded { background: rgba(107,114,128,0.1); color: var(--muted); }
     .status-dot-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 600; padding: .22rem .65rem; border-radius: 50px; }
 
     .section-heading { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 1.75rem 0 .75rem; }
@@ -211,7 +211,7 @@
                     <strong>{{ $rangeLabel }}</strong>.<br>
                     Net sales reflect paid transactions only, after discounts.
                     @if($filters['include_unpaid'])
-                        <br><br><span style="color:#B45309"><i class="fas fa-triangle-exclamation"></i> Cancelled/unpaid orders are shown in the table below for visibility, but are excluded from all totals.</span>
+                        <br><br><span style="color:var(--amber-700)"><i class="fas fa-triangle-exclamation"></i> Cancelled/unpaid orders are shown in the table below for visibility, but are excluded from all totals.</span>
                     @endif
                 </p>
             </div>
@@ -301,8 +301,8 @@
             <div class="card-body">
                 <p style="font-size:.85rem;color:var(--muted);line-height:1.8">
                     <strong>{{ $data['summary']['total_items'] }}</strong> tracked items —
-                    <strong style="color:#B45309">{{ $data['summary']['low_stock_items'] }}</strong> running low,
-                    <strong style="color:#DC2626">{{ $data['summary']['out_of_stock_items'] }}</strong> out of stock.<br><br>
+                    <strong style="color:var(--amber-700)">{{ $data['summary']['low_stock_items'] }}</strong> running low,
+                    <strong style="color:var(--red-600)">{{ $data['summary']['out_of_stock_items'] }}</strong> out of stock.<br><br>
                     Only Pork, Beef, Chicken, Fish (RTC) and beverages are tracked — no ingredient-level inventory.
                 </p>
             </div>
@@ -472,6 +472,7 @@
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+@include('partials.chart-theme')
 <script>
 // Every filter field auto-applies on change — no "Apply Filters" button needed.
 function autoSubmit() {

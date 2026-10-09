@@ -12,10 +12,10 @@
 @section('styles')
 <style>
     .form-card {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 18px;
-        box-shadow: 0 4px 20px rgba(17,24,39,0.06);
+        box-shadow: 0 4px 20px rgba(var(--ink-rgb),0.06);
         overflow: hidden;
     }
     .form-card-header {
@@ -34,7 +34,7 @@
         width: 100%; padding: .62rem .85rem;
         border: 1.5px solid var(--border); border-radius: 10px;
         font-size: .88rem; font-family: inherit; color: var(--dark);
-        background: #fff; outline: none;
+        background: var(--surface); outline: none;
         transition: border-color .18s, box-shadow .18s;
         box-sizing: border-box;
     }
@@ -98,7 +98,7 @@
         background: rgba(37,99,235,0.06);
         border: 1.5px solid rgba(37,99,235,0.15);
         border-radius: 10px; padding: .75rem 1rem;
-        font-size: .8rem; color: #1D4ED8; margin-bottom: 1rem;
+        font-size: .8rem; color: var(--blue-700); margin-bottom: 1rem;
         display: flex; align-items: flex-start; gap: .5rem;
     }
     #rtcFields { display: none; }
@@ -154,7 +154,7 @@
             <input type="radio" name="item_type" id="type_food" value="food" class="tile-input"
                 {{ old('item_type', 'food') === 'food' ? 'checked' : '' }}>
             <label for="type_food" class="tile-label">
-                <div class="tile-icon" style="background:rgba(37,99,235,0.10);color:#2563EB"><i class="fas fa-bowl-food"></i></div>
+                <div class="tile-icon" style="background:rgba(37,99,235,0.10);color:var(--blue-600)"><i class="fas fa-bowl-food"></i></div>
                 <div>
                     <div class="tile-text">Food</div>
                 </div>
@@ -163,7 +163,7 @@
             <input type="radio" name="item_type" id="type_beverage" value="beverage" class="tile-input"
                 {{ old('item_type') === 'beverage' ? 'checked' : '' }}>
             <label for="type_beverage" class="tile-label">
-                <div class="tile-icon" style="background:rgba(139,92,246,0.10);color:#7C3AED"><i class="fas fa-glass-water"></i></div>
+                <div class="tile-icon" style="background:rgba(139,92,246,0.10);color:var(--violet-600)"><i class="fas fa-glass-water"></i></div>
                 <div>
                     <div class="tile-text">Beverage</div>
                 </div>
@@ -226,13 +226,13 @@
                     <input type="radio" name="is_active" id="active_yes" value="1" class="tile-input"
                         {{ old('is_active', '1') === '1' ? 'checked' : '' }}>
                     <label for="active_yes" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(22,163,74,0.10);color:#16A34A;width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-on"></i></div>
+                        <div class="tile-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600);width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-on"></i></div>
                         <div class="tile-text" style="font-size:.82rem">Active</div>
                     </label>
                     <input type="radio" name="is_active" id="active_no" value="0" class="tile-input"
                         {{ old('is_active') === '0' ? 'checked' : '' }}>
                     <label for="active_no" class="tile-label" style="flex:none;padding:.6rem .9rem">
-                        <div class="tile-icon" style="background:rgba(220,38,38,0.10);color:#DC2626;width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-off"></i></div>
+                        <div class="tile-icon" style="background:rgba(220,38,38,0.10);color:var(--red-600);width:28px;height:28px;font-size:.75rem"><i class="fas fa-toggle-off"></i></div>
                         <div class="tile-text" style="font-size:.82rem">Inactive</div>
                     </label>
                 </div>

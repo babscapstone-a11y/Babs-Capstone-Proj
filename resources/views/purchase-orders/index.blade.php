@@ -14,49 +14,49 @@
 .po-title i{color:var(--primary)}
 .po-sub{font-size:.83rem;color:var(--muted);margin-top:.25rem}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.1rem;margin-bottom:1.75rem}
-.stat-card{background:#fff;border-radius:16px;padding:1.25rem 1.4rem;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem}
+.stat-card{background:var(--surface);border-radius:16px;padding:1.25rem 1.4rem;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem}
 .stat-icon-wrap{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-.si-blue{background:#EFF6FF;color:#2563EB}.si-green{background:#F0FDF4;color:#16A34A}.si-amber{background:#FFFBEB;color:#D97706}.si-red{background:#FEF2F2;color:#DC2626}
+.si-blue{background:var(--blue-50);color:var(--blue-600)}.si-green{background:var(--green-50);color:var(--green-600)}.si-amber{background:var(--amber-50);color:var(--amber-600)}.si-red{background:var(--red-50);color:var(--red-600)}
 .stat-content .stat-val{font-size:1.75rem;font-weight:900;color:var(--dark);line-height:1}
 .stat-content .stat-lbl{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem}
 .grid-2{display:grid;grid-template-columns:1fr 1.4fr;gap:1.25rem;margin-bottom:1.75rem}
 @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
-.po-card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden}
-.po-card-hd{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#FAFBFC}
+.po-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden}
+.po-card-hd{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
 .po-card-hd h3{font-size:.88rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:.5rem;margin:0}
 .po-card-hd h3 i{color:var(--primary)}
 .mini-table{width:100%;border-collapse:collapse;font-size:.81rem}
-.mini-table th{padding:.55rem .9rem;text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#F8FAFC;border-bottom:1px solid var(--border)}
-.mini-table td{padding:.7rem .9rem;border-bottom:1px solid #F3F4F6;color:var(--dark);vertical-align:middle}
+.mini-table th{padding:.55rem .9rem;text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.mini-table td{padding:.7rem .9rem;border-bottom:1px solid var(--line);color:var(--dark);vertical-align:middle}
 .mini-table tr:last-child td{border-bottom:none}
-.mini-table tr:hover td{background:#FAFAFA}
-.badge-po-draft{background:#FEF3C7;color:#B45309;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-finalized{background:#DCFCE7;color:#15803D;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-stocked{background:#DBEAFE;color:#1D4ED8;display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-out{background:#FEE2E2;color:#B91C1C;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-low{background:#FEF3C7;color:#B45309;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-rtc{background:#EFF6FF;color:#1D4ED8;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
-.badge-po-bev{background:#F5F3FF;color:#6D28D9;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
+.mini-table tr:hover td{background:var(--surface-2)}
+.badge-po-draft{background:var(--amber-100);color:var(--amber-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-finalized{background:var(--green-100);color:var(--green-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-stocked{background:var(--blue-100);color:var(--blue-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-out{background:var(--red-100);color:var(--red-700);padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-low{background:var(--amber-100);color:var(--amber-700);padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-po-rtc{background:var(--blue-50);color:var(--blue-700);padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
+.badge-po-bev{background:var(--violet-50);color:var(--violet-700);padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
 .filter-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.1rem}
 .search-box{position:relative;flex:1;min-width:200px}
 .search-box i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.82rem;pointer-events:none}
-.search-input{width:100%;padding:.55rem .9rem .55rem 2.25rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.search-input{width:100%;padding:.55rem .9rem .55rem 2.25rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .search-input:focus{border-color:var(--primary)}
-.flt-select,.flt-date{padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-size:.82rem;font-family:inherit;color:var(--dark);outline:none;background:#fff}
+.flt-select,.flt-date{padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-size:.82rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
 .btn{display:inline-flex;align-items:center;gap:.42rem;padding:.52rem 1.05rem;border-radius:10px;font-size:.82rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(220,38,38,.2)}.btn-primary:hover{background:#B91C1C}
-.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--dark)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
 .btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#15803D}
 .btn-sm{padding:.35rem .7rem;font-size:.76rem}
-.full-card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden}
+.full-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden}
 .full-table{width:100%;border-collapse:collapse;font-size:.83rem}
-.full-table th{padding:.65rem 1rem;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#F8FAFC;border-bottom:1px solid var(--border)}
-.full-table td{padding:.8rem 1rem;border-bottom:1px solid #F3F4F6;color:var(--dark);vertical-align:middle}
+.full-table th{padding:.65rem 1rem;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.full-table td{padding:.8rem 1rem;border-bottom:1px solid var(--line);color:var(--dark);vertical-align:middle}
 .full-table tr:last-child td{border-bottom:none}
-.full-table tr:hover td{background:#FAFAFA}
+.full-table tr:hover td{background:var(--surface-2)}
 .empty-msg{text-align:center;color:var(--muted);padding:2.5rem;font-size:.84rem}
-.quick-actions{display:flex;gap:.75rem;flex-wrap:wrap;padding:1.1rem 1.25rem;border-top:1px solid var(--border);background:#FAFBFC}
+.quick-actions{display:flex;gap:.75rem;flex-wrap:wrap;padding:1.1rem 1.25rem;border-top:1px solid var(--border);background:var(--surface-2)}
 .tbl-wrap{overflow-x:auto}
 </style>
 @endsection
@@ -162,7 +162,7 @@
             </table>
             @else
             <div class="empty-msg">
-                <i class="fas fa-circle-check" style="font-size:1.4rem;color:#16A34A;display:block;margin-bottom:.5rem"></i>
+                <i class="fas fa-circle-check" style="font-size:1.4rem;color:var(--green-600);display:block;margin-bottom:.5rem"></i>
                 All inventory items are sufficiently stocked.
             </div>
             @endif
@@ -186,7 +186,7 @@
 
     {{-- Full PO Table --}}
     <div class="full-card">
-        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:#FAFBFC;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
             <h3 style="font-size:.92rem;font-weight:700;margin:0;color:var(--dark)"><i class="fas fa-list" style="color:var(--primary);margin-right:.4rem"></i>All Purchase Orders</h3>
         </div>
 
@@ -231,7 +231,7 @@
                             <a href="{{ route('purchase-orders.show', $order) }}" style="font-weight:700;color:var(--primary)">{{ $order->po_number }}</a>
                         </td>
                         <td style="color:var(--muted);font-size:.8rem">{{ $order->created_at->format('M d, Y') }}<br><span style="font-size:.72rem">{{ $order->created_at->format('h:i A') }}</span></td>
-                        <td><span style="font-weight:700;background:#F3F4F6;padding:.2rem .6rem;border-radius:6px">{{ $order->total_items }}</span></td>
+                        <td><span style="font-weight:700;background:var(--surface-3);padding:.2rem .6rem;border-radius:6px">{{ $order->total_items }}</span></td>
                         <td><span class="{{ $order->status_badge_class }}">{{ $order->status_label }}</span></td>
                         <td style="font-size:.82rem">{{ $order->preparedBy?->name ?? '—' }}</td>
                         <td style="color:var(--muted);font-size:.78rem">{{ $order->updated_at->diffForHumans() }}</td>

@@ -15,13 +15,13 @@
 
     /* Left panel */
     .item-profile-card {
-        background: #fff; border: 1.5px solid var(--border);
+        background: var(--surface); border: 1.5px solid var(--border);
         border-radius: 18px; overflow: hidden;
-        box-shadow: 0 4px 20px rgba(17,24,39,0.07);
+        box-shadow: 0 4px 20px rgba(var(--ink-rgb),0.07);
         position: sticky; top: 90px;
     }
     .item-hero {
-        background: linear-gradient(145deg, var(--dark) 0%, #1F2937 60%, #2D1010 100%);
+        background: linear-gradient(145deg, var(--ink) 0%, #1F2937 60%, #2D1010 100%);
         padding: 1.75rem 1.25rem 1.5rem;
         text-align: center; position: relative; overflow: hidden;
     }
@@ -52,12 +52,12 @@
         position: relative; z-index: 1; margin-bottom: .65rem;
     }
     .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .65rem; border-radius: 50px; font-size: .7rem; font-weight: 700; }
-    .badge-active   { background: rgba(22,163,74,0.15);  color: #15803D; border: 1px solid rgba(22,163,74,0.3); }
-    .badge-inactive { background: rgba(220,38,38,0.12);  color: #B91C1C; border: 1px solid rgba(220,38,38,0.25); }
-    .badge-avail    { background: rgba(22,163,74,0.10);  color: #15803D; border: 1px solid rgba(22,163,74,0.2); }
-    .badge-unavail  { background: rgba(107,114,128,0.1); color: #4B5563; border: 1px solid rgba(107,114,128,0.2); }
-    .badge-food     { background: rgba(37,99,235,0.10);  color: #2563EB; border: 1px solid rgba(37,99,235,0.2); }
-    .badge-beverage { background: rgba(139,92,246,0.10); color: #7C3AED; border: 1px solid rgba(139,92,246,0.2); }
+    .badge-active   { background: rgba(22,163,74,0.15);  color: var(--green-700); border: 1px solid rgba(22,163,74,0.3); }
+    .badge-inactive { background: rgba(220,38,38,0.12);  color: var(--red-700); border: 1px solid rgba(220,38,38,0.25); }
+    .badge-avail    { background: rgba(22,163,74,0.10);  color: var(--green-700); border: 1px solid rgba(22,163,74,0.2); }
+    .badge-unavail  { background: rgba(107,114,128,0.1); color: var(--text-2); border: 1px solid rgba(107,114,128,0.2); }
+    .badge-food     { background: rgba(37,99,235,0.10);  color: var(--blue-600); border: 1px solid rgba(37,99,235,0.2); }
+    .badge-beverage { background: rgba(139,92,246,0.10); color: var(--violet-600); border: 1px solid rgba(139,92,246,0.2); }
 
     .item-details { padding: 1.2rem 1.25rem; }
     .detail-row {
@@ -81,19 +81,19 @@
         margin-bottom: .45rem; box-sizing: border-box;
     }
     .action-btn:last-child { margin-bottom: 0; }
-    .action-edit       { color: #D97706; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
+    .action-edit       { color: var(--amber-600); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
     .action-edit:hover { background: rgba(245,158,11,0.12); }
-    .action-deact      { color: #B91C1C; border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+    .action-deact      { color: var(--red-700); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
     .action-deact:hover{ background: rgba(220,38,38,0.12); }
-    .action-act        { color: #15803D; border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
+    .action-act        { color: var(--green-700); border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
     .action-act:hover  { background: rgba(22,163,74,0.12); }
 
     /* Right content */
     .content-stack { display: flex; flex-direction: column; gap: 1.1rem; }
     .info-card {
-        background: #fff; border: 1.5px solid var(--border);
+        background: var(--surface); border: 1.5px solid var(--border);
         border-radius: 16px; overflow: hidden;
-        box-shadow: 0 2px 10px rgba(17,24,39,0.04);
+        box-shadow: 0 2px 10px rgba(var(--ink-rgb),0.04);
     }
     .info-card-header {
         padding: .85rem 1.2rem; border-bottom: 1px solid var(--border);
@@ -115,7 +115,7 @@
     }
     .rtc-icon-big {
         width: 52px; height: 52px; border-radius: 13px;
-        background: rgba(245,158,11,0.12); color: #D97706;
+        background: rgba(245,158,11,0.12); color: var(--amber-600);
         display: flex; align-items: center; justify-content: center;
         font-size: 1.2rem; flex-shrink: 0;
     }
@@ -182,11 +182,11 @@
                     <span class="detail-value">{{ $menu->category?->category_name ?? '—' }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-calendar-plus" style="color:#2563EB"></i> Created</span>
+                    <span class="detail-label"><i class="fas fa-calendar-plus" style="color:var(--blue-600)"></i> Created</span>
                     <span class="detail-value">{{ $menu->created_at->format('M d, Y') }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label"><i class="fas fa-pen" style="color:#16A34A"></i> Updated</span>
+                    <span class="detail-label"><i class="fas fa-pen" style="color:var(--green-600)"></i> Updated</span>
                     <span class="detail-value">{{ $menu->updated_at->format('M d, Y') }}</span>
                 </div>
             </div>
@@ -240,31 +240,31 @@
                     </div>
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         @if($menu->prep_time_minutes)
-                            <div style="font-size:1.2rem;color:#D97706"><i class="fas fa-hourglass-half"></i></div>
+                            <div style="font-size:1.2rem;color:var(--amber-600)"><i class="fas fa-hourglass-half"></i></div>
                             <div style="font-size:.9rem;font-weight:700;color:var(--dark)">{{ $menu->prep_time_minutes }} min</div>
                         @else
-                            <div style="font-size:1.2rem;color:#6B7280"><i class="fas fa-hourglass"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:#6B7280">Not set</div>
+                            <div style="font-size:1.2rem;color:var(--muted)"><i class="fas fa-hourglass"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--muted)">Not set</div>
                         @endif
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Prep Time</div>
                     </div>
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         @if($menu->is_available)
-                            <div style="font-size:1.2rem;color:#16A34A"><i class="fas fa-check-circle"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:#16A34A">Available</div>
+                            <div style="font-size:1.2rem;color:var(--green-600)"><i class="fas fa-check-circle"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--green-600)">Available</div>
                         @else
-                            <div style="font-size:1.2rem;color:#6B7280"><i class="fas fa-minus-circle"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:#6B7280">Unavailable</div>
+                            <div style="font-size:1.2rem;color:var(--muted)"><i class="fas fa-minus-circle"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--muted)">Unavailable</div>
                         @endif
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Availability</div>
                     </div>
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
                         @if($menu->is_active)
-                            <div style="font-size:1.2rem;color:#16A34A"><i class="fas fa-toggle-on"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:#16A34A">Active</div>
+                            <div style="font-size:1.2rem;color:var(--green-600)"><i class="fas fa-toggle-on"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--green-600)">Active</div>
                         @else
-                            <div style="font-size:1.2rem;color:#DC2626"><i class="fas fa-toggle-off"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:#DC2626">Inactive</div>
+                            <div style="font-size:1.2rem;color:var(--red-600)"><i class="fas fa-toggle-off"></i></div>
+                            <div style="font-size:.9rem;font-weight:700;color:var(--red-600)">Inactive</div>
                         @endif
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Status</div>
                     </div>
@@ -279,11 +279,11 @@
             </div>
             <div class="info-card-body">
                 @if($menu->item_type === 'beverage')
-                    <div style="display:flex;align-items:center;gap:.65rem;background:rgba(139,92,246,0.06);border:1.5px solid rgba(139,92,246,0.18);border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:#6D28D9">
+                    <div style="display:flex;align-items:center;gap:.65rem;background:rgba(139,92,246,0.06);border:1.5px solid rgba(139,92,246,0.18);border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:var(--violet-700)">
                         <i class="fas fa-glass-water" style="font-size:1.1rem;flex-shrink:0"></i>
                         <div>
                             <strong>Beverage Item</strong>
-                            <div style="font-size:.78rem;color:#7C3AED;margin-top:.1rem">Beverages do not require RTC raw material assignment.</div>
+                            <div style="font-size:.78rem;color:var(--violet-600);margin-top:.1rem">Beverages do not require RTC raw material assignment.</div>
                         </div>
                     </div>
                 @elseif($menu->rtcItem)
@@ -341,7 +341,7 @@
 
         {{-- Back link --}}
         <div style="display:flex;justify-content:flex-end;gap:.65rem">
-            <a href="{{ route('menu.index') }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-weight:600;color:var(--dark);text-decoration:none;background:#fff;transition:border-color .18s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <a href="{{ route('menu.index') }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-weight:600;color:var(--dark);text-decoration:none;background:var(--surface);transition:border-color .18s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
                 <i class="fas fa-arrow-left"></i> Back to Catalog
             </a>
             @can('update', $menu)
@@ -356,7 +356,7 @@
 
 {{-- Toggle Modal --}}
 <div id="toggleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
         <div style="text-align:center;margin-bottom:1.25rem">
             <div id="toggleIcon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem"></div>
             <h3 id="toggleTitle" style="font-size:1.05rem;font-weight:700;color:var(--dark);margin:0 0 .5rem"></h3>

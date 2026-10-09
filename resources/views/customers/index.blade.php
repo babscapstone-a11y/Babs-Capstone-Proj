@@ -17,12 +17,12 @@
         margin-bottom: 1.5rem;
     }
     .cust-stat {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 14px;
         padding: 1.1rem 1.2rem;
         display: flex; align-items: center; gap: .85rem;
-        box-shadow: 0 2px 8px rgba(17,24,39,0.04);
+        box-shadow: 0 2px 8px rgba(var(--ink-rgb),0.04);
         position: relative; overflow: hidden;
     }
     .cust-stat::after {
@@ -40,7 +40,7 @@
 
     /* ── Filter bar ─────────────────────────────────────────── */
     .filter-bar {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 14px;
         padding: .9rem 1.1rem;
@@ -77,11 +77,11 @@
 
     /* ── Table ──────────────────────────────────────────────── */
     .table-card {
-        background: #fff;
+        background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(17,24,39,0.05);
+        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05);
     }
     .table-header {
         padding: 1rem 1.25rem;
@@ -99,7 +99,7 @@
     }
     tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #FAFAFA; }
+    tbody tr:hover { background: var(--surface-2); }
     td { padding: .7rem .9rem; color: var(--dark); vertical-align: middle; }
 
     /* Avatar */
@@ -115,8 +115,8 @@
 
     /* Badges */
     .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .65rem; border-radius: 50px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
-    .badge-active   { background: rgba(22,163,74,0.10); color: #15803D; border: 1px solid rgba(22,163,74,0.2); }
-    .badge-inactive { background: rgba(220,38,38,0.10); color: #B91C1C; border: 1px solid rgba(220,38,38,0.2); }
+    .badge-active   { background: rgba(22,163,74,0.10); color: var(--green-700); border: 1px solid rgba(22,163,74,0.2); }
+    .badge-inactive { background: rgba(220,38,38,0.10); color: var(--red-700); border: 1px solid rgba(220,38,38,0.2); }
 
     /* Sort arrows */
     .sort-link { color: inherit; text-decoration: none; display: flex; align-items: center; gap: .3rem; }
@@ -130,11 +130,11 @@
         border: 1.5px solid; cursor: pointer; font-family: inherit;
         text-decoration: none; white-space: nowrap; transition: all .18s;
     }
-    .btn-view     { color: #2563EB; border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); }
+    .btn-view     { color: var(--blue-600); border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); }
     .btn-view:hover { background: rgba(37,99,235,0.12); }
-    .btn-deact    { color: #B91C1C; border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+    .btn-deact    { color: var(--red-700); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
     .btn-deact:hover { background: rgba(220,38,38,0.12); }
-    .btn-activ    { color: #15803D; border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
+    .btn-activ    { color: var(--green-700); border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
     .btn-activ:hover { background: rgba(22,163,74,0.12); }
 
     /* Empty state */
@@ -148,7 +148,7 @@
         border: 1.5px solid rgba(37,99,235,0.15);
         border-radius: 12px; padding: .7rem 1rem;
         display: flex; align-items: flex-start; gap: .55rem;
-        font-size: .8rem; color: #1D4ED8; margin-bottom: 1.25rem;
+        font-size: .8rem; color: var(--blue-700); margin-bottom: 1.25rem;
     }
     .reg-notice i { margin-top: .1rem; flex-shrink: 0; }
 
@@ -168,7 +168,7 @@
 {{-- Stats --}}
 <div class="cust-stats anim-1">
     <div class="cust-stat" style="--stat-bar: linear-gradient(90deg,#7C3AED,#2563EB)">
-        <div class="cust-stat-icon" style="background:rgba(124,58,237,0.10);color:#7C3AED">
+        <div class="cust-stat-icon" style="background:rgba(124,58,237,0.10);color:var(--violet-600)">
             <i class="fas fa-users"></i>
         </div>
         <div>
@@ -177,11 +177,11 @@
         </div>
     </div>
     <div class="cust-stat" style="--stat-bar: linear-gradient(90deg,#16A34A,#059669)">
-        <div class="cust-stat-icon" style="background:rgba(22,163,74,0.10);color:#16A34A">
+        <div class="cust-stat-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)">
             <i class="fas fa-circle-check"></i>
         </div>
         <div>
-            <div class="cust-stat-val" style="color:#16A34A">{{ $activeCustomers }}</div>
+            <div class="cust-stat-val" style="color:var(--green-600)">{{ $activeCustomers }}</div>
             <div class="cust-stat-lbl">Active</div>
         </div>
     </div>
@@ -201,7 +201,7 @@
     <i class="fas fa-circle-info"></i>
     <div>
         <strong>Self-Registration Module</strong> — Customer accounts are created when visitors register through the public
-        <a href="{{ route('register') }}" target="_blank" style="font-weight:700;color:#1D4ED8">Registration Page</a>.
+        <a href="{{ route('register') }}" target="_blank" style="font-weight:700;color:var(--blue-700)">Registration Page</a>.
         Every new registration is automatically assigned the Customer role and appears in this list.
         Administrators cannot create customer accounts directly.
     </div>
@@ -244,7 +244,7 @@
 
 {{-- Toggle Status Modal --}}
 <div id="toggleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
         <div style="text-align:center;margin-bottom:1.25rem">
             <div id="toggleIcon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem"></div>
             <h3 id="toggleTitle" style="font-size:1.05rem;font-weight:700;color:var(--dark);margin:0 0 .5rem"></h3>

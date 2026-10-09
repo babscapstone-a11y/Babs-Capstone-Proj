@@ -183,6 +183,7 @@
             .cb-datetime { display: none; }
         }
     </style>
+    @include('partials.admin-theme-css')
     @include('partials.row-actions-css')
 
     @yield('styles')
