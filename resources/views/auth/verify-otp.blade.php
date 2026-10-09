@@ -48,14 +48,11 @@
     }
 
     /* Logo badge */
-    .logo-badge{
-        width:96px;height:96px;border-radius:20px;
-        background:var(--primary);
-        display:flex;align-items:center;justify-content:center;
-        color:var(--white);font-weight:800;font-size:28px;
-        box-shadow:0 25px 60px rgba(220,38,38,0.22);
+    .logo-img{
+        width:96px;height:96px;object-fit:contain;flex-shrink:0;
+        filter:drop-shadow(0 12px 28px rgba(220,38,38,0.22));
     }
-    .brand{font-weight:800;letter-spacing:0.4px;margin-top:.6rem;font-size:1rem}
+    .brand{font-weight:800;letter-spacing:0.4px;font-size:1rem}
 
     /* Animated slogan */
     .animated-slogan{
@@ -289,11 +286,8 @@
         <div class="left-inner">
             <!-- Logo -->
             <div style="display:flex;align-items:center;gap:.85rem">
-                <div class="logo-badge" aria-label="BAB'S RESTO Logo">BR</div>
-                <div>
-                    <div class="brand" style="font-size:1.05rem;color:var(--black)">BAB'S RESTO</div>
-                    <div style="font-size:.82rem;color:var(--muted)">Web-based Ordering&nbsp;•&nbsp;POS&nbsp;•&nbsp;Inventory</div>
-                </div>
+                <img src="{{ asset('images/LandingPageBabsBlack.png') }}" alt="BAB'S RESTO logo" class="logo-img">
+                <div class="brand" style="font-size:1.05rem;color:var(--black)">BAB'S RESTO</div>
             </div>
 
             <!-- Heading -->
