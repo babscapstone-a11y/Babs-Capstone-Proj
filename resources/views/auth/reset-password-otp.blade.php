@@ -49,6 +49,7 @@
 
     /* Logo badge */
     .logo-img{
+        -webkit-user-drag: none; user-select: none;
         width:96px;height:96px;object-fit:contain;flex-shrink:0;
         filter:drop-shadow(0 12px 28px rgba(220,38,38,0.22));
     }
@@ -254,7 +255,7 @@
         <div class="left-inner">
             <!-- Logo -->
             <div style="display:flex;align-items:center;gap:.85rem">
-                <img src="{{ asset('images/LandingPageBabsBlack.png') }}" alt="BAB'S RESTO logo" class="logo-img">
+                <img src="{{ asset('images/LandingPageBabsBlack.png') }}" alt="BAB'S RESTO logo" class="logo-img" draggable="false">
                 <div class="brand" style="font-size:1.05rem;color:var(--black)">BAB'S RESTO</div>
             </div>
 

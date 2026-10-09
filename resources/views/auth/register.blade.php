@@ -113,6 +113,7 @@
     /* Logo — stacked above the name, large enough that the lettering is readable */
     .logo-wrap { display: flex; flex-direction: column; align-items: center; gap: .75rem; }
     .logo-img {
+        -webkit-user-drag: none; user-select: none;
         width: 160px; height: 160px;
         object-fit: contain;
         flex-shrink: 0;
@@ -461,7 +462,7 @@
         <div class="left-inner">
             <!-- Logo -->
             <div class="logo-wrap">
-                <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO logo" class="logo-img">
+                <img src="{{ asset('images/LandingPageBabsWhite.png') }}" alt="BAB'S RESTO logo" class="logo-img" draggable="false">
                 <div class="brand-name">BAB'S RESTO</div>
             </div>
 
