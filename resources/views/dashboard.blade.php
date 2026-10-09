@@ -108,7 +108,7 @@
     }
     .stat-placeholder { font-style: italic; }
 
-    /* ── Module cards ───────────────────────────────────────── */
+    /* ── Section headings ───────────────────────────────────── */
     .section-heading {
         font-size: .72rem; font-weight: 700; text-transform: uppercase;
         letter-spacing: .08em; color: var(--muted);
@@ -116,59 +116,6 @@
         border-bottom: 1px solid var(--border);
         display: flex; align-items: center; justify-content: space-between;
     }
-    .modules-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.75rem;
-    }
-    .module-card {
-        background: #fff;
-        border: 1.5px solid var(--border);
-        border-radius: 16px;
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: .75rem;
-        transition: border-color .2s, box-shadow .2s, transform .2s;
-        position: relative;
-        overflow: hidden;
-    }
-    .module-card:hover {
-        border-color: var(--primary);
-        box-shadow: 0 8px 28px rgba(220,38,38,0.12);
-        transform: translateY(-2px);
-    }
-    .module-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(ellipse 60% 50% at 100% 0%, rgba(220,38,38,0.05) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .module-icon {
-        width: 52px; height: 52px; border-radius: 14px;
-        background: linear-gradient(135deg, rgba(220,38,38,0.12), rgba(249,115,22,0.08));
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; color: var(--primary);
-    }
-    .module-name {
-        font-size: .95rem; font-weight: 700; color: var(--dark);
-    }
-    .module-desc {
-        font-size: .82rem; color: var(--muted); line-height: 1.55; flex: 1;
-    }
-    .module-btn {
-        display: inline-flex; align-items: center; gap: .45rem;
-        padding: .58rem 1.1rem; border-radius: 10px;
-        background: linear-gradient(90deg, var(--primary), #F97316);
-        color: #fff; font-size: .82rem; font-weight: 700;
-        border: none; cursor: pointer; font-family: inherit;
-        text-decoration: none;
-        transition: opacity .18s, transform .18s;
-        width: fit-content;
-    }
-    .module-btn:hover { opacity: .9; transform: translateX(2px); color: #fff; }
 
     /* ── Widget placeholders ────────────────────────────────── */
     .widgets-grid {
@@ -226,33 +173,6 @@
         text-transform: uppercase;
     }
 
-    /* ── System status bar ──────────────────────────────────── */
-    .status-bar {
-        background: #fff;
-        border: 1.5px solid var(--border);
-        border-radius: 14px;
-        padding: .9rem 1.3rem;
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        flex-wrap: wrap;
-        font-size: .8rem;
-        color: var(--muted);
-        margin-bottom: 1.75rem;
-    }
-    .status-item { display: flex; align-items: center; gap: .5rem; }
-    .status-dot {
-        width: 8px; height: 8px; border-radius: 50%;
-        animation: statusPulse 2s ease infinite;
-    }
-    .status-dot.online  { background: #16A34A; box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
-    .status-dot.warning { background: #D97706; }
-    @keyframes statusPulse {
-        0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
-        50%      { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
-    }
-    .status-label { font-weight: 600; color: var(--dark); }
-
     /* ── Restaurant service control ─────────────────────────── */
     .service-status-bar {
         display: flex; align-items: center; justify-content: space-between;
@@ -304,7 +224,6 @@
         .stats-grid    { grid-template-columns: 1fr; }
         .welcome-badge { display: none; }
         .welcome-greeting { font-size: 1.25rem; }
-        .status-bar    { gap: 1rem; }
     }
 </style>
 @endsection
@@ -315,7 +234,7 @@
 <div class="welcome-banner anim-1">
     <div class="welcome-text">
         <div class="welcome-greeting">
-            Welcome back, <span>{{ explode(' ', auth()->user()->name)[0] }}</span>! 👋
+            Welcome back, <span>{{ explode(' ', auth()->user()->name)[0] }}</span>!
         </div>
         <div class="welcome-meta">
             <span><i class="fas fa-calendar-days"></i> <span id="liveDate"></span></span>
@@ -419,38 +338,6 @@
     </div>
 </div>
 @endif
-
-{{-- System Status Bar --}}
-<div class="status-bar anim-2">
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">System Status:</span> Online
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">User Management:</span> Active
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">Menu Catalog:</span> Active
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">Customer Accounts:</span> Active
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">Order Module:</span> Active
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">Inventory Module:</span> Active
-    </div>
-    <div class="status-item">
-        <span class="status-dot online"></span>
-        <span class="status-label">POS Module:</span> Active
-    </div>
-</div>
 
 {{-- Summary Stats --}}
 <div class="stats-grid anim-3">
@@ -595,81 +482,6 @@
                 </table>
             </div>
         @endif
-    </div>
-</div>
-
-{{-- Quick Access Modules (REQ007) --}}
-<div class="anim-5">
-    <div class="section-heading">
-        <span><i class="fas fa-th-large" style="margin-right:.4rem;color:var(--primary)"></i> Available Modules</span>
-        <span style="font-size:.7rem;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0">
-            Quick access to management modules
-        </span>
-    </div>
-    <div class="modules-grid">
-
-        {{-- User Management (only active module) --}}
-        <div class="module-card">
-            <div class="module-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="module-name">User Management</div>
-            <div class="module-desc">
-                Create, update, activate, deactivate, and manage internal staff accounts including Administrators, Cashiers, Kitchen Staff, and Table Servers.
-            </div>
-            <a href="{{ route('users.index') }}" class="module-btn">
-                <i class="fas fa-arrow-right"></i> Open Module
-            </a>
-        </div>
-
-        {{-- Menu Catalog Management --}}
-        <div class="module-card">
-            <div class="module-icon" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(37,99,235,0.08));color:#7C3AED">
-                <i class="fas fa-utensils"></i>
-            </div>
-            <div class="module-name">Menu Catalog</div>
-            <div class="module-desc">
-                Add, update, and manage all food and beverage items. Set pricing, categories, availability, and link RTC raw material requirements per serving.
-            </div>
-            @if($totalMenuItems > 0)
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:-.1rem">
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.18);color:#15803D;border-radius:50px;font-size:.68rem;font-weight:700;padding:.15rem .55rem">
-                    <i class="fas fa-check" style="font-size:.5rem"></i> {{ $availableMenuItems }} available
-                </span>
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);color:#7C3AED;border-radius:50px;font-size:.68rem;font-weight:700;padding:.15rem .55rem">
-                    {{ $totalMenuItems }} total
-                </span>
-            </div>
-            @endif
-            <a href="{{ route('menu.index') }}" class="module-btn" style="background:linear-gradient(90deg,#7C3AED,#2563EB)">
-                <i class="fas fa-arrow-right"></i> Open Module
-            </a>
-        </div>
-
-        {{-- Customer Account Management --}}
-        <div class="module-card">
-            <div class="module-icon" style="background:linear-gradient(135deg,rgba(14,165,233,0.12),rgba(6,182,212,0.08));color:#0EA5E9">
-                <i class="fas fa-user-group"></i>
-            </div>
-            <div class="module-name">Customer Accounts</div>
-            <div class="module-desc">
-                View and manage all registered customer accounts. Search, filter, activate or deactivate accounts, and monitor registration activity.
-            </div>
-            @if($totalCustomers > 0)
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:-.1rem">
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.18);color:#15803D;border-radius:50px;font-size:.68rem;font-weight:700;padding:.15rem .55rem">
-                    <i class="fas fa-check" style="font-size:.5rem"></i> {{ $activeCustomers }} active
-                </span>
-                <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.18);color:#0369A1;border-radius:50px;font-size:.68rem;font-weight:700;padding:.15rem .55rem">
-                    {{ $totalCustomers }} total
-                </span>
-            </div>
-            @endif
-            <a href="{{ route('customers.index') }}" class="module-btn" style="background:linear-gradient(90deg,#0EA5E9,#06B6D4)">
-                <i class="fas fa-arrow-right"></i> Open Module
-            </a>
-        </div>
-
     </div>
 </div>
 

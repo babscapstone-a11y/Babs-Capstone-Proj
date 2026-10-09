@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CancellationRequest;
-use App\Models\Customer;
 use App\Models\InventoryItem;
-use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RestaurantDowntime;
@@ -23,13 +21,6 @@ class DashboardController extends Controller
         $activeStaff = User::whereHas('role', fn ($q) => $q->whereIn('role_name', $staffRoles))
                            ->where('status', 'active')->count();
         $pendingResets = StaffPasswordResetRequest::pending()->count();
-
-        $totalMenuItems     = MenuItem::count();
-        $activeMenuItems    = MenuItem::where('is_active', true)->count();
-        $availableMenuItems = MenuItem::where('is_active', true)->where('is_available', true)->count();
-
-        $totalCustomers  = Customer::count();
-        $activeCustomers = Customer::where('status', 'active')->count();
 
         // ── Order Cancellation Review Module (REQ047–REQ050) ───────────
         $pendingCancellations = CancellationRequest::pending()->count();
@@ -100,8 +91,6 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'totalStaff', 'activeStaff', 'pendingResets',
-            'totalMenuItems', 'activeMenuItems', 'availableMenuItems',
-            'totalCustomers', 'activeCustomers',
             'pendingCancellations', 'approvedCancellationsToday', 'rejectedCancellationsToday',
             'cancelledOrders', 'recentCancellationRequests',
             'salesChartLabels', 'salesChartData',
