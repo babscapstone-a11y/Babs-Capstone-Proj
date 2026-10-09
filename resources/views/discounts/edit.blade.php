@@ -183,7 +183,7 @@
                 </div>
 
                 <div style="display:flex;gap:.75rem;justify-content:flex-end">
-                    <a href="{{ route('discounts.show', $discount) }}" class="btn btn-outline">Cancel</a>
+                    <a href="{{ route('discounts.index') }}" class="btn btn-outline">Cancel</a>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Save Changes</button>
                 </div>
             </div>

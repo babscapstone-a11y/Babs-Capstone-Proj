@@ -227,7 +227,7 @@
 
                 {{-- Actions --}}
                 <div style="display:flex;gap:.75rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border)">
-                    <a href="{{ route('users.show', $user) }}" class="btn btn-secondary" style="min-width:120px;justify-content:center">
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary" style="min-width:120px;justify-content:center">
                         Cancel
                     </a>
                     <button type="submit" class="btn btn-primary" id="submitBtn" style="flex:1;justify-content:center">
