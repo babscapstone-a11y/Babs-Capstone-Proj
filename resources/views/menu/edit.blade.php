@@ -287,7 +287,7 @@
     </div>{{-- /form-card-body --}}
 
     <div class="form-footer">
-        <a href="{{ route('menu.show', $menu) }}" class="btn-cancel">
+        <a href="{{ route('menu.index') }}" class="btn-cancel">
             <i class="fas fa-arrow-left"></i> Cancel
         </a>
         <button type="button" class="btn-submit" onclick="openConfirmDialog()" id="saveBtn">
