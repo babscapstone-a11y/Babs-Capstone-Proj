@@ -95,6 +95,7 @@
 }
 .qty-btn:hover { background: var(--primary); color: #fff; }
 .qty-btn:active { transform: scale(.9); }
+.qty-btn:disabled { opacity: .5; cursor: wait; }
 .qty-val { font-weight: 700; font-size: .85rem; min-width: 18px; text-align: center; }
 .qty-val.bump { animation: bump .3s ease; }
 @keyframes bump { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
@@ -179,9 +180,9 @@
                         <div class="cart-row-actions">
                             <div class="cart-row-subtotal" id="subtotal-{{ $item->id }}">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</div>
                             <div class="qty-control">
-                                <button class="qty-btn" onclick="changeQty({{ $item->id }}, {{ $item->quantity - 1 }})">−</button>
+                                <button class="qty-btn" onclick="changeQty({{ $item->id }}, -1)" aria-label="Decrease quantity">−</button>
                                 <span class="qty-val" id="qty-{{ $item->id }}">{{ $item->quantity }}</span>
-                                <button class="qty-btn" onclick="changeQty({{ $item->id }}, {{ $item->quantity + 1 }})">+</button>
+                                <button class="qty-btn" onclick="changeQty({{ $item->id }}, 1)" aria-label="Increase quantity">+</button>
                             </div>
                             <button class="btn-remove" onclick="removeItem({{ $item->id }})"><i class="fas fa-trash-alt"></i> Remove</button>
                         </div>
@@ -258,21 +259,33 @@ function updateTotals(grandTotal, count) {
     }
 }
 
-async function changeQty(cartItemId, newQty) {
-    if (newQty < 1) { removeItem(cartItemId); return; }
-    if (newQty > 99) return;
+// step is +1 or -1. The new quantity is worked out from the quantity currently shown, so
+// repeated clicks keep counting up/down (the buttons used to carry the page-load quantity).
+async function changeQty(cartItemId, step) {
+    const row    = document.getElementById(`cart-row-${cartItemId}`);
+    const qtyEl  = document.getElementById(`qty-${cartItemId}`);
+    const btns   = row.querySelectorAll('.qty-btn');
+    if (row.dataset.busy) return;                       // ignore clicks while the last change is saving
 
+    const newQty = (parseInt(qtyEl.textContent, 10) || 1) + step;
+    if (newQty < 1) { removeItem(cartItemId); return; } // "−" on a quantity of 1 asks to remove the item
+    if (newQty > 99) { showToast('You can order up to 99 of one item.', 'info'); return; }
+
+    row.dataset.busy = '1';
+    btns.forEach(b => b.disabled = true);
     try {
-        const data = await apiPatch(`/cart/${cartItemId}/update`, { quantity: newQty });
-        const row = document.getElementById(`cart-row-${cartItemId}`);
+        const data  = await apiPatch(`/cart/${cartItemId}/update`, { quantity: newQty });
         const price = parseFloat(row.dataset.price);
-        document.getElementById(`qty-${cartItemId}`).textContent = newQty;
-        document.getElementById(`qty-${cartItemId}`).classList.add('bump');
-        setTimeout(() => document.getElementById(`qty-${cartItemId}`).classList.remove('bump'), 300);
+        qtyEl.textContent = newQty;
+        qtyEl.classList.add('bump');
+        setTimeout(() => qtyEl.classList.remove('bump'), 300);
         document.getElementById(`subtotal-${cartItemId}`).textContent = formatMoney(price * newQty);
         updateTotals(data.total, data.count);
     } catch (e) {
         showToast(e.message || 'Failed to update quantity.', 'error');
+    } finally {
+        delete row.dataset.busy;
+        btns.forEach(b => b.disabled = false);
     }
 }
 
