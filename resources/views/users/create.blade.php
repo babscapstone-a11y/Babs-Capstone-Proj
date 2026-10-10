@@ -35,7 +35,10 @@
         border-color:var(--primary);
         background:rgba(220,38,38,0.05);
     }
-    .role-option:checked + .role-label .role-name { color:var(--primary); }    @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2 { grid-column:auto; } }
+    .role-option:checked + .role-label .role-name { color:var(--primary); }
+    .req-mark { color:var(--primary); margin-left:.1rem; font-weight:700; }
+    .form-grid .col-right { grid-column:2; }   /* Confirm Password sits directly under Password */
+    @media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .form-grid .span-2, .form-grid .col-right { grid-column:auto; } }
 </style>
 @endsection
 
@@ -60,7 +63,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="first_name">
-                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> First Name
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> First Name <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('first_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
@@ -78,7 +81,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="last_name">
-                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> Last Name
+                            <i class="fas fa-user" style="color:var(--primary);font-size:.78rem"></i> Last Name <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('last_name') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-user"></i></span>
@@ -96,7 +99,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="email">
-                            <i class="fas fa-envelope" style="color:var(--primary);font-size:.78rem"></i> Email Address
+                            <i class="fas fa-envelope" style="color:var(--primary);font-size:.78rem"></i> Email Address <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('email') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-envelope"></i></span>
@@ -112,7 +115,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="username">
-                            <i class="fas fa-at" style="color:var(--primary);font-size:.78rem"></i> Username
+                            <i class="fas fa-at" style="color:var(--primary);font-size:.78rem"></i> Username <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('username') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-at"></i></span>
@@ -128,21 +131,25 @@
 
                     <div class="form-group">
                         <label class="form-label" for="phone">
-                            <i class="fas fa-phone" style="color:var(--primary);font-size:.78rem"></i> Phone
-                            <span class="form-label-opt">Optional</span>
+                            <i class="fas fa-phone" style="color:var(--primary);font-size:.78rem"></i> Phone <span class="req-mark" aria-hidden="true">*</span>
                         </label>
-                        <div class="input-wrap">
+                        <div class="input-wrap @error('phone') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-mobile-screen"></i></span>
                             <input id="phone" name="phone" type="tel" class="form-input"
-                                   value="{{ old('phone') }}" placeholder="09XXXXXXXXX"
+                                   value="{{ old('phone') }}" placeholder="09XXXXXXXXX" required
                                    inputmode="numeric" maxlength="11" pattern="[0-9]{11}"
+                                   title="Enter an 11-digit mobile number, e.g. 09171234567"
+                                   aria-invalid="{{ $errors->has('phone') ? 'true' : 'false' }}"
                                    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
                         </div>
+                        @error('phone')
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="password">
-                            <i class="fas fa-lock" style="color:var(--primary);font-size:.78rem"></i> Password
+                            <i class="fas fa-lock" style="color:var(--primary);font-size:.78rem"></i> Password <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('password') has-error @enderror">
                             <span class="input-icon"><i class="fas fa-lock"></i></span>
@@ -159,9 +166,9 @@
                         @enderror
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group col-right">
                         <label class="form-label" for="password_confirmation">
-                            <i class="fas fa-shield-halved" style="color:var(--primary);font-size:.78rem"></i> Confirm Password
+                            <i class="fas fa-shield-halved" style="color:var(--primary);font-size:.78rem"></i> Confirm Password <span class="req-mark" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap" id="confirmWrap">
                             <span class="input-icon"><i class="fas fa-shield-halved"></i></span>
@@ -179,7 +186,7 @@
                 </div>
 
                 {{-- Role --}}
-                <div class="section-label" style="margin-top:1.5rem">Assigned Role</div>
+                <div class="section-label" style="margin-top:1.5rem">Assigned Role <span class="req-mark" aria-hidden="true">*</span></div>
                 <div class="role-grid">
                     @foreach($roles as $r)
                     @php
@@ -188,7 +195,7 @@
                     @endphp
                     <div>
                         <input type="radio" name="role_id" id="role_{{ $r->id }}" value="{{ $r->id }}"
-                               class="role-option" {{ old('role_id') == $r->id ? 'checked' : '' }} required>
+                               class="role-option" {{ old('role_id') == $r->id ? 'checked' : '' }}>
                         <label for="role_{{ $r->id }}" class="role-label">
                             <span class="role-icon"><i class="fas {{ $icon }}"></i></span>
                             <span class="role-name">{{ $r->label }}</span>
@@ -199,6 +206,9 @@
                 @error('role_id')
                     <div class="field-error" style="margin-top:.4rem"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
                 @enderror
+                <div class="field-error" id="roleError" style="margin-top:.4rem;display:none">
+                    <i class="fas fa-circle-exclamation"></i> Please select a role for this staff member.
+                </div>
 
                 {{-- Actions --}}
                 <div style="display:flex;gap:.75rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border)">
@@ -271,10 +281,23 @@ conf.addEventListener('input', function() {
 
 // Intercept submit → show confirmation modal instead of posting straight away
 var createForm = document.getElementById('createForm');
+document.querySelectorAll('input[name="role_id"]').forEach(function (r) {
+    r.addEventListener('change', function () { document.getElementById('roleError').style.display = 'none'; });
+});
+
 createForm.addEventListener('submit', function(e) {
     e.preventDefault();
 
     if (!this.checkValidity()) { this.reportValidity(); return; }
+
+    // Role is required. Its radios are hidden behind styled cards, so the browser can't point at them —
+    // check it here (after the visible fields) and show our own message.
+    var roleChosen = !!document.querySelector('input[name="role_id"]:checked');
+    document.getElementById('roleError').style.display = roleChosen ? 'none' : 'flex';
+    if (!roleChosen) {
+        document.querySelector('.role-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
     if (pwd.value !== conf.value) {
         matchErr.style.display = 'flex';
         confWrap.classList.add('has-error');

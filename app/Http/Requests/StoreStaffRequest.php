@@ -21,7 +21,7 @@ class StoreStaffRequest extends FormRequest
             'last_name'  => ['required', 'string', 'max:100', new PersonName],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'username'   => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
-            'phone'      => ['nullable', 'digits:11'],
+            'phone'      => ['required', 'digits:11'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
             // Strong password rule is defined once in AppServiceProvider (Password::defaults)
             'password'   => ['required', 'confirmed', Password::defaults()],
@@ -33,6 +33,7 @@ class StoreStaffRequest extends FormRequest
         return [
             'role_id.required'  => 'Please select a role for this staff member.',
             'role_id.exists'    => 'The selected role is invalid.',
+            'phone.required'    => 'Please enter the staff member\'s phone number.',
             'phone.digits'      => 'Phone number must be exactly 11 digits.',
             'username.alpha_dash' => 'Username may only contain letters, numbers, dashes, and underscores.',
         ];
