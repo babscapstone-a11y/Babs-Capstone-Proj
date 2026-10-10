@@ -56,25 +56,31 @@ class PasswordResetLinkController extends Controller
 
         $customer = Customer::where('email', $email)->first();
 
-        if ($customer) {
-            $otp = (string) random_int(100000, 999999);
-
-            PasswordResetOtp::updateOrCreate(
-                ['email' => $email],
-                [
-                    'otp' => Hash::make($otp),
-                    'attempts' => 0,
-                    'expires_at' => now()->addMinutes(10),
-                    'created_at' => now(),
-                ]
-            );
-
-            $customer->notify(new PasswordResetOtpNotification($otp));
+        // Tell the user when the email isn't registered, so a typo can be fixed right away.
+        // (This route is rate-limited — throttle:6,1 — which limits using it to probe for accounts.)
+        if (! $customer) {
+            return back()
+                ->withInput()
+                ->withErrors(['email' => 'We couldn\'t find an account with that email address. Please check it and try again.']);
         }
+
+        $otp = (string) random_int(100000, 999999);
+
+        PasswordResetOtp::updateOrCreate(
+            ['email' => $email],
+            [
+                'otp' => Hash::make($otp),
+                'attempts' => 0,
+                'expires_at' => now()->addMinutes(10),
+                'created_at' => now(),
+            ]
+        );
+
+        $customer->notify(new PasswordResetOtpNotification($otp));
 
         $request->session()->put('password_reset_otp_email', $email);
 
         return redirect()->route('password.otp.verify')
-            ->with('status', 'If an account exists for that email, a 6-digit code has been sent.');
+            ->with('status', 'A 6-digit code has been sent to your email.');
     }
 }
