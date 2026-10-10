@@ -88,7 +88,8 @@
 
         /* ── Toasts ──────────────────────────────────────────── */
         .toast-wrap {
-            position: fixed; top: 1.25rem; right: 1.25rem;
+            /* below the top bar, so pop-ups never cover the bell, staff name or Sign Out */
+            position: fixed; top: calc(var(--ts-header-h, 70px) + 12px); right: 1.25rem;
             z-index: 9999; display: flex; flex-direction: column; gap: .5rem;
         }
         .toast {
@@ -141,7 +142,74 @@
         .btn-modal-confirm { background: var(--primary); color: var(--white); }
         .btn-modal-confirm:hover { background: var(--primary-dk); }
 
+        /* ── Notification bell ───────────────────────────────── */
+        .ts-notif { position: relative; }
+        .ts-bell {
+            position: relative; width: 42px; height: 42px; border-radius: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+            color: #fff; font-size: 1.05rem; cursor: pointer; transition: background .18s;
+        }
+        .ts-bell:hover, .ts-bell[aria-expanded="true"] { background: rgba(255,255,255,0.14); }
+        .ts-bell:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .ts-bell.ring i { animation: bellRing .9s ease; transform-origin: 50% 0; }
+        @keyframes bellRing {
+            0%,100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); }
+            45% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 75% { transform: rotate(4deg); }
+        }
+        .ts-bell-badge {
+            position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px;
+            border-radius: 50px; background: var(--primary); color: #fff; border: 2px solid var(--dark);
+            font-size: .68rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+        }
+        .ts-bell-badge[hidden] { display: none; }
+
+        /* Fixed to the screen (placed under the bell by script): the page body clips anything
+           absolutely positioned past its content because html/body use overflow-x: hidden */
+        .ts-notif-panel {
+            position: fixed; top: calc(var(--ts-header-h, 70px) + 8px); right: 1.25rem; z-index: 1200;
+            width: 360px; max-width: calc(100vw - 2rem);
+            background: var(--white); color: var(--dark); border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(17,24,39,0.25); border: 1px solid var(--border);
+            overflow: hidden; animation: notifPanelIn .18s ease both;
+        }
+        .ts-notif-panel[hidden] { display: none; }
+        @keyframes notifPanelIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .ts-notif-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .9rem 1.1rem; border-bottom: 1px solid var(--border);
+            font-weight: 700; font-size: .92rem;
+        }
+        .ts-notif-head small { color: var(--muted); font-weight: 500; font-size: .74rem; }
+        .ts-notif-list { max-height: 380px; overflow-y: auto; }
+        .ts-notif-item {
+            display: flex; gap: .75rem; padding: .85rem 1.1rem; text-decoration: none; color: inherit;
+            border-bottom: 1px solid rgba(17,24,39,0.06); transition: background .15s;
+        }
+        .ts-notif-item:last-child { border-bottom: none; }
+        .ts-notif-item:hover { background: #F9FAFB; }
+        .ts-notif-item.unread { background: #F0FDF4; }
+        .ts-notif-item.unread:hover { background: #DCFCE7; }
+        .ts-notif-icon {
+            width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff;
+            background: #16A34A;
+        }
+        .ts-notif-icon.packaging { background: #F59E0B; }
+        .ts-notif-text { flex: 1; min-width: 0; font-size: .84rem; line-height: 1.4; }
+        .ts-notif-text strong { font-weight: 700; }
+        .ts-notif-time { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+        .ts-notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #16A34A; flex-shrink: 0; margin-top: .45rem; }
+        .ts-notif-empty { padding: 2rem 1.1rem; text-align: center; color: var(--muted); font-size: .85rem; }
+        .ts-notif-empty i { display: block; font-size: 1.6rem; opacity: .35; margin-bottom: .5rem; }
+        .ts-notif-foot {
+            display: block; text-align: center; padding: .75rem; font-size: .82rem; font-weight: 700;
+            color: var(--primary); border-top: 1px solid var(--border); text-decoration: none;
+        }
+        .ts-notif-foot:hover { background: #FEF2F2; }
+
         @media (max-width: 768px) {
+            .ts-notif-panel { right: 1rem !important; left: 1rem; width: auto; }
             .kds-topbar { padding: .75rem 1rem; flex-wrap: wrap; gap: .6rem; }
             .kds-content { padding: 1rem; }
             .kds-datetime { display: none; }
@@ -180,6 +248,28 @@
                 <div class="kds-date">{{ now()->format('l, F d, Y') }}</div>
                 <div class="kds-clock" id="liveClock">--:--:-- --</div>
             </div>
+
+            {{-- Notifications: orders that are ready for the food server to serve / package --}}
+            <div class="ts-notif" id="tsNotif">
+                <button type="button" class="ts-bell" id="tsBell" aria-haspopup="true" aria-expanded="false"
+                        aria-controls="tsNotifPanel" aria-label="Notifications" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="ts-bell-badge" id="tsBellBadge" hidden>0</span>
+                </button>
+                <div class="ts-notif-panel" id="tsNotifPanel" role="region" aria-label="Notifications" hidden>
+                    <div class="ts-notif-head">
+                        <span>Notifications</span>
+                        <small id="tsNotifSummary">Orders ready for you</small>
+                    </div>
+                    <div class="ts-notif-list" id="tsNotifList">
+                        <div class="ts-notif-empty"><i class="fas fa-bell-slash"></i> Loading…</div>
+                    </div>
+                    <a href="{{ route('table-server.service.index') }}" class="ts-notif-foot">
+                        View all ready orders <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
             <div class="kds-staff">
                 <div class="kds-staff-avatar">{{ auth()->user()->initials }}</div>
                 <div>
@@ -286,6 +376,132 @@
         }
         tickClock();
         setInterval(tickClock, 1000);
+
+        // ── Notification bell ───────────────────────────────────────────────
+        // Lists every order that is Ready for the food server (to serve, or to package for
+        // pickup). Polls the same endpoint as the Ready Orders page. "Read" order ids are
+        // remembered per staff member in localStorage, so the badge survives page changes.
+        window.tsNotifications = (function () {
+            const ORDERS_URL = @json(route('table-server.service.orders'));
+            const SHOW_BASE  = @json(url('/table-server/service'));
+            const SEEN_KEY   = 'tsNotifSeen:' + @json(auth()->id());
+
+            const bell  = document.getElementById('tsBell');
+            const badge = document.getElementById('tsBellBadge');
+            const panel = document.getElementById('tsNotifPanel');
+            const list  = document.getElementById('tsNotifList');
+            const summary = document.getElementById('tsNotifSummary');
+
+            let ready = [];          // current Ready orders
+            let known = null;        // ids seen on the previous poll (null until the first poll)
+
+            const loadSeen = () => { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); } catch (e) { return new Set(); } };
+            const saveSeen = s => { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch (e) {} };
+            const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            function ago(iso) {
+                if (!iso) return '';
+                const m = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+                if (m < 1) return 'Just now';
+                if (m < 60) return m + ' min ago';
+                const h = Math.floor(m / 60);
+                return h + ' hr' + (h > 1 ? 's' : '') + (m % 60 ? ' ' + (m % 60) + ' min' : '') + ' ago';
+            }
+
+            function message(o) {
+                return o.uses_packaging
+                    ? `<strong>Order #${esc(o.order_number)}</strong> (${esc(o.order_type_label)}) is ready to package for pickup.`
+                    : `<strong>Order #${esc(o.order_number)}</strong>${o.table_number ? ` for <strong>Table ${esc(o.table_number)}</strong>` : ''} is ready to serve.`;
+            }
+
+            function render() {
+                const seen = loadSeen();
+                const unread = ready.filter(o => !seen.has(o.id)).length;
+                badge.textContent = unread > 99 ? '99+' : unread;
+                badge.hidden = unread === 0;
+                bell.setAttribute('aria-label', unread ? `Notifications, ${unread} unread` : 'Notifications');
+                summary.textContent = ready.length ? `${ready.length} order${ready.length === 1 ? '' : 's'} ready` : 'Orders ready for you';
+
+                list.innerHTML = ready.length
+                    ? ready.map(o => `
+                        <a class="ts-notif-item ${seen.has(o.id) ? '' : 'unread'}" href="${SHOW_BASE}/${o.id}">
+                            <div class="ts-notif-icon ${o.uses_packaging ? 'packaging' : ''}"><i class="fas ${o.uses_packaging ? 'fa-box' : 'fa-bell-concierge'}"></i></div>
+                            <div class="ts-notif-text">
+                                <div>${message(o)}</div>
+                                <div class="ts-notif-time"><i class="fas fa-clock"></i> Ready ${ago(o.ready_at)}${o.customer_name ? ' · ' + esc(o.customer_name) : ''}</div>
+                            </div>
+                            ${seen.has(o.id) ? '' : '<span class="ts-notif-dot" aria-label="Unread"></span>'}
+                        </a>`).join('')
+                    : '<div class="ts-notif-empty"><i class="fas fa-bell-slash"></i> No new notifications. Ready orders will appear here.</div>';
+            }
+
+            // Takes the orders list (from the poll, or from a page that already fetched it)
+            function ingest(orders) {
+                ready = orders.filter(o => o.status === 'Ready')
+                              .sort((a, b) => new Date(b.ready_at || 0) - new Date(a.ready_at || 0));
+                const ids = new Set(ready.map(o => o.id));
+
+                // Alert for orders that became ready since the last poll (not on first load)
+                if (known) {
+                    const fresh = ready.filter(o => !known.has(o.id) && !loadSeen().has(o.id));
+                    if (fresh.length) {
+                        bell.classList.remove('ring'); void bell.offsetWidth; bell.classList.add('ring');
+                        showToast(fresh.length === 1
+                            ? `Order #${esc(fresh[0].order_number)} is ready ${fresh[0].uses_packaging ? 'to package' : 'to serve'}.`
+                            : `${fresh.length} new orders are ready.`, 'info', 5000);
+                    }
+                }
+                known = ids;
+
+                // Forget "read" ids for orders that are no longer ready, so the stored list stays small
+                const seen = loadSeen();
+                saveSeen(new Set([...seen].filter(id => ids.has(id))));
+                render();
+            }
+
+            async function poll() {
+                try {
+                    const res = await fetch(ORDERS_URL, { headers: { Accept: 'application/json' } });
+                    if (!res.ok) return;
+                    ingest((await res.json()).orders || []);
+                } catch (e) { /* offline or session ended — try again next poll */ }
+            }
+
+            // The top bar's height positions the dropdown and pop-ups just below it
+            const header = document.querySelector('.kds-topbar');
+            const measure = () => document.documentElement.style.setProperty('--ts-header-h', header.offsetHeight + 'px');
+            measure();
+            window.addEventListener('resize', () => { measure(); if (!panel.hidden) place(); });
+
+            // Line the dropdown's right edge up with the bell (desktop; on phones CSS spans the width)
+            function place() {
+                panel.style.right = Math.max(16, window.innerWidth - bell.getBoundingClientRect().right) + 'px';
+            }
+
+            function open(show) {
+                if (show) place();
+                panel.hidden = !show;
+                bell.setAttribute('aria-expanded', show ? 'true' : 'false');
+                if (show) {
+                    render();                                              // show which ones are new…
+                    const seen = loadSeen(); ready.forEach(o => seen.add(o.id)); saveSeen(seen);
+                    badge.hidden = true;                                   // …and mark them all read
+                    bell.setAttribute('aria-label', 'Notifications');
+                } else {
+                    render();
+                }
+            }
+
+            bell.addEventListener('click', e => { e.stopPropagation(); open(panel.hidden); });
+            document.addEventListener('click', e => { if (!panel.hidden && !document.getElementById('tsNotif').contains(e.target)) open(false); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { open(false); bell.focus(); } });
+
+            poll();
+            setInterval(poll, 8000);
+            setInterval(() => { if (!panel.hidden) render(); }, 30000);   // keep "x min ago" fresh
+
+            return { refresh: poll, ingest };
+        })();
     </script>
 
     @yield('scripts')

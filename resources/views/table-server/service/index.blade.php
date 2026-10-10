@@ -25,32 +25,6 @@
     .summary-count { font-size: 1.7rem; font-weight: 800; color: var(--dark); line-height: 1; }
     .summary-label  { font-size: .78rem; color: var(--muted); font-weight: 600; margin-top: .2rem; }
 
-    /* ── Notification overlay ───────────────────────────────── */
-    .notif-stack {
-        position: fixed; top: 85px; right: 1.5rem; z-index: 500;
-        display: flex; flex-direction: column; gap: .6rem;
-        width: 360px; max-width: calc(100vw - 2.5rem);
-        max-height: calc(100vh - 110px); overflow-y: auto; padding: .1rem;
-    }
-    .notif-banner {
-        display: flex; align-items: center; gap: .8rem;
-        background: var(--white); border-left: 4px solid var(--status-ready);
-        border-radius: 12px; padding: .8rem 1rem; cursor: pointer; transition: transform .15s, box-shadow .15s;
-        box-shadow: 0 8px 24px rgba(17,24,39,0.14);
-        animation: notifIn .3s ease both;
-    }
-    .notif-banner:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(17,24,39,0.18); }
-    @keyframes notifIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-    .notif-icon {
-        width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
-        background: var(--status-ready); color: #fff; display: flex; align-items: center; justify-content: center;
-        animation: notifPulse 1.6s ease-in-out infinite;
-    }
-    @keyframes notifPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(22,163,74,.35); } 50% { box-shadow: 0 0 0 8px rgba(22,163,74,0); } }
-    .notif-text { flex: 1; font-size: .87rem; color: var(--dark); font-weight: 600; }
-    .notif-dismiss { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .9rem; padding: .3rem; }
-    .notif-dismiss:hover { color: var(--dark); }
-
     /* ── Search + filters ───────────────────────────────────── */
     .toolbar-row { display: flex; gap: .8rem; margin-bottom: 1.1rem; flex-wrap: wrap; align-items: center; }
     .toolbar-search {
@@ -111,7 +85,6 @@
     @media (max-width: 640px) {
         .summary-row { grid-template-columns: 1fr; }
         .toolbar-row { flex-direction: column; align-items: stretch; }
-        .notif-stack { top: 120px; right: 1rem; left: 1rem; width: auto; }
     }
 </style>
 @endsection
@@ -136,8 +109,6 @@
         <div><div class="summary-count" id="countAvg">—</div><div class="summary-label">Avg. Serving Time</div></div>
     </div>
 </div>
-
-<div class="notif-stack" id="notifStack"></div>
 
 <div class="toolbar-row">
     <div class="toolbar-search">
@@ -165,8 +136,6 @@
 
     let ordersCache = [];
     let activeFilter = 'all';
-    let acknowledgedIds = new Set();
-    let knownReadyIds = new Set();
 
     function statusColor(status) {
         return getComputedStyle(document.documentElement).getPropertyValue(STATUS_VAR[status] || '--status-ready').trim();
@@ -250,25 +219,6 @@
         }).join('');
     }
 
-    function renderNotifications() {
-        const readyOrders = ordersCache.filter(o => o.status === 'Ready' && !acknowledgedIds.has(o.id));
-        const stack = document.getElementById('notifStack');
-        stack.innerHTML = readyOrders.map(o => `
-            <div class="notif-banner" onclick="window.location.href='${SHOW_URL_BASE}/${o.id}'">
-                <div class="notif-icon"><i class="fas fa-bell"></i></div>
-                <div class="notif-text">Order #${o.order_number}${o.table_number ? ` for Table ${o.table_number}` : ''} is ready to serve.</div>
-                <button type="button" class="notif-dismiss" onclick="event.stopPropagation(); acknowledgeOrder(${o.id})" title="Dismiss">
-                    <i class="fas fa-xmark"></i>
-                </button>
-            </div>
-        `).join('');
-    }
-
-    function acknowledgeOrder(id) {
-        acknowledgedIds.add(id);
-        renderNotifications();
-    }
-
     function renderSummary(summary) {
         document.getElementById('countReady').textContent = summary.ready_to_serve;
         document.getElementById('countServed').textContent = summary.served_today;
@@ -282,12 +232,10 @@
             const data = await res.json();
             ordersCache = data.orders;
 
-            // New Ready orders since last poll get a fresh, un-acknowledged notification.
-            const currentReadyIds = new Set(ordersCache.filter(o => o.status === 'Ready').map(o => o.id));
-            knownReadyIds = currentReadyIds;
+            // Ready-order notifications live in the top-bar bell (layouts/table-server)
+            window.tsNotifications?.ingest(ordersCache);
 
             renderSummary(data.summary);
-            renderNotifications();
             renderGrid();
         } catch (e) {
             console.error('Failed to poll ready orders', e);
@@ -341,7 +289,6 @@
                 return;
             }
 
-            acknowledgeOrder(order.id);
             showToast(data.message, 'success');
             pollOrders();
         } catch (e) {
