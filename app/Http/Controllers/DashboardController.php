@@ -86,6 +86,15 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // ── Needs Restocking (out of stock first, then low stock) ──
+        $restockCount    = InventoryItem::outOfStock()->count() + InventoryItem::lowStock()->count();
+        $needsRestocking = InventoryItem::outOfStock()
+            ->union(InventoryItem::lowStock())
+            ->orderBy('item_type')
+            ->orderBy('item_name')
+            ->limit(8)
+            ->get();
+
         $activeDowntime   = RestaurantDowntime::current();
         $upcomingDowntime = RestaurantDowntime::next();
 
@@ -96,6 +105,7 @@ class DashboardController extends Controller
             'salesChartLabels', 'salesChartData',
             'todaySales', 'todayTransactions', 'activeOrders', 'completedOrdersToday', 'ordersChartData',
             'inventoryTotal', 'inventoryOut', 'inventoryLow', 'inventoryOk', 'lowStockItems',
+            'needsRestocking', 'restockCount',
             'activeDowntime', 'upcomingDowntime'
         ));
     }

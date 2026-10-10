@@ -37,19 +37,11 @@ class ProcurementOrderController extends Controller
         $lowStockCount  = InventoryItem::lowStock()->count();
         $outOfStockCount= InventoryItem::outOfStock()->count();
 
-        $needsRestocking = InventoryItem::outOfStock()
-            ->union(InventoryItem::lowStock())
-            ->orderBy('item_type')
-            ->orderBy('item_name')
-            ->limit(8)
-            ->get();
-
         $recentOrders = ProcurementOrder::with('preparedBy')->latest()->limit(5)->get();
 
         return view('purchase-orders.index', compact(
             'orders', 'draftCount', 'finalizedCount', 'stockedInCount',
-            'lowStockCount', 'outOfStockCount',
-            'needsRestocking', 'recentOrders'
+            'lowStockCount', 'outOfStockCount', 'recentOrders'
         ));
     }
 
@@ -91,7 +83,7 @@ class ProcurementOrderController extends Controller
         }
 
         return redirect()->route('purchase-orders.edit', $po)
-            ->with('success', "Draft Purchase Order {$po->po_number} generated successfully with {$items->count()} item(s). Review and edit quantities before finalizing.");
+            ->with('success', "Draft Purchase Order {$po->po_number} generated successfully with {$items->count()} item(s). Review the items and quantities, then click Save Changes to view and print it.");
     }
 
     public function show(ProcurementOrder $purchaseOrder): View
@@ -100,7 +92,12 @@ class ProcurementOrderController extends Controller
         return view('purchase-orders.show', ['po' => $purchaseOrder]);
     }
 
-    public function edit(ProcurementOrder $purchaseOrder): View|RedirectResponse
+    /**
+     * One edit page, two stages of a draft:
+     *  - planning  (default)       : adjust items/quantities → Save Changes → view & print
+     *  - recording (?mode=record)  : after buying, enter qty bought + amount paid → Save & Finalize
+     */
+    public function edit(Request $request, ProcurementOrder $purchaseOrder): View|RedirectResponse
     {
         if ($purchaseOrder->isFinalized()) {
             return redirect()->route('purchase-orders.show', $purchaseOrder)
@@ -113,7 +110,17 @@ class ProcurementOrderController extends Controller
             ->orderBy('item_type')->orderBy('item_name')
             ->get();
 
-        return view('purchase-orders.edit', ['po' => $purchaseOrder, 'availableItems' => $availableItems]);
+        return view('purchase-orders.edit', [
+            'po'             => $purchaseOrder,
+            'availableItems' => $availableItems,
+            'recording'      => $request->query('mode') === 'record',
+        ]);
+    }
+
+    /** Edit-page URL that keeps the current stage (planning or recording) */
+    private function editUrl(ProcurementOrder $po, bool $recording): string
+    {
+        return route('purchase-orders.edit', $recording ? [$po, 'mode' => 'record'] : $po);
     }
 
     public function update(Request $request, ProcurementOrder $purchaseOrder): RedirectResponse
@@ -141,25 +148,40 @@ class ProcurementOrderController extends Controller
 
         $request->validate($rules, $messages);
 
-        $purchaseOrder->update(['notes' => $request->notes]);
+        // Planning stage has no bought/paid inputs, so leave any recorded values untouched there
+        $recording = $request->input('mode') === 'record';
 
-        foreach ($purchaseOrder->items as $item) {
-            $received = $request->input("received.{$item->id}");
-            $paid     = $request->input("paid.{$item->id}");
-
-            $item->update([
-                'quantity_to_purchase' => (float) $request->input("quantities.{$item->id}"),
-                'quantity_received'    => $received === null || $received === '' ? null : (float) $received,
-                'amount_paid'          => $paid === null || $paid === '' ? null : (float) $paid,
-            ]);
+        // Notes are only on the planning page; don't clear them when saving from the recording page
+        if ($request->has('notes')) {
+            $purchaseOrder->update(['notes' => $request->notes]);
         }
 
-        // "Save & Finalize" from the edit page: save first, then run the normal finalize checks
-        if ($request->input('intent') === 'finalize') {
+        foreach ($purchaseOrder->items as $item) {
+            $changes = ['quantity_to_purchase' => (float) $request->input("quantities.{$item->id}")];
+
+            if ($recording) {
+                $received = $request->input("received.{$item->id}");
+                $paid     = $request->input("paid.{$item->id}");
+                $changes['quantity_received'] = $received === null || $received === '' ? null : (float) $received;
+                $changes['amount_paid']       = $paid === null || $paid === '' ? null : (float) $paid;
+            }
+
+            $item->update($changes);
+        }
+
+        // "Save & Finalize" (recording stage only): save first, then run the normal finalize checks
+        if ($recording && $request->input('intent') === 'finalize') {
             return $this->finalize($purchaseOrder->fresh());
         }
 
-        return back()->with('success', 'Purchase order saved successfully.');
+        if ($recording) {
+            return redirect($this->editUrl($purchaseOrder, true))
+                ->with('success', 'Purchase recorded. Finalize once every item is filled in.');
+        }
+
+        // Planning stage: show the saved PO so it can be printed and taken shopping
+        return redirect()->route('purchase-orders.show', $purchaseOrder)
+            ->with('success', "Purchase Order {$purchaseOrder->po_number} saved. Print it and bring it when buying the items.");
     }
 
     public function addItem(Request $request, ProcurementOrder $purchaseOrder): RedirectResponse
@@ -201,11 +223,11 @@ class ProcurementOrderController extends Controller
 
         $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
 
-        return redirect()->route('purchase-orders.edit', $purchaseOrder)
+        return redirect($this->editUrl($purchaseOrder, $request->query('mode') === 'record'))
             ->with('success', "{$item->item_name} added to the purchase order.");
     }
 
-    public function removeItem(ProcurementOrder $purchaseOrder, ProcurementOrderItem $item): RedirectResponse
+    public function removeItem(Request $request, ProcurementOrder $purchaseOrder, ProcurementOrderItem $item): RedirectResponse
     {
         if ($purchaseOrder->isFinalized()) {
             return back()->with('error', 'Finalized purchase orders cannot be modified.');
@@ -218,7 +240,7 @@ class ProcurementOrderController extends Controller
         $item->delete();
         $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
 
-        return redirect()->route('purchase-orders.edit', $purchaseOrder)
+        return redirect($this->editUrl($purchaseOrder, $request->query('mode') === 'record'))
             ->with('success', "{$name} removed from the purchase order.");
     }
 
@@ -239,12 +261,12 @@ class ProcurementOrderController extends Controller
             $names = $incomplete->pluck('item_name')->take(5)->implode(', ');
             $more  = $incomplete->count() > 5 ? ' and ' . ($incomplete->count() - 5) . ' more' : '';
 
-            return redirect()->route('purchase-orders.edit', $purchaseOrder)
+            return redirect($this->editUrl($purchaseOrder, true))
                 ->with('error', "Enter the quantity bought and amount paid for every item before finalizing. Missing: {$names}{$more}. (Enter 0 bought if an item was not purchased.)");
         }
 
         if ($purchaseOrder->items->every(fn ($item) => (float) $item->quantity_received <= 0)) {
-            return redirect()->route('purchase-orders.edit', $purchaseOrder)
+            return redirect($this->editUrl($purchaseOrder, true))
                 ->with('error', 'Cannot finalize: no items were bought. Enter the quantity bought for at least one item.');
         }
 

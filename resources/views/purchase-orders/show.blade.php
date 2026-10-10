@@ -88,13 +88,9 @@
             </div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-blue"><i class="fas fa-print"></i> Print / Save PDF</a>
-            @if($po->isDraft())
-            <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline"><i class="fas fa-pen"></i> Edit Draft</a>
-            @elseif($po->awaitingStockIn())
-            <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
-            @endif
-            <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+            {{-- Actions (Print, Record Purchase, Record Stock-In) live in the bar at the bottom.
+                 A draft goes back to its planning page; a finalized PO goes back to the list. --}}
+            <a href="{{ $po->isDraft() ? route('purchase-orders.edit', $po) : route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
     </div>
 
@@ -113,7 +109,7 @@
     @else
     <div class="notice notice-amber">
         <i class="fas fa-file-pen" style="font-size:1.1rem"></i>
-        <div class="grow">This is a draft. After buying the items, open <strong>Edit Draft</strong> to enter the quantity bought and amount paid, then finalize.</div>
+        <div class="grow">This is a draft. <strong>Print</strong> it and bring it when buying the items, then click <strong>Record Purchase</strong> to enter the quantity bought and amount paid, and finalize.</div>
     </div>
     @endif
 
@@ -153,7 +149,7 @@
             <div class="divider"></div>
             <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-blue"><i class="fas fa-print"></i> Print Purchase Order</a>
             @if($po->isDraft())
-            <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-outline" style="border-color:var(--primary);color:var(--primary)"><i class="fas fa-pen"></i> Edit / Record Purchase</a>
+            <a href="{{ route('purchase-orders.edit', [$po, 'mode' => 'record']) }}" class="btn btn-green"><i class="fas fa-cart-shopping"></i> Record Purchase</a>
             @elseif($po->awaitingStockIn())
             <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
             @endif

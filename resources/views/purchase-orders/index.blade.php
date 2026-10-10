@@ -19,8 +19,6 @@
 .si-blue{background:var(--blue-50);color:var(--blue-600)}.si-green{background:var(--green-50);color:var(--green-600)}.si-amber{background:var(--amber-50);color:var(--amber-600)}.si-red{background:var(--red-50);color:var(--red-600)}
 .stat-content .stat-val{font-size:1.75rem;font-weight:900;color:var(--dark);line-height:1}
 .stat-content .stat-lbl{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem}
-.grid-2{display:grid;grid-template-columns:1fr 1.4fr;gap:1.25rem;margin-bottom:1.75rem}
-@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
 .po-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden}
 .po-card-hd{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
 .po-card-hd h3{font-size:.88rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:.5rem;margin:0}
@@ -33,10 +31,6 @@
 .badge-po-draft{background:var(--amber-100);color:var(--amber-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-finalized{background:var(--green-100);color:var(--green-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
 .badge-po-stocked{background:var(--blue-100);color:var(--blue-700);display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-out{background:var(--red-100);color:var(--red-700);padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-low{background:var(--amber-100);color:var(--amber-700);padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-po-rtc{background:var(--blue-50);color:var(--blue-700);padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
-.badge-po-bev{background:var(--violet-50);color:var(--violet-700);padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;text-transform:uppercase}
 .filter-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.1rem}
 .search-box{position:relative;flex:1;min-width:200px}
 .search-box i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.82rem;pointer-events:none}
@@ -56,7 +50,6 @@
 .full-table tr:last-child td{border-bottom:none}
 .full-table tr:hover td{background:var(--surface-2)}
 .empty-msg{text-align:center;color:var(--muted);padding:2.5rem;font-size:.84rem}
-.quick-actions{display:flex;gap:.75rem;flex-wrap:wrap;padding:1.1rem 1.25rem;border-top:1px solid var(--border);background:var(--surface-2)}
 .tbl-wrap{overflow-x:auto}
 </style>
 @endsection
@@ -112,75 +105,6 @@
         <div class="stat-card">
             <div class="stat-icon-wrap si-red"><i class="fas fa-circle-xmark"></i></div>
             <div class="stat-content"><div class="stat-val">{{ $outOfStockCount }}</div><div class="stat-lbl">Out of Stock</div></div>
-        </div>
-    </div>
-
-    {{-- Two-column: Recent POs + Needs Restocking --}}
-    <div class="grid-2">
-        {{-- Recent Purchase Orders --}}
-        <div class="po-card">
-            <div class="po-card-hd">
-                <h3><i class="fas fa-clock-rotate-left"></i> Recent Purchase Orders</h3>
-                <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline btn-sm">View All</a>
-            </div>
-            <table class="mini-table">
-                <thead><tr><th>PO Number</th><th>Status</th><th>Items</th><th>Date</th></tr></thead>
-                <tbody>
-                    @forelse($recentOrders as $o)
-                    <tr>
-                        <td><a href="{{ route('purchase-orders.show', $o) }}" style="color:var(--primary);font-weight:700">{{ $o->po_number }}</a></td>
-                        <td><span class="{{ $o->status_badge_class }}">{{ $o->status_label }}</span></td>
-                        <td>{{ $o->total_items }}</td>
-                        <td style="color:var(--muted);font-size:.78rem">{{ $o->created_at->format('M d, Y') }}</td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="4" class="empty-msg">No purchase orders yet.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Needs Restocking --}}
-        <div class="po-card">
-            <div class="po-card-hd">
-                <h3><i class="fas fa-cart-shopping"></i> Needs Restocking</h3>
-                <a href="{{ route('inventory.restocking') }}" class="btn btn-outline btn-sm">Full List</a>
-            </div>
-            @if($needsRestocking->isNotEmpty())
-            <table class="mini-table">
-                <thead><tr><th>Item</th><th>Type</th><th>Current Qty</th><th>Status</th></tr></thead>
-                <tbody>
-                    @foreach($needsRestocking as $item)
-                    <tr>
-                        <td><div style="font-weight:600">{{ $item->item_name }}</div><div style="font-size:.72rem;color:var(--muted)">{{ $item->category }}</div></td>
-                        <td><span class="{{ $item->item_type === 'rtc' ? 'badge-po-rtc' : 'badge-po-bev' }}">{{ $item->item_type === 'rtc' ? 'RTC' : 'BEV' }}</span></td>
-                        <td style="font-weight:700;color:{{ $item->stock_status === 'out_of_stock' ? '#DC2626' : '#D97706' }}">{{ number_format($item->quantity,0) }} {{ $item->unit }}</td>
-                        <td><span class="{{ $item->stock_status === 'out_of_stock' ? 'badge-po-out' : 'badge-po-low' }}">{{ $item->stock_status_label }}</span></td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <div class="empty-msg">
-                <i class="fas fa-circle-check" style="font-size:1.4rem;color:var(--green-600);display:block;margin-bottom:.5rem"></i>
-                All inventory items are sufficiently stocked.
-            </div>
-            @endif
-            @if($lowStockCount + $outOfStockCount > 0)
-            <div class="quick-actions">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openModal({
-                        type: 'warn',
-                        iconClass: 'fas fa-wand-magic-sparkles',
-                        title: 'Generate Purchase Order?',
-                        desc: 'This will create a draft Purchase Order from all low/out-of-stock items.',
-                        action: '{{ route('purchase-orders.generate') }}',
-                        method: 'POST',
-                        confirmText: 'Generate'
-                    })">
-                    <i class="fas fa-wand-magic-sparkles"></i> Generate PO Draft
-                </button>
-            </div>
-            @endif
         </div>
     </div>
 
@@ -240,7 +164,6 @@
                                 <a href="{{ route('purchase-orders.show', $order) }}" class="act-btn act-view" title="View" aria-label="View"><i class="fas fa-eye"></i></a>
                                 <a href="{{ route('purchase-orders.print', $order) }}" target="_blank" class="act-btn act-edit" title="Print" aria-label="Print"><i class="fas fa-print"></i></a>
                                 @if($order->isDraft())
-                                <a href="{{ route('purchase-orders.edit', $order) }}" class="act-btn act-edit" title="Edit / Record Purchase" aria-label="Edit or record purchase"><i class="fas fa-pen"></i></a>
                                 <button type="button" class="act-btn act-danger" title="Delete" aria-label="Delete" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
@@ -279,6 +202,30 @@
         @if($orders->hasPages())
         <div style="padding:1rem 1.25rem;border-top:1px solid var(--border)">{{ $orders->links() }}</div>
         @endif
+    </div>
+
+    {{-- Recent Purchase Orders (below the full list; Needs Restocking lives on the Dashboard) --}}
+    <div style="margin-top:1.75rem">
+        <div class="po-card">
+            <div class="po-card-hd">
+                <h3><i class="fas fa-clock-rotate-left"></i> Recent Purchase Orders</h3>
+            </div>
+            <table class="mini-table">
+                <thead><tr><th>PO Number</th><th>Status</th><th>Items</th><th>Date</th></tr></thead>
+                <tbody>
+                    @forelse($recentOrders as $o)
+                    <tr>
+                        <td><a href="{{ route('purchase-orders.show', $o) }}" style="color:var(--primary);font-weight:700">{{ $o->po_number }}</a></td>
+                        <td><span class="{{ $o->status_badge_class }}">{{ $o->status_label }}</span></td>
+                        <td>{{ $o->total_items }}</td>
+                        <td style="color:var(--muted);font-size:.78rem">{{ $o->created_at->format('M d, Y') }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="empty-msg">No purchase orders yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 @endsection

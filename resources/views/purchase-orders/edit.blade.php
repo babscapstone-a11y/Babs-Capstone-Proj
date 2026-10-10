@@ -37,7 +37,7 @@
 .qty-input{width:90px;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:9px;font-size:.86rem;font-family:inherit;font-weight:700;color:var(--dark);outline:none;text-align:center;background:var(--surface)}
 .qty-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(220,38,38,.1)}
 .qty-input.changed{border-color:#16A34A;background:var(--green-50)}
-.notes-area{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:12px;font-size:.85rem;font-family:inherit;color:var(--dark);outline:none;resize:vertical;min-height:90px}
+.notes-area{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:12px;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface);outline:none;resize:vertical;min-height:90px}
 .notes-area:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
 .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:10px;font-size:.83rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(220,38,38,.2)}.btn-primary:hover{background:#B91C1C}
@@ -69,7 +69,9 @@
 /* Actual purchase (receiving) columns */
 .po-table th.rcv-col{background:var(--blue-50);color:var(--blue-700)}
 .po-table td.rcv-col{background:var(--blue-25)}
-.rcv-input{width:100px}
+.rcv-input{width:100px;-moz-appearance:textfield;appearance:textfield}
+/* No up/down arrows on Qty Bought / Amount Paid (values are typed) */
+.rcv-input::-webkit-outer-spin-button,.rcv-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .rcv-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 .peso-wrap{display:flex;align-items:center;gap:.25rem;font-weight:700;color:var(--muted)}
 .unit-cost-hint{font-size:.7rem;color:var(--muted);text-align:center;min-height:1em}
@@ -81,7 +83,12 @@
 .badge-rcv-none{background:var(--red-100);color:var(--red-700)}
 .steps{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .step{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-size:.78rem;color:var(--muted);display:flex;gap:.65rem;align-items:flex-start}
-.step-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--muted);color:#fff;font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step.current{border-color:var(--primary);box-shadow:0 0 0 3px rgba(220,38,38,.1)}
+.step.current .step-num{background:var(--primary)}
+.step.done{opacity:.7}
+.step.done .step-num{background:var(--green-600)}
+.mode-pill{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.25rem .6rem;border-radius:50px;background:var(--blue-50);color:var(--blue-700);border:1px solid var(--blue-200)}
 .step strong{color:var(--dark);display:block;font-size:.8rem}
 .summary-row{display:flex;gap:2rem;flex-wrap:wrap;padding:1rem 1.4rem;font-size:.85rem}
 .summary-row .lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
@@ -94,14 +101,22 @@
 
     <div class="po-header">
         <div>
-            <div class="po-title"><i class="fas fa-file-pen"></i> {{ $po->po_number }}</div>
-            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Plan the order, print it, then record what was actually bought</div>
+            <div class="po-title">
+                <i class="fas {{ $recording ? 'fa-cart-shopping' : 'fa-file-pen' }}"></i> {{ $po->po_number }}
+                <span class="mode-pill">{{ $recording ? 'Recording Purchase' : 'Planning Order' }}</span>
+            </div>
+            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">
+                {{ $recording
+                    ? 'Enter what was actually bought and how much was paid, then Save & Finalize.'
+                    : 'Adjust the items and quantities, then Save Changes to view and print the order.' }}
+            </div>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            @unless($recording)
             <button type="button" class="btn btn-primary" onclick="openLocalModal('addPoItemModal')"><i class="fas fa-plus"></i> Add Item</button>
-            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-outline" title="Save your changes first so the printout is up to date"><i class="fas fa-print"></i> Print</a>
-            <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-outline"><i class="fas fa-eye"></i> View</a>
-            <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+            @endunless
+            {{-- Recording returns to the PO's view page (where Record Purchase was clicked); planning returns to the list --}}
+            <a href="{{ $recording ? route('purchase-orders.show', $po) : route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
     </div>
 
@@ -116,10 +131,10 @@
 
     {{-- Workflow guide --}}
     <div class="steps">
-        <div class="step"><span class="step-num">1</span><div><strong>Plan the order</strong>Adjust quantities, add or remove items, then Save.</div></div>
-        <div class="step"><span class="step-num">2</span><div><strong>Print &amp; buy</strong>Print the PO and bring it when buying the items.</div></div>
-        <div class="step"><span class="step-num">3</span><div><strong>Record the purchase</strong>Enter the quantity bought and amount paid per item (0 if not bought).</div></div>
-        <div class="step"><span class="step-num">4</span><div><strong>Finalize &amp; stock in</strong>Finalize, then click Record Stock-In to update inventory.</div></div>
+        <div class="step {{ $recording ? 'done' : 'current' }}"><span class="step-num">1</span><div><strong>Plan the order</strong>Adjust quantities, add or remove items, then Save Changes.</div></div>
+        <div class="step {{ $recording ? 'done' : '' }}"><span class="step-num">2</span><div><strong>Print &amp; buy</strong>Print the PO from its view page and bring it when buying the items.</div></div>
+        <div class="step {{ $recording ? 'current' : '' }}"><span class="step-num">3</span><div><strong>Record the purchase</strong>Click Record Purchase, then enter the quantity bought and amount paid (0 if not bought).</div></div>
+        <div class="step"><span class="step-num">4</span><div><strong>Finalize &amp; stock in</strong>Save &amp; Finalize, then click Record Stock-In to update inventory.</div></div>
     </div>
 
     @if($errors->any())
@@ -128,14 +143,6 @@
 
     <form method="POST" action="{{ route('purchase-orders.update', $po) }}" id="editForm">
         @csrf @method('PUT')
-
-        {{-- Notes --}}
-        <div class="card">
-            <div class="card-hd"><h3><i class="fas fa-note-sticky"></i> Purchase Order Notes</h3></div>
-            <div style="padding:1.25rem 1.4rem">
-                <textarea name="notes" class="notes-area" placeholder="Add notes or instructions for this purchase order (optional)…">{{ old('notes', $po->notes) }}</textarea>
-            </div>
-        </div>
 
         {{-- RTC Items --}}
         @php $rtcItems = $po->items->where('item_type', 'rtc'); @endphp
@@ -156,10 +163,12 @@
                             <th>Recommended</th>
                             <th>Qty to Purchase *</th>
                             <th>Status</th>
+                            @if($recording)
                             <th class="rcv-col">Qty Bought</th>
                             <th class="rcv-col">Amount Paid</th>
                             <th class="rcv-col">Check</th>
-                            <th></th>
+                            @endif
+                            @unless($recording)<th></th>@endunless
                         </tr>
                     </thead>
                     <tbody>
@@ -184,18 +193,22 @@
                                 </div>
                             </td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
-                            @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '0.01', 'decimals' => 2])
+                            @if($recording)
+                                @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '0.01', 'decimals' => 2])
+                            @endif
+                            @unless($recording)
                             <td>
                                 <button type="button" class="act-btn act-danger" title="Remove item" aria-label="Remove item" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
                                         title: 'Remove Item?',
                                         desc: 'Remove ' + {{ Js::from($item->item_name) }} + ' from this purchase order?',
-                                        action: '{{ route('purchase-orders.items.destroy', [$po, $item]) }}',
+                                        action: '{{ route('purchase-orders.items.destroy', $recording ? [$po, $item, 'mode' => 'record'] : [$po, $item]) }}',
                                         method: 'DELETE',
                                         confirmText: 'Remove'
                                     })"><i class="fas fa-trash"></i></button>
                             </td>
+                            @endunless
                         </tr>
                         @endforeach
                     </tbody>
@@ -223,10 +236,12 @@
                             <th>Recommended</th>
                             <th>Qty to Purchase *</th>
                             <th>Status</th>
+                            @if($recording)
                             <th class="rcv-col">Qty Bought</th>
                             <th class="rcv-col">Amount Paid</th>
                             <th class="rcv-col">Check</th>
-                            <th></th>
+                            @endif
+                            @unless($recording)<th></th>@endunless
                         </tr>
                     </thead>
                     <tbody>
@@ -251,18 +266,22 @@
                                 </div>
                             </td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
-                            @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '1', 'decimals' => 0])
+                            @if($recording)
+                                @include('purchase-orders.partials.receiving-cells', ['item' => $item, 'step' => '1', 'decimals' => 0])
+                            @endif
+                            @unless($recording)
                             <td>
                                 <button type="button" class="act-btn act-danger" title="Remove item" aria-label="Remove item" onclick="openModal({
                                         type: 'danger',
                                         iconClass: 'fas fa-trash',
                                         title: 'Remove Item?',
                                         desc: 'Remove ' + {{ Js::from($item->item_name) }} + ' from this purchase order?',
-                                        action: '{{ route('purchase-orders.items.destroy', [$po, $item]) }}',
+                                        action: '{{ route('purchase-orders.items.destroy', $recording ? [$po, $item, 'mode' => 'record'] : [$po, $item]) }}',
                                         method: 'DELETE',
                                         confirmText: 'Remove'
                                     })"><i class="fas fa-trash"></i></button>
                             </td>
+                            @endunless
                         </tr>
                         @endforeach
                     </tbody>
@@ -276,31 +295,52 @@
             <div style="padding:2.5rem;text-align:center;color:var(--muted);font-size:.85rem">
                 <i class="fas fa-boxes-stacked" style="font-size:1.6rem;display:block;margin-bottom:.6rem;opacity:.35"></i>
                 No items on this purchase order yet.<br>
+                @unless($recording)
                 <button type="button" class="btn btn-primary btn-sm" style="margin-top:.9rem" onclick="openLocalModal('addPoItemModal')"><i class="fas fa-plus"></i> Add Item</button>
+                @endunless
             </div>
         </div>
         @endif
 
-        {{-- Purchase summary + action bar --}}
+        {{-- Notes (planning stage only — saved notes are kept while recording) --}}
+        @unless($recording)
         <div class="card">
+            <div class="card-hd"><h3><i class="fas fa-note-sticky"></i> Purchase Order Notes</h3></div>
+            <div style="padding:1.25rem 1.4rem">
+                <textarea name="notes" class="notes-area" placeholder="Add notes or instructions for this purchase order (optional)…">{{ old('notes', $po->notes) }}</textarea>
+            </div>
+        </div>
+        @endunless
+
+        {{-- Action bar (+ purchase summary while recording) --}}
+        <div class="card">
+            @if($recording)
             <div class="card-hd"><h3><i class="fas fa-receipt"></i> Actual Purchase Summary</h3></div>
             <div class="summary-row">
                 <div><div class="lbl">Items Recorded</div><div class="val"><span id="sumRecorded">0</span> / {{ $po->items->count() }}</div></div>
                 <div><div class="lbl">Items Bought</div><div class="val" id="sumBought">0</div></div>
                 <div><div class="lbl">Total Amount Paid</div><div class="val" style="color:var(--primary)">₱<span id="sumPaid">0.00</span></div></div>
             </div>
+            @endif
             <div class="action-bar">
                 <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
                 <div class="divider"></div>
+                @if($recording)
                 <button type="submit" class="btn btn-outline" style="border-color:var(--primary);color:var(--primary)">
                     <i class="fas fa-floppy-disk"></i> Save Changes
                 </button>
                 <button type="button" class="btn btn-green" onclick="doFinalize()">
                     <i class="fas fa-check-double"></i> Save &amp; Finalize
                 </button>
+                @else
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-floppy-disk"></i> Save Changes
+                </button>
+                @endif
             </div>
         </div>
         <input type="hidden" name="intent" id="formIntent" value="save">
+        @if($recording)<input type="hidden" name="mode" value="record">@endif
     </form>
 
 </div>
@@ -312,7 +352,7 @@
             <h3><i class="fas fa-plus"></i> Add Item to Purchase Order</h3>
             <button class="modal-close-btn" onclick="closeLocalModal('addPoItemModal')"><i class="fas fa-times"></i></button>
         </div>
-        <form method="POST" action="{{ route('purchase-orders.items.store', $po) }}">
+        <form method="POST" action="{{ route('purchase-orders.items.store', $recording ? [$po, 'mode' => 'record'] : $po) }}">
             @csrf
             <div class="modal-body">
                 @if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))
@@ -362,6 +402,8 @@ function markChanged(input) {
     if (hintId) hintId.style.display = isChanged ? 'block' : 'none';
 }
 
+@if($recording)
+/* ── Recording stage only: finalize + live check of bought vs ordered ── */
 function doFinalize() {
     var missing = document.querySelectorAll('.js-rcv-badge.badge-rcv-pending').length;
     if (missing > 0) {
@@ -440,6 +482,14 @@ document.querySelectorAll('.js-received').forEach(function (el) { updateReceivin
 document.querySelectorAll('input[name^="quantities"]').forEach(function (el) {
     el.addEventListener('input', function () { updateReceivingRow(el); });
 });
+
+// Scrolling the mouse wheel over a focused number box would change its value; let the page scroll instead
+document.querySelectorAll('.rcv-input').forEach(function (el) {
+    el.addEventListener('wheel', function () {
+        if (document.activeElement === el) el.blur();
+    }, { passive: true });
+});
+@endif
 
 function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }

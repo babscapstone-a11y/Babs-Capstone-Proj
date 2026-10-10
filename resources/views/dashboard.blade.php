@@ -392,6 +392,76 @@
 
 </div>
 
+{{-- Needs Restocking (moved here from the Purchase Orders page) --}}
+<div class="anim-4" style="margin-bottom:1.75rem">
+    <div class="section-heading">
+        <span><i class="fas fa-cart-shopping" style="margin-right:.4rem;color:var(--primary)"></i> Needs Restocking</span>
+        <a href="{{ route('inventory.restocking') }}" style="font-size:.75rem;color:var(--primary);font-weight:600;text-transform:none;letter-spacing:0">
+            Full List <i class="fas fa-arrow-right" style="font-size:.65rem"></i>
+        </a>
+    </div>
+
+    <div class="card">
+        @if($needsRestocking->isEmpty())
+            <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.85rem">
+                <i class="fas fa-circle-check" style="font-size:2rem;display:block;margin-bottom:.65rem;color:var(--green-600)"></i>
+                All inventory items are sufficiently stocked.
+            </div>
+        @else
+            <div class="cancel-table-wrap">
+                <table class="cancel-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Current Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($needsRestocking as $item)
+                        @php $out = $item->stock_status === 'out_of_stock'; @endphp
+                        <tr>
+                            <td>
+                                <div style="font-weight:600">{{ $item->item_name }}</div>
+                                <div style="font-size:.72rem;color:var(--muted)">{{ $item->category ?: '—' }}</div>
+                            </td>
+                            <td>
+                                <span class="badge" style="background:{{ $item->item_type === 'rtc' ? 'var(--blue-50)' : 'var(--violet-50)' }};color:{{ $item->item_type === 'rtc' ? 'var(--blue-700)' : 'var(--violet-700)' }}">
+                                    {{ $item->item_type === 'rtc' ? 'RTC' : 'BEV' }}
+                                </span>
+                            </td>
+                            <td style="font-weight:700;color:{{ $out ? 'var(--red-600)' : 'var(--amber-600)' }}">{{ number_format($item->quantity, 0) }} {{ $item->unit }}</td>
+                            <td>
+                                <span class="badge" style="background:{{ $out ? 'var(--red-100)' : 'var(--amber-100)' }};color:{{ $out ? 'var(--red-700)' : 'var(--amber-700)' }};text-transform:uppercase;font-weight:700">
+                                    {{ $item->stock_status_label }}
+                                </span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.9rem 1.2rem;border-top:1px solid var(--border)">
+                <span style="font-size:.78rem;color:var(--muted)">
+                    {{ $restockCount }} {{ Str::plural('item', $restockCount) }} need restocking{{ $restockCount > $needsRestocking->count() ? ' — showing the first ' . $needsRestocking->count() : '' }}
+                </span>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openModal({
+                        type: 'warn',
+                        iconClass: 'fas fa-wand-magic-sparkles',
+                        title: 'Generate Purchase Order?',
+                        desc: 'This will create a draft Purchase Order from all low/out-of-stock items.',
+                        action: '{{ route('purchase-orders.generate') }}',
+                        method: 'POST',
+                        confirmText: 'Generate'
+                    })">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate PO Draft
+                </button>
+            </div>
+        @endif
+    </div>
+</div>
+
 {{-- Order Cancellation Review (REQ047–REQ050) --}}
 <div class="anim-4" style="margin-bottom:1.75rem">
     <div class="section-heading">
