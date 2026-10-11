@@ -30,7 +30,7 @@ class InventoryController extends Controller
             ->latest()->limit(5)->get();
         $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])
             ->latest()->limit(5)->get();
-        $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'adjuster'])
+        $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])
             ->latest()->limit(5)->get();
 
         return view('inventory.index', compact(

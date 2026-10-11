@@ -49,8 +49,8 @@
 .activity-meta { font-size:.75rem; color:var(--muted); margin-top:.1rem; }
 .activity-qty  { font-size:.83rem; font-weight:700; color:var(--primary); flex-shrink:0; }
 
-.two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-@media(max-width:900px) { .two-col { grid-template-columns:1fr; } }
+.activity-icon.red   { background:var(--red-50); color:var(--red-600); }
+.activity-qty.minus  { color:var(--red-600); }
 
 .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; border-radius:10px; font-size:.83rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all .18s; text-decoration:none; }
 .btn-primary { background:var(--primary); color:#fff; }
@@ -148,8 +148,8 @@
     </div>
     @endif
 
-    {{-- ── Recent Activity ── --}}
-    <div class="two-col">
+    {{-- ── Recent Activity (full-width, stacked) ── --}}
+    <div>
         {{-- Recent Stock-Ins --}}
         <div class="section-card">
             <div class="section-hd">
@@ -190,6 +190,31 @@
                 </div>
                 @empty
                 <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No conversions yet.</div>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- Recent Adjustments --}}
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas fa-pen-to-square"></i> Recent Adjustments</h2>
+                <a href="{{ route('inventory.adjustments.index') }}">View All →</a>
+            </div>
+            <div class="activity-list">
+                @forelse($recentAdjustments as $adj)
+                <div class="activity-item">
+                    <div class="activity-icon red"><i class="fas fa-minus"></i></div>
+                    <div class="activity-body">
+                        <div class="activity-name">{{ $adj->subject_name }}</div>
+                        <div class="activity-meta">
+                            {{ $adj->getTypeLabel() }} &bull; {{ $adj->subject_kind }} &bull; {{ $adj->created_at->format('M d, Y') }} &bull; {{ $adj->adjuster?->name ?? 'Admin' }}
+                            @if($adj->remarks) &bull; <span title="{{ $adj->remarks }}">{{ Str::limit($adj->remarks, 40) }}</span>@endif
+                        </div>
+                    </div>
+                    <div class="activity-qty minus">{{ (float) $adj->quantity_adjusted > 0 ? '+' : '' }}{{ number_format($adj->quantity_adjusted, $adj->isServings() ? 0 : 2) }} {{ $adj->unit_label }}</div>
+                </div>
+                @empty
+                <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No adjustments yet.</div>
                 @endforelse
             </div>
         </div>
