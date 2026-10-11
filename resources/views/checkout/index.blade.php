@@ -225,8 +225,8 @@
                                 <div class="oc-sub"><span class="payment-amount" data-type="full">₱0.00</span></div>
                             </label>
                         </div>
-                        <div class="hint" style="margin-top:.9rem">
-                            You'll be shown a QR code to scan with your GCash app — payment is confirmed automatically. If it doesn't confirm right away, you can upload a screenshot as backup. Any remaining balance is settled at pickup.
+                        <div style="margin-top:.9rem;font-size:.74rem;color:var(--muted);line-height:1.5">
+                            Scan the QR code with GCash to pay. Any remaining balance is paid at pickup.
                         </div>
                     </div>
                 </div>
