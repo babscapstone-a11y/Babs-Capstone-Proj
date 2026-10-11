@@ -402,6 +402,12 @@ class CheckoutController extends Controller
                 ->with('error', 'This order has been cancelled, so payment can no longer be completed.');
         }
 
+        // Staff already verified the payment (e.g. from the backup screenshot) — nothing left to pay here
+        if ($order->approval_status === 'approved') {
+            return redirect()->route('account.orders.show', $order)
+                ->with('success', 'Your payment has already been verified.');
+        }
+
         $paymentProof = $order->paymentProof;
 
         if (! $paymentProof || ! $paymentProof->paymongo_checkout_url) {

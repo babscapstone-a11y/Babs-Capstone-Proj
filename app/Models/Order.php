@@ -503,6 +503,10 @@ class Order extends Model
      * reaches the counter (e.g. a "half payment" down payment at
      * checkout) — the cashier's billing screen deducts this from what's
      * still owed instead of re-charging the full total.
+     *
+     * An approved online order counts as paid too: approval is the cashier
+     * verifying the down-payment, including one sent through the backup
+     * screenshot upload that GCash never confirmed automatically.
      */
     public function amountPaidOnline(): float
     {
@@ -510,9 +514,10 @@ class Order extends Model
             $this->load('paymentProof');
         }
 
-        return $this->paymentProof && $this->paymentProof->status === 'paid'
-            ? (float) $this->paymentProof->amount
-            : 0.0;
+        $verified = $this->paymentProof
+            && ($this->paymentProof->status === 'paid' || ($this->isOnline() && $this->approval_status === 'approved'));
+
+        return $verified ? (float) $this->paymentProof->amount : 0.0;
     }
 
     public function isAwaitingPayment(): bool

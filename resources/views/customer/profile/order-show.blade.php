@@ -225,10 +225,12 @@
         // screenshot and are just waiting on the cashier to check it (the
         // "Awaiting Payment Verification" banner below, unchanged).
         // Never offer to resume payment once the order is cancelled or a
-        // cancellation request is pending review — there's nothing to pay for.
+        // cancellation request is pending review — there's nothing to pay for —
+        // or once staff have reviewed it (approved = payment verified).
         $needsPayment = $order->isOnline() && $order->paymentProof
             && in_array($order->paymentProof->status, ['awaiting_payment', 'failed'], true)
             && ! $order->paymentProof->proof_image
+            && ! in_array($order->approval_status, ['approved', 'rejected'], true)
             && ! $order->isCancelled()
             && ! $order->cancellationRequest?->isPending();
         $qrExpired = $needsPayment && ($order->paymentProof->status === 'failed' || $order->paymentProof->isQrExpired());

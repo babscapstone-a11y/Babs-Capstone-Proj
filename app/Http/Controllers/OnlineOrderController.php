@@ -103,6 +103,14 @@ class OnlineOrderController extends Controller
                 'reviewed_at'     => now(),
             ]);
 
+            // Approving = the cashier verified the down-payment. If it came in through the
+            // backup screenshot (GCash never confirmed it automatically), record it as
+            // received now so the pick-up bill only charges the remaining balance.
+            $proof = $locked->paymentProof;
+            if ($proof && $proof->status !== 'paid') {
+                $proof->update(['status' => 'paid', 'paid_at' => $proof->paid_at ?? now()]);
+            }
+
             return $locked;
         });
 
