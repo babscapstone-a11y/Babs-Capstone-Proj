@@ -662,32 +662,24 @@
             @csrf
             <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:.35rem">Starts</label>
             <div style="display:flex;gap:.6rem">
-                <input type="date" name="downtime_start_date" id="downtimeStartDate" required
-                       min="{{ now()->format('Y-m-d') }}" value="{{ $selectedStartDate }}"
-                       oninput="hideDowntimeJsError();updateDowntimePreview()"
-                       class="{{ $errors->has('downtime_start_date') ? 'has-error' : '' }}"
-                       style="flex:1.3;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
-                <input type="time" name="downtime_start_time" id="downtimeStartTime" required
-                       value="{{ $selectedStartTime }}"
-                       oninput="hideDowntimeJsError();updateDowntimePreview()"
-                       class="{{ $errors->has('downtime_start_time') ? 'has-error' : '' }}"
-                       style="flex:1;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
+                <input type="hidden" name="downtime_start_date" id="downtimeStartDate" value="{{ $selectedStartDate }}" data-min="{{ now()->format('Y-m-d') }}">
+                <button type="button" class="cd-field {{ $errors->has('downtime_start_date') ? 'has-error' : '' }}" style="flex:1.3"
+                        data-picker="date" data-for="downtimeStartDate" aria-haspopup="dialog" aria-label="Start date" onclick="DatePick.open(this)">
+                    <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                </button>
+                @include('partials.downtime-time-picker', ['name' => 'downtime_start_time', 'id' => 'downtimeStartTime', 'value' => $selectedStartTime, 'label' => 'Start'])
             </div>
             @error('downtime_start_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             @error('downtime_start_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
             <label style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Ends</label>
             <div style="display:flex;gap:.6rem">
-                <input type="date" name="downtime_date" id="downtimeDate" required
-                       min="{{ now()->format('Y-m-d') }}" value="{{ $selectedDate }}"
-                       oninput="hideDowntimeJsError();updateDowntimePreview()"
-                       class="{{ $errors->has('downtime_date') ? 'has-error' : '' }}"
-                       style="flex:1.3;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
-                <input type="time" name="downtime_time" id="downtimeTime" required
-                       value="{{ $selectedTime }}"
-                       oninput="hideDowntimeJsError();updateDowntimePreview()"
-                       class="{{ $errors->has('downtime_time') ? 'has-error' : '' }}"
-                       style="flex:1;height:40px;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:0 .6rem;font-size:.85rem;font-family:inherit;color:var(--dark);background:var(--surface)">
+                <input type="hidden" name="downtime_date" id="downtimeDate" value="{{ $selectedDate }}" data-min="{{ now()->format('Y-m-d') }}">
+                <button type="button" class="cd-field {{ $errors->has('downtime_date') ? 'has-error' : '' }}" style="flex:1.3"
+                        data-picker="date" data-for="downtimeDate" aria-haspopup="dialog" aria-label="End date" onclick="DatePick.open(this)">
+                    <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                </button>
+                @include('partials.downtime-time-picker', ['name' => 'downtime_time', 'id' => 'downtimeTime', 'value' => $selectedTime, 'label' => 'End'])
             </div>
             @error('downtime_date')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
             @error('downtime_time')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
@@ -698,7 +690,7 @@
             <label for="downtimeReason" style="display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin:.85rem 0 .35rem">Reason (optional — shown to customers who try to order)</label>
             <textarea name="reason" id="downtimeReason" rows="2" maxlength="255" placeholder="e.g. We're temporarily closed for staff shortage…"
                       class="{{ $errors->has('reason') ? 'has-error' : '' }}"
-                      style="width:100%;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $editingDowntime->reason ?? '') }}</textarea>
+                      style="width:100%;border:1.5px solid rgba(var(--ink-rgb),0.1);border-radius:10px;padding:.55rem .85rem;font-size:.85rem;color:var(--dark);background:var(--surface);font-family:inherit;resize:vertical;outline:none;min-height:60px">{{ old('reason', $editingDowntime->reason ?? '') }}</textarea>
             <div class="hint" style="font-size:.72rem;color:var(--muted);margin-top:.3rem">If left blank, customers will just see a generic "temporarily unavailable" message.</div>
             @error('reason')<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
 
@@ -711,6 +703,8 @@
         </form>
     </div>
 </div>
+@include('partials.clock-dial')
+@include('partials.date-picker')
 
 {{-- Footer note --}}
 <div class="anim-7" style="text-align:center;padding:.75rem 0 .25rem;color:var(--muted);font-size:.78rem">
@@ -758,10 +752,10 @@ function openDowntimeModal() {
         var nowDate = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
         var nowTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
 
-        document.getElementById('downtimeStartDate').value = activeDowntimeStartDate || nowDate;
-        document.getElementById('downtimeStartTime').value = activeDowntimeStartTime || nowTime;
-        document.getElementById('downtimeDate').value = activeDowntimeDate || '';
-        document.getElementById('downtimeTime').value = activeDowntimeTime || '';
+        DatePick.set('downtimeStartDate', activeDowntimeStartDate || nowDate);
+        ClockDial.set('downtimeStartTime', activeDowntimeStartTime || nowTime);
+        DatePick.set('downtimeDate', activeDowntimeDate || '');
+        ClockDial.set('downtimeTime', activeDowntimeTime || '');
         document.getElementById('downtimeReason').value = activeDowntimeReason;
 
         downtimeModalInitialized = true;
@@ -773,6 +767,11 @@ function openDowntimeModal() {
 function closeDowntimeModal() { document.getElementById('downtimeModal').classList.remove('open'); }
 
 function hideDowntimeJsError() { document.getElementById('downtimeJsError').style.display = 'none'; }
+
+// The calendar and clock dial fire "change" on the hidden inputs when a date/time is set
+['downtimeStartDate', 'downtimeStartTime', 'downtimeDate', 'downtimeTime'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () { hideDowntimeJsError(); updateDowntimePreview(); });
+});
 
 function updateDowntimePreview() {
     var startDateInput = document.getElementById('downtimeStartDate');

@@ -68,6 +68,11 @@
 .field textarea { resize: vertical; min-height: 80px; }
 .field .hint { font-size: .74rem; color: var(--muted); margin-top: .3rem; }
 
+/* Date calendar + clock dial (partials/date-picker, partials/clock-dial) in the customer red */
+:root { --cd-accent: var(--primary); --cd-accent-rgb: 220,38,38; }
+.field .cd-field { height: auto; padding: .7rem .9rem; border-color: var(--border); font-size: .87rem; color: var(--text); }
+.field .cd-field:hover, .field .cd-field.active { border-color: var(--primary); }
+
 /* Order summary sidebar */
 .summary-card { position: sticky; top: calc(var(--nav-h) + 1.5rem); }
 .summary-item { display: flex; justify-content: space-between; padding: .45rem 0; font-size: .83rem; }
@@ -150,10 +155,18 @@
 
                         {{-- Scheduled pickup --}}
                         <div class="field" id="onlinePickupField">
-                            <label for="pickup_date">Scheduled Pick-up Date &amp; Time</label>
+                            <label for="pickup_date_btn">Scheduled Pick-up Date &amp; Time</label>
                             <div style="display:flex;gap:.6rem">
-                                <input type="date" id="pickup_date" placeholder="Date" style="flex:1">
-                                <input type="time" id="pickup_time" placeholder="Time" style="flex:1" min="11:00" max="21:00">
+                                <input type="hidden" id="pickup_date" data-min="{{ now()->format('Y-m-d') }}">
+                                <button type="button" class="cd-field" id="pickup_date_btn" data-picker="date" data-for="pickup_date"
+                                        aria-haspopup="dialog" aria-label="Pick-up date" onclick="DatePick.open(this)">
+                                    <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                                </button>
+                                <input type="hidden" id="pickup_time" data-min-time="11:00" data-max-time="21:00">
+                                <button type="button" class="cd-field" data-picker="time" data-for="pickup_time"
+                                        aria-haspopup="dialog" aria-label="Pick-up time" onclick="ClockDial.open(this)">
+                                    <span class="cd-text"></span><i class="fas fa-clock"></i>
+                                </button>
                             </div>
                             <input type="hidden" name="pickup_at" id="pickup_at">
                             <div class="hint">We're open 11:00 AM – 9:00 PM. Please choose a pick-up time within our hours, at least 30 minutes from now.</div>
@@ -228,6 +241,8 @@
         </div>
     </form>
 </div>
+@include('partials.clock-dial')
+@include('partials.date-picker')
 @endsection
 
 @section('scripts')
@@ -270,7 +285,6 @@ const MIN_LEAD_MINUTES = 30; // kitchen needs at least this much notice
 
 const pickupDateInput = document.getElementById('pickup_date');
 const pickupTimeInput = document.getElementById('pickup_time');
-pickupDateInput.min = new Date().toISOString().split('T')[0];
 
 /* Combine pickup date + time into a single datetime field before submit */
 function syncPickupAt() {
@@ -301,14 +315,14 @@ function validatePickupFields() {
 
     if (time && ! isWithinBusinessHours(time)) {
         showToast("Please choose a pick-up time between 11:00 AM and 9:00 PM, our restaurant hours.", 'error');
-        pickupTimeInput.value = '';
+        ClockDial.set('pickup_time', '');
         syncPickupAt();
         return false;
     }
 
     if (date && time && ! meetsLeadTime(date, time)) {
         showToast(`Please choose a pick-up time at least ${MIN_LEAD_MINUTES} minutes from now, so the kitchen has time to prepare your order.`, 'error');
-        pickupTimeInput.value = '';
+        ClockDial.set('pickup_time', '');
         syncPickupAt();
         return false;
     }
