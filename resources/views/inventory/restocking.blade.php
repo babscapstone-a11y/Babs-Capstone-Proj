@@ -74,15 +74,6 @@
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-list"></i> View All</a>
             @endif
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
-            <button class="btn btn-green" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
-            @if($outOfStockItems->isNotEmpty() || $lowStockItems->isNotEmpty())
-            <form method="POST" action="{{ route('purchase-orders.generate') }}" style="display:inline">
-                @csrf
-                <button type="submit" class="btn btn-primary" onclick="return confirm('Generate a draft Purchase Order from all {{ $outOfStockItems->count() + $lowStockItems->count() }} restocking item(s)?')">
-                    <i class="fas fa-file-invoice"></i> Generate Purchase Order
-                </button>
-            </form>
-            @endif
         </div>
     </div>
 
@@ -196,19 +187,6 @@
         </div>
         <div style="font-size:.85rem;color:var(--muted);margin-top:.35rem">No items are currently below the reorder threshold.</div>
         <a href="{{ route('inventory.index') }}" class="btn btn-outline" style="margin-top:1.25rem"><i class="fas fa-arrow-left"></i> Back to Inventory</a>
-    </div>
-    @endif
-
-    @if($outOfStockItems->isNotEmpty() || $lowStockItems->isNotEmpty())
-    <div class="no-print" style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap">
-        <form method="POST" action="{{ route('purchase-orders.generate') }}" style="display:inline">
-            @csrf
-            <button type="submit" class="btn btn-primary" onclick="return confirm('Generate a draft Purchase Order from all restocking items?')">
-                <i class="fas fa-file-invoice"></i> Generate Purchase Order
-            </button>
-        </form>
-        <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-outline"><i class="fas fa-dolly"></i> Record Stock-In</a>
-        <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-list"></i> View Purchase Orders</a>
     </div>
     @endif
 </div>
