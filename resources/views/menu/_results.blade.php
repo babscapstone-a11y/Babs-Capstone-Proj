@@ -46,11 +46,11 @@
                 </td>
                 <td class="price-val">₱{{ number_format($item->price, 2) }}</td>
                 <td>
-                    @if($item->is_available)
-                        <span class="badge badge-avail-yes"><i class="fas fa-circle" style="font-size:.45rem"></i> Available</span>
-                    @else
-                        <span class="badge badge-avail-no"><i class="fas fa-circle" style="font-size:.45rem"></i> Unavailable</span>
-                    @endif
+                    @php $avail = $item->availability; @endphp
+                    <span class="badge {{ ['available' => 'badge-avail-yes', 'low_stock' => 'badge-avail-low', 'sold_out' => 'badge-avail-out'][$avail] }}"
+                          @if($item->isRtcTracked()) title="{{ (int) $item->rtc_servings }} {{ Str::plural('serving', (int) $item->rtc_servings) }} left" @endif>
+                        <i class="fas fa-circle" style="font-size:.45rem"></i> {{ $item->availability_label }}
+                    </span>
                 </td>
                 <td>
                     @if($item->is_active)
@@ -86,7 +86,7 @@
                     <div class="empty-state">
                         <i class="fas fa-utensils" style="color:var(--muted)"></i>
                         <h3>No Menu Items Found</h3>
-                        <p>{{ request()->hasAny(['search','category_id','item_type','is_active','is_available']) ? 'No matching records found.' : 'Start by adding your first menu item.' }}</p>
+                        <p>{{ request()->hasAny(['search','category_id','item_type','is_active','availability']) ? 'No matching records found.' : 'Start by adding your first menu item.' }}</p>
                         @can('create', App\Models\MenuItem::class)
                         <a href="{{ route('menu.create') }}" style="display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(90deg,var(--primary),#F97316);color:#fff;padding:.55rem 1.2rem;border-radius:10px;font-size:.83rem;font-weight:700;text-decoration:none">
                             <i class="fas fa-plus"></i> Add First Menu Item

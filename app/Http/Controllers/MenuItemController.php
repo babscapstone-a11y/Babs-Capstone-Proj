@@ -36,8 +36,8 @@ class MenuItemController extends Controller
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
         }
-        if ($request->filled('is_available')) {
-            $query->where('is_available', $request->boolean('is_available'));
+        if (in_array($request->input('availability'), ['available', 'low_stock', 'sold_out'], true)) {
+            $query->availability($request->input('availability'));
         }
 
         $menuItems  = $query->latest()->paginate(15)->withQueryString();
@@ -52,7 +52,8 @@ class MenuItemController extends Controller
 
         $totalItems     = MenuItem::count();
         $activeItems    = MenuItem::where('is_active', true)->count();
-        $availableItems = MenuItem::where('is_available', true)->where('is_active', true)->count();
+        // Active dishes that can be ordered right now (Available or Low Stock — not Sold Out)
+        $availableItems = $activeItems - MenuItem::where('is_active', true)->availability('sold_out')->count();
         $foodCount      = MenuItem::where('item_type', 'food')->count();
         $beverageCount  = MenuItem::where('item_type', 'beverage')->count();
 

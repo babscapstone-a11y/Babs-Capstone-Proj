@@ -55,6 +55,8 @@
     .badge-active   { background: rgba(22,163,74,0.15);  color: var(--green-700); border: 1px solid rgba(22,163,74,0.3); }
     .badge-inactive { background: rgba(220,38,38,0.12);  color: var(--red-700); border: 1px solid rgba(220,38,38,0.25); }
     .badge-avail    { background: rgba(22,163,74,0.10);  color: var(--green-700); border: 1px solid rgba(22,163,74,0.2); }
+    .badge-avail-low { background: rgba(217,119,6,0.12); color: var(--amber-700); border: 1px solid rgba(217,119,6,0.25); }
+    .badge-avail-out { background: rgba(220,38,38,0.10); color: var(--red-600);   border: 1px solid rgba(220,38,38,0.22); }
     .badge-unavail  { background: rgba(107,114,128,0.1); color: var(--text-2); border: 1px solid rgba(107,114,128,0.2); }
     .badge-food     { background: rgba(37,99,235,0.10);  color: var(--blue-600); border: 1px solid rgba(37,99,235,0.2); }
     .badge-beverage { background: rgba(139,92,246,0.10); color: var(--violet-600); border: 1px solid rgba(139,92,246,0.2); }
@@ -121,11 +123,14 @@
                     @else
                         <span class="badge badge-inactive"><i class="fas fa-circle" style="font-size:.4rem"></i> Inactive</span>
                     @endif
-                    @if($menu->is_available)
-                        <span class="badge badge-avail"><i class="fas fa-check" style="font-size:.55rem"></i> Available</span>
-                    @else
-                        <span class="badge badge-unavail"><i class="fas fa-minus" style="font-size:.55rem"></i> Unavailable</span>
-                    @endif
+                    @php
+                        $availStyle = [
+                            'available' => ['badge-avail',     'fa-check',                'var(--green-600)'],
+                            'low_stock' => ['badge-avail-low', 'fa-triangle-exclamation', 'var(--amber-600)'],
+                            'sold_out'  => ['badge-avail-out', 'fa-ban',                  'var(--red-600)'],
+                        ][$menu->availability];
+                    @endphp
+                    <span class="badge {{ $availStyle[0] }}"><i class="fas {{ $availStyle[1] }}" style="font-size:.55rem"></i> {{ $menu->availability_label }}</span>
                     @if($menu->item_type === 'food')
                         <span class="badge badge-food"><i class="fas fa-bowl-food" style="font-size:.55rem"></i> Food</span>
                     @else
@@ -194,12 +199,10 @@
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Prep Time</div>
                     </div>
                     <div style="text-align:center;padding:1rem;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
-                        @if($menu->is_available)
-                            <div style="font-size:1.2rem;color:var(--green-600)"><i class="fas fa-check-circle"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:var(--green-600)">Available</div>
-                        @else
-                            <div style="font-size:1.2rem;color:var(--muted)"><i class="fas fa-minus-circle"></i></div>
-                            <div style="font-size:.9rem;font-weight:700;color:var(--muted)">Unavailable</div>
+                        <div style="font-size:1.2rem;color:{{ $availStyle[2] }}"><i class="fas {{ $availStyle[1] }}"></i></div>
+                        <div style="font-size:.9rem;font-weight:700;color:{{ $availStyle[2] }}">{{ $menu->availability_label }}</div>
+                        @if($menu->isRtcTracked())
+                            <div style="font-size:.72rem;color:var(--muted)">{{ (int) $menu->rtc_servings }} {{ Str::plural('serving', (int) $menu->rtc_servings) }} left</div>
                         @endif
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Availability</div>
                     </div>

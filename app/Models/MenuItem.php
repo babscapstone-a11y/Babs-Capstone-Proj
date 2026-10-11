@@ -66,7 +66,7 @@ class MenuItem extends Model
 
     public function scopeRtcLowStock(Builder $q): Builder
     {
-        return $q->where('rtc_servings', '>', 0)->where('rtc_servings', '<=', 10);
+        return $q->where('rtc_servings', '>', 0)->where('rtc_servings', '<', 10);
     }
 
     public function scopeRtcOutOfStock(Builder $q): Builder
@@ -78,14 +78,14 @@ class MenuItem extends Model
     {
         $servings = (float) $this->rtc_servings;
         if ($servings <= 0) return 'out_of_stock';
-        if ($servings <= 10) return 'low_stock';
+        if ($servings < 10) return 'low_stock';
         return 'available';
     }
 
     /**
      * Whether this dish's orderable quantity is capped by RTC servings
      * stock (vs. beverages / food items never set up through conversion,
-     * which remain unlimited aside from the manual is_available toggle).
+     * which are unlimited).
      */
     public function isRtcTracked(): bool
     {
@@ -126,8 +126,48 @@ class MenuItem extends Model
         return $this->is_active ? 'Active' : 'Inactive';
     }
 
+    /* ── Availability (automatic, from RTC servings) ─────────── */
+
+    /** Fewer servings than this shows as Low Stock. */
+    const LOW_SERVINGS = 10;
+
+    /**
+     * 'available' | 'low_stock' | 'sold_out', worked out from servings stock:
+     * 0 servings = Sold Out, fewer than LOW_SERVINGS = Low Stock, otherwise Available.
+     * Items that aren't stock-tracked (beverages, dishes not set up for RTC
+     * conversion) are always Available. Taking a dish off the menu entirely is
+     * the separate Active / Inactive status.
+     */
+    public function getAvailabilityAttribute(): string
+    {
+        if (! $this->isRtcTracked()) {
+            return 'available';
+        }
+        $servings = (float) $this->rtc_servings;
+
+        return $servings <= 0 ? 'sold_out' : ($servings < self::LOW_SERVINGS ? 'low_stock' : 'available');
+    }
+
     public function getAvailabilityLabelAttribute(): string
     {
-        return $this->is_available ? 'Available' : 'Unavailable';
+        return match ($this->availability) {
+            'sold_out'  => 'Sold Out',
+            'low_stock' => 'Low Stock',
+            default     => 'Available',
+        };
+    }
+
+    /** Same rules as getAvailabilityAttribute(), for filtering lists. */
+    public function scopeAvailability(Builder $q, string $availability): Builder
+    {
+        $tracked = fn ($w) => $w->where('item_type', 'food')->whereNotNull('rtc_quantity');
+
+        return match ($availability) {
+            'sold_out'  => $q->where($tracked)->where(fn ($w) => $w->whereNull('rtc_servings')->orWhere('rtc_servings', '<=', 0)),
+            'low_stock' => $q->where($tracked)->where('rtc_servings', '>', 0)->where('rtc_servings', '<', self::LOW_SERVINGS),
+            'available' => $q->where(fn ($w) => $w->where('item_type', '!=', 'food')->orWhereNull('rtc_quantity')
+                                ->orWhere('rtc_servings', '>=', self::LOW_SERVINGS)),
+            default     => $q,
+        };
     }
 }
