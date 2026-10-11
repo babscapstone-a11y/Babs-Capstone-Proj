@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class InventoryItem extends Model
 {
     protected $fillable = [
-        'item_name', 'item_type', 'category', 'unit',
+        'item_name', 'item_type', 'category', 'unit', 'pack_unit', 'pieces_per_pack',
         'quantity', 'min_stock_level', 'reorder_level',
         'cost_price', 'is_rtc', 'rtc_servings',
         'portion_size', 'portion_unit', 'supplier', 'is_active',
     ];
 
     protected $casts = [
+        'pieces_per_pack' => 'integer',
         'quantity'        => 'decimal:4',
         'min_stock_level' => 'decimal:4',
         'reorder_level'   => 'decimal:4',
@@ -97,6 +98,34 @@ class InventoryItem extends Model
 
     public function isRtc(): bool  { return $this->item_type === 'rtc'; }
     public function isBeverage(): bool { return $this->item_type === 'beverage'; }
+
+    /** Packs a beverage can arrive in. Stock itself is counted per piece (bottle/can). */
+    const PACK_UNITS = ['Case', 'Box'];
+
+    /**
+     * How many of this beverage's own unit (bottle, can, Piece) come in one pack_unit (Case or
+     * Box), or null when it is only received by the piece. Set per item: a Case of 1 L Coke
+     * holds 6, a Case of 8 oz holds 12.
+     */
+    public function packSize(): ?int
+    {
+        $size = (int) $this->pieces_per_pack;
+
+        return $this->isBeverage() && in_array($this->pack_unit, self::PACK_UNITS, true)
+            && $this->unit !== $this->pack_unit && $size > 1 ? $size : null;
+    }
+
+    /** Stock as full packs plus loose pieces ("1 Case + 4 bottle"), for items with a pack size. */
+    public function getPackBreakdownAttribute(): ?string
+    {
+        $size = $this->packSize();
+        $qty  = (int) floor((float) $this->quantity);
+        if (! $size || $qty <= 0) {
+            return null;
+        }
+
+        return intdiv($qty, $size) . " {$this->pack_unit} + " . ($qty % $size) . ' ' . $this->unit;
+    }
 
     /* ── Relationships ── */
     public function menuItems(): HasMany

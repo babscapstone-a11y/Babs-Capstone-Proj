@@ -27,6 +27,7 @@
                         <div style="font-weight:700;font-size:.95rem">{{ number_format($item->quantity, 0) }}</div>
                         @php $pct = $item->reorder_level > 0 ? min(100, ($item->quantity / ($item->reorder_level * 2)) * 100) : 100; $color = $item->stock_status === 'available' ? 'progress-green' : ($item->stock_status === 'low_stock' ? 'progress-amber' : 'progress-red'); @endphp
                         <div class="progress-bar"><div class="progress-fill {{ $color }}" style="width:{{ $pct }}%"></div></div>
+                        @if($item->pack_breakdown)<div style="font-size:.72rem;color:var(--muted);margin-top:.3rem">{{ $item->pack_breakdown }}</div>@endif
                     </td>
                     <td style="color:var(--muted)">@unit($item->unit)</td>
                     <td>

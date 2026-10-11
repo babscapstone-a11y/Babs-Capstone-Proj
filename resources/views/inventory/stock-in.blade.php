@@ -103,7 +103,11 @@
                         </td>
                         <td><span class="badge {{ $tx->po_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($tx->po_type) }}</span></td>
                         <td style="color:var(--muted)">{{ number_format($tx->previous_quantity, 2) }} @unit($tx->unit)</td>
-                        <td><span style="color:var(--green-600);font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} @unit($tx->unit)</span></td>
+                        <td>
+                            <span style="color:var(--green-600);font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} @unit($tx->unit)</span>
+                            {{-- Manual stock-ins only carry remarks when received by the Case/Box ("Received as 1 Case…") --}}
+                            @if($tx->remarks && ! $tx->procurementOrder)<div style="font-size:.72rem;color:var(--muted)">{{ $tx->remarks }}</div>@endif
+                        </td>
                         <td style="font-weight:700">{{ number_format($tx->new_quantity, 2) }} @unit($tx->unit)</td>
                         <td>
                             @if($tx->unit_cost !== null)

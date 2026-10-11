@@ -26,7 +26,10 @@ class StockInService
 
     public function allowedUnits(InventoryItem $item): array
     {
-        return self::UNIT_FAMILIES[$item->unit] ?? [$item->unit];
+        $units = self::UNIT_FAMILIES[$item->unit] ?? [$item->unit];
+
+        // A beverage counted per bottle/can can also be received by its pack (Case or Box)
+        return $item->packSize() ? [...$units, $item->pack_unit] : $units;
     }
 
     public function unitConversionFactor(string $fromUnit, string $toUnit): float
@@ -49,6 +52,14 @@ class StockInService
         string $purchaseDate,
         array $extra = [],
     ): PurchaseOrder {
+        // Received by the pack (Case/Box): count it in the item's own unit (1 Case of 6 = 6 bottles),
+        // so stock and history stay in whole pieces; the remarks keep how it actually arrived
+        if ($unit === $item->pack_unit && ($packSize = $item->packSize())) {
+            $extra    += ['remarks' => "Received as {$purchased} {$unit} ({$packSize} {$item->unit} per {$unit})"];
+            $purchased *= $packSize;
+            $unit       = $item->unit;
+        }
+
         $unitCost = $totalCost !== null ? round($totalCost / $purchased, 2) : null;
 
         // Convert the purchased amount into the item's own tracked unit before touching stock

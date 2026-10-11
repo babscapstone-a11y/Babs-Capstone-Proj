@@ -275,6 +275,12 @@
                         <option value="Case" {{ old('unit') === 'Case' ? 'selected' : '' }}>Case</option>
                     </select>
                 </div>
+                {{-- Beverage bought by the Case/Box: how many pieces are inside, so Stock-In can convert --}}
+                <div class="field" id="addPackSizeField" style="margin:1.1rem 0 0;display:none">
+                    <label>Pieces per <span id="addPackSizeUnit">Case</span> *</label>
+                    <input type="number" class="no-spin" name="pieces_per_pack" id="addPackSize" step="1" min="2" max="999" required value="{{ old('pieces_per_pack') }}" placeholder="e.g. 6 or 12">
+                    <div id="addPackSizeHint" style="font-size:.73rem;color:var(--muted);margin-top:.3rem"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeLocalModal('addItemModal')">Cancel</button>
@@ -320,7 +326,7 @@
                         <option class="si-opt-raw" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>
                         @endforeach
                         @foreach($beverageItems as $item)
-                        <option class="si-opt-bev" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}" style="display:none">{{ $item->item_name }}</option>
+                        <option class="si-opt-bev" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}" data-pack-size="{{ $item->packSize() }}" data-pack-unit="{{ $item->pack_unit }}" style="display:none">{{ $item->item_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -404,6 +410,21 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
     var options = document.querySelectorAll('#addItemModal .type-option');
     var unitRaw = document.getElementById('addUnitRaw');
     var unitBev = document.getElementById('addUnitBev');
+    var packSizeField = document.getElementById('addPackSizeField');
+    var packSize = document.getElementById('addPackSize');
+
+    // Only for a beverage bought by the Case or Box: the item is then counted per piece
+    // (so 2 damaged bottles can be deducted) and Stock-In converts packs into pieces.
+    function togglePackSize() {
+        var pack = unitBev.value;
+        var show = !unitBev.disabled && (pack === 'Case' || pack === 'Box');
+        packSizeField.style.display = show ? '' : 'none';
+        packSize.disabled = !show;
+        if (!show) return;
+        document.getElementById('addPackSizeUnit').textContent = pack;
+        document.getElementById('addPackSizeHint').textContent = 'How many bottles/cans are in one ' + pack
+            + '. Stock is counted per piece, so enter Min Stock Level in pieces too. Stock-In still lets you receive it by the ' + pack + '.';
+    }
 
     function toggleUnitSelect(type) {
         if (type === 'beverage') {
@@ -413,7 +434,9 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
             unitRaw.style.display = ''; unitRaw.disabled = false;
             unitBev.style.display = 'none'; unitBev.disabled = true;
         }
+        togglePackSize();
     }
+    unitBev.addEventListener('change', togglePackSize);
 
     options.forEach(function(opt){
         opt.addEventListener('click', function(){
@@ -455,14 +478,15 @@ const SI_UNIT_FAMILIES = {
     'Case': ['Case'],
 };
 
-function populateSIUnitOptions(baseUnit) {
+function populateSIUnitOptions(baseUnit, pack) {
     const sel = document.getElementById('siUnit');
     sel.innerHTML = '';
     if (!baseUnit) {
         sel.innerHTML = '<option value="">Select item first…</option>';
         return;
     }
-    const options = SI_UNIT_FAMILIES[baseUnit] || [baseUnit];
+    // A beverage with a pack size can also be received by its pack (Case or Box)
+    const options = (SI_UNIT_FAMILIES[baseUnit] || [baseUnit]).concat(pack && pack.size ? [pack.unit] : []);
     options.forEach(function(u) {
         const o = document.createElement('option');
         o.value = u;
@@ -472,7 +496,7 @@ function populateSIUnitOptions(baseUnit) {
     });
 }
 
-@if($errors->has('item_name') || $errors->has('unit') || $errors->has('min_stock_level'))
+@if($errors->has('item_name') || $errors->has('unit') || $errors->has('min_stock_level') || $errors->has('pieces_per_pack'))
 openLocalModal('addItemModal');
 @elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('total_cost') || $errors->has('purchase_date'))
 openLocalModal('stockInModal');
@@ -481,7 +505,7 @@ openLocalModal('stockInModal');
 function onSIItemChange() {
     const sel = document.getElementById('siItemId');
     const opt = sel.selectedOptions[0];
-    populateSIUnitOptions(opt && opt.value ? (opt.dataset.unit || '') : '');
+    populateSIUnitOptions(opt && opt.value ? (opt.dataset.unit || '') : '', opt ? siPack(opt) : null);
     updateSIPreview();
 }
 
@@ -490,10 +514,22 @@ const SI_UNIT_CONVERSION = {
     'Kilogram->Gram': 1000,
 };
 
-function siConvert(qty, fromUnit, toUnit) {
+// The pack the chosen item arrives in (Case/Box) and how many pieces it holds (size 0 = by the piece only)
+function siPack(opt) {
+    return { unit: opt.dataset.packUnit || '', size: parseInt(opt.dataset.packSize, 10) || 0 };
+}
+
+function siConvert(qty, fromUnit, toUnit, pack) {
     if (fromUnit === toUnit) return qty;
+    if (pack && pack.size && fromUnit === pack.unit) return qty * pack.size;
     const factor = SI_UNIT_CONVERSION[fromUnit + '->' + toUnit];
     return factor !== undefined ? qty * factor : qty;
+}
+
+// "+1.00 Case", plus what that is in the item's own unit when received by the pack
+function siPurchasedLabel(qty, enteredUnit, purchasedInBase, baseUnit, pack) {
+    const label = '+' + qty.toFixed(2) + ' ' + unitShort(enteredUnit);
+    return pack.size && enteredUnit === pack.unit ? label + ' (' + purchasedInBase.toFixed(2) + ' ' + unitShort(baseUnit) + ')' : label;
 }
 
 function updateSIPreview() {
@@ -505,10 +541,10 @@ function updateSIPreview() {
     const baseUnit = opt.dataset.unit;
     const enteredUnit = document.getElementById('siUnit').value || baseUnit;
     const prevBase = parseFloat(opt.dataset.qty) || 0;
-    const purchasedInBase = siConvert(qty, enteredUnit, baseUnit);
+    const purchasedInBase = siConvert(qty, enteredUnit, baseUnit, siPack(opt));
     const newQtyBase = prevBase + purchasedInBase;
     document.getElementById('siPrevQty').textContent = prevBase.toFixed(2) + ' ' + unitShort(baseUnit);
-    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unitShort(enteredUnit);
+    document.getElementById('siPurchased').textContent = siPurchasedLabel(qty, enteredUnit, purchasedInBase, baseUnit, siPack(opt));
     document.getElementById('siNewQty').textContent = newQtyBase.toFixed(2) + ' ' + unitShort(baseUnit);
 
     const totalCost = parseFloat(document.getElementById('siCost').value);
@@ -562,13 +598,21 @@ function proceedStockIn() {
 
     const baseUnit = opt.dataset.unit;
     const prevBase = parseFloat(opt.dataset.qty) || 0;
-    const purchasedInBase = siConvert(qty, unit, baseUnit);
+    const pack = siPack(opt);
+    const purchasedInBase = siConvert(qty, unit, baseUnit, pack);
     const newQtyBase = prevBase + purchasedInBase;
     const costVal = parseFloat(cost);
 
+    // Packs become pieces, so a part-pack must come out to whole pieces (0.5 of 12 is fine, 0.33 is not)
+    if (pack.size && unit === pack.unit && Math.abs(purchasedInBase - Math.round(purchasedInBase)) > 1e-6) {
+        errBox.textContent = qty + ' ' + unit + ' is not a whole number of ' + unitShort(baseUnit) + ' (' + pack.size + ' per ' + unit + '). Enter a whole number, or stock in by ' + unitShort(baseUnit) + ' instead.';
+        errBox.style.display = '';
+        return;
+    }
+
     document.getElementById('siConfirmItem').textContent = opt.text.trim();
     document.getElementById('siConfirmPrev').textContent = prevBase.toFixed(2) + ' ' + unitShort(baseUnit);
-    document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unitShort(unit);
+    document.getElementById('siConfirmPurchased').textContent = siPurchasedLabel(qty, unit, purchasedInBase, baseUnit, pack);
     document.getElementById('siConfirmNew').textContent = newQtyBase.toFixed(2) + ' ' + unitShort(baseUnit);
 
     const confirmCostRow = document.getElementById('siConfirmCostRow');

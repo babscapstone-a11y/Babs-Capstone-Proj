@@ -56,9 +56,17 @@ class StockInController extends Controller
         $purchased = (float) $request->quantity_purchased;
         $totalCost = $request->filled('total_cost') ? (float) $request->total_cost : null;
 
+        // Packs become pieces, so a part-pack has to come out to whole bottles (0.5 of 12 is fine, 0.33 is not)
+        if ($unit === $item->pack_unit && ($packSize = $item->packSize())) {
+            $pieces = $purchased * $packSize;
+            if (abs($pieces - round($pieces)) > 1e-6) {
+                return back()->withInput()->withErrors(['quantity_purchased' => "{$purchased} {$unit} of {$item->item_name} is not a whole number of {$item->unit} ({$packSize} per {$unit}). Enter a whole number, or stock in by {$item->unit} instead."]);
+            }
+        }
+
         $tx = $stockIn->record($item, $purchased, $unit, $totalCost, $request->purchase_date);
 
-        $costNote = $tx->unit_cost !== null ? " at ₱{$tx->unit_cost}/{$unit} (₱{$totalCost} total)" : '';
+        $costNote = $tx->unit_cost !== null ? " at ₱{$tx->unit_cost}/{$tx->unit} (₱{$totalCost} total)" : '';
         $newQty   = (float) $item->quantity;
 
         return back()->with('success', "Stock-in recorded: +{$purchased} {$unit} of {$item->item_name}{$costNote}. New total: {$newQty} {$item->unit}.");

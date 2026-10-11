@@ -94,6 +94,37 @@
                 </div>
             </div>
 
+            @if($item->item_type === 'beverage' && ! in_array($item->unit, \App\Models\InventoryItem::PACK_UNITS, true))
+            @php $pack = old('pack_unit', $item->pack_unit); @endphp
+            <div class="section-label" style="margin-top:1.5rem">Pack Conversion</div>
+            <div class="field-grid">
+                <div class="field">
+                    <label>Bought By</label>
+                    <select name="pack_unit" id="packUnit">
+                        <option value="">@unit($item->unit) only</option>
+                        @foreach(\App\Models\InventoryItem::PACK_UNITS as $p)
+                        <option value="{{ $p }}" {{ $pack === $p ? 'selected' : '' }}>{{ $p }}</option>
+                        @endforeach
+                    </select>
+                    <div class="help">Stock is counted per @unit($item->unit). Choose Case or Box to also stock in by that pack.</div>
+                </div>
+                <div class="field" id="packSizeField" style="{{ $pack ? '' : 'display:none' }}">
+                    <label>Pieces per <span id="packSizeUnit">{{ $pack ?: 'Case' }}</span> *</label>
+                    <input type="number" class="no-spin" name="pieces_per_pack" id="packSize" step="1" min="2" max="999" value="{{ old('pieces_per_pack', $item->pieces_per_pack) }}" placeholder="e.g. 6 or 12" {{ $pack ? 'required' : 'disabled' }}>
+                    <div class="help">How many @unit($item->unit) are in one pack. Stock-In adds that many per pack received.</div>
+                </div>
+            </div>
+            <script>
+            document.getElementById('packUnit').addEventListener('change', function () {
+                var size = document.getElementById('packSize');
+                document.getElementById('packSizeField').style.display = this.value ? '' : 'none';
+                document.getElementById('packSizeUnit').textContent = this.value || 'Case';
+                size.disabled = !this.value;
+                size.required = !!this.value;
+            });
+            </script>
+            @endif
+
             @if($item->item_type === 'rtc')
             <div class="section-label" style="margin-top:1.5rem">RTC Conversion Rules</div>
             <div class="field-grid">

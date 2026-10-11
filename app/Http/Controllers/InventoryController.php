@@ -191,7 +191,17 @@ class InventoryController extends Controller
             'item_type'       => ['required', 'in:rtc,beverage'],
             'unit'            => ['required', Rule::in($allowedUnits)],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
+            'pieces_per_pack' => ['nullable', 'required_if:unit,Case,Box', 'integer', 'min:2', 'max:999'],
+        ], [
+            'pieces_per_pack.required_if' => 'Please enter how many pieces are in one :value.',
         ]);
+
+        // A beverage bought by the Case/Box is counted per piece (so single damaged bottles can
+        // be deducted); the pack and its size are kept so Stock-In can convert packs into pieces.
+        $byPack = $validated['item_type'] === 'beverage' && in_array($validated['unit'], InventoryItem::PACK_UNITS, true);
+        $validated['pack_unit']       = $byPack ? $validated['unit'] : null;
+        $validated['pieces_per_pack'] = $byPack ? $validated['pieces_per_pack'] : null;
+        $validated['unit']            = $byPack ? 'Piece' : $validated['unit'];
 
         $item = InventoryItem::create([
             ...$validated,
@@ -221,6 +231,10 @@ class InventoryController extends Controller
             'reorder_level'   => ['required', 'numeric', 'min:0'],
             'portion_size'    => ['nullable', 'numeric', 'min:0.001'],
             'portion_unit'    => ['nullable', 'string', 'max:50'],
+            'pack_unit'       => ['nullable', Rule::in(InventoryItem::PACK_UNITS)],
+            'pieces_per_pack' => ['nullable', 'required_with:pack_unit', 'integer', 'min:2', 'max:999'],
+        ], [
+            'pieces_per_pack.required_with' => 'Please enter how many pieces are in one pack.',
         ]);
 
         $item->update($request->only([
@@ -228,6 +242,14 @@ class InventoryController extends Controller
             'min_stock_level', 'reorder_level',
             'portion_size', 'portion_unit',
         ]));
+
+        // Beverages: the pack it arrives in (Case/Box) and its size; "Piece only" clears both
+        if ($item->isBeverage() && $request->has('pack_unit')) {
+            $item->update([
+                'pack_unit'       => $request->pack_unit ?: null,
+                'pieces_per_pack' => $request->pack_unit ? $request->pieces_per_pack : null,
+            ]);
+        }
 
         return back()->with('success', "{$item->item_name} updated successfully.");
     }
