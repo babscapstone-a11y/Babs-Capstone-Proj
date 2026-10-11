@@ -69,8 +69,7 @@
             <option value="rtc" {{ request('type')==='rtc' ? 'selected' : '' }}>RTC</option>
             <option value="beverage" {{ request('type')==='beverage' ? 'selected' : '' }}>Beverage</option>
         </select>
-        <input type="date" name="from" value="{{ request('from') }}" class="filter-date" title="From date">
-        <input type="date" name="to" value="{{ request('to') }}" class="filter-date" title="To date">
+        @include('partials.date-range-filter')
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
         @if(request()->hasAny(['q','type','from','to']))
         <a href="{{ route('inventory.stock-in.index') }}" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
@@ -82,22 +81,20 @@
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Item</th>
                         <th>Type</th>
                         <th>Previous Qty</th>
                         <th>Purchased</th>
                         <th>New Qty</th>
                         <th>Cost</th>
-                        <th>Supplier</th>
                         <th>Date</th>
+                        <th>Time</th>
                         <th>Recorded By</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($transactions as $tx)
                     <tr>
-                        <td style="color:var(--muted);font-size:.78rem">#{{ $tx->id }}</td>
                         <td>
                             <div style="font-weight:700">{{ $tx->inventoryItem?->item_name ?? '—' }}</div>
                             @if($tx->procurementOrder)
@@ -116,12 +113,13 @@
                                 —
                             @endif
                         </td>
-                        <td>{{ $tx->supplier ?? '—' }}</td>
                         <td>{{ $tx->purchase_date?->format('M d, Y') }}</td>
+                        {{-- Purchase date has no time; this is when the stock-in was recorded --}}
+                        <td style="white-space:nowrap">{{ $tx->created_at?->format('h:i A') }}</td>
                         <td>{{ $tx->recorder?->name ?? 'Admin' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="10" class="empty-row"><i class="fas fa-inbox" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No stock-in transactions found.</td></tr>
+                    <tr><td colspan="9" class="empty-row"><i class="fas fa-inbox" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No stock-in transactions found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -131,4 +129,5 @@
         @endif
     </div>
 </div>
+
 @endsection

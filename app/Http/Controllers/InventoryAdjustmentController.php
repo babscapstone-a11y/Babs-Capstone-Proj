@@ -32,7 +32,7 @@ class InventoryAdjustmentController extends Controller
             $query->where('created_at', '<=', $to . ' 23:59:59');
         }
 
-        $adjustments   = $query->latest()->paginate(15)->withQueryString();
+        $adjustments   = $query->latest()->paginate(10)->withQueryString();
         $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
 

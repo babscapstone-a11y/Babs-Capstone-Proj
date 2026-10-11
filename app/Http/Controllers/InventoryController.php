@@ -26,12 +26,10 @@ class InventoryController extends Controller
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
         $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
 
-        $recentStockIns   = PurchaseOrder::with(['inventoryItem', 'recorder'])
-            ->latest()->limit(5)->get();
-        $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])
-            ->latest()->limit(5)->get();
-        $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])
-            ->latest()->limit(5)->get();
+        // Latest 5 of each; the View All pages list everything 10 per page
+        $recentStockIns    = PurchaseOrder::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
+        $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])->latest()->limit(5)->get();
+        $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])->latest()->limit(5)->get();
 
         return view('inventory.index', compact(
             'totalRtc', 'totalRtcProducts', 'totalBeverage', 'lowStock', 'outOfStock',

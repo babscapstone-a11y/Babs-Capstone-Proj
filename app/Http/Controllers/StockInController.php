@@ -28,7 +28,7 @@ class StockInController extends Controller
             $query->where('purchase_date', '<=', $to);
         }
 
-        $transactions = $query->latest()->paginate(15)->withQueryString();
+        $transactions = $query->latest()->paginate(10)->withQueryString();
 
         return view('inventory.stock-in', compact('transactions'));
     }
@@ -40,7 +40,9 @@ class StockInController extends Controller
             'quantity_purchased' => ['required', 'numeric', 'min:0.01'],
             'unit'              => ['required', 'string', 'max:50'],
             'total_cost'        => ['nullable', 'numeric', 'min:0'],
-            'purchase_date'     => ['required', 'date'],
+            'purchase_date'     => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'purchase_date.before_or_equal' => 'The purchase date cannot be in the future.',
         ]);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);

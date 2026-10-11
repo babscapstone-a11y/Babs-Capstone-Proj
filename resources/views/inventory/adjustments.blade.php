@@ -78,8 +78,7 @@
             <option value="missing"    {{ request('type')==='missing'    ? 'selected' : '' }}>Missing</option>
             <option value="correction" {{ request('type')==='correction' ? 'selected' : '' }}>Correction</option>
         </select>
-        <input type="date" name="from" value="{{ request('from') }}" class="filter-date" title="From date">
-        <input type="date" name="to"   value="{{ request('to') }}"   class="filter-date" title="To date">
+        @include('partials.date-range-filter')
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
         @if(request()->hasAny(['q','type','from','to']))
         <a href="{{ route('inventory.adjustments.index') }}" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
@@ -91,15 +90,15 @@
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Item</th>
                         <th>Reason</th>
                         <th>Before</th>
                         <th>Adjustment</th>
                         <th>After</th>
                         <th>Remarks</th>
+                        <th>Date</th>
+                        <th>Time</th>
                         <th>Adjusted By</th>
-                        <th>Date & Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -115,7 +114,6 @@
                         $isNeg = (float)$adj->quantity_adjusted < 0;
                     @endphp
                     <tr>
-                        <td style="color:var(--muted);font-size:.78rem">#{{ $adj->id }}</td>
                         <td>
                             <div style="font-weight:700">{{ $adj->subject_name }}</div>
                             <div style="font-size:.72rem;color:var(--muted)">{{ $adj->subject_kind }}</div>
@@ -127,8 +125,9 @@
                         </td>
                         <td style="font-weight:700">{{ number_format($adj->quantity_after,2) }} {{ $adj->unit_label }}</td>
                         <td style="font-size:.8rem;color:var(--muted)">{{ $adj->remarks ?: ($adj->reason !== $adj->getTypeLabel() ? $adj->reason : '—') }}</td>
+                        <td style="white-space:nowrap">{{ $adj->created_at->format('M d, Y') }}</td>
+                        <td style="white-space:nowrap">{{ $adj->created_at->format('h:i A') }}</td>
                         <td>{{ $adj->adjuster?->name ?? 'Admin' }}</td>
-                        <td style="font-size:.78rem;color:var(--muted)">{{ $adj->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                     @empty
                     <tr><td colspan="9" class="empty-row"><i class="fas fa-pen-to-square" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No adjustments recorded yet.</td></tr>

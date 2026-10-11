@@ -88,6 +88,10 @@
 .preview-box { background:var(--surface-2); border-radius:12px; padding:1rem 1.2rem; margin:.75rem 0 0; border:1px solid var(--border); }
 .preview-row { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.3rem; color:var(--dark); }
 .preview-row:last-child { margin-bottom:0; font-weight:700; color:var(--primary); }
+
+/* Purchase Date calendar in the Stock-In red; field matches the other inputs */
+:root { --cd-accent: var(--primary); --cd-accent-rgb: 220,38,38; }
+.field .cd-field { width:100%; height:auto; padding:.6rem .9rem; font-size:.84rem; }
 </style>
 @endsection
 
@@ -151,7 +155,7 @@
     {{-- ── Recent Activity (full-width, stacked) ── --}}
     <div>
         {{-- Recent Stock-Ins --}}
-        <div class="section-card">
+        <div class="section-card" id="recent-stock-in">
             <div class="section-hd">
                 <h2><i class="fas fa-dolly"></i> Recent Stock-In</h2>
                 <a href="{{ route('inventory.stock-in.index') }}">View All →</a>
@@ -173,7 +177,7 @@
         </div>
 
         {{-- Recent Conversions --}}
-        <div class="section-card">
+        <div class="section-card" id="recent-conversions">
             <div class="section-hd">
                 <h2><i class="fas fa-arrows-rotate"></i> Recent Conversions</h2>
                 <a href="{{ route('inventory.conversions.index') }}">View All →</a>
@@ -195,7 +199,7 @@
         </div>
 
         {{-- Recent Adjustments --}}
-        <div class="section-card">
+        <div class="section-card" id="recent-adjustments">
             <div class="section-hd">
                 <h2><i class="fas fa-pen-to-square"></i> Recent Adjustments</h2>
                 <a href="{{ route('inventory.adjustments.index') }}">View All →</a>
@@ -323,7 +327,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
                         <label>Quantity Purchased *</label>
-                        <input type="number" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
+                        <input type="number" class="no-spin" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
                     </div>
                     <div class="field">
                         <label>Unit *</label>
@@ -335,11 +339,15 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
                         <label>Total Cost</label>
-                        <input type="number" name="total_cost" id="siCost" step="0.01" min="0" placeholder="0.00" oninput="updateSIPreview()">
+                        <input type="number" class="no-spin" name="total_cost" id="siCost" step="0.01" min="0" placeholder="0.00" oninput="updateSIPreview()">
                     </div>
                     <div class="field">
                         <label>Purchase Date *</label>
-                        <input type="date" name="purchase_date" id="siDate" required value="{{ date('Y-m-d') }}">
+                        {{-- Calendar pop-up (partials/date-picker); purchases can't be dated in the future --}}
+                        <input type="hidden" name="purchase_date" id="siDate" value="{{ old('purchase_date', now()->format('Y-m-d')) }}" data-max="{{ now()->format('Y-m-d') }}">
+                        <button type="button" class="cd-field" data-picker="date" data-for="siDate" aria-haspopup="dialog" aria-label="Purchase date" onclick="DatePick.open(this)">
+                            <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="preview-box" id="siPreview" style="display:none">
@@ -380,6 +388,10 @@
         </div>
     </div>
 </div>
+
+{{-- Calendar for the Purchase Date (date-picker reuses the clock-dial field/panel styles) --}}
+@include('partials.clock-dial')
+@include('partials.date-picker')
 @endsection
 
 @section('scripts')

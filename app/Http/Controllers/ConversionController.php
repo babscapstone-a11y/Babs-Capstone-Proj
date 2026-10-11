@@ -28,7 +28,7 @@ class ConversionController extends Controller
             $query->where('created_at', '<=', $to . ' 23:59:59');
         }
 
-        $logs      = $query->latest()->paginate(15)->withQueryString();
+        $logs      = $query->latest()->paginate(10)->withQueryString();
         $rtcItems  = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
         $menuItems = MenuItem::food()->orderBy('menu_name')->get();
 

@@ -5,6 +5,8 @@
     <button class="cd-field" data-picker="date" data-for="inputId" onclick="DatePick.open(this)">.
     Picking a day writes "Y-m-d" to the hidden input and fires a "change" event.
     DatePick.set(inputId, 'Y-m-d' | '') fills a field from script.
+    Optional on the button: data-placeholder="From date" (text when empty, default "Select date")
+    and data-clearable (adds a Clear button, e.g. for optional filter dates).
 --}}
 <style>
 .dp-panel { width: 284px; }
@@ -25,6 +27,8 @@
 .dp-day:focus-visible { outline: 2px solid var(--cd-accent, #D97706); outline-offset: 1px; }
 .dp-panel .cd-foot { justify-content: space-between; }
 .dp-panel .dp-today { background: transparent; color: var(--cd-accent, #D97706); padding-left: .3rem; }
+.dp-panel .dp-clear { background: transparent; color: var(--muted); margin-left: auto; }
+.dp-panel .dp-clear:hover { color: var(--cd-accent, #D97706); }
 </style>
 
 <script>
@@ -47,7 +51,7 @@
         '</div>' +
         '<div class="dp-dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>' +
         '<div class="dp-grid"></div>' +
-        '<div class="cd-foot"><button type="button" class="dp-today">Today</button><button type="button" class="cd-cancel">Cancel</button></div>';
+        '<div class="cd-foot"><button type="button" class="dp-today">Today</button><button type="button" class="dp-clear">Clear</button><button type="button" class="cd-cancel">Cancel</button></div>';
     document.body.appendChild(panel);
 
     var grid = panel.querySelector('.dp-grid');
@@ -116,12 +120,14 @@
     var todayBtn = panel.querySelector('.dp-today');   // hidden when today isn't allowed (e.g. advance orders)
     todayBtn.addEventListener('click', function () { apply(ymd(new Date())); });
     panel.querySelector('.cd-cancel').addEventListener('click', close);
+    var clearBtn = panel.querySelector('.dp-clear');   // only for fields marked data-clearable
+    clearBtn.addEventListener('click', function () { apply(''); });
 
     function showOnField(btn, value) {
         var text = btn.querySelector('.cd-text');
         text.textContent = valid(value)
             ? parse(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : 'Select date';
+            : (btn.dataset.placeholder || 'Select date');
         text.classList.toggle('empty', ! valid(value));
     }
 
@@ -146,6 +152,7 @@
         var today = ymd(new Date());
         cursor = selected || (min && min > today ? min : today);
         todayBtn.style.visibility = outside(today) ? 'hidden' : '';
+        clearBtn.style.display = btn.hasAttribute('data-clearable') && selected ? '' : 'none';
         var c = parse(cursor);
         view = new Date(c.getFullYear(), c.getMonth(), 1);
         btn.classList.add('active');

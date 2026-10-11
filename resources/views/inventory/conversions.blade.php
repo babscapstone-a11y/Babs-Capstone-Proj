@@ -73,8 +73,7 @@
 
     <form method="GET" action="{{ route('inventory.conversions.index') }}" class="filter-bar">
         <div class="search-wrap"><i class="fas fa-search"></i><input type="text" name="q" value="{{ request('q') }}" placeholder="Search raw item or menu item…" class="search-input"></div>
-        <input type="date" name="from" value="{{ request('from') }}" class="filter-date" title="From date">
-        <input type="date" name="to"   value="{{ request('to') }}"   class="filter-date" title="To date">
+        @include('partials.date-range-filter')
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
         @if(request()->hasAny(['q','from','to']))
         <a href="{{ route('inventory.conversions.index') }}" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
@@ -86,7 +85,6 @@
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Raw Item</th>
                         <th>Menu Item</th>
                         <th>Raw Used</th>
@@ -96,14 +94,14 @@
                         <th>Remaining Raw</th>
                         <th>Prev Servings</th>
                         <th>New Servings</th>
+                        <th>Date</th>
+                        <th>Time</th>
                         <th>By</th>
-                        <th>Date & Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($logs as $log)
                     <tr>
-                        <td style="color:var(--muted);font-size:.78rem">#{{ $log->id }}</td>
                         <td><div style="font-weight:700">{{ $log->inventoryItem?->item_name ?? '—' }}</div></td>
                         <td><div style="font-weight:700;color:var(--blue-700)">{{ $log->menuItem?->menu_name ?? '—' }}</div></td>
                         <td style="color:var(--red-600);font-weight:700">{{ number_format($log->raw_quantity_used, 2) }} @unit($log->unit)</td>
@@ -113,8 +111,9 @@
                         <td style="font-weight:600">{{ number_format($log->remaining_raw_stock, 2) }} @unit($log->unit)</td>
                         <td style="color:var(--muted)">{{ number_format($log->previous_rtc_servings,0) }}</td>
                         <td style="font-weight:700;color:var(--green-600)">{{ number_format($log->new_rtc_servings,0) }}</td>
+                        <td style="white-space:nowrap">{{ $log->created_at->format('M d, Y') }}</td>
+                        <td style="white-space:nowrap">{{ $log->created_at->format('h:i A') }}</td>
                         <td>{{ $log->converter?->name ?? 'Admin' }}</td>
-                        <td style="font-size:.78rem;color:var(--muted)">{{ $log->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                     @empty
                     <tr><td colspan="12" class="empty-row"><i class="fas fa-arrows-rotate" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No conversions recorded yet.</td></tr>
