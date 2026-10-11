@@ -210,18 +210,8 @@
                     <div class="meta-info">
                         <span><i class="fas fa-calendar-plus" style="color:var(--primary)"></i> Created: {{ $discount->created_at->format('M d, Y h:i A') }}</span>
                         <span><i class="fas fa-calendar-check" style="color:var(--accent)"></i> Last Updated: {{ $discount->updated_at->format('M d, Y h:i A') }}</span>
-                        <span><i class="fas fa-hashtag" style="color:var(--muted)"></i> ID: #{{ $discount->id }}</span>
                     </div>
                 </div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:.65rem">
-                <a href="{{ route('discounts.edit', $discount) }}" class="btn btn-primary" style="justify-content:center"><i class="fas fa-pen"></i> Edit This Discount</a>
-                <button type="button" style="width:100%;justify-content:center" class="btn {{ $discount->is_active ? 'btn-amber' : 'btn-green' }}"
-                        onclick="openModal({{ Js::from(\App\Support\DiscountToggle::confirm($discount)) }})">
-                    <i class="fas {{ $discount->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
-                    {{ $discount->is_active ? 'Deactivate Discount' : 'Activate Discount' }}
-                </button>
             </div>
         </div>
 
