@@ -62,8 +62,6 @@
 .preview-card .p-value{font-size:1.65rem;font-weight:900;color:var(--accent);line-height:1}
 .preview-card .p-type{font-size:.73rem;color:rgba(255,255,255,.55);margin-top:.15rem}
 .preview-card .p-elig{margin-top:.65rem;padding-top:.65rem;border-top:1px solid rgba(255,255,255,.1);font-size:.79rem;color:rgba(255,255,255,.7)}
-.future-notice{background:var(--blue-50);border:1.5px solid var(--blue-200);border-radius:12px;padding:.9rem 1.1rem;font-size:.8rem;color:var(--blue-700);line-height:1.6}
-.future-notice i{color:#60A5FA}
 </style>
 @endsection
 
@@ -249,12 +247,6 @@
                         </div>
                     </div>
                 </div>
-
-                {{-- Future Notice --}}
-                <div class="future-notice">
-                    <i class="fas fa-circle-info"></i>
-                    This discount will become available in the <strong>POS Module</strong> and <strong>Online Ordering Checkout Module</strong> when set to <strong>Active</strong>.
-                </div>
             </div>
 
         </div>
@@ -285,7 +277,8 @@ function updateTypeUI() {
     const input = document.getElementById('discountValue');
     input.max  = isPct ? '100' : '';
     input.step = isPct ? '1' : '0.01';
-    input.min  = isSpecial ? '0' : '0.01';
+    // min must line up with step, or the browser only accepts values like 1.01, 20.01
+    input.min  = isSpecial ? '0' : (isPct ? '1' : '0.01');
     input.required = !isSpecial;
     if (isSpecial) input.value = '0';
 
