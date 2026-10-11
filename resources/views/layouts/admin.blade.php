@@ -318,6 +318,7 @@
 
     </style>
     @include('partials.row-actions-css')
+    @include('partials.searchable-select')
 
     @yield('styles')
 </head>

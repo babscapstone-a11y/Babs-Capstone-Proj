@@ -131,7 +131,7 @@
             <div class="modal-body">
                 <div class="field">
                     <label>Beverage Item *</label>
-                    <select name="inventory_item_id" id="adjItemId" required onchange="updateAdjPreview()">
+                    <select name="inventory_item_id" id="adjItemId" data-searchable data-search-placeholder="Search beverages…" required onchange="updateAdjPreview()">
                         <option value="">Select beverage…</option>
                         @foreach($items as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>

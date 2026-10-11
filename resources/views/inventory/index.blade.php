@@ -285,7 +285,7 @@
 
                 <div class="field">
                     <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="siItemId" required onchange="onSIItemChange()">
+                    <select name="inventory_item_id" id="siItemId" data-searchable data-search-placeholder="Search inventory items…" required onchange="onSIItemChange()">
                         <option value="">Select item…</option>
                         @foreach($rtcItems as $item)
                         <option class="si-opt-raw" value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-cost="{{ $item->cost_price }}">{{ $item->item_name }}</option>

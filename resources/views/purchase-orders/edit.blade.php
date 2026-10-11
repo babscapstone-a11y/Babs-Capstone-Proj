@@ -361,7 +361,7 @@
 
                 <div class="field">
                     <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="addPoItemSelect" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
+                    <select name="inventory_item_id" id="addPoItemSelect" data-searchable data-search-placeholder="Search inventory items…" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
                         <option value="">Select item…</option>
                         @forelse($availableItems as $ai)
                         <option value="{{ $ai->id }}" data-unit="{{ $ai->unit }}" data-stock="{{ number_format($ai->quantity,2) }}"

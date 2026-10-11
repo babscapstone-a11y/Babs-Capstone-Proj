@@ -150,7 +150,7 @@
             <div class="modal-body">
                 <div class="field">
                     <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="adjItem" required onchange="updateAdjPreview()">
+                    <select name="inventory_item_id" id="adjItem" data-searchable data-search-placeholder="Search inventory items…" required onchange="updateAdjPreview()">
                         <option value="">Select item…</option>
                         <optgroup label="RTC Raw Meat">
                         @foreach($rtcItems as $item)

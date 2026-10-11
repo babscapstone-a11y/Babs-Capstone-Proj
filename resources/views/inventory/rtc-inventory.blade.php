@@ -146,7 +146,7 @@
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
                     <label>Raw Meat Item *</label>
-                    <select name="inventory_item_id" id="cvItemId" required onchange="updateConvertCalc()">
+                    <select name="inventory_item_id" id="cvItemId" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateConvertCalc()">
                         <option value="">Select item…</option>
                         @foreach($rawItems as $item)
                         <option value="{{ $item->id }}"
@@ -161,7 +161,7 @@
                 </div>
                 <div class="field">
                     <label>Menu Item *</label>
-                    <select name="menu_item_id" id="cvMenuItem" required>
+                    <select name="menu_item_id" id="cvMenuItem" data-searchable data-search-placeholder="Search menu items…" required>
                         <option value="">Select menu item…</option>
                         @foreach($menuItems as $menuItem)
                         <option value="{{ $menuItem->id }}">{{ $menuItem->menu_name }}</option>

@@ -143,7 +143,7 @@
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
                     <label>Raw Meat Item *</label>
-                    <select name="inventory_item_id" id="cvItem" required onchange="updateCalc()">
+                    <select name="inventory_item_id" id="cvItem" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateCalc()">
                         <option value="">Select raw meat item…</option>
                         @foreach($rtcItems as $item)
                         <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-portion="{{ $item->portion_size ?? 0.25 }}" data-punit="{{ $item->portion_unit ?? $item->unit }}">
@@ -154,7 +154,7 @@
                 </div>
                 <div class="field">
                     <label>Menu Item *</label>
-                    <select name="menu_item_id" id="cvMenuItem" required>
+                    <select name="menu_item_id" id="cvMenuItem" data-searchable data-search-placeholder="Search menu items…" required>
                         <option value="">Select menu item…</option>
                         @foreach($menuItems as $menuItem)
                         <option value="{{ $menuItem->id }}">{{ $menuItem->menu_name }}</option>
