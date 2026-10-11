@@ -45,6 +45,9 @@
                     </td>
                     <td>
                         <div class="row-acts">
+                            <button type="button" class="act-btn act-view" title="Adjust Stock" aria-label="Adjust stock" onclick="openAdjustFor({{ $item->id }})">
+                                <i class="fas fa-pen-to-square"></i>
+                            </button>
                             <a href="{{ route('inventory.edit', $item) }}" class="act-btn act-edit" title="Edit Settings" aria-label="Edit settings">
                                 <i class="fas fa-sliders"></i>
                             </a>

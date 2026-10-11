@@ -59,7 +59,7 @@
             <div class="page-title"><i class="fas fa-pen-to-square"></i> Inventory Adjustments</div>
             <div class="page-sub">Manual corrections, damaged, expired, and missing stock records</div>
         </div>
-        <button class="btn btn-purple" onclick="openLocalModal('adjModal')"><i class="fas fa-plus"></i> New Adjustment</button>
+        <button class="btn btn-purple" onclick="openAdjust()"><i class="fas fa-plus"></i> New Adjustment</button>
     </div>
 
     @if(session('success'))
@@ -69,7 +69,7 @@
     <form method="GET" action="{{ route('inventory.adjustments.index') }}" class="filter-bar">
         <div class="search-wrap"><i class="fas fa-search"></i><input type="text" name="q" value="{{ request('q') }}" placeholder="Search item…" class="search-input"></div>
         <select name="type" class="filter-select" onchange="this.form.submit()">
-            <option value="">All Types</option>
+            <option value="">All Reasons</option>
             <option value="damaged"    {{ request('type')==='damaged'    ? 'selected' : '' }}>Damaged</option>
             <option value="expired"    {{ request('type')==='expired'    ? 'selected' : '' }}>Expired</option>
             <option value="missing"    {{ request('type')==='missing'    ? 'selected' : '' }}>Missing</option>
@@ -90,11 +90,11 @@
                     <tr>
                         <th>#</th>
                         <th>Item</th>
-                        <th>Type</th>
+                        <th>Reason</th>
                         <th>Before</th>
                         <th>Adjustment</th>
                         <th>After</th>
-                        <th>Reason</th>
+                        <th>Remarks</th>
                         <th>Adjusted By</th>
                         <th>Date & Time</th>
                     </tr>
@@ -114,16 +114,16 @@
                     <tr>
                         <td style="color:var(--muted);font-size:.78rem">#{{ $adj->id }}</td>
                         <td>
-                            <div style="font-weight:700">{{ $adj->inventoryItem?->item_name ?? '—' }}</div>
-                            <div style="font-size:.72rem;color:var(--muted)">{{ $adj->inventoryItem?->item_type === 'rtc' ? 'RTC' : 'Beverage' }}</div>
+                            <div style="font-weight:700">{{ $adj->subject_name }}</div>
+                            <div style="font-size:.72rem;color:var(--muted)">{{ $adj->subject_kind }}</div>
                         </td>
                         <td><span class="badge {{ $typeClass }}">{{ $adj->getTypeLabel() }}</span></td>
-                        <td style="color:var(--muted)">{{ number_format($adj->quantity_before,2) }} @unit($adj->inventoryItem?->unit)</td>
+                        <td style="color:var(--muted)">{{ number_format($adj->quantity_before,2) }} {{ $adj->unit_label }}</td>
                         <td style="font-weight:700;color:{{ $isNeg ? '#DC2626' : '#16A34A' }}">
-                            {{ $isNeg ? '' : '+' }}{{ number_format($adj->quantity_adjusted,2) }} @unit($adj->inventoryItem?->unit)
+                            {{ $isNeg ? '' : '+' }}{{ number_format($adj->quantity_adjusted,2) }} {{ $adj->unit_label }}
                         </td>
-                        <td style="font-weight:700">{{ number_format($adj->quantity_after,2) }} @unit($adj->inventoryItem?->unit)</td>
-                        <td style="font-size:.8rem">{{ $adj->reason }}</td>
+                        <td style="font-weight:700">{{ number_format($adj->quantity_after,2) }} {{ $adj->unit_label }}</td>
+                        <td style="font-size:.8rem;color:var(--muted)">{{ $adj->remarks ?: ($adj->reason !== $adj->getTypeLabel() ? $adj->reason : '—') }}</td>
                         <td>{{ $adj->adjuster?->name ?? 'Admin' }}</td>
                         <td style="font-size:.78rem;color:var(--muted)">{{ $adj->created_at->format('M d, Y H:i') }}</td>
                     </tr>
@@ -139,66 +139,11 @@
     </div>
 </div>
 
-<div class="modal-backdrop" id="adjModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-pen-to-square"></i> New Inventory Adjustment</h3>
-            <button class="modal-close-btn" onclick="closeLocalModal('adjModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.adjustments.store') }}" onsubmit="return confirmAdj()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>Inventory Item *</label>
-                    <select name="inventory_item_id" id="adjItem" data-searchable data-search-placeholder="Search inventory items…" required onchange="updateAdjPreview()">
-                        <option value="">Select item…</option>
-                        <optgroup label="RTC Raw Meat">
-                        @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} @unit($item->unit))</option>
-                        @endforeach
-                        </optgroup>
-                        <optgroup label="Beverages">
-                        @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} @unit($item->unit))</option>
-                        @endforeach
-                        </optgroup>
-                    </select>
-                </div>
-                <input type="hidden" name="adjustment_type" id="adjTypeHidden" value="damaged">
-                <div class="field">
-                    <label>Adjustment Type *</label>
-                    <div class="adj-type-grid">
-                        <button type="button" class="adj-type-btn selected" onclick="setAdjType('damaged',this)">🔴 Damaged</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('expired',this)">⏰ Expired</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('missing',this)">❓ Missing</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('correction',this)">✏️ Correction</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Quantity Adjustment * <small style="font-weight:400;color:var(--muted)">(negative to deduct)</small></label>
-                    <input type="number" name="quantity_adjusted" id="adjQty" step="0.01" required placeholder="-5" oninput="updateAdjPreview()">
-                </div>
-                <div class="field">
-                    <label>Reason *</label>
-                    <input type="text" name="reason" required placeholder="Brief reason…">
-                </div>
-                <div class="field">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" style="resize:none"></textarea>
-                </div>
-                <div class="preview-box" id="adjPreview" style="display:none">
-                    <div class="preview-row"><span>Before</span><span id="adjBefore">—</span></div>
-                    <div class="preview-row"><span>Adjustment</span><span id="adjChange">—</span></div>
-                    <div class="preview-row"><span>After</span><span id="adjAfter">—</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeLocalModal('adjModal')">Cancel</button>
-                <button type="submit" class="btn btn-purple"><i class="fas fa-check"></i> Confirm Adjustment</button>
-            </div>
-        </form>
-    </div>
-</div>
+@include('inventory.partials.adjust-modal', [
+    'field' => 'inventory_item_id', 'itemLabel' => 'Inventory Item',
+    'options' => $rtcItems->concat($beverageItems)->map(fn ($i) => ['id' => $i->id, 'name' => $i->item_name, 'qty' => (float) $i->quantity, 'unit' => \App\Support\Units::short($i->unit)])->all(),
+    'decimals' => 2, 'searchHint' => 'Search inventory items…',
+])
 @endsection
 
 @section('scripts')
@@ -206,29 +151,5 @@
 function openLocalModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
 function closeLocalModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeLocalModal(el.id);}));
-function setAdjType(type,btn){
-    document.getElementById('adjTypeHidden').value=type;
-    document.querySelectorAll('.adj-type-btn').forEach(b=>b.classList.remove('selected'));
-    btn.classList.add('selected');
-}
-function updateAdjPreview(){
-    const sel=document.getElementById('adjItem');const opt=sel.selectedOptions[0];
-    const adj=parseFloat(document.getElementById('adjQty').value)||0;
-    const preview=document.getElementById('adjPreview');
-    if(!opt?.value||adj===0){preview.style.display='none';return;}
-    const before=parseFloat(opt.dataset.qty)||0;const unit=opt.dataset.unit;
-    const after=Math.max(0,before+adj);
-    document.getElementById('adjBefore').textContent=before.toFixed(2)+' '+unit;
-    document.getElementById('adjChange').textContent=(adj>=0?'+':'')+adj.toFixed(2)+' '+unit;
-    document.getElementById('adjAfter').textContent=after.toFixed(2)+' '+unit;
-    preview.style.display='';
-}
-function confirmAdj(){
-    const sel=document.getElementById('adjItem');const opt=sel.selectedOptions[0];
-    const adj=parseFloat(document.getElementById('adjQty').value)||0;
-    if(!opt?.value)return true;
-    const before=parseFloat(opt.dataset.qty)||0;const after=Math.max(0,before+adj);
-    return confirm('Adjustment Confirmation\n\nItem: '+opt.text.split('(')[0].trim()+'\nBefore: '+before.toFixed(2)+' '+opt.dataset.unit+'\nAdjustment: '+(adj>=0?'+':'')+adj.toFixed(2)+' '+opt.dataset.unit+'\nAfter: '+after.toFixed(2)+' '+opt.dataset.unit+'\n\nAre you sure you want to confirm this adjustment?');
-}
 </script>
 @endsection

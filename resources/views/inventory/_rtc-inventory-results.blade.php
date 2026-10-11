@@ -45,6 +45,9 @@
                     </td>
                     <td>
                         <div class="row-acts">
+                            <button type="button" class="act-btn act-view" title="Adjust Servings" aria-label="Adjust servings" onclick="openAdjustFor({{ $item->id }})">
+                                <i class="fas fa-pen-to-square"></i>
+                            </button>
                             <button type="button" class="act-btn act-edit" title="Convert to Servings" aria-label="Convert to servings" onclick="openConvertFor({{ $item->id }}, {{ $item->rtc_quantity ?? 0.25 }}, '{{ $item->rtc_unit ?? '' }}')">
                                 <i class="fas fa-arrows-rotate"></i>
                             </button>

@@ -78,7 +78,7 @@
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
-            <button class="btn btn-purple" onclick="openLocalModal('adjustModal')"><i class="fas fa-pen-to-square"></i> Adjust</button>
+            <button class="btn btn-purple" onclick="openAdjust()"><i class="fas fa-pen-to-square"></i> Adjust</button>
         </div>
     </div>
 
@@ -119,60 +119,10 @@
     </div>
 </div>
 
-{{-- Adjust Modal --}}
-<div class="modal-backdrop" id="adjustModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-pen-to-square"></i> Inventory Adjustment</h3>
-            <button class="modal-close-btn" onclick="closeLocalModal('adjustModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.adjustments.store') }}" onsubmit="return confirmAdjust()">
-            @csrf
-            <div class="modal-body">
-                <div class="field">
-                    <label>Beverage Item *</label>
-                    <select name="inventory_item_id" id="adjItemId" data-searchable data-search-placeholder="Search beverages…" required onchange="updateAdjPreview()">
-                        <option value="">Select beverage…</option>
-                        @foreach($items as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} @unit($item->unit))</option>
-                        @endforeach
-                    </select>
-                </div>
-                <input type="hidden" name="adjustment_type" id="adjTypeHidden" value="damaged">
-                <div class="field">
-                    <label>Adjustment Type *</label>
-                    <div class="adj-type-grid">
-                        <button type="button" class="adj-type-btn selected" onclick="setAdjType('damaged', this)">🔴 Damaged</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('expired', this)">⏰ Expired</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('missing', this)">❓ Missing</button>
-                        <button type="button" class="adj-type-btn" onclick="setAdjType('correction', this)">✏️ Correction</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Adjustment Quantity *<br><small style="font-weight:400;color:var(--muted)">Use negative to deduct (e.g. -5), positive to add (e.g. +3)</small></label>
-                    <input type="number" name="quantity_adjusted" id="adjQty" step="1" required placeholder="-5" oninput="updateAdjPreview()">
-                </div>
-                <div class="field">
-                    <label>Reason *</label>
-                    <input type="text" name="reason" required placeholder="Brief reason for adjustment…">
-                </div>
-                <div class="field">
-                    <label>Remarks</label>
-                    <textarea name="remarks" rows="2" style="resize:none" placeholder="Additional details…"></textarea>
-                </div>
-                <div class="preview-box" id="adjPreview" style="display:none">
-                    <div class="preview-row"><span>Before Adjustment</span><span id="adjBefore">—</span></div>
-                    <div class="preview-row"><span>Adjustment</span><span id="adjChange">—</span></div>
-                    <div class="preview-row"><span>After Adjustment</span><span id="adjAfter">—</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeLocalModal('adjustModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Adjustment</button>
-            </div>
-        </form>
-    </div>
-</div>
+@include('inventory.partials.adjust-modal', [
+    'field' => 'inventory_item_id', 'itemLabel' => 'Beverage', 'options' => $adjustOptions,
+    'decimals' => 0, 'searchHint' => 'Search beverages…',
+])
 @endsection
 
 @section('scripts')
@@ -190,42 +140,5 @@ document.addEventListener('DOMContentLoaded', function () {
         debounceMs: 300,
     });
 });
-
-function setAdjType(type, btn) {
-    document.getElementById('adjTypeHidden').value = type;
-    document.querySelectorAll('.adj-type-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-}
-
-function openAdjustFor(id, name, unit, qty) {
-    document.getElementById('adjItemId').value = id;
-    updateAdjPreview();
-    openLocalModal('adjustModal');
-}
-
-function updateAdjPreview() {
-    const sel = document.getElementById('adjItemId');
-    const opt = sel.selectedOptions[0];
-    const adj = parseFloat(document.getElementById('adjQty').value) || 0;
-    const preview = document.getElementById('adjPreview');
-    if (!opt?.value || adj === 0) { preview.style.display='none'; return; }
-    const before = parseFloat(opt.dataset.qty) || 0;
-    const unit = opt.dataset.unit;
-    const after = Math.max(0, before + adj);
-    document.getElementById('adjBefore').textContent = before.toFixed(0) + ' ' + unit;
-    document.getElementById('adjChange').textContent = (adj >= 0 ? '+' : '') + adj.toFixed(0) + ' ' + unit;
-    document.getElementById('adjAfter').textContent = after.toFixed(0) + ' ' + unit;
-    preview.style.display = '';
-}
-
-function confirmAdjust() {
-    const sel = document.getElementById('adjItemId');
-    const opt = sel.selectedOptions[0];
-    const adj = parseFloat(document.getElementById('adjQty').value) || 0;
-    if (!opt?.value) return true;
-    const before = parseFloat(opt.dataset.qty) || 0;
-    const after = Math.max(0, before + adj);
-    return confirm(`Adjustment Confirmation\n\nBeverage: ${opt.text.split('(')[0].trim()}\nBefore: ${before} ${opt.dataset.unit}\nAdjustment: ${adj >= 0 ? '+' : ''}${adj} ${opt.dataset.unit}\nAfter: ${after} ${opt.dataset.unit}\n\nAre you sure you want to confirm this adjustment?`);
-}
 </script>
 @endsection

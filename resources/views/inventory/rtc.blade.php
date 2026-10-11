@@ -58,7 +58,7 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
-            <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
+            <button type="button" class="btn" style="background:#7C3AED;color:#fff" onclick="openAdjust()"><i class="fas fa-pen-to-square"></i> Adjust</button>
         </div>
     </div>
 
@@ -96,11 +96,12 @@
         @include('inventory._rtc-results', ['items' => $items])
     </div>
 
-    {{-- Links --}}
-    <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem;">
-        <a href="{{ route('inventory.stock-in.index') }}?type=rtc" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Stock-In History</a>
-    </div>
 </div>
+
+@include('inventory.partials.adjust-modal', [
+    'field' => 'inventory_item_id', 'itemLabel' => 'Raw Meat Item', 'options' => $adjustOptions,
+    'decimals' => 2, 'searchHint' => 'Search raw meat items…',
+])
 @endsection
 
 @section('scripts')

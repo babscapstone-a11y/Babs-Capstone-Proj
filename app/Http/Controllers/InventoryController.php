@@ -72,7 +72,9 @@ class InventoryController extends Controller
         $lowStock   = InventoryItem::rtc()->lowStock()->count();
         $outOfStock = InventoryItem::rtc()->outOfStock()->count();
 
-        return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock'));
+        $adjustOptions = self::stockAdjustOptions(InventoryItem::rtc());
+
+        return view('inventory.rtc', compact('items', 'totalRtc', 'lowStock', 'outOfStock', 'adjustOptions'));
     }
 
     public function rtcInventory(Request $request): View|JsonResponse
@@ -86,7 +88,7 @@ class InventoryController extends Controller
             match($status) {
                 'low_stock'    => $query->rtcLowStock(),
                 'out_of_stock' => $query->rtcOutOfStock(),
-                'available'    => $query->where('rtc_servings', '>', 10),
+                'available'    => $query->where('rtc_servings', '>=', MenuItem::LOW_SERVINGS),
                 default        => null,
             };
         }
@@ -107,7 +109,11 @@ class InventoryController extends Controller
         $rawItems      = InventoryItem::rtc()->orderBy('item_name')->get();
         $menuItems     = MenuItem::food()->orderBy('menu_name')->get();
 
-        return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'menuItems'));
+        // Adjust Stock on this page corrects a dish's RTC servings
+        $adjustOptions = MenuItem::rtcTracked()->orderBy('menu_name')->get()
+            ->map(fn ($m) => ['id' => $m->id, 'name' => $m->menu_name, 'qty' => (float) $m->rtc_servings, 'unit' => 'srv'])->all();
+
+        return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'menuItems', 'adjustOptions'));
     }
 
     public function beverages(Request $request): View|JsonResponse
@@ -142,7 +148,9 @@ class InventoryController extends Controller
         $lowStock   = InventoryItem::beverage()->lowStock()->count();
         $outOfStock = InventoryItem::beverage()->outOfStock()->count();
 
-        return view('inventory.beverages', compact('items', 'totalBev', 'lowStock', 'outOfStock'));
+        $adjustOptions = self::stockAdjustOptions(InventoryItem::beverage());
+
+        return view('inventory.beverages', compact('items', 'totalBev', 'lowStock', 'outOfStock', 'adjustOptions'));
     }
 
     public function restocking(Request $request): View
@@ -224,5 +232,12 @@ class InventoryController extends Controller
         ]));
 
         return back()->with('success', "{$item->item_name} updated successfully.");
+    }
+
+    /** Items for the shared Adjust Stock modal (inventory.partials.adjust-modal). */
+    private static function stockAdjustOptions($query): array
+    {
+        return $query->orderBy('item_name')->get()
+            ->map(fn ($i) => ['id' => $i->id, 'name' => $i->item_name, 'qty' => (float) $i->quantity, 'unit' => \App\Support\Units::short($i->unit)])->all();
     }
 }

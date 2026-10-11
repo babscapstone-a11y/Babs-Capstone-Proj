@@ -85,6 +85,7 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+            <button type="button" class="btn" style="background:#7C3AED;color:#fff" onclick="openAdjust()"><i class="fas fa-pen-to-square"></i> Adjust</button>
             <button class="btn btn-green" onclick="openLocalModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
@@ -123,12 +124,12 @@
     <div class="card" id="results">
         @include('inventory._rtc-inventory-results', ['items' => $items])
     </div>
-
-    {{-- Links --}}
-    <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem;">
-        <a href="{{ route('inventory.conversions.index') }}" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Conversion History</a>
-    </div>
 </div>
+
+@include('inventory.partials.adjust-modal', [
+    'field' => 'menu_item_id', 'itemLabel' => 'Menu Item', 'options' => $adjustOptions,
+    'decimals' => 0, 'searchHint' => 'Search menu items…',
+])
 
 {{-- ── Convert Modal ── --}}
 <div class="modal-backdrop" id="convertModal">
