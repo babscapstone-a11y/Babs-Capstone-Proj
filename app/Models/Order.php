@@ -15,7 +15,7 @@ class Order extends Model
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'extra_prep_minutes',
         'cancelled_at', 'cancellation_reason',
-        'pickup_at', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
+        'pickup_at', 'party_size', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
         'ready_at', 'served_by', 'served_at', 'packaged_at',
     ];
 
@@ -23,6 +23,7 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'cancelled_at' => 'datetime',
         'pickup_at'    => 'datetime',
+        'party_size'   => 'integer',
         'reviewed_at'  => 'datetime',
         'ready_at'     => 'datetime',
         'served_at'    => 'datetime',
@@ -31,6 +32,15 @@ class Order extends Model
 
     /** Percentage of the order total the "pay half now" GCash checkout option charges. */
     const HALF_PAYMENT_PERCENT = 50;
+
+    /** Orders below this total (₱) must be paid in full — "pay half now" isn't offered. */
+    const HALF_PAYMENT_MIN_TOTAL = 500;
+
+    /** Advance orders can be scheduled from today up to this many days ahead. */
+    const ADVANCE_MAX_DAYS = 7;
+
+    /** Largest "No. of Persons" an Advance Order can be booked for. */
+    const PARTY_SIZE_MAX = 50;
 
     /** Restaurant operating hours (24h), used to bound customer-scheduled pickup times. */
     const OPEN_HOUR  = 11; // 11:00 AM

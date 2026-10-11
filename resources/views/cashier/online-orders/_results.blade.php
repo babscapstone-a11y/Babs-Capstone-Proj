@@ -44,6 +44,9 @@
                         @if($order->pickup_at)
                             {{ $order->pickup_at->format('M d, Y') }}<br>
                             <span style="font-size:.7rem">{{ $order->pickup_at->format('h:i A') }}</span>
+                            @if($order->party_size)
+                                <br><span style="font-size:.7rem"><i class="fas fa-users"></i> {{ $order->party_size }} pax</span>
+                            @endif
                         @else
                             —
                         @endif

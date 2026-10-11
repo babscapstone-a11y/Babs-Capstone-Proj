@@ -320,6 +320,7 @@ class KitchenController extends Controller
             'next_action'           => $order->next_kitchen_action,
             'created_at'            => $order->created_at?->toIso8601String(),
             'pickup_at'             => $order->pickup_at?->toIso8601String(),
+            'party_size'            => $order->party_size,
             'item_count'            => $order->item_count,
             'estimated_completion'  => $order->estimated_completion?->toIso8601String(),
             'extra_prep_minutes'    => $order->extra_prep_minutes,

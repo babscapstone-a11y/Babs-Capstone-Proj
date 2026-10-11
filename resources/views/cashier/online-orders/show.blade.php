@@ -121,6 +121,9 @@
                     <div class="info-item"><div class="label">Order Date</div><div class="value">{{ $order->created_at->format('M d, Y h:i A') }}</div></div>
                     <div class="info-item"><div class="label">Pick-up Date</div><div class="value">{{ $order->pickup_at?->format('M d, Y') ?? '—' }}</div></div>
                     <div class="info-item"><div class="label">Pick-up Time</div><div class="value">{{ $order->pickup_at?->format('h:i A') ?? '—' }}</div></div>
+                    @if($order->party_size)
+                    <div class="info-item"><div class="label">No. of Persons</div><div class="value">{{ $order->party_size }} {{ Str::plural('person', $order->party_size) }}</div></div>
+                    @endif
                 </div>
 
                 @foreach($order->details as $detail)

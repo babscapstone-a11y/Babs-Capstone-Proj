@@ -321,6 +321,7 @@
                     ${order.table_number ? `<span class="ticket-chip"><i class="fas fa-chair"></i> Table ${order.table_number}</span>` : ''}
                     <span class="ticket-chip"><i class="fas fa-clock"></i> ${formatTime(order.created_at)}</span>
                     ${order.order_type === 'online' && order.pickup_at ? `<span class="ticket-chip"><i class="fas fa-calendar-clock"></i> Pickup ${formatPickup(order.pickup_at)}</span>` : ''}
+                    ${order.party_size ? `<span class="ticket-chip"><i class="fas fa-users"></i> ${order.party_size} pax</span>` : ''}
                     ${order.extra_prep_minutes > 0 ? `<span class="ticket-chip extended"><i class="fas fa-hourglass-half"></i> +${order.extra_prep_minutes}m added</span>` : ''}
                 </div>
                 <div class="ticket-items">

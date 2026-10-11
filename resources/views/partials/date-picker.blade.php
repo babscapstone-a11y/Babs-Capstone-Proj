@@ -1,7 +1,7 @@
 {{--
     Calendar date picker that matches the clock dial (it reuses the .cd-field / .cd-panel / .cd-foot
     styles from partials.clock-dial, so include that first). Include once per page; each field is a
-    hidden input (optional data-min="Y-m-d") plus a
+    hidden input (optional data-min / data-max="Y-m-d") plus a
     <button class="cd-field" data-picker="date" data-for="inputId" onclick="DatePick.open(this)">.
     Picking a day writes "Y-m-d" to the hidden input and fires a "change" event.
     DatePick.set(inputId, 'Y-m-d' | '') fills a field from script.
@@ -51,13 +51,15 @@
     document.body.appendChild(panel);
 
     var grid = panel.querySelector('.dp-grid');
-    // view = month on screen; cursor = day with keyboard focus; min = earliest allowed day ('' = none)
-    var view = null, cursor = '', selected = '', min = '', field = null;
+    // view = month on screen; cursor = day with keyboard focus; min/max = allowed days ('' = no limit)
+    var view = null, cursor = '', selected = '', min = '', max = '', field = null;
+    var outside = function (date) { return (min && date < min) || (max && date > max); };
 
     function render() {
         panel.querySelector('.dp-title').textContent = MONTHS[view.getMonth()] + ' ' + view.getFullYear();
         var firstOfMonth = ymd(view).slice(0, 7);
         panel.querySelector('[data-step="-1"]').disabled = !! min && firstOfMonth <= min.slice(0, 7);
+        panel.querySelector('[data-step="1"]').disabled = !! max && firstOfMonth >= max.slice(0, 7);
 
         var today = ymd(new Date());
         var html = '';
@@ -67,7 +69,7 @@
             var date = firstOfMonth + '-' + pad(d);
             var cls = 'dp-day' + (date === selected ? ' on' : '') + (date === today ? ' today' : '');
             html += '<button type="button" class="' + cls + '" data-date="' + date + '" tabindex="' + (date === cursor ? 0 : -1) + '"' +
-                    (min && date < min ? ' disabled' : '') + ' aria-label="' + parse(date).toDateString() + '">' + d + '</button>';
+                    (outside(date) ? ' disabled' : '') + ' aria-label="' + parse(date).toDateString() + '">' + d + '</button>';
         }
         grid.innerHTML = html;
     }
@@ -99,7 +101,7 @@
         e.preventDefault();
         var next = parse(cursor);
         next.setDate(next.getDate() + step);
-        if (min && ymd(next) < min) return;
+        if (outside(ymd(next))) return;
         cursor = ymd(next);
         view = new Date(next.getFullYear(), next.getMonth(), 1);
         render();
@@ -111,7 +113,8 @@
             render();
         });
     });
-    panel.querySelector('.dp-today').addEventListener('click', function () { apply(ymd(new Date())); });
+    var todayBtn = panel.querySelector('.dp-today');   // hidden when today isn't allowed (e.g. advance orders)
+    todayBtn.addEventListener('click', function () { apply(ymd(new Date())); });
     panel.querySelector('.cd-cancel').addEventListener('click', close);
 
     function showOnField(btn, value) {
@@ -139,8 +142,10 @@
         var hidden = document.getElementById(btn.dataset.for);
         selected = valid(hidden.value) ? hidden.value : '';
         min = hidden.dataset.min || '';
+        max = hidden.dataset.max || '';
         var today = ymd(new Date());
         cursor = selected || (min && min > today ? min : today);
+        todayBtn.style.visibility = outside(today) ? 'hidden' : '';
         var c = parse(cursor);
         view = new Date(c.getFullYear(), c.getMonth(), 1);
         btn.classList.add('active');

@@ -57,6 +57,19 @@
 .option-card .oc-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
 .option-card.selected { border-color: var(--primary); background: #FEF2F2; }
 .option-card.selected .oc-icon { color: var(--primary); }
+.option-card.unavailable { cursor: not-allowed; opacity: .5; }
+.option-card.unavailable:hover { border-color: var(--border); }
+
+.pickup-row { display: flex; gap: .6rem; }
+.pickup-row.time-only #pickup_date_btn { display: none; }
+.pickup-row.time-only .cd-field { flex: 0 1 calc(50% - .3rem); }
+@media (max-width: 480px) { .pickup-row.time-only .cd-field { flex: 1; } }
+
+.party-stepper { display: inline-flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+.party-stepper:focus-within { border-color: var(--primary); }
+.party-stepper button { width: 44px; border: 0; background: #F9FAFB; color: var(--dark); cursor: pointer; font-size: .8rem; }
+.party-stepper button:hover { background: #FEF2F2; color: var(--primary); }
+.field .party-stepper input { width: 64px; border: 0; border-radius: 0; text-align: center; font-weight: 700; font-size: .95rem; padding: .65rem .3rem; }
 
 .field { margin-top: 1rem; }
 .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--dark); margin-bottom: .4rem; }
@@ -139,25 +152,26 @@
                     <div class="card-header"><h2><i class="fas fa-utensils"></i> Order Type</h2></div>
                     <div class="card-body">
                         <div class="option-grid">
-                            <label class="option-card selected" data-type="online">
+                            <label class="option-card selected" data-type="online" data-schedule="advance">
                                 <input type="radio" name="order_type" value="online" checked>
                                 <div class="oc-icon"><i class="fas fa-calendar-check"></i></div>
                                 <div class="oc-label">Advance Order</div>
-                                <div class="oc-sub">Schedule ahead, pay online</div>
+                                <div class="oc-sub">Schedule up to {{ \App\Models\Order::ADVANCE_MAX_DAYS }} days ahead</div>
                             </label>
-                            <label class="option-card" data-type="online">
+                            <label class="option-card" data-type="online" data-schedule="pickup">
                                 <input type="radio" name="order_type" value="online">
                                 <div class="oc-icon"><i class="fas fa-mobile-screen-button"></i></div>
                                 <div class="oc-label">Pick-Up</div>
-                                <div class="oc-sub">Pay online, pick up soon</div>
+                                <div class="oc-sub">Pick up later today</div>
                             </label>
                         </div>
 
-                        {{-- Scheduled pickup --}}
+                        {{-- Scheduled pickup: Advance Order = date + time, Pick-Up = time only (today) --}}
                         <div class="field" id="onlinePickupField">
-                            <label for="pickup_date_btn">Scheduled Pick-up Date &amp; Time</label>
-                            <div style="display:flex;gap:.6rem">
-                                <input type="hidden" id="pickup_date" data-min="{{ now()->format('Y-m-d') }}">
+                            <label id="pickupLabel">Scheduled Pick-up Date &amp; Time</label>
+                            <div class="pickup-row">
+                                <input type="hidden" id="pickup_date"
+                                       data-min="{{ now()->format('Y-m-d') }}" data-max="{{ now()->addDays(\App\Models\Order::ADVANCE_MAX_DAYS)->format('Y-m-d') }}">
                                 <button type="button" class="cd-field" id="pickup_date_btn" data-picker="date" data-for="pickup_date"
                                         aria-haspopup="dialog" aria-label="Pick-up date" onclick="DatePick.open(this)">
                                     <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
@@ -169,7 +183,18 @@
                                 </button>
                             </div>
                             <input type="hidden" name="pickup_at" id="pickup_at">
-                            <div class="hint">We're open 11:00 AM – 9:00 PM. Please choose a pick-up time within our hours, at least 30 minutes from now.</div>
+                            <div class="hint" id="pickupHint"></div>
+
+                            {{-- Advance Order only: customers can book ahead to dine in --}}
+                            <div id="partySizeField" style="margin-top:1rem">
+                                <label for="party_size">No. of Persons</label>
+                                <div class="party-stepper">
+                                    <button type="button" data-step="-1" aria-label="Fewer persons"><i class="fas fa-minus"></i></button>
+                                    <input type="text" inputmode="numeric" id="party_size" maxlength="2" placeholder="0" autocomplete="off">
+                                    <button type="button" data-step="1" aria-label="More persons"><i class="fas fa-plus"></i></button>
+                                </div>
+                                <div class="hint">Dining in? Tell us how many people are coming so we can prepare your table.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,14 +204,22 @@
                     <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay with GCash (Scan QR)</h2></div>
                     <div class="card-body">
                         <div class="option-grid">
-                            <label class="option-card selected" data-payment-type="half">
-                                <input type="radio" name="payment_type" value="half" checked>
+                            @php $halfAllowed = $cart->total >= \App\Models\Order::HALF_PAYMENT_MIN_TOTAL; @endphp
+                            <label class="option-card {{ $halfAllowed ? 'selected' : 'unavailable' }}" data-payment-type="half"
+                                   @unless($halfAllowed) aria-disabled="true" @endunless>
+                                <input type="radio" name="payment_type" value="half" @if($halfAllowed) checked @else disabled @endif>
                                 <div class="oc-icon"><i class="fas fa-hand-holding-dollar"></i></div>
                                 <div class="oc-label">Pay Half Now</div>
-                                <div class="oc-sub"><span class="payment-amount" data-type="half">₱0.00</span></div>
+                                <div class="oc-sub">
+                                    @if($halfAllowed)
+                                        <span class="payment-amount" data-type="half">₱0.00</span>
+                                    @else
+                                        For orders ₱{{ number_format(\App\Models\Order::HALF_PAYMENT_MIN_TOTAL) }} and up
+                                    @endif
+                                </div>
                             </label>
-                            <label class="option-card" data-payment-type="full">
-                                <input type="radio" name="payment_type" value="full">
+                            <label class="option-card {{ $halfAllowed ? '' : 'selected' }}" data-payment-type="full">
+                                <input type="radio" name="payment_type" value="full" @unless($halfAllowed) checked @endunless>
                                 <div class="oc-icon"><i class="fas fa-money-bill-wave"></i></div>
                                 <div class="oc-label">Pay in Full</div>
                                 <div class="oc-sub"><span class="payment-amount" data-type="full">₱0.00</span></div>
@@ -249,33 +282,43 @@
 <script>
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-/* Order type selector — Advance Order / Pick-Up both submit order_type=online
-   and require the same fields, so this is purely visual selection feedback. */
+/* Order type selector — Advance Order / Pick-Up both submit order_type=online;
+   "schedule" (advance | pickup) decides which pick-up dates are allowed. */
 const orderTypeCards = document.querySelectorAll('.option-card[data-type]');
 const cartTotal = {{ (float) $cart->total }};
 const halfPaymentPercent = {{ \App\Models\Order::HALF_PAYMENT_PERCENT }};
+let schedule = 'advance';
 
 orderTypeCards.forEach(card => {
     card.addEventListener('click', () => {
         orderTypeCards.forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         card.querySelector('input').checked = true;
+        if (schedule !== card.dataset.schedule) {
+            schedule = card.dataset.schedule;
+            applySchedule();
+        }
     });
 });
 
-/* Payment option selector — Pay Half Now / Pay in Full */
+/* Payment option selector — Pay Half Now / Pay in Full (Pay Half is unavailable below ₱500) */
 const paymentCards = document.querySelectorAll('.option-card[data-payment-type]');
 
 paymentCards.forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+        if (card.classList.contains('unavailable')) {
+            e.preventDefault();
+            showToast('Pay Half Now is only available for orders of ₱{{ number_format(\App\Models\Order::HALF_PAYMENT_MIN_TOTAL) }} and up.', 'error');
+            return;
+        }
         paymentCards.forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         card.querySelector('input').checked = true;
     });
 });
 
-const halfAmount = (cartTotal * halfPaymentPercent / 100).toFixed(2);
-document.querySelector('.payment-amount[data-type="half"]').textContent = '₱' + halfAmount;
+const halfAmountEl = document.querySelector('.payment-amount[data-type="half"]');
+if (halfAmountEl) halfAmountEl.textContent = '₱' + (cartTotal * halfPaymentPercent / 100).toFixed(2);
 document.querySelector('.payment-amount[data-type="full"]').textContent = '₱' + cartTotal.toFixed(2);
 
 /* Restaurant hours: pickup can only be scheduled between these hours (24h). */
@@ -334,6 +377,75 @@ function validatePickupFields() {
 pickupDateInput.addEventListener('change', validatePickupFields);
 pickupTimeInput.addEventListener('change', validatePickupFields);
 
+/* Advance Order: pick a date (today … +{{ \App\Models\Order::ADVANCE_MAX_DAYS }} days) and a time.
+   Pick-Up: the date is fixed to today, so only the time is shown. */
+const TODAY = @json(now()->format('Y-m-d'));
+const pickupRow = document.querySelector('.pickup-row');
+const to12h = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`; };
+
+// Earliest same-day pick-up: 30 minutes from now (+1 minute so it's still valid a moment later
+// when the customer confirms), rounded up to 5 minutes, not before opening. Null after closing time.
+function earliestTodayTime() {
+    const t = new Date(Date.now() + (MIN_LEAD_MINUTES + 1) * 60000);
+    let mins = Math.max(OPEN_HOUR * 60, Math.ceil((t.getHours() * 60 + t.getMinutes() + t.getSeconds() / 60) / 5) * 5);
+    if (mins > CLOSE_HOUR * 60) return null;
+    return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+}
+
+// When the pick-up date is today, grey out times that are already too soon (re-run every minute)
+function refreshTimeLimit() {
+    const isToday = pickupDateInput.value === TODAY;
+    const earliest = isToday ? earliestTodayTime() : '11:00';
+    pickupTimeInput.dataset.minTime = earliest || '23:59';   // after closing: every time greyed out
+
+    if (schedule === 'pickup') {
+        document.getElementById('pickupHint').textContent = earliest
+            ? `Pick-up is for today. Choose a time from ${to12h(earliest)} to 9:00 PM.`
+            : 'Same-day pick-up is closed for today. Please choose Advance Order to schedule another day.';
+    }
+}
+pickupDateInput.addEventListener('change', refreshTimeLimit);
+
+/* No. of Persons (Advance Order only): digits only, − / + step between 1 and the maximum */
+const PARTY_SIZE_MAX = {{ \App\Models\Order::PARTY_SIZE_MAX }};
+const partySizeInput = document.getElementById('party_size');
+partySizeInput.addEventListener('input', () => {
+    partySizeInput.value = partySizeInput.value.replace(/\D/g, '');
+    if (+partySizeInput.value > PARTY_SIZE_MAX) partySizeInput.value = PARTY_SIZE_MAX;
+});
+document.querySelectorAll('.party-stepper button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const next = (parseInt(partySizeInput.value, 10) || 0) + Number(btn.dataset.step);
+        partySizeInput.value = Math.min(PARTY_SIZE_MAX, Math.max(1, next));
+    });
+});
+
+function applySchedule() {
+    const timeOnly = schedule === 'pickup';
+    pickupRow.classList.toggle('time-only', timeOnly);
+    document.getElementById('partySizeField').style.display = timeOnly ? 'none' : '';
+    document.getElementById('pickupLabel').textContent = timeOnly ? 'Pick-up Time (Today)' : 'Scheduled Pick-up Date & Time';
+
+    if (timeOnly) {
+        DatePick.set('pickup_date', TODAY);
+        refreshTimeLimit();
+    } else {
+        const d = pickupDateInput.value;
+        if (d && (d < pickupDateInput.dataset.min || d > pickupDateInput.dataset.max)) DatePick.set('pickup_date', '');
+        refreshTimeLimit();
+        document.getElementById('pickupHint').textContent =
+            "Choose a day from today up to {{ \App\Models\Order::ADVANCE_MAX_DAYS }} days ahead. We're open 11:00 AM – 9:00 PM, and same-day orders need at least 30 minutes' notice.";
+    }
+
+    // Quietly drop a time that no longer fits the new choice
+    const time = pickupTimeInput.value;
+    if (time && (! isWithinBusinessHours(time) || ! meetsLeadTime(pickupDateInput.value, time))) ClockDial.set('pickup_time', '');
+    syncPickupAt();
+}
+
+applySchedule();
+setInterval(refreshTimeLimit, 60000);
+
 /* Confirm & submit to PayMongo with duplicate-prevention */
 const form = document.getElementById('checkoutForm');
 const confirmBtn = document.getElementById('confirmOrderBtn');
@@ -342,11 +454,17 @@ form.addEventListener('submit', (e) => {
     e.preventDefault();
 
     if (! pickupDateInput.value || ! pickupTimeInput.value) {
-        showToast('Please choose a pick-up date and time.', 'error');
+        showToast(schedule === 'pickup' ? 'Please choose a pick-up time.' : 'Please choose a pick-up date and time.', 'error');
         return;
     }
 
     if (! validatePickupFields()) {
+        return;
+    }
+
+    if (schedule === 'advance' && ! (parseInt(partySizeInput.value, 10) >= 1)) {
+        showToast('Please enter the number of persons for your Advance Order.', 'error');
+        partySizeInput.focus();
         return;
     }
 
@@ -373,6 +491,8 @@ async function submitCheckout() {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
             body: JSON.stringify({
                 order_type: orderType,
+                schedule: schedule,
+                party_size: schedule === 'advance' ? parseInt(partySizeInput.value, 10) : null,
                 payment_type: paymentType,
                 pickup_at: document.getElementById('pickup_at').value,
                 special_instructions: form.querySelector('textarea[name="special_instructions"]').value,
