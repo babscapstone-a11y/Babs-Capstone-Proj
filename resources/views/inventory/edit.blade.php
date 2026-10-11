@@ -48,7 +48,7 @@
     <div class="item-info">
         <span class="badge {{ $item->item_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($item->item_type) }}</span>
         <span class="name">{{ $item->item_name }}</span>
-        <span class="qty">Current: <strong>{{ number_format($item->quantity,2) }} {{ $item->unit }}</strong></span>
+        <span class="qty">Current: <strong>{{ number_format($item->quantity,2) }} @unit($item->unit)</strong></span>
         @php $s=$item->stock_status; @endphp
         <span class="badge {{ $s==='available'?'badge-available':($s==='low_stock'?'badge-low':'badge-out') }}">{{ $item->stock_status_label }}</span>
     </div>
@@ -100,7 +100,7 @@
                 <div class="field">
                     <label>Portion Size *</label>
                     <input type="number" name="portion_size" step="0.001" min="0.001" required value="{{ old('portion_size', $item->portion_size) }}">
-                    <div class="help">Raw {{ $item->unit }} used per RTC serving</div>
+                    <div class="help">Raw @unit($item->unit) used per RTC serving</div>
                 </div>
                 <div class="field">
                     <label>Portion Unit</label>

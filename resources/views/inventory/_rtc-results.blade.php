@@ -25,7 +25,7 @@
                         @endif
                     </td>
                     <td>
-                        <div style="font-weight:700">{{ number_format($item->quantity, 2) }} {{ $item->unit }}</div>
+                        <div style="font-weight:700">{{ number_format($item->quantity, 2) }} @unit($item->unit)</div>
                         @php
                             $pct = $item->reorder_level > 0 ? min(100, ($item->quantity / ($item->reorder_level * 2)) * 100) : 100;
                             $color = $item->stock_status === 'available' ? 'progress-green' : ($item->stock_status === 'low_stock' ? 'progress-amber' : 'progress-red');
@@ -33,7 +33,7 @@
                         <div class="progress-bar"><div class="progress-fill {{ $color }}" style="width:{{ $pct }}%"></div></div>
                     </td>
                     <td>
-                        <div style="font-size:.82rem">{{ number_format($item->reorder_level, 2) }} {{ $item->unit }}</div>
+                        <div style="font-size:.82rem">{{ number_format($item->reorder_level, 2) }} @unit($item->unit)</div>
                         <div style="font-size:.73rem;color:var(--muted)">Min: {{ number_format($item->min_stock_level, 2) }}</div>
                     </td>
                     <td>

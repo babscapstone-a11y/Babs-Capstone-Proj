@@ -177,18 +177,18 @@
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
-                            <td class="ro-val">{{ number_format($item->current_stock,2) }} {{ $item->unit }}</td>
-                            <td class="ro-val">{{ number_format($item->threshold,2) }} {{ $item->unit }}</td>
-                            <td class="ro-val">{{ number_format($item->quantity_recommended,2) }} {{ $item->unit }}</td>
+                            <td class="ro-val">{{ number_format($item->current_stock,2) }} @unit($item->unit)</td>
+                            <td class="ro-val">{{ number_format($item->threshold,2) }} @unit($item->unit)</td>
+                            <td class="ro-val">{{ number_format($item->quantity_recommended,2) }} @unit($item->unit)</td>
                             <td>
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,2,'.','')) }}"
                                            class="qty-input" step="0.01" min="{{ number_format($rtcMin,2,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,2,'.','') }}"
-                                           title="Must be at least the minimum threshold ({{ number_format($rtcMin,2) }} {{ $item->unit }})"
+                                           title="Must be at least the minimum threshold ({{ number_format($rtcMin,2) }} @unit($item->unit))"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }} {{ $item->unit }}</span>
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
@@ -250,18 +250,18 @@
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
-                            <td class="ro-val">{{ number_format($item->current_stock,0) }} {{ $item->unit }}</td>
-                            <td class="ro-val">{{ number_format($item->threshold,0) }} {{ $item->unit }}</td>
-                            <td class="ro-val">{{ number_format($item->quantity_recommended,0) }} {{ $item->unit }}</td>
+                            <td class="ro-val">{{ number_format($item->current_stock,0) }} @unit($item->unit)</td>
+                            <td class="ro-val">{{ number_format($item->threshold,0) }} @unit($item->unit)</td>
+                            <td class="ro-val">{{ number_format($item->quantity_recommended,0) }} @unit($item->unit)</td>
                             <td>
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,0,'.','')) }}"
                                            class="qty-input" step="1" min="{{ number_format($bevMin,0,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,0,'.','') }}"
-                                           title="Must be at least the minimum threshold ({{ number_format($bevMin,0) }} {{ $item->unit }})"
+                                           title="Must be at least the minimum threshold ({{ number_format($bevMin,0) }} @unit($item->unit))"
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }} {{ $item->unit }}</span>
+                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                             </td>
@@ -364,7 +364,7 @@
                     <select name="inventory_item_id" id="addPoItemSelect" data-searchable data-search-placeholder="Search inventory items…" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
                         <option value="">Select item…</option>
                         @forelse($availableItems as $ai)
-                        <option value="{{ $ai->id }}" data-unit="{{ $ai->unit }}" data-stock="{{ number_format($ai->quantity,2) }}"
+                        <option value="{{ $ai->id }}" data-unit="@unit($ai->unit)" data-stock="{{ number_format($ai->quantity,2) }}"
                                 data-threshold="{{ number_format(max((float) $ai->reorder_level, 0.01),2,'.','') }}"
                                 {{ (string) old('inventory_item_id') === (string) $ai->id ? 'selected' : '' }}>
                             {{ $ai->item_name }} ({{ $ai->item_type === 'rtc' ? 'RTC Raw Meat' : 'Beverage' }})

@@ -31,7 +31,7 @@
                     </td>
                     <td>
                         @if($item->rtc_quantity)
-                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 3) }} {{ $item->rtc_unit }}/serving</span>
+                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 2) }} @unit($item->rtc_unit)/serving</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">Not set</span>
                         @endif

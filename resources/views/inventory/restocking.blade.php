@@ -63,9 +63,9 @@
                 @if($statusFilter === 'out_of_stock')
                     Items with zero quantity remaining
                 @elseif($statusFilter === 'low_stock')
-                    Items at or below reorder threshold, but not yet out of stock
+                    Items below the reorder threshold, but not yet out of stock
                 @else
-                    Items at or below reorder threshold requiring repurchase
+                    Items below the reorder threshold requiring repurchase
                 @endif
             </div>
         </div>
@@ -123,9 +123,9 @@
                         <td><span class="badge {{ $item->item_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($item->item_type) }}</span></td>
                         <td style="color:var(--muted)">{{ $item->category ?? '—' }}</td>
                         <td><span class="badge badge-out">0 / {{ number_format($item->quantity,0) }}</span></td>
-                        <td>{{ $item->unit }}</td>
+                        <td>@unit($item->unit)</td>
                         <td>{{ number_format($item->reorder_level,0) }}</td>
-                        <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} {{ $item->unit }}</span></td>
+                        <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} @unit($item->unit)</span></td>
                         <td>{{ $item->supplier ?? '—' }}</td>
                     </tr>
                     @endforeach
@@ -163,9 +163,9 @@
                         <td>
                             <span class="badge badge-low">{{ number_format($item->quantity,0) }}</span>
                         </td>
-                        <td>{{ $item->unit }}</td>
+                        <td>@unit($item->unit)</td>
                         <td>{{ number_format($item->reorder_level,0) }}</td>
-                        <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} {{ $item->unit }}</span></td>
+                        <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} @unit($item->unit)</span></td>
                         <td>{{ $item->supplier ?? '—' }}</td>
                     </tr>
                     @endforeach

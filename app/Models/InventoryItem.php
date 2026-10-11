@@ -40,7 +40,7 @@ class InventoryItem extends Model
     public function scopeLowStock(Builder $q): Builder
     {
         return $q->where('quantity', '>', 0)
-                 ->whereRaw('quantity <= reorder_level');
+                 ->whereRaw('quantity < reorder_level');   // low = below the minimum, not equal to it
     }
 
     public function scopeOutOfStock(Builder $q): Builder
@@ -51,7 +51,7 @@ class InventoryItem extends Model
     public function scopeServingsLowStock(Builder $q): Builder
     {
         return $q->where('rtc_servings', '>', 0)
-                 ->where('rtc_servings', '<=', 10);
+                 ->where('rtc_servings', '<', 10);
     }
 
     public function scopeServingsOutOfStock(Builder $q): Builder
@@ -65,7 +65,7 @@ class InventoryItem extends Model
         if ((float) $this->quantity <= 0) {
             return 'out_of_stock';
         }
-        if ((float) $this->quantity <= (float) $this->reorder_level) {
+        if ((float) $this->quantity < (float) $this->reorder_level) {
             return 'low_stock';
         }
         return 'available';
@@ -85,7 +85,7 @@ class InventoryItem extends Model
         if ($this->item_type !== 'rtc') return 'n/a';
         $servings = (float) $this->rtc_servings;
         if ($servings <= 0) return 'out_of_stock';
-        if ($servings <= 10) return 'low_stock';
+        if ($servings < 10) return 'low_stock';
         return 'available';
     }
 

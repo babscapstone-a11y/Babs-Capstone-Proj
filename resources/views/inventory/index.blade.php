@@ -164,7 +164,7 @@
                         <div class="activity-name">{{ $tx->inventoryItem?->item_name ?? '—' }}</div>
                         <div class="activity-meta">{{ $tx->purchase_date?->format('M d, Y') }} &bull; {{ $tx->recorder?->name ?? 'Admin' }}</div>
                     </div>
-                    <div class="activity-qty">+{{ number_format($tx->quantity_purchased, 2) }} {{ $tx->unit }}</div>
+                    <div class="activity-qty">+{{ number_format($tx->quantity_purchased, 2) }} @unit($tx->unit)</div>
                 </div>
                 @empty
                 <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No stock-in transactions yet.</div>
@@ -429,7 +429,7 @@ function populateSIUnitOptions(baseUnit) {
     options.forEach(function(u) {
         const o = document.createElement('option');
         o.value = u;
-        o.textContent = u;
+        o.textContent = unitShort(u);
         if (u === baseUnit) o.selected = true;
         sel.appendChild(o);
     });
@@ -470,15 +470,15 @@ function updateSIPreview() {
     const prevBase = parseFloat(opt.dataset.qty) || 0;
     const purchasedInBase = siConvert(qty, enteredUnit, baseUnit);
     const newQtyBase = prevBase + purchasedInBase;
-    document.getElementById('siPrevQty').textContent = prevBase.toFixed(2) + ' ' + baseUnit;
-    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + enteredUnit;
-    document.getElementById('siNewQty').textContent = newQtyBase.toFixed(2) + ' ' + baseUnit;
+    document.getElementById('siPrevQty').textContent = prevBase.toFixed(2) + ' ' + unitShort(baseUnit);
+    document.getElementById('siPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unitShort(enteredUnit);
+    document.getElementById('siNewQty').textContent = newQtyBase.toFixed(2) + ' ' + unitShort(baseUnit);
 
     const totalCost = parseFloat(document.getElementById('siCost').value);
     const costRow = document.getElementById('siCostRow');
     if (totalCost > 0) {
         const perUnit = totalCost / qty;
-        document.getElementById('siTotalCost').textContent = '₱' + totalCost.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + enteredUnit + ')';
+        document.getElementById('siTotalCost').textContent = '₱' + totalCost.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + unitShort(enteredUnit) + ')';
         costRow.style.display = '';
     } else {
         costRow.style.display = 'none';
@@ -530,14 +530,14 @@ function proceedStockIn() {
     const costVal = parseFloat(cost);
 
     document.getElementById('siConfirmItem').textContent = opt.text.trim();
-    document.getElementById('siConfirmPrev').textContent = prevBase.toFixed(2) + ' ' + baseUnit;
-    document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unit;
-    document.getElementById('siConfirmNew').textContent = newQtyBase.toFixed(2) + ' ' + baseUnit;
+    document.getElementById('siConfirmPrev').textContent = prevBase.toFixed(2) + ' ' + unitShort(baseUnit);
+    document.getElementById('siConfirmPurchased').textContent = '+' + qty.toFixed(2) + ' ' + unitShort(unit);
+    document.getElementById('siConfirmNew').textContent = newQtyBase.toFixed(2) + ' ' + unitShort(baseUnit);
 
     const confirmCostRow = document.getElementById('siConfirmCostRow');
     if (costVal > 0) {
         const perUnit = costVal / qty;
-        document.getElementById('siConfirmTotalCost').textContent = '₱' + costVal.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + unit + ')';
+        document.getElementById('siConfirmTotalCost').textContent = '₱' + costVal.toFixed(2) + ' (₱' + perUnit.toFixed(2) + '/' + unitShort(unit) + ')';
         confirmCostRow.style.display = '';
     } else {
         confirmCostRow.style.display = 'none';

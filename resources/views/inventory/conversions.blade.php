@@ -106,11 +106,11 @@
                         <td style="color:var(--muted);font-size:.78rem">#{{ $log->id }}</td>
                         <td><div style="font-weight:700">{{ $log->inventoryItem?->item_name ?? '—' }}</div></td>
                         <td><div style="font-weight:700;color:var(--blue-700)">{{ $log->menuItem?->menu_name ?? '—' }}</div></td>
-                        <td style="color:var(--red-600);font-weight:700">{{ number_format($log->raw_quantity_used,3) }} {{ $log->unit }}</td>
-                        <td style="color:var(--muted)">{{ number_format($log->portion_size,3) }}/srv</td>
+                        <td style="color:var(--red-600);font-weight:700">{{ number_format($log->raw_quantity_used, 2) }} @unit($log->unit)</td>
+                        <td style="color:var(--muted)">{{ number_format($log->portion_size, 2) }}/srv</td>
                         <td><span style="font-weight:800;color:var(--blue-700);font-size:.95rem">{{ number_format($log->rtc_units_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
-                        <td style="color:var(--muted)">{{ number_format($log->previous_raw_stock,3) }} {{ $log->unit }}</td>
-                        <td style="font-weight:600">{{ number_format($log->remaining_raw_stock,3) }} {{ $log->unit }}</td>
+                        <td style="color:var(--muted)">{{ number_format($log->previous_raw_stock, 2) }} @unit($log->unit)</td>
+                        <td style="font-weight:600">{{ number_format($log->remaining_raw_stock, 2) }} @unit($log->unit)</td>
                         <td style="color:var(--muted)">{{ number_format($log->previous_rtc_servings,0) }}</td>
                         <td style="font-weight:700;color:var(--green-600)">{{ number_format($log->new_rtc_servings,0) }}</td>
                         <td>{{ $log->converter?->name ?? 'Admin' }}</td>
@@ -142,18 +142,7 @@
                 @endif
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
-                    <label>Raw Meat Item *</label>
-                    <select name="inventory_item_id" id="cvItem" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateCalc()">
-                        <option value="">Select raw meat item…</option>
-                        @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}" data-portion="{{ $item->portion_size ?? 0.25 }}" data-punit="{{ $item->portion_unit ?? $item->unit }}">
-                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }} available)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Menu Item *</label>
+                    <label>Menu Item <span style="color:var(--red-600)">*</span></label>
                     <select name="menu_item_id" id="cvMenuItem" data-searchable data-search-placeholder="Search menu items…" required>
                         <option value="">Select menu item…</option>
                         @foreach($menuItems as $menuItem)
@@ -161,14 +150,25 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="field">
+                    <label>Raw Meat Item <span style="color:var(--red-600)">*</span></label>
+                    <select name="inventory_item_id" id="cvItem" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateCalc()">
+                        <option value="">Select raw meat item…</option>
+                        @foreach($rtcItems as $item)
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)" data-portion="{{ $item->portion_size ?? 0.25 }}" data-punit="@unit($item->portion_unit ?? $item->unit)">
+                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} @unit($item->unit) available)
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
-                        <label>Raw Qty to Use *</label>
-                        <input type="number" name="raw_quantity_used" id="cvRaw" step="0.01" min="0.01" required placeholder="0.00" oninput="updateCalc()">
+                        <label>Raw Qty to Use <span style="color:var(--red-600)">*</span></label>
+                        <input type="number" class="no-spin" name="raw_quantity_used" id="cvRaw" step="0.01" min="0.01" required placeholder="0.00" oninput="updateCalc()">
                     </div>
                     <div class="field">
-                        <label>Portion Size/serving *</label>
-                        <input type="number" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.250" oninput="updateCalc()">
+                        <label>Portion Size/serving <span style="color:var(--red-600)">*</span></label>
+                        <input type="number" class="no-spin" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.25" oninput="updateCalc()">
                     </div>
                 </div>
                 <div class="conv-calc" id="cvCalc" style="display:none">
@@ -244,10 +244,10 @@ function updateCalc(){
     const avail=parseFloat(opt.dataset.qty)||0;const unit=opt.dataset.unit;const punit=opt.dataset.punit||unit;
     const units=Math.floor(raw/portion);const remain=avail-raw;
     document.getElementById('cvUnits').textContent=units;
-    document.getElementById('cvRawShow').textContent=raw.toFixed(3)+' '+unit;
-    document.getElementById('cvPortShow').textContent=portion.toFixed(3)+' '+punit;
+    document.getElementById('cvRawShow').textContent=raw.toFixed(2)+' '+unit;
+    document.getElementById('cvPortShow').textContent=portion.toFixed(2)+' '+punit;
     document.getElementById('cvUnitsShow').textContent=units;
-    document.getElementById('cvRemain').textContent=remain.toFixed(3)+' '+unit;
+    document.getElementById('cvRemain').textContent=remain.toFixed(2)+' '+unit;
     calc.style.display='';
     // Auto-fill portion from item default
     if(document.getElementById('cvPortion').value===''&&opt.dataset.portion)
@@ -277,16 +277,16 @@ function proceedConvert(){
     if(raw>avail){errBox.textContent='Insufficient raw stock. Available: '+avail.toFixed(2)+' '+unit+'.';errBox.style.display='';return;}
 
     const units=Math.floor(raw/portion);
-    if(units<1){errBox.textContent='This quantity is too small to produce even 1 RTC serving (need at least '+portion.toFixed(3)+' '+punit+').';errBox.style.display='';return;}
+    if(units<1){errBox.textContent='This quantity is too small to produce even 1 RTC serving (need at least '+portion.toFixed(2)+' '+punit+').';errBox.style.display='';return;}
 
     const remain=avail-raw;
     document.getElementById('cvConfirmItem').textContent=opt.text.split('(')[0].trim();
     document.getElementById('cvConfirmName').textContent=menuOpt.text.trim();
     document.getElementById('cvConfirmUnits').textContent=units;
     document.getElementById('cvConfirmUnits2').textContent=units;
-    document.getElementById('cvConfirmRaw').textContent=raw.toFixed(3)+' '+unit;
-    document.getElementById('cvConfirmPortion').textContent=portion.toFixed(3)+' '+punit;
-    document.getElementById('cvConfirmRemain').textContent=remain.toFixed(3)+' '+unit;
+    document.getElementById('cvConfirmRaw').textContent=raw.toFixed(2)+' '+unit;
+    document.getElementById('cvConfirmPortion').textContent=portion.toFixed(2)+' '+punit;
+    document.getElementById('cvConfirmRemain').textContent=remain.toFixed(2)+' '+unit;
 
     closeLocalModal('cvModal');
     openLocalModal('cvConfirmModal');

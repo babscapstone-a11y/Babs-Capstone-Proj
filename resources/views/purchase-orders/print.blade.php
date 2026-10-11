@@ -198,10 +198,10 @@
                 <tr>
                     <td style="color:#9CA3AF;font-size:.78rem">{{ $i+1 }}</td>
                     <td><strong>{{ $item->item_name }}</strong>@if($item->category)<div style="font-size:.7rem;color:#9CA3AF">{{ $item->category }}</div>@endif</td>
-                    <td style="color:#6B7280">{{ number_format($item->current_stock, $section['decimals']) }} {{ $item->unit }}</td>
-                    <td style="font-weight:700">{{ number_format($item->quantity_to_purchase, $section['decimals']) }} {{ $item->unit }}</td>
+                    <td style="color:#6B7280">{{ number_format($item->current_stock, $section['decimals']) }} @unit($item->unit)</td>
+                    <td style="font-weight:700">{{ number_format($item->quantity_to_purchase, $section['decimals']) }} @unit($item->unit)</td>
                     @if($item->quantity_received !== null)
-                    <td>{{ number_format($item->quantity_received, $section['decimals']) }} {{ $item->unit }}</td>
+                    <td>{{ number_format($item->quantity_received, $section['decimals']) }} @unit($item->unit)</td>
                     <td>{{ $item->amount_paid !== null ? '₱' . number_format($item->amount_paid, 2) : '—' }}</td>
                     @else
                     <td><span class="write-in"></span></td>

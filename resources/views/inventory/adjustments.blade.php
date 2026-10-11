@@ -118,11 +118,11 @@
                             <div style="font-size:.72rem;color:var(--muted)">{{ $adj->inventoryItem?->item_type === 'rtc' ? 'RTC' : 'Beverage' }}</div>
                         </td>
                         <td><span class="badge {{ $typeClass }}">{{ $adj->getTypeLabel() }}</span></td>
-                        <td style="color:var(--muted)">{{ number_format($adj->quantity_before,2) }} {{ $adj->inventoryItem?->unit }}</td>
+                        <td style="color:var(--muted)">{{ number_format($adj->quantity_before,2) }} @unit($adj->inventoryItem?->unit)</td>
                         <td style="font-weight:700;color:{{ $isNeg ? '#DC2626' : '#16A34A' }}">
-                            {{ $isNeg ? '' : '+' }}{{ number_format($adj->quantity_adjusted,2) }} {{ $adj->inventoryItem?->unit }}
+                            {{ $isNeg ? '' : '+' }}{{ number_format($adj->quantity_adjusted,2) }} @unit($adj->inventoryItem?->unit)
                         </td>
-                        <td style="font-weight:700">{{ number_format($adj->quantity_after,2) }} {{ $adj->inventoryItem?->unit }}</td>
+                        <td style="font-weight:700">{{ number_format($adj->quantity_after,2) }} @unit($adj->inventoryItem?->unit)</td>
                         <td style="font-size:.8rem">{{ $adj->reason }}</td>
                         <td>{{ $adj->adjuster?->name ?? 'Admin' }}</td>
                         <td style="font-size:.78rem;color:var(--muted)">{{ $adj->created_at->format('M d, Y H:i') }}</td>
@@ -154,12 +154,12 @@
                         <option value="">Select item…</option>
                         <optgroup label="RTC Raw Meat">
                         @foreach($rtcItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)">{{ $item->item_name }} ({{ number_format($item->quantity,2) }} @unit($item->unit))</option>
                         @endforeach
                         </optgroup>
                         <optgroup label="Beverages">
                         @foreach($beverageItems as $item)
-                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="{{ $item->unit }}">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} {{ $item->unit }})</option>
+                        <option value="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-unit="@unit($item->unit)">{{ $item->item_name }} ({{ number_format($item->quantity,0) }} @unit($item->unit))</option>
                         @endforeach
                         </optgroup>
                     </select>

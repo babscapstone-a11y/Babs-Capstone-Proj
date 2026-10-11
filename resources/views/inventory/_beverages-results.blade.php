@@ -28,9 +28,9 @@
                         @php $pct = $item->reorder_level > 0 ? min(100, ($item->quantity / ($item->reorder_level * 2)) * 100) : 100; $color = $item->stock_status === 'available' ? 'progress-green' : ($item->stock_status === 'low_stock' ? 'progress-amber' : 'progress-red'); @endphp
                         <div class="progress-bar"><div class="progress-fill {{ $color }}" style="width:{{ $pct }}%"></div></div>
                     </td>
-                    <td style="color:var(--muted)">{{ $item->unit }}</td>
+                    <td style="color:var(--muted)">@unit($item->unit)</td>
                     <td>
-                        <div style="font-size:.82rem">{{ number_format($item->reorder_level, 0) }} {{ $item->unit }}</div>
+                        <div style="font-size:.82rem">{{ number_format($item->reorder_level, 0) }} @unit($item->unit)</div>
                     </td>
                     <td>
                         @php $s = $item->stock_status; @endphp
@@ -41,7 +41,7 @@
                     </td>
                     <td>
                         <div class="row-acts">
-                            <button type="button" class="act-btn act-edit" title="Adjust Stock" aria-label="Adjust stock" onclick="openAdjustFor({{ $item->id }},'{{ addslashes($item->item_name) }}','{{ $item->unit }}',{{ $item->quantity }})"><i class="fas fa-pen-to-square"></i></button>
+                            <button type="button" class="act-btn act-edit" title="Adjust Stock" aria-label="Adjust stock" onclick="openAdjustFor({{ $item->id }},'{{ addslashes($item->item_name) }}','@unit($item->unit)',{{ $item->quantity }})"><i class="fas fa-pen-to-square"></i></button>
                             <a href="{{ route('inventory.edit', $item) }}" class="act-btn act-edit" title="Edit Settings" aria-label="Edit settings"><i class="fas fa-sliders"></i></a>
                         </div>
                     </td>

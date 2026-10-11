@@ -335,7 +335,7 @@
                                 <tr>
                                     <td>{{ $row['item_name'] }} <span style="color:var(--muted);font-size:.76rem">({{ $row['category'] }})</span></td>
                                     <td>{{ number_format($row['current_stock'], 2) }}</td>
-                                    <td>{{ $row['unit'] }}</td>
+                                    <td>@unit($row['unit'])</td>
                                     <td>{{ number_format($row['threshold'], 2) }}</td>
                                     <td>{{ number_format($row['rtc_units_available'], 2) }}</td>
                                     <td>{{ $row['equivalent_servings'] !== null ? number_format($row['equivalent_servings'], 2) : '—' }}</td>

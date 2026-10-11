@@ -474,7 +474,7 @@
         const soldOut = currentMaxQty !== null && currentMaxQty <= 0;
         modalQtyRow.style.display = soldOut ? 'none' : '';
 
-        if (currentMaxQty !== null && currentMaxQty <= 10) {
+        if (currentMaxQty !== null && currentMaxQty < 10) {
             modalStockNote.style.display = '';
             modalStockNote.className = 'modal-stock-note ' + (soldOut ? 'out' : 'low');
             modalStockNote.innerHTML = soldOut

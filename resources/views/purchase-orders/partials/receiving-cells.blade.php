@@ -7,9 +7,9 @@
     <div class="qty-wrap">
         <input type="number" name="received[{{ $item->id }}]" value="{{ $receivedVal }}"
                class="qty-input rcv-input js-received" step="{{ $step }}" min="0" placeholder="—"
-               title="Quantity actually bought ({{ $item->unit }}). Enter 0 if this item was not bought."
+               title="Quantity actually bought (@unit($item->unit)). Enter 0 if this item was not bought."
                oninput="updateReceivingRow(this)">
-        <span class="field-hint" style="margin:0">{{ $item->unit }}</span>
+        <span class="field-hint" style="margin:0">@unit($item->unit)</span>
     </div>
 </td>
 <td class="rcv-col">
@@ -20,7 +20,7 @@
                    title="Total amount paid for this item"
                    oninput="updateReceivingRow(this)">
         </div>
-        <span class="unit-cost-hint js-unit-cost" data-unit="{{ $item->unit }}"></span>
+        <span class="unit-cost-hint js-unit-cost" data-unit="@unit($item->unit)"></span>
     </div>
 </td>
 <td class="rcv-col">

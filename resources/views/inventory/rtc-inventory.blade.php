@@ -145,22 +145,7 @@
                 @endif
                 <div class="error-msg" id="cvClientError" style="display:none"></div>
                 <div class="field">
-                    <label>Raw Meat Item *</label>
-                    <select name="inventory_item_id" id="cvItemId" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateConvertCalc()">
-                        <option value="">Select item…</option>
-                        @foreach($rawItems as $item)
-                        <option value="{{ $item->id }}"
-                            data-qty="{{ $item->quantity }}"
-                            data-unit="{{ $item->unit }}"
-                            data-portion="{{ $item->portion_size ?? 0.25 }}"
-                            data-punit="{{ $item->portion_unit ?? $item->unit }}">
-                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} {{ $item->unit }} available)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Menu Item *</label>
+                    <label>Menu Item <span style="color:var(--red-600)">*</span></label>
                     <select name="menu_item_id" id="cvMenuItem" data-searchable data-search-placeholder="Search menu items…" required>
                         <option value="">Select menu item…</option>
                         @foreach($menuItems as $menuItem)
@@ -168,14 +153,29 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="field">
+                    <label>Raw Meat Item <span style="color:var(--red-600)">*</span></label>
+                    <select name="inventory_item_id" id="cvItemId" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateConvertCalc()">
+                        <option value="">Select item…</option>
+                        @foreach($rawItems as $item)
+                        <option value="{{ $item->id }}"
+                            data-qty="{{ $item->quantity }}"
+                            data-unit="@unit($item->unit)"
+                            data-portion="{{ $item->portion_size ?? 0.25 }}"
+                            data-punit="@unit($item->portion_unit ?? $item->unit)">
+                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} @unit($item->unit) available)
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
-                        <label>Raw Quantity to Use *</label>
-                        <input type="number" name="raw_quantity_used" id="cvRawQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateConvertCalc()">
+                        <label>Raw Quantity to Use <span style="color:var(--red-600)">*</span></label>
+                        <input type="number" class="no-spin" name="raw_quantity_used" id="cvRawQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateConvertCalc()">
                     </div>
                     <div class="field">
-                        <label>Portion Size (per serving) *</label>
-                        <input type="number" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.250" oninput="updateConvertCalc()">
+                        <label>Portion Size (per serving) <span style="color:var(--red-600)">*</span></label>
+                        <input type="number" class="no-spin" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.25" oninput="updateConvertCalc()">
                         <div class="help" id="cvPortionHelp"></div>
                     </div>
                 </div>
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function openConvertFor(menuItemId, portion, punit) {
     document.getElementById('cvMenuItem').value = menuItemId;
     document.getElementById('cvPortion').value = portion;
-    document.getElementById('cvPortionHelp').textContent = punit ? `Default: ${portion} ${punit} per serving` : '';
+    document.getElementById('cvPortionHelp').textContent = punit ? `Default: ${portion} ${unitShort(punit)} per serving` : '';
     updateConvertCalc();
     openLocalModal('convertModal');
 }
@@ -271,10 +271,10 @@ function updateConvertCalc() {
     const units    = Math.floor(rawQty / portion);
     const remaining = avail - rawQty;
     document.getElementById('cvUnits').textContent = units;
-    document.getElementById('cvRawUsed').textContent = rawQty.toFixed(3) + ' ' + unit;
-    document.getElementById('cvPortionShow').textContent = portion.toFixed(3) + ' ' + punit;
+    document.getElementById('cvRawUsed').textContent = rawQty.toFixed(2) + ' ' + unit;
+    document.getElementById('cvPortionShow').textContent = portion.toFixed(2) + ' ' + punit;
     document.getElementById('cvUnitsShow').textContent = units;
-    document.getElementById('cvRemaining').textContent = remaining.toFixed(3) + ' ' + unit;
+    document.getElementById('cvRemaining').textContent = remaining.toFixed(2) + ' ' + unit;
     calc.style.display = '';
     document.getElementById('cvPortionHelp').textContent = opt.dataset.portion ? `Default: ${opt.dataset.portion} ${punit}/serving` : '';
 }
@@ -323,7 +323,7 @@ function proceedConvert() {
 
     const units = Math.floor(rawQty / portion);
     if (units < 1) {
-        errBox.textContent = 'This quantity is too small to produce even 1 RTC serving (need at least ' + portion.toFixed(3) + ' ' + punit + ').';
+        errBox.textContent = 'This quantity is too small to produce even 1 RTC serving (need at least ' + portion.toFixed(2) + ' ' + punit + ').';
         errBox.style.display = '';
         return;
     }
@@ -333,9 +333,9 @@ function proceedConvert() {
     document.getElementById('cvConfirmName').textContent = menuOpt.text.trim();
     document.getElementById('cvConfirmUnits').textContent = units;
     document.getElementById('cvConfirmUnits2').textContent = units;
-    document.getElementById('cvConfirmRaw').textContent = rawQty.toFixed(3) + ' ' + unit;
-    document.getElementById('cvConfirmPortion').textContent = portion.toFixed(3) + ' ' + punit;
-    document.getElementById('cvConfirmRemain').textContent = remain.toFixed(3) + ' ' + unit;
+    document.getElementById('cvConfirmRaw').textContent = rawQty.toFixed(2) + ' ' + unit;
+    document.getElementById('cvConfirmPortion').textContent = portion.toFixed(2) + ' ' + punit;
+    document.getElementById('cvConfirmRemain').textContent = remain.toFixed(2) + ' ' + unit;
 
     closeLocalModal('convertModal');
     openLocalModal('convertConfirmModal');

@@ -12,7 +12,23 @@
                 document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
             } catch (e) {}
         })();
+
+        // Short unit name for display, e.g. "Kilogram" → "Kg" (same list as App\Support\Units)
+        window.unitShort = function (unit) {
+            return @json(\App\Support\Units::SHORT)[unit] || unit || '';
+        };
+
+        // <input type="number" class="no-spin">: no up/down arrows, and the mouse wheel scrolls
+        // the page instead of changing the value
+        document.addEventListener('wheel', function (e) {
+            var el = e.target;
+            if (el.matches && el.matches('input.no-spin') && document.activeElement === el) el.blur();
+        }, { passive: true });
     </script>
+    <style>
+        input.no-spin::-webkit-outer-spin-button, input.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input.no-spin[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    </style>
     <title>@yield('title', 'Admin') – BAB'S RESTO</title>
     <link rel="icon" type="image/png" href="{{ asset('images/BabsLandingPageLogo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.jpg') }}">

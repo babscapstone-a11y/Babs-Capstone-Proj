@@ -54,7 +54,7 @@ class InventoryController extends Controller
             match($status) {
                 'low_stock'    => $query->lowStock(),
                 'out_of_stock' => $query->outOfStock(),
-                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity > reorder_level'),
+                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity >= reorder_level'),
                 default        => null,
             };
         }
@@ -124,7 +124,7 @@ class InventoryController extends Controller
             match($status) {
                 'low_stock'    => $query->lowStock(),
                 'out_of_stock' => $query->outOfStock(),
-                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity > reorder_level'),
+                'available'    => $query->where('quantity', '>', 0)->whereRaw('quantity >= reorder_level'),
                 default        => null,
             };
         }

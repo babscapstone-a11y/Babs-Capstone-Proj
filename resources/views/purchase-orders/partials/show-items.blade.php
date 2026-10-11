@@ -23,14 +23,14 @@
                     <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                     <td style="font-weight:700">{{ $item->item_name }}</td>
                     <td style="color:var(--muted)">{{ $item->category ?? '—' }}</td>
-                    <td style="color:var(--muted)">{{ number_format($item->current_stock, $decimals) }} {{ $item->unit }}</td>
+                    <td style="color:var(--muted)">{{ number_format($item->current_stock, $decimals) }} @unit($item->unit)</td>
                     <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
-                    <td style="font-weight:800;color:var(--primary)">{{ number_format($item->quantity_to_purchase, $decimals) }} <span style="font-weight:400;font-size:.78rem;color:var(--muted)">{{ $item->unit }}</span></td>
+                    <td style="font-weight:800;color:var(--primary)">{{ number_format($item->quantity_to_purchase, $decimals) }} <span style="font-weight:400;font-size:.78rem;color:var(--muted)">@unit($item->unit)</span></td>
                     <td class="rcv-col" style="font-weight:700">
-                        {{ $item->quantity_received !== null ? number_format($item->quantity_received, $decimals) . ' ' . $item->unit : '—' }}
+                        {{ $item->quantity_received !== null ? number_format($item->quantity_received, $decimals) . ' ' . \App\Support\Units::short($item->unit) : '—' }}
                     </td>
                     <td class="rcv-col">{{ $item->amount_paid !== null ? '₱' . number_format($item->amount_paid, 2) : '—' }}</td>
-                    <td class="rcv-col" style="color:var(--muted)">{{ $item->unit_cost !== null ? '₱' . number_format($item->unit_cost, 2) . '/' . $item->unit : '—' }}</td>
+                    <td class="rcv-col" style="color:var(--muted)">{{ $item->unit_cost !== null ? '₱' . number_format($item->unit_cost, 2) . '/' . \App\Support\Units::short($item->unit) : '—' }}</td>
                     <td class="rcv-col"><span class="{{ $item->receiving_badge_class }}">{{ $item->receiving_label }}</span></td>
                 </tr>
                 @endforeach

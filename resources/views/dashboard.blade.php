@@ -401,7 +401,7 @@
                                     {{ $item->item_type === 'rtc' ? 'RTC' : 'BEV' }}
                                 </span>
                             </td>
-                            <td style="font-weight:700;color:{{ $out ? 'var(--red-600)' : 'var(--amber-600)' }}">{{ number_format($item->quantity, 0) }} {{ $item->unit }}</td>
+                            <td style="font-weight:700;color:{{ $out ? 'var(--red-600)' : 'var(--amber-600)' }}">{{ number_format($item->quantity, 0) }} @unit($item->unit)</td>
                             <td>
                                 <span class="badge" style="background:{{ $out ? 'var(--red-100)' : 'var(--amber-100)' }};color:{{ $out ? 'var(--red-700)' : 'var(--amber-700)' }};text-transform:uppercase;font-weight:700">
                                     {{ $item->stock_status_label }}
@@ -619,7 +619,7 @@
                             <div style="display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem">
                                 <span style="font-weight:600;color:var(--dark)">{{ $item->item_name }}</span>
                                 <span style="color:{{ $item->stock_status === 'out_of_stock' ? 'var(--primary)' : '#D97706' }};font-weight:600;white-space:nowrap">
-                                    {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} {{ $item->unit }}
+                                    {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} @unit($item->unit)
                                 </span>
                             </div>
                         @endforeach
