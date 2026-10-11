@@ -9,7 +9,7 @@
                 <th style="width:56px">Image</th>
                 <th>Item Name</th>
                 <th>Category</th>
-                <th>Type</th>
+                <th>RTC Servings</th>
                 <th>Price</th>
                 <th>Availability</th>
                 <th>Status</th>
@@ -38,10 +38,12 @@
                 </td>
                 <td>{{ $item->category?->category_name ?? '—' }}</td>
                 <td>
-                    @if($item->item_type === 'food')
-                        <span class="badge badge-type-food"><i class="fas fa-bowl-food"></i> Food</span>
+                    @if($item->isRtcTracked())
+                        <span class="servings-val">{{ (int) $item->rtc_servings }}</span>
+                        <span class="servings-unit">{{ Str::plural('serving', (int) $item->rtc_servings) }}</span>
                     @else
-                        <span class="badge badge-type-beverage"><i class="fas fa-glass-water"></i> Beverage</span>
+                        {{-- Beverages, and food not marked "Requires RTC servings", aren't counted in servings --}}
+                        <span class="servings-none" title="Not tracked by RTC servings">—</span>
                     @endif
                 </td>
                 <td class="price-val">₱{{ number_format($item->price, 2) }}</td>

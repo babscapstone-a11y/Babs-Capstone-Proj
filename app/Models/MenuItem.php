@@ -23,6 +23,7 @@ class MenuItem extends Model
         'rtc_inventory_item_id',
         'rtc_quantity',
         'rtc_unit',
+        'requires_rtc',
         'rtc_servings',
     ];
 
@@ -33,6 +34,7 @@ class MenuItem extends Model
         'rtc_servings'       => 'decimal:4',
         'is_available'       => 'boolean',
         'is_active'          => 'boolean',
+        'requires_rtc'       => 'boolean',
     ];
 
     /* ── Relationships ───────────────────────────────────────── */
@@ -56,7 +58,7 @@ class MenuItem extends Model
 
     public function scopeRtcTracked(Builder $q): Builder
     {
-        return $q->where('item_type', 'food')->whereNotNull('rtc_quantity');
+        return $q->where('item_type', 'food')->where('requires_rtc', true);
     }
 
     public function scopeFood(Builder $q): Builder
@@ -83,13 +85,13 @@ class MenuItem extends Model
     }
 
     /**
-     * Whether this dish's orderable quantity is capped by RTC servings
-     * stock (vs. beverages / food items never set up through conversion,
-     * which are unlimited).
+     * Whether this dish's orderable quantity is capped by RTC servings stock:
+     * food marked "Requires RTC servings" on Add/Edit Menu Item. Everything else
+     * (beverages, desserts and other dishes not made from converted raw meat) is unlimited.
      */
     public function isRtcTracked(): bool
     {
-        return $this->item_type === 'food' && $this->rtc_quantity !== null;
+        return $this->item_type === 'food' && (bool) $this->requires_rtc;
     }
 
     /**
@@ -134,8 +136,8 @@ class MenuItem extends Model
     /**
      * 'available' | 'low_stock' | 'sold_out', worked out from servings stock:
      * 0 servings = Sold Out, fewer than LOW_SERVINGS = Low Stock, otherwise Available.
-     * Items that aren't stock-tracked (beverages, dishes not set up for RTC
-     * conversion) are always Available. Taking a dish off the menu entirely is
+     * Items that aren't stock-tracked (beverages, and food not marked "Requires RTC
+     * servings") are always Available. Taking a dish off the menu entirely is
      * the separate Active / Inactive status.
      */
     public function getAvailabilityAttribute(): string
@@ -160,12 +162,12 @@ class MenuItem extends Model
     /** Same rules as getAvailabilityAttribute(), for filtering lists. */
     public function scopeAvailability(Builder $q, string $availability): Builder
     {
-        $tracked = fn ($w) => $w->where('item_type', 'food')->whereNotNull('rtc_quantity');
+        $tracked = fn ($w) => $w->where('item_type', 'food')->where('requires_rtc', true);
 
         return match ($availability) {
             'sold_out'  => $q->where($tracked)->where(fn ($w) => $w->whereNull('rtc_servings')->orWhere('rtc_servings', '<=', 0)),
             'low_stock' => $q->where($tracked)->where('rtc_servings', '>', 0)->where('rtc_servings', '<', self::LOW_SERVINGS),
-            'available' => $q->where(fn ($w) => $w->where('item_type', '!=', 'food')->orWhereNull('rtc_quantity')
+            'available' => $q->where(fn ($w) => $w->where('item_type', '!=', 'food')->orWhere('requires_rtc', false)
                                 ->orWhere('rtc_servings', '>=', self::LOW_SERVINGS)),
             default     => $q,
         };

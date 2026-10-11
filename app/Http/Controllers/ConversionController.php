@@ -91,6 +91,8 @@ class ConversionController extends Controller
             'rtc_inventory_item_id' => $item->id,
             'rtc_quantity'          => $portion,
             'rtc_unit'              => $item->unit,
+            // Converting stock for a dish means its servings are counted from now on
+            'requires_rtc'          => true,
         ]);
 
         return redirect()->route('inventory.conversions.index')

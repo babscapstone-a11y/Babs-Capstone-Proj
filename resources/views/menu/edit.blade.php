@@ -42,6 +42,9 @@
     .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(220,38,38,0.08); }
     .form-control.is-invalid { border-color: var(--primary); }
     .invalid-feedback { font-size: .75rem; color: var(--primary); font-weight: 500; }
+    .rtc-check { display: inline-flex; align-items: center; gap: .55rem; margin-top: .1rem; padding: .6rem .9rem; border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--dark); }
+    .rtc-check:has(input:checked) { border-color: var(--primary); background: rgba(220,38,38,0.07); }
+    .rtc-check input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
     .form-hint { font-size: .73rem; color: var(--muted); }
     textarea.form-control { resize: vertical; min-height: 90px; }
     .form-divider { border: none; border-top: 1.5px solid var(--border); margin: 1.75rem 0; }
@@ -249,7 +252,14 @@
                 </div>
                 @error('is_active')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div></div>
+            <div class="form-group" id="requiresRtcGroup">
+                <label>RTC Servings</label>
+                <label class="rtc-check">
+                    <input type="checkbox" name="requires_rtc" value="1" {{ old('requires_rtc', $menu->requires_rtc) ? 'checked' : '' }}>
+                    <span>Requires RTC servings</span>
+                </label>
+                <div class="form-hint">Tick this for dishes made from converted raw meat (e.g. Pork Sisig). Their servings are counted, and they show as <strong>Sold Out</strong> until you convert stock for them in RTC Units. Leave it unticked for desserts and other dishes that aren't.</div>
+            </div>
         </div>
 
         <hr class="form-divider">
@@ -368,5 +378,14 @@ document.querySelectorAll('input[name="item_type"]').forEach(function(radio) {
     radio.addEventListener('change', filterCategoriesByType);
 });
 filterCategoriesByType();
+/* ── "Requires RTC servings" only applies to food ─────── */
+function toggleRequiresRtc() {
+    var checked = document.querySelector('input[name="item_type"]:checked');
+    document.getElementById('requiresRtcGroup').style.visibility = checked && checked.value === 'beverage' ? 'hidden' : '';
+}
+document.querySelectorAll('input[name="item_type"]').forEach(function(radio) {
+    radio.addEventListener('change', toggleRequiresRtc);
+});
+toggleRequiresRtc();
 </script>
 @endsection

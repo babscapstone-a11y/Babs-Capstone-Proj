@@ -25,6 +25,7 @@ class UpdateMenuItemRequest extends FormRequest
             'prep_time_minutes' => ['nullable', 'integer', 'min:1', 'max:480'],
             'image'       => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'is_active'   => ['required', 'boolean'],
+            'requires_rtc' => ['nullable', 'boolean'],
         ];
     }
 

@@ -77,6 +77,8 @@ class MenuItemController extends Controller
         $this->authorize('create', MenuItem::class);
 
         $data = $request->validated();
+        // "Requires RTC servings" only applies to food; an unticked checkbox isn't sent at all
+        $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('menu-items', 'public');
@@ -111,6 +113,7 @@ class MenuItemController extends Controller
         $this->authorize('update', $menu);
 
         $data = $request->validated();
+        $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
 
         if ($request->hasFile('image')) {
             if ($menu->image) {

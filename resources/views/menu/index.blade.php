@@ -119,6 +119,9 @@
     .badge-type-beverage  { background:rgba(139,92,246,0.10); color:var(--violet-600); border:1px solid rgba(139,92,246,0.2); }
     .badge-avail-yes      { background:rgba(22,163,74,0.10);  color:var(--green-700); border:1px solid rgba(22,163,74,0.2); }
     .badge-avail-no       { background:rgba(107,114,128,0.10);color:var(--text-2); border:1px solid rgba(107,114,128,0.2); }
+    .servings-val         { font-weight:800; color:var(--dark); }
+    .servings-unit        { font-size:.78rem; color:var(--muted); }
+    .servings-none        { color:var(--muted); }
     .badge-avail-low      { background:rgba(217,119,6,0.12);  color:var(--amber-700); border:1px solid rgba(217,119,6,0.25); }
     .badge-avail-out      { background:rgba(220,38,38,0.10);  color:var(--red-600);   border:1px solid rgba(220,38,38,0.22); }
     .badge-active         { background:rgba(22,163,74,0.10);  color:var(--green-700); border:1px solid rgba(22,163,74,0.2); }
