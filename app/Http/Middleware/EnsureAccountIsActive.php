@@ -18,13 +18,17 @@ class EnsureAccountIsActive
         };
 
         if ($guard && ! Auth::guard($guard)->user()->isActive()) {
+            // A customer deactivated while logged in is told why, same as at login
+            $message = $guard === 'customer'
+                ? Auth::guard($guard)->user()->deactivationNotice()
+                : 'Your account has been deactivated. Please contact the administrator.';
+
             Auth::guard($guard)->logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')
-                ->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
+            return redirect()->route('login')->withErrors(['login' => $message]);
         }
 
         return $next($request);

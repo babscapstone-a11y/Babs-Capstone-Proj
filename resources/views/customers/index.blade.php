@@ -242,59 +242,12 @@
     @include('customers._results', ['customers' => $customers])
 </div>
 
-{{-- Toggle Status Modal --}}
-<div id="toggleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-        <div style="text-align:center;margin-bottom:1.25rem">
-            <div id="toggleIcon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem"></div>
-            <h3 id="toggleTitle" style="font-size:1.05rem;font-weight:700;color:var(--dark);margin:0 0 .5rem"></h3>
-            <p id="toggleBody" style="font-size:.85rem;color:var(--muted);margin:0;line-height:1.55"></p>
-        </div>
-        <form id="toggleForm" method="POST">
-            @csrf @method('PUT')
-            <div style="display:flex;gap:.75rem;justify-content:center">
-                <button type="button" onclick="closeToggleModal()" style="flex:1;padding:.65rem;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">Cancel</button>
-                <button type="submit" id="toggleSubmit" style="flex:1;padding:.65rem;border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Confirm</button>
-            </div>
-        </form>
-    </div>
-</div>
+@include('customers.partials.toggle-modal')
 
 @endsection
 
 @section('scripts')
 <script>
-function openToggleModal(action, name, isActive) {
-    var icon   = document.getElementById('toggleIcon');
-    var title  = document.getElementById('toggleTitle');
-    var body   = document.getElementById('toggleBody');
-    var form   = document.getElementById('toggleForm');
-    var submit = document.getElementById('toggleSubmit');
-    if (isActive) {
-        icon.style.background = 'rgba(220,38,38,0.10)'; icon.style.color = '#DC2626';
-        icon.innerHTML = '<i class="fas fa-ban"></i>';
-        title.textContent = 'Deactivate "' + name + '"?';
-        body.innerHTML  = 'This customer will be <strong>logged out</strong> and unable to log in or place orders. Their account and order history remain stored in the database.';
-        submit.style.background = 'linear-gradient(90deg,#DC2626,#F97316)';
-        submit.textContent = 'Deactivate Account';
-    } else {
-        icon.style.background = 'rgba(22,163,74,0.10)'; icon.style.color = '#16A34A';
-        icon.innerHTML = '<i class="fas fa-check"></i>';
-        title.textContent = 'Activate "' + name + '"?';
-        body.innerHTML  = 'This customer will be able to <strong>log in</strong> and place orders again.';
-        submit.style.background = 'linear-gradient(90deg,#16A34A,#059669)';
-        submit.textContent = 'Activate Account';
-    }
-    form.action = action;
-    document.getElementById('toggleModal').style.display = 'flex';
-}
-function closeToggleModal() {
-    document.getElementById('toggleModal').style.display = 'none';
-}
-document.getElementById('toggleModal').addEventListener('click', function(e) {
-    if (e.target === this) closeToggleModal();
-});
-
 document.addEventListener('DOMContentLoaded', function () {
     LiveTable.init({
         formSelector: '#liveFilterForm',

@@ -68,13 +68,38 @@ class CustomerController extends Controller
         return view('customers.show', compact('customer'));
     }
 
-    public function toggleStatus(Customer $customer): RedirectResponse
+    /**
+     * Deactivating needs a reason (the customer sees it when they try to log in);
+     * activating clears it.
+     */
+    public function toggleStatus(Request $request, Customer $customer): RedirectResponse
     {
         $this->authorize('toggleStatus', $customer);
 
         $newStatus = $customer->status === 'active' ? 'inactive' : 'active';
 
-        $customer->update(['status' => $newStatus]);
+        if ($newStatus === 'inactive') {
+            // If the reason is rejected, the page reopens the pop-up for this customer
+            $request->session()->flash('toggle_customer', [
+                'action' => route('customers.toggle-status', $customer),
+                'name'   => $customer->full_name,
+            ]);
+
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:255'],
+            ], [
+                'reason.required' => 'Please enter a reason for deactivating this account.',
+                'reason.max'      => 'The reason may not be longer than 255 characters.',
+            ]);
+
+            $customer->update([
+                'status'              => 'inactive',
+                'deactivation_reason' => trim($data['reason']),
+                'deactivated_at'      => now(),
+            ]);
+        } else {
+            $customer->update(['status' => 'active', 'deactivation_reason' => null, 'deactivated_at' => null]);
+        }
 
         $label = $newStatus === 'active' ? 'activated' : 'deactivated';
 

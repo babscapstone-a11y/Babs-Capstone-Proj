@@ -66,12 +66,16 @@ class LoginRequest extends FormRequest
 
         // REQ012: Reject inactive accounts immediately on login
         if (! Auth::guard($guard)->user()->isActive()) {
+            // Customers are told why (the reason the admin entered). This only runs after the
+            // password was accepted, so the reason isn't shown to anyone else.
+            $message = $guard === 'customer'
+                ? Auth::guard($guard)->user()->deactivationNotice()
+                : 'Your account has been deactivated. Please contact the administrator.';
+
             Auth::guard($guard)->logout();
             RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'login' => 'Your account has been deactivated. Please contact the administrator.',
-            ]);
+            throw ValidationException::withMessages(['login' => $message]);
         }
 
         // Customers must verify their email before they can log in.

@@ -18,6 +18,7 @@ class Customer extends Authenticatable
     protected $fillable = [
         'first_name', 'last_name', 'email', 'password',
         'contact_no', 'address_id', 'profile_picture', 'status',
+        'deactivation_reason', 'deactivated_at',
     ];
 
     protected $hidden = [
@@ -30,7 +31,21 @@ class Customer extends Authenticatable
         return [
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
+            'deactivated_at' => 'datetime',
         ];
+    }
+
+    /** What a deactivated customer is told when they try to log in. */
+    public function deactivationNotice(): string
+    {
+        $reason = trim((string) $this->deactivation_reason);
+        if ($reason !== '' && ! preg_match('/[.!?]$/', $reason)) {
+            $reason .= '.';
+        }
+
+        return 'Your account has been deactivated.'
+            . ($reason !== '' ? ' Reason: ' . $reason : '')
+            . ' Please contact the restaurant if you think this is a mistake.';
     }
 
     /* ── Relationships ───────────────────────────────────────── */
