@@ -44,7 +44,8 @@
                     .hero{min-height:72vh;padding:4rem 1rem;display:flex;align-items:center}
                     .hero-card{background:linear-gradient(135deg, rgba(227,6,19,0.03), rgba(248,184,3,0.03));border-radius:20px;padding:2rem;box-shadow:var(--shadow)}
                     .glass-card{background:linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.65));backdrop-filter: blur(8px);border-radius:16px;padding:1.25rem;box-shadow:0 8px 30px rgba(17,24,39,0.06);border:1px solid rgba(255,255,255,0.6)}
-                    .btn-primary-custom{background:var(--brand-red);border:none;padding:0.9rem 1.3rem;border-radius:12px;font-weight:600}
+                    .btn-primary-custom{background:var(--brand-red);border:none;padding:0.9rem 1.3rem;border-radius:12px;font-weight:600;color:#fff}
+                    .btn-primary-custom:hover,.btn-primary-custom:focus,.btn-primary-custom:active{background:var(--brand-red);color:#fff}
                     .btn-outline-custom{border:1px solid rgba(11,11,11,0.08);background:transparent;padding:0.8rem 1.2rem;border-radius:12px}
                     .feature-card{border-radius:12px;padding:1rem;background:linear-gradient(180deg,#fff,#fff);box-shadow:var(--shadow);border:1px solid rgba(11,11,11,0.03)}
                     .menu-card{border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.06);transition:transform .28s ease, box-shadow .28s ease}

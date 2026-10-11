@@ -58,7 +58,7 @@
         .brand{font-weight:700;color:var(--primary-red);letter-spacing:0.6px}
         .navbar{background:var(--navbar-bg) !important;transition:background-color .2s ease;}
         .nav-link{color:var(--text-primary) !important;font-weight:600}
-        .btn-primary-custom{background:var(--primary-red);border:none}
+        .btn-primary-custom,.btn-primary-custom:hover,.btn-primary-custom:focus,.btn-primary-custom:active{background:var(--primary-red);border:none;color:#fff}
         .btn-outline-custom{color:var(--primary-red);border-color:var(--primary-red)}
         .theme-toggle-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border-color);background:transparent;color:var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
         .theme-toggle-btn:hover{background:var(--bg-surface-alt);}
