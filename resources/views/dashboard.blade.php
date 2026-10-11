@@ -34,31 +34,21 @@
     .welcome-text { position: relative; z-index: 1; }
     .welcome-greeting {
         font-size: 1.6rem; font-weight: 800; color: #fff;
-        line-height: 1.2; margin: 0 0 .4rem;
+        line-height: 1.2; margin: 0;
     }
     .welcome-greeting span { color: var(--accent); }
     .welcome-meta {
-        display: flex; align-items: center; gap: 1.25rem;
-        color: rgba(255,255,255,0.55); font-size: .82rem;
-    }
-    .welcome-meta i { color: var(--accent); }
-    .welcome-badge {
         position: relative; z-index: 1;
-        background: rgba(255,255,255,0.07);
-        border: 1.5px solid rgba(255,255,255,0.12);
-        border-radius: 14px;
-        padding: 1.1rem 1.5rem;
-        text-align: center;
-        min-width: 130px;
-        flex-shrink: 0;
+        display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; justify-content: flex-end;
     }
-    .welcome-badge .wb-val {
-        font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1;
+    .wm-chip {
+        display: inline-flex; align-items: center; gap: .45rem;
+        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 50px; padding: .45rem .95rem;
+        color: rgba(255,255,255,0.8); font-size: .82rem; font-weight: 500; white-space: nowrap;
     }
-    .welcome-badge .wb-label {
-        font-size: .72rem; font-weight: 600; color: rgba(255,255,255,0.45);
-        text-transform: uppercase; letter-spacing: .07em; margin-top: .3rem;
-    }
+    .wm-chip i { color: var(--accent); }
+    .wm-chip #liveTime { font-variant-numeric: tabular-nums; }
 
     /* ── Stats grid ─────────────────────────────────────────── */
     .stats-grid {
@@ -222,7 +212,8 @@
     }
     @media (max-width: 700px) {
         .stats-grid    { grid-template-columns: 1fr; }
-        .welcome-badge { display: none; }
+        .welcome-banner { flex-direction: column; align-items: flex-start; }
+        .welcome-meta { justify-content: flex-start; }
         .welcome-greeting { font-size: 1.25rem; }
     }
 </style>
@@ -236,32 +227,11 @@
         <div class="welcome-greeting">
             Welcome back, <span>{{ explode(' ', auth()->user()->name)[0] }}</span>!
         </div>
-        <div class="welcome-meta">
-            <span><i class="fas fa-calendar-days"></i> <span id="liveDate"></span></span>
-            <span><i class="fas fa-clock"></i> <span id="liveTime"></span></span>
-        </div>
-        <div style="margin-top:.85rem;display:flex;gap:.55rem;flex-wrap:wrap">
-            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(22,163,74,0.18);border:1px solid rgba(22,163,74,0.3);color:#86EFAC;border-radius:50px;font-size:.72rem;font-weight:600;padding:.22rem .7rem">
-                <span style="width:6px;height:6px;border-radius:50%;background:#4ADE80;display:inline-block"></span>
-                System Online
-            </span>
-        </div>
     </div>
-    <div style="display:flex;gap:.75rem;position:relative;z-index:1;flex-shrink:0">
-        <div class="welcome-badge">
-            <div class="wb-val">{{ $totalStaff }}</div>
-            <div class="wb-label">Staff Total</div>
-        </div>
-        <div class="welcome-badge">
-            <div class="wb-val">{{ $activeStaff }}</div>
-            <div class="wb-label">Active Staff</div>
-        </div>
-        @if($pendingResets > 0)
-        <div class="welcome-badge" style="border-color:rgba(220,38,38,0.35);background:rgba(220,38,38,0.12)">
-            <div class="wb-val" style="color:#FCA5A5">{{ $pendingResets }}</div>
-            <div class="wb-label">Pending Resets</div>
-        </div>
-        @endif
+    {{-- Date and time, side by side --}}
+    <div class="welcome-meta">
+        <span class="wm-chip"><i class="fas fa-calendar-days"></i> <span id="liveDate"></span></span>
+        <span class="wm-chip"><i class="fas fa-clock"></i> <span id="liveTime"></span></span>
     </div>
 </div>
 

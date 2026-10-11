@@ -69,25 +69,6 @@
     .detail-label { color: var(--muted); font-weight: 600; }
     .detail-value { color: var(--dark); font-weight: 600; text-align: right; max-width: 60%; }
 
-    /* Quick actions */
-    .quick-actions { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
-    .quick-actions-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .6rem; }
-    .action-btn {
-        display: flex; align-items: center; gap: .55rem;
-        padding: .62rem .9rem; border-radius: 10px;
-        font-size: .83rem; font-weight: 600;
-        border: 1.5px solid; cursor: pointer; font-family: inherit;
-        text-decoration: none; transition: all .18s; width: 100%;
-        margin-bottom: .45rem; box-sizing: border-box;
-    }
-    .action-btn:last-child { margin-bottom: 0; }
-    .action-edit       { color: var(--amber-600); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
-    .action-edit:hover { background: rgba(245,158,11,0.12); }
-    .action-deact      { color: var(--red-700); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
-    .action-deact:hover{ background: rgba(220,38,38,0.12); }
-    .action-act        { color: var(--green-700); border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
-    .action-act:hover  { background: rgba(22,163,74,0.12); }
-
     /* Right content */
     .content-stack { display: flex; flex-direction: column; gap: 1.1rem; }
     .info-card {
@@ -105,25 +86,6 @@
 
     .desc-text { font-size: .88rem; color: var(--dark); line-height: 1.65; }
     .desc-none { font-size: .85rem; color: var(--muted); font-style: italic; }
-
-    /* RTC card */
-    .rtc-display {
-        background: linear-gradient(135deg, rgba(245,158,11,0.07), rgba(249,115,22,0.04));
-        border: 1.5px solid rgba(245,158,11,0.25);
-        border-radius: 14px; padding: 1.2rem 1.3rem;
-        display: flex; align-items: center; gap: 1.1rem;
-    }
-    .rtc-icon-big {
-        width: 52px; height: 52px; border-radius: 13px;
-        background: rgba(245,158,11,0.12); color: var(--amber-600);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; flex-shrink: 0;
-    }
-    .rtc-name  { font-size: 1rem; font-weight: 700; color: var(--dark); }
-    .rtc-meta  { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
-    .rtc-qty   { margin-left: auto; text-align: right; flex-shrink: 0; }
-    .rtc-qty-val { font-size: 1.3rem; font-weight: 800; color: var(--dark); }
-    .rtc-qty-unit { font-size: .72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
     .anim-1 { animation: fadeUp .4s ease both; }
@@ -190,23 +152,6 @@
                     <span class="detail-value">{{ $menu->updated_at->format('M d, Y') }}</span>
                 </div>
             </div>
-
-            @can('update', $menu)
-            <div class="quick-actions">
-                <div class="quick-actions-title">Quick Actions</div>
-                <a href="{{ route('menu.edit', $menu) }}" class="action-btn action-edit">
-                    <i class="fas fa-pen"></i> Edit Item
-                </a>
-                @can('toggleStatus', $menu)
-                <button type="button"
-                    onclick="openToggleModal({{ $menu->id }}, '{{ addslashes($menu->menu_name) }}', {{ $menu->is_active ? 'true' : 'false' }})"
-                    class="action-btn {{ $menu->is_active ? 'action-deact' : 'action-act' }}">
-                    <i class="fas fa-{{ $menu->is_active ? 'ban' : 'check' }}"></i>
-                    {{ $menu->is_active ? 'Deactivate Item' : 'Activate Item' }}
-                </button>
-                @endcan
-            </div>
-            @endcan
         </div>
     </div>
 
@@ -272,52 +217,6 @@
             </div>
         </div>
 
-        {{-- RTC Raw Material --}}
-        <div class="info-card">
-            <div class="info-card-header">
-                <i class="fas fa-drumstick-bite"></i> RTC Raw Material (Ready-to-Cook)
-            </div>
-            <div class="info-card-body">
-                @if($menu->item_type === 'beverage')
-                    <div style="display:flex;align-items:center;gap:.65rem;background:rgba(139,92,246,0.06);border:1.5px solid rgba(139,92,246,0.18);border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:var(--violet-700)">
-                        <i class="fas fa-glass-water" style="font-size:1.1rem;flex-shrink:0"></i>
-                        <div>
-                            <strong>Beverage Item</strong>
-                            <div style="font-size:.78rem;color:var(--violet-600);margin-top:.1rem">Beverages do not require RTC raw material assignment.</div>
-                        </div>
-                    </div>
-                @elseif($menu->rtcItem)
-                    <div class="rtc-display">
-                        <div class="rtc-icon-big"><i class="fas fa-drumstick-bite"></i></div>
-                        <div>
-                            <div class="rtc-name">{{ $menu->rtcItem->item_name }}</div>
-                            <div class="rtc-meta">Inventory tracked RTC material</div>
-                        </div>
-                        <div class="rtc-qty">
-                            <div class="rtc-qty-val">{{ rtrim(rtrim(number_format($menu->rtc_quantity, 4), '0'), '.') }}</div>
-                            <div class="rtc-qty-unit">{{ $menu->rtc_unit }} / serving</div>
-                        </div>
-                    </div>
-                    <div style="margin-top:.85rem;font-size:.78rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:.65rem .9rem;border:1px solid var(--border)">
-                        <i class="fas fa-circle-info" style="color:var(--accent);margin-right:.35rem"></i>
-                        When an order containing this item is completed, <strong>{{ rtrim(rtrim(number_format($menu->rtc_quantity, 4), '0'), '.') }} {{ $menu->rtc_unit }}</strong>
-                        of <strong>{{ $menu->rtcItem->item_name }}</strong> will be automatically deducted from inventory.
-                    </div>
-                @else
-                    <div style="text-align:center;padding:1.75rem;color:var(--muted)">
-                        <i class="fas fa-drumstick-bite" style="font-size:2rem;margin-bottom:.75rem;display:block;opacity:.35"></i>
-                        <div style="font-size:.88rem;font-weight:600;color:var(--dark);margin-bottom:.35rem">No RTC Material Assigned</div>
-                        <div style="font-size:.8rem">No raw material tracking configured for this item.</div>
-                        @can('update', $menu)
-                        <a href="{{ route('menu.edit', $menu) }}" style="display:inline-flex;align-items:center;gap:.35rem;margin-top:.75rem;font-size:.8rem;color:var(--primary);font-weight:600;text-decoration:none">
-                            <i class="fas fa-plus"></i> Assign RTC material
-                        </a>
-                        @endcan
-                    </div>
-                @endif
-            </div>
-        </div>
-
         {{-- Timestamps --}}
         <div class="info-card">
             <div class="info-card-header">
@@ -354,57 +253,5 @@
     </div>{{-- /content-stack --}}
 </div>
 
-{{-- Toggle Modal --}}
-<div id="toggleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:var(--surface);border-radius:18px;padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-        <div style="text-align:center;margin-bottom:1.25rem">
-            <div id="toggleIcon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .9rem"></div>
-            <h3 id="toggleTitle" style="font-size:1.05rem;font-weight:700;color:var(--dark);margin:0 0 .5rem"></h3>
-            <p id="toggleBody" style="font-size:.85rem;color:var(--muted);margin:0"></p>
-        </div>
-        <form id="toggleForm" method="POST">
-            @csrf @method('PUT')
-            <div style="display:flex;gap:.75rem;justify-content:center">
-                <button type="button" onclick="closeToggleModal()" style="flex:1;padding:.65rem;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">Cancel</button>
-                <button type="submit" id="toggleSubmit" style="flex:1;padding:.65rem;border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Confirm</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 @endsection
 
-@section('scripts')
-<script>
-function openToggleModal(id, name, isActive) {
-    var icon   = document.getElementById('toggleIcon');
-    var title  = document.getElementById('toggleTitle');
-    var body   = document.getElementById('toggleBody');
-    var form   = document.getElementById('toggleForm');
-    var submit = document.getElementById('toggleSubmit');
-    if (isActive) {
-        icon.style.background = 'rgba(220,38,38,0.10)'; icon.style.color = '#DC2626';
-        icon.innerHTML = '<i class="fas fa-ban"></i>';
-        title.textContent = 'Deactivate "' + name + '"?';
-        body.textContent  = 'This item will be hidden from the ordering page and POS.';
-        submit.style.background = 'linear-gradient(90deg,#DC2626,#F97316)';
-        submit.textContent = 'Deactivate';
-    } else {
-        icon.style.background = 'rgba(22,163,74,0.10)'; icon.style.color = '#16A34A';
-        icon.innerHTML = '<i class="fas fa-check"></i>';
-        title.textContent = 'Activate "' + name + '"?';
-        body.textContent  = 'This item will become visible on the ordering page and POS.';
-        submit.style.background = 'linear-gradient(90deg,#16A34A,#059669)';
-        submit.textContent = 'Activate';
-    }
-    form.action = '/menu/' + id + '/toggle-status';
-    document.getElementById('toggleModal').style.display = 'flex';
-}
-function closeToggleModal() {
-    document.getElementById('toggleModal').style.display = 'none';
-}
-document.getElementById('toggleModal').addEventListener('click', function(e) {
-    if (e.target === this) closeToggleModal();
-});
-</script>
-@endsection
