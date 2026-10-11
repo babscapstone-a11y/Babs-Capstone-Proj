@@ -11,6 +11,7 @@ use App\Notifications\PasswordResetOtpNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -37,10 +38,33 @@ class PasswordResetLinkController extends Controller
 
         $email = $request->email;
 
-        // Staff (admin/cashier/kitchen/table server) go through admin approval
-        // instead of an instant self-service reset.
         $staffUser = User::where('email', $email)->first();
 
+        // Admins approve everyone else's requests, so they don't wait for approval themselves:
+        // they get the same emailed reset link an approved request produces, straight away.
+        if ($staffUser && $staffUser->isAdmin()) {
+            if (! $staffUser->isActive()) {
+                return back()->withInput()
+                    ->withErrors(['email' => 'This account has been deactivated, so its password can\'t be reset.']);
+            }
+
+            $status = Password::sendResetLink(['email' => $staffUser->email]);
+
+            if ($status === Password::RESET_THROTTLED) {
+                return back()->withInput()
+                    ->withErrors(['email' => 'A reset link was just sent. Please check your email, or wait a minute before trying again.']);
+            }
+            if ($status !== Password::RESET_LINK_SENT) {
+                return back()->withInput()
+                    ->withErrors(['email' => 'We couldn\'t send the reset email. Please try again in a moment.']);
+            }
+
+            return redirect()->route('password.request')
+                ->with('status', 'A password reset link has been sent to your email.');
+        }
+
+        // Other staff (cashier / kitchen / table server) go through admin approval
+        // instead of an instant self-service reset.
         if ($staffUser) {
             if (! $staffUser->passwordResetRequests()->pending()->exists()) {
                 StaffPasswordResetRequest::create([
