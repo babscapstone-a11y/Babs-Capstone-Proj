@@ -44,7 +44,7 @@
     .search-empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; font-size: .88rem; }
     .search-results { max-height: 360px; overflow-y: auto; padding-right: .25rem; }
 
-    .order-detail-box { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px dashed var(--border); }
+    .billing-left { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
     .detail-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; margin-bottom: 1.1rem; }
     .detail-meta-item { background: rgba(17,24,39,0.03); border-radius: 10px; padding: .6rem .8rem; }
     .detail-meta-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
@@ -149,26 +149,33 @@
 
 <div class="billing-layout">
 
-    <!-- ── Left Panel: Order Search, Details, Items ── -->
-    <div class="card">
-        <div class="card-header"><h3 class="card-title"><i class="fas fa-magnifying-glass"></i> Order Search</h3></div>
-        <div class="card-body">
-            <div class="search-bar">
-                <input type="text" id="searchInput" class="search-input"
-                       placeholder="Search order #, customer name, or table number...">
-                <select id="typeFilter" class="search-select">
-                    <option value="">All Types</option>
-                    <option value="dine_in">Dine-In</option>
-                    <option value="takeout">Take-Out</option>
-                    <option value="online">Online</option>
-                </select>
+    <!-- ── Left column: Order Search card, then a separate Order Details card ── -->
+    <div class="billing-left">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-magnifying-glass"></i> Order Search</h3></div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="search-input"
+                           placeholder="Search order #, customer name, or table number...">
+                    <select id="typeFilter" class="search-select">
+                        <option value="">All Types</option>
+                        <option value="dine_in">Dine-In</option>
+                        <option value="takeout">Take-Out</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+                <div class="search-results" id="searchResults"></div>
             </div>
-            <div class="search-results" id="searchResults"></div>
+        </div>
 
-            <div class="order-detail-box" id="orderDetailBox" style="display:none"></div>
-            <div class="empty-left" id="emptyLeft">
-                <i class="fas fa-receipt"></i>
-                Select an order from the search results to begin billing.
+        <div class="card">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-receipt"></i> Order Details</h3></div>
+            <div class="card-body">
+                <div class="order-detail-box" id="orderDetailBox" style="display:none"></div>
+                <div class="empty-left" id="emptyLeft">
+                    <i class="fas fa-receipt"></i>
+                    Select an order from the search results to begin billing.
+                </div>
             </div>
         </div>
     </div>
