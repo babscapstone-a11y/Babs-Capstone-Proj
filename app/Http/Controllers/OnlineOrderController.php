@@ -18,6 +18,9 @@ class OnlineOrderController extends Controller
      */
     public function index(Request $request): View|JsonResponse
     {
+        // Backup for the scheduler: drop prepared online orders nobody picked up by closing time
+        Order::cancelUnclaimedPickupsThrottled();
+
         $status = in_array($request->input('status'), ['pending', 'approved', 'rejected', 'cancelled'], true)
             ? $request->input('status')
             : 'pending';

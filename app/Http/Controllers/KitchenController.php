@@ -26,7 +26,10 @@ class KitchenController extends Controller
      */
     public function orders(): JsonResponse
     {
-        $orders = Order::with(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem'])
+        // Backup for the scheduler: drop prepared online orders nobody picked up by closing time
+        Order::cancelUnclaimedPickupsThrottled();
+
+        $orders =Order::with(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem'])
             ->where(function ($query) {
                 $query->whereHas('orderStatus', function ($q) {
                     $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);

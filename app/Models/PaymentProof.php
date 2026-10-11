@@ -41,6 +41,17 @@ class PaymentProof extends Model
     /** How long a QR Ph code stays scannable before PayMongo expires it. */
     const QR_EXPIRY_MINUTES = 30;
 
+    /* ── Customer email: receipt once the GCash payment is confirmed (App\Support\OrderMail) ── */
+
+    protected static function booted(): void
+    {
+        static::updated(function (PaymentProof $proof) {
+            if ($proof->wasChanged('status') && $proof->status === 'paid' && $proof->order) {
+                \App\Support\OrderMail::paymentReceived($proof->order);
+            }
+        });
+    }
+
     /* ── Relationships ── */
 
     public function order(): BelongsTo

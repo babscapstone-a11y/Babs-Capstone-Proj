@@ -46,6 +46,31 @@ class Order extends Model
     const OPEN_HOUR  = 11; // 11:00 AM
     const CLOSE_HOUR = 21; // 9:00 PM
 
+    /* ── Customer emails (see App\Support\OrderMail) ── */
+
+    protected static function booted(): void
+    {
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('cancelled_at') && $order->cancelled_at && ! $order->getOriginal('cancelled_at')) {
+                \App\Support\OrderMail::cancelled($order);
+            }
+
+            if ($order->wasChanged('approval_status')) {
+                match ($order->approval_status) {
+                    'rejected' => \App\Support\OrderMail::rejected($order),
+                    // Covers the screenshot-upload path; a GCash payment confirmed
+                    // automatically has already been emailed (sent once only)
+                    'approved' => \App\Support\OrderMail::paymentReceived($order),
+                    default    => null,
+                };
+            }
+
+            if ($order->wasChanged('payment_status') && $order->payment_status === 'paid') {
+                \App\Support\OrderMail::finalReceipt($order);
+            }
+        });
+    }
+
     /* ── Relationships ── */
 
     public function customer(): BelongsTo
@@ -187,6 +212,56 @@ class Order extends Model
         } while (self::where('order_number', $number)->exists());
 
         return $number;
+    }
+
+    /* ── Unclaimed pick-ups ── */
+
+    /** Reason saved on orders cancelled by cancelUnclaimedPickups(); shown to the customer. */
+    const UNCLAIMED_REASON = 'Not picked up by closing time (9:00 PM) on the scheduled pick-up day. The payment is forfeited because the order was already prepared.';
+
+    /**
+     * Cancels online orders that were prepared (Ready / Packaged) but not picked up by
+     * closing time (CLOSE_HOUR) on their pick-up day. The payment is left as it is
+     * (forfeited — the food was made). Orders the kitchen never prepared are not touched.
+     * Runs every few minutes from the scheduler (routes/console.php) and, throttled,
+     * from the kitchen and cashier screens. Returns how many orders were cancelled.
+     */
+    public static function cancelUnclaimedPickups(): int
+    {
+        // Pick-up days whose closing time has passed: every day before today,
+        // plus today once it's 9:00 PM or later.
+        $cutoff = now()->hour >= self::CLOSE_HOUR ? now()->addDay()->startOfDay() : now()->startOfDay();
+        $cancelledStatusId = OrderStatus::where('status_name', 'Cancelled')->value('id');
+
+        if (! $cancelledStatusId) {
+            return 0;
+        }
+
+        $orders = self::where('order_type', 'online')
+            ->whereNull('cancelled_at')
+            ->whereNotNull('pickup_at')
+            ->where('pickup_at', '<', $cutoff)
+            ->whereHas('orderStatus', fn (Builder $q) => $q->whereIn('status_name', ['Ready', 'Packaged']))
+            ->get();
+
+        // One by one (not a bulk update) so each order's "cancelled" email goes out
+        foreach ($orders as $order) {
+            $order->update([
+                'order_status_id'     => $cancelledStatusId,
+                'cancelled_at'        => now(),
+                'cancellation_reason' => self::UNCLAIMED_REASON,
+            ]);
+        }
+
+        return $orders->count();
+    }
+
+    /** cancelUnclaimedPickups(), at most once a minute — for screens that poll often. */
+    public static function cancelUnclaimedPickupsThrottled(): void
+    {
+        if (\Illuminate\Support\Facades\Cache::add('orders:unclaimed-check', true, 60)) {
+            self::cancelUnclaimedPickups();
+        }
     }
 
     /* ── Computed Attributes ── */
