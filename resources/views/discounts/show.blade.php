@@ -51,8 +51,6 @@
 .hl-elig{margin-top:.85rem;font-size:.82rem;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:.4rem}
 .meta-info{font-size:.75rem;color:var(--muted);margin-top:.6rem;display:flex;flex-direction:column;gap:.35rem}
 .meta-info span{display:flex;align-items:center;gap:.4rem}
-.notice-box{background:var(--blue-50);border:1.5px solid var(--blue-200);border-radius:12px;padding:1rem 1.2rem;font-size:.82rem;color:var(--blue-700);line-height:1.6;display:flex;gap:.65rem}
-.notice-box i{color:#60A5FA;font-size:.95rem;flex-shrink:0;margin-top:.05rem}
 .expired-banner{background:var(--red-50);border:1.5px solid var(--red-200);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.65rem;font-size:.83rem;color:var(--red-700);font-weight:500}
 .section-divider{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:.7rem 1.4rem;background:var(--surface-2);border-bottom:1px solid var(--border)}
 </style>
@@ -68,14 +66,11 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('discounts.edit', $discount) }}" class="btn btn-outline"><i class="fas fa-pen"></i> Edit</a>
-            <form method="POST" action="{{ route('discounts.toggle-status', $discount) }}"
-                  onsubmit="return confirm('{{ $discount->is_active ? 'Deactivate' : 'Activate' }} discount \"{{ addslashes($discount->discount_name) }}\"?')">
-                @csrf @method('PUT')
-                <button type="submit" class="btn {{ $discount->is_active ? 'btn-amber' : 'btn-green' }}">
-                    <i class="fas {{ $discount->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
-                    {{ $discount->is_active ? 'Deactivate' : 'Activate' }}
-                </button>
-            </form>
+            <button type="button" class="btn {{ $discount->is_active ? 'btn-amber' : 'btn-green' }}"
+                    onclick="openModal({{ Js::from(\App\Support\DiscountToggle::confirm($discount)) }})">
+                <i class="fas {{ $discount->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
+                {{ $discount->is_active ? 'Deactivate' : 'Activate' }}
+            </button>
             <a href="{{ route('discounts.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
     </div>
@@ -187,12 +182,6 @@
                 </div>
             </div>
             @endif
-
-            {{-- Future Integration Notice --}}
-            <div class="notice-box">
-                <i class="fas fa-circle-info"></i>
-                <div>This discount will become available in the <strong>POS Module</strong> and <strong>Online Ordering Checkout Module</strong> when set to <strong>Active</strong>. Actual discount application will be handled during the transaction process.</div>
-            </div>
         </div>
 
         {{-- Right: Status & Meta --}}
@@ -228,14 +217,11 @@
 
             <div style="display:flex;flex-direction:column;gap:.65rem">
                 <a href="{{ route('discounts.edit', $discount) }}" class="btn btn-primary" style="justify-content:center"><i class="fas fa-pen"></i> Edit This Discount</a>
-                <form method="POST" action="{{ route('discounts.toggle-status', $discount) }}"
-                      onsubmit="return confirm('{{ $discount->is_active ? 'Deactivate' : 'Activate' }} discount \"{{ addslashes($discount->discount_name) }}\"?')">
-                    @csrf @method('PUT')
-                    <button type="submit" style="width:100%;justify-content:center" class="btn {{ $discount->is_active ? 'btn-amber' : 'btn-green' }}">
-                        <i class="fas {{ $discount->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
-                        {{ $discount->is_active ? 'Deactivate Discount' : 'Activate Discount' }}
-                    </button>
-                </form>
+                <button type="button" style="width:100%;justify-content:center" class="btn {{ $discount->is_active ? 'btn-amber' : 'btn-green' }}"
+                        onclick="openModal({{ Js::from(\App\Support\DiscountToggle::confirm($discount)) }})">
+                    <i class="fas {{ $discount->is_active ? 'fa-circle-pause' : 'fa-circle-play' }}"></i>
+                    {{ $discount->is_active ? 'Deactivate Discount' : 'Activate Discount' }}
+                </button>
             </div>
         </div>
 

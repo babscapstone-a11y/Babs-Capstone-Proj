@@ -170,13 +170,11 @@
                             <div class="row-acts">
                                 <a href="{{ route('discounts.show', $d) }}" class="act-btn act-view" title="View" aria-label="View"><i class="fas fa-eye"></i></a>
                                 <a href="{{ route('discounts.edit', $d) }}" class="act-btn act-edit" title="Edit" aria-label="Edit"><i class="fas fa-pen"></i></a>
-                                <form method="POST" action="{{ route('discounts.toggle-status', $d) }}"
-                                      onsubmit="return confirm('{{ $d->is_active ? 'Deactivate' : 'Activate' }} discount \"{{ addslashes($d->discount_name) }}\"?')">
-                                    @csrf @method('PUT')
-                                    <button type="submit" class="act-btn {{ $d->is_active ? 'act-danger' : 'act-success' }}" title="{{ $d->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $d->is_active ? 'Deactivate' : 'Activate' }}">
-                                        <i class="fas {{ $d->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="act-btn {{ $d->is_active ? 'act-danger' : 'act-success' }}"
+                                        title="{{ $d->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $d->is_active ? 'Deactivate' : 'Activate' }}"
+                                        onclick="openModal({{ Js::from(\App\Support\DiscountToggle::confirm($d)) }})">
+                                    <i class="fas {{ $d->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
