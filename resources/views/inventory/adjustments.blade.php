@@ -59,7 +59,10 @@
             <div class="page-title"><i class="fas fa-pen-to-square"></i> Inventory Adjustments</div>
             <div class="page-sub">Manual corrections, damaged, expired, and missing stock records</div>
         </div>
-        <button class="btn btn-purple" onclick="openAdjust()"><i class="fas fa-plus"></i> New Adjustment</button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+            <button class="btn btn-purple" onclick="openAdjust()"><i class="fas fa-plus"></i> New Adjustment</button>
+        </div>
     </div>
 
     @if(session('success'))
