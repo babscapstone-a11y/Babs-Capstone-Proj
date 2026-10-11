@@ -45,6 +45,9 @@
     .search-results { max-height: 360px; overflow-y: auto; padding-right: .25rem; }
 
     .billing-left { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+    input.no-spin::-webkit-outer-spin-button, input.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input.no-spin[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    .amount-limit-note { font-size: .75rem; color: var(--muted); margin-top: .3rem; }
     .detail-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; margin-bottom: 1.1rem; }
     .detail-meta-item { background: rgba(17,24,39,0.03); border-radius: 10px; padding: .6rem .8rem; }
     .detail-meta-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
@@ -393,7 +396,8 @@
 
             <div class="form-group" id="amountReceivedGroup">
                 <label class="form-label"><i class="fas fa-hand-holding-dollar"></i> Amount Received</label>
-                <input type="number" class="form-input" id="amountReceivedInput" min="0" step="0.01" placeholder="0.00">
+                <input type="number" class="form-input no-spin" id="amountReceivedInput" min="0" max="999999.99" step="0.01" placeholder="0.00" inputmode="decimal">
+                <div class="amount-limit-note" id="amountLimitNote" style="display:none"><i class="fas fa-circle-info"></i> Up to ₱999,999.99 (6 digits and 2 decimals).</div>
                 <div class="field-error" id="paymentError" style="display:none">Insufficient payment amount.</div>
                 <div class="change-box" id="changeBox" style="display:none">
                     <div class="change-label">Change</div>
@@ -424,7 +428,24 @@
         `;
 
         document.getElementById('discountSelect').addEventListener('change', onDiscountSelectChange);
-        document.getElementById('amountReceivedInput').addEventListener('input', recomputeTotals);
+        // Amount Received: at most 6 digits before the decimal point and 2 after (max ₱999,999.99).
+        // A number box ignores maxlength, so extra digits are trimmed as they're typed.
+        const amountInput = document.getElementById('amountReceivedInput');
+        amountInput.addEventListener('input', () => {
+            const raw = amountInput.value;
+            const m = raw.match(/^(\d*)(?:\.(\d*))?$/);
+            if (m) {
+                const whole = m[1].slice(0, 6), dec = m[2] !== undefined ? m[2].slice(0, 2) : null;
+                const trimmed = whole + (dec !== null && raw.includes('.') ? '.' + dec : '');
+                const tooLong = m[1].length > 6 || (m[2] || '').length > 2;
+                if (tooLong) amountInput.value = trimmed;
+                document.getElementById('amountLimitNote').style.display = tooLong ? 'block' : 'none';
+            }
+            recomputeTotals();
+        });
+        // Don't let the mouse wheel or minus/exponent keys change the amount
+        amountInput.addEventListener('wheel', () => { if (document.activeElement === amountInput) amountInput.blur(); }, { passive: true });
+        amountInput.addEventListener('keydown', (e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); });
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.addEventListener('change', recomputeTotals));
 
         recomputeTotals();

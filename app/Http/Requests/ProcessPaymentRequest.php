@@ -19,7 +19,8 @@ class ProcessPaymentRequest extends FormRequest
             'discount_id'           => ['nullable', 'exists:discounts,id'],
             'eligibility_confirmed' => ['sometimes', 'boolean'],
             'service_charge'        => ['nullable', 'numeric', 'min:0'],
-            'amount_received'       => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0'],
+            // Same cap as the billing screen: 6 digits and 2 decimals
+            'amount_received'       => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
             'reference_number'      => ['nullable', 'string', 'max:100'],
         ];
     }
