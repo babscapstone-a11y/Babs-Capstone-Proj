@@ -199,7 +199,9 @@
             return `
                 <div class="service-card ${cssClass}" onclick="window.location.href='${SHOW_URL_BASE}/${order.id}'">
                     <div class="sc-top">
-                        <div class="sc-order-number">#${order.order_number}</div>
+                        <div class="sc-order-number">${order.table_number
+                            ? `<i class="fas fa-chair" style="font-size:.85em;opacity:.75"></i> Table ${order.table_number}`
+                            : `#${order.order_number}`}</div>
                         <span class="sc-badge" style="background:${statusColor(order.status)}">${order.status_label}</span>
                     </div>
                     ${order.status === 'Ready'
@@ -207,11 +209,11 @@
                         : `<div class="sc-waiting"><i class="fas fa-clock"></i> ${order.status} at ${formatTime(waitingSource)}</div>`
                     }
                     <div class="sc-customer"><i class="fas fa-user"></i> ${order.customer_name}</div>
+                    ${order.table_number ? '' : `
                     <div class="sc-meta">
                         <span class="sc-chip">${order.order_type_label}</span>
-                        ${order.table_number ? `<span class="sc-chip"><i class="fas fa-chair"></i> Table ${order.table_number}</span>` : ''}
                         <span class="sc-chip"><i class="fas fa-clock"></i> Ready ${formatTime(order.ready_at)}</span>
-                    </div>
+                    </div>`}
                     <div class="sc-items">${order.item_count} item${order.item_count === 1 ? '' : 's'}${itemsPreview ? ' — ' + itemsPreview : ''}${moreCount > 0 ? ` +${moreCount} more` : ''}</div>
                     ${actionBtn}
                 </div>
