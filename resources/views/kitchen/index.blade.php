@@ -72,6 +72,13 @@
     .ticket-order-number.small { font-size: .85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ticket-chip.small { font-size: .65rem; padding: .1rem .4rem; white-space: nowrap; flex-shrink: 0; }
 
+    .pickup-day-heading {
+        display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+        font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+        padding: .35rem .15rem 0;
+    }
+    .pickup-day-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
     .ticket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
     .ticket-order-number { font-size: 1.02rem; font-weight: 800; color: var(--dark); }
     .ticket-elapsed {
@@ -257,6 +264,16 @@
         return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
     }
 
+    // Pick-up day as a heading: "Today", "Tomorrow", or e.g. "Sat, Oct 17"
+    function pickupDayLabel(iso) {
+        const day = new Date(iso); day.setHours(0, 0, 0, 0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((day - today) / 86400000);
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Tomorrow';
+        return day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
     function elapsedText(iso) {
         const diffMs = Date.now() - new Date(iso).getTime();
         const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
@@ -277,7 +294,9 @@
                 <div class="ticket-card collapsed ${cssClass}" onclick="openDetailModal(${order.id})">
                     <div class="ticket-collapsed-row">
                         <span class="ticket-order-number small">#${order.order_number}</span>
-                        <span class="ticket-chip small">${order.order_type_label}</span>
+                        ${order.order_type === 'online' && order.pickup_at
+                            ? `<span class="ticket-chip small"><i class="fas fa-clock"></i> ${formatTime(order.pickup_at)}</span>`
+                            : `<span class="ticket-chip small">${order.order_type_label}</span>`}
                     </div>
                 </div>
             `;
@@ -364,8 +383,18 @@
         Object.keys(COLUMN_IDS).forEach(key => {
             const col = document.getElementById(COLUMN_IDS[key]);
             const list = grouped[key];
+            // Pending · Online is grouped under pick-up day headings (Today, Tomorrow, Sat, Oct 17 …)
+            let lastDay = null;
             col.innerHTML = list.length
-                ? list.map((order, idx) => renderCard(order, idx > 0)).join('')
+                ? list.map((order, idx) => {
+                    let heading = '';
+                    if (key === 'PendingOnline') {
+                        const day = order.pickup_at ? pickupDayLabel(order.pickup_at) : 'No pick-up time';
+                        if (day !== lastDay) heading = `<div class="pickup-day-heading"><i class="fas fa-calendar-day"></i> ${day}</div>`;
+                        lastDay = day;
+                    }
+                    return heading + renderCard(order, idx > 0);
+                }).join('')
                 : '<div class="kanban-empty">No orders</div>';
             document.getElementById('colCount' + key).textContent = list.length;
         });
