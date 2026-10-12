@@ -24,14 +24,13 @@
                     <td>
                         @if($item->rtc_servings > 0)
                         <span style="font-weight:700;color:var(--blue-700)">{{ number_format($item->rtc_servings, 0) }}</span>
-                        <span style="font-size:.75rem;color:var(--muted)"> servings</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">—</span>
                         @endif
                     </td>
                     <td>
                         @if($item->rtc_quantity)
-                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 2) }} @unit($item->rtc_unit)/serving</span>
+                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 2) }}</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">Not set</span>
                         @endif
