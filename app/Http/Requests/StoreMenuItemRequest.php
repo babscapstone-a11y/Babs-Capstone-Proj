@@ -24,6 +24,8 @@ class StoreMenuItemRequest extends FormRequest
             'image'       => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'is_active'   => ['required', 'boolean'],
             'requires_rtc' => ['nullable', 'boolean'],
+            // Beverages only: the stock item one order uses one piece of
+            'beverage_inventory_item_id' => ['nullable', Rule::exists('inventory_items', 'id')->where('item_type', 'beverage')],
         ];
     }
 

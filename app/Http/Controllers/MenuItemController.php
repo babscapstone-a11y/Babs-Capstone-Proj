@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMenuItemRequest;
 use App\Http\Requests\UpdateMenuItemRequest;
 use App\Models\Category;
+use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ class MenuItemController extends Controller
     {
         $this->authorize('viewAny', MenuItem::class);
 
-        $query = MenuItem::with('category');
+        $query = MenuItem::with(['category', 'beverageItem']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -69,7 +70,9 @@ class MenuItemController extends Controller
 
         $categories = Category::where('is_active', true)->orderBy('category_name')->get();
 
-        return view('menu.create', compact('categories'));
+        $beverageStockItems = InventoryItem::beverage()->orderBy('item_name')->get();
+
+        return view('menu.create', compact('categories', 'beverageStockItems'));
     }
 
     public function store(StoreMenuItemRequest $request): RedirectResponse
@@ -79,6 +82,8 @@ class MenuItemController extends Controller
         $data = $request->validated();
         // "Requires RTC servings" only applies to food; an unticked checkbox isn't sent at all
         $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
+        // A stock link only applies to beverages
+        $data['beverage_inventory_item_id'] = $data['item_type'] === 'beverage' ? ($data['beverage_inventory_item_id'] ?? null) : null;
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('menu-items', 'public');
@@ -94,7 +99,7 @@ class MenuItemController extends Controller
     {
         $this->authorize('view', $menu);
 
-        $menu->load(['category', 'rtcItem']);
+        $menu->load(['category', 'rtcItem', 'beverageItem']);
 
         return view('menu.show', compact('menu'));
     }
@@ -105,7 +110,9 @@ class MenuItemController extends Controller
 
         $categories = Category::where('is_active', true)->orderBy('category_name')->get();
 
-        return view('menu.edit', compact('menu', 'categories'));
+        $beverageStockItems = InventoryItem::beverage()->orderBy('item_name')->get();
+
+        return view('menu.edit', compact('menu', 'categories', 'beverageStockItems'));
     }
 
     public function update(UpdateMenuItemRequest $request, MenuItem $menu): RedirectResponse
@@ -114,6 +121,8 @@ class MenuItemController extends Controller
 
         $data = $request->validated();
         $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
+        // A stock link only applies to beverages
+        $data['beverage_inventory_item_id'] = $data['item_type'] === 'beverage' ? ($data['beverage_inventory_item_id'] ?? null) : null;
 
         if ($request->hasFile('image')) {
             if ($menu->image) {

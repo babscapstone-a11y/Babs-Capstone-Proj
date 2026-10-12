@@ -25,7 +25,7 @@ class TableServerOrderController extends Controller
 
         // Unlike CatalogController, unavailable items are NOT filtered out here —
         // the food server needs to see them (disabled) rather than have them vanish.
-        $query = MenuItem::with('category')->where('is_active', true);
+        $query = MenuItem::with(['category', 'beverageItem'])->where('is_active', true);
 
         if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {

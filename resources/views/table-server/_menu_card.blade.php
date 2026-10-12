@@ -1,5 +1,5 @@
 @php
-    $stockStatus = $item->isRtcTracked() ? $item->rtc_servings_status : null;
+    $stockStatus = $item->stock_status;
     $availableStock = $item->available_stock;
     $soldOut = $stockStatus === 'out_of_stock';
     $selectable = $item->is_available && ! $soldOut;

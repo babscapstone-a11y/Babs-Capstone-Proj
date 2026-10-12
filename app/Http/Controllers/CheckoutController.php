@@ -87,7 +87,7 @@ class CheckoutController extends Controller
         foreach ($cart->items as $item) {
             $menuItem = MenuItem::find($item->menu_item_id);
 
-            if ($menuItem && $menuItem->isRtcTracked() && $item->quantity > $menuItem->available_stock) {
+            if ($menuItem && $menuItem->isStockTracked() && $item->quantity > $menuItem->available_stock) {
                 $shortages[] = "{$menuItem->menu_name} (only {$menuItem->available_stock} left)";
             }
         }
@@ -285,7 +285,7 @@ class CheckoutController extends Controller
         foreach ($cart->items as $item) {
             $menuItem = MenuItem::find($item->menu_item_id);
 
-            if ($menuItem && $menuItem->isRtcTracked() && $item->quantity > $menuItem->available_stock) {
+            if ($menuItem && $menuItem->isStockTracked() && $item->quantity > $menuItem->available_stock) {
                 $shortages[] = "{$menuItem->menu_name} (only {$menuItem->available_stock} left)";
             }
         }

@@ -260,6 +260,19 @@
                 </label>
                 <div class="form-hint">Tick this for dishes made from converted raw meat (e.g. Pork Sisig). Their servings are counted, and they show as <strong>Sold Out</strong> until you convert stock for them in RTC Units. Leave it unticked for desserts and other dishes that aren't.</div>
             </div>
+            <div class="form-group" id="beverageStockGroup">
+                <label for="beverage_inventory_item_id">Stock Item</label>
+                <select name="beverage_inventory_item_id" id="beverage_inventory_item_id" class="form-control @error('beverage_inventory_item_id') is-invalid @enderror">
+                    <option value="">Not tracked (always available)</option>
+                    @foreach($beverageStockItems as $stockItem)
+                        <option value="{{ $stockItem->id }}" {{ (string) old('beverage_inventory_item_id', $menu->beverage_inventory_item_id) === (string) $stockItem->id ? 'selected' : '' }}>
+                            {{ $stockItem->item_name }} — {{ (int) $stockItem->quantity }} @unit($stockItem->unit) in stock
+                        </option>
+                    @endforeach
+                </select>
+                <div class="form-hint">Pick the beverage stock this drink is served from. Each order uses one piece, and the drink shows as <strong>Sold Out</strong> when that stock runs out. Leave it as "Not tracked" for drinks made in-house.</div>
+                @error('beverage_inventory_item_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
         </div>
 
         <hr class="form-divider">
@@ -378,10 +391,12 @@ document.querySelectorAll('input[name="item_type"]').forEach(function(radio) {
     radio.addEventListener('change', filterCategoriesByType);
 });
 filterCategoriesByType();
-/* ── "Requires RTC servings" only applies to food ─────── */
+/* ── "Requires RTC servings" only applies to food; "Stock Item" only to beverages ─────── */
 function toggleRequiresRtc() {
     var checked = document.querySelector('input[name="item_type"]:checked');
-    document.getElementById('requiresRtcGroup').style.visibility = checked && checked.value === 'beverage' ? 'hidden' : '';
+    var isBeverage = !!checked && checked.value === 'beverage';
+    document.getElementById('requiresRtcGroup').style.display = isBeverage ? 'none' : '';
+    document.getElementById('beverageStockGroup').style.display = isBeverage ? '' : 'none';
 }
 document.querySelectorAll('input[name="item_type"]').forEach(function(radio) {
     radio.addEventListener('change', toggleRequiresRtc);

@@ -50,7 +50,8 @@
                 <td>
                     @php $avail = $item->availability; @endphp
                     <span class="badge {{ ['available' => 'badge-avail-yes', 'low_stock' => 'badge-avail-low', 'sold_out' => 'badge-avail-out'][$avail] }}"
-                          @if($item->isRtcTracked()) title="{{ (int) $item->rtc_servings }} {{ Str::plural('serving', (int) $item->rtc_servings) }} left" @endif>
+                          @if($item->isRtcTracked()) title="{{ (int) $item->rtc_servings }} {{ Str::plural('serving', (int) $item->rtc_servings) }} left"
+                          @elseif($item->isBeverageTracked()) title="{{ $item->available_stock }} left in stock" @endif>
                         <i class="fas fa-circle" style="font-size:.45rem"></i> {{ $item->availability_label }}
                     </span>
                 </td>

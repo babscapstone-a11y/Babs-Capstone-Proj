@@ -21,6 +21,7 @@ class MenuItem extends Model
         'is_active',
         'category_id',
         'rtc_inventory_item_id',
+        'beverage_inventory_item_id',
         'rtc_quantity',
         'rtc_unit',
         'requires_rtc',
@@ -47,6 +48,12 @@ class MenuItem extends Model
     public function rtcItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'rtc_inventory_item_id');
+    }
+
+    /** The stock item a beverage is served from — one order uses one piece of it. */
+    public function beverageItem(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItem::class, 'beverage_inventory_item_id');
     }
 
     public function conversionLogs(): HasMany
@@ -95,12 +102,58 @@ class MenuItem extends Model
     }
 
     /**
-     * How many servings can actually be ordered right now. Null means
-     * "not stock-tracked" (no cap), not "zero available".
+     * Whether this beverage's orderable quantity is capped by stock: a beverage linked
+     * to a stock item on Add/Edit Menu Item. An unlinked beverage is unlimited.
+     */
+    public function isBeverageTracked(): bool
+    {
+        return $this->item_type === 'beverage' && $this->beverage_inventory_item_id !== null;
+    }
+
+    /** Capped by stock either way: RTC servings for food, pieces in stock for a beverage. */
+    public function isStockTracked(): bool
+    {
+        return $this->isRtcTracked() || $this->isBeverageTracked();
+    }
+
+    /**
+     * How many can actually be ordered right now — servings for food, pieces for a
+     * beverage. Null means "not stock-tracked" (no cap), not "zero available".
      */
     public function getAvailableStockAttribute(): ?int
     {
-        return $this->isRtcTracked() ? (int) floor((float) $this->rtc_servings) : null;
+        if ($this->isRtcTracked()) {
+            return (int) floor((float) $this->rtc_servings);
+        }
+        if ($this->isBeverageTracked()) {
+            return (int) floor((float) $this->beverageItem?->quantity);
+        }
+
+        return null;
+    }
+
+    /**
+     * 'available' | 'low_stock' | 'out_of_stock' for a stock-tracked item, or null
+     * when it isn't tracked. Used by the menu cards to show Sold Out / Low Stock.
+     */
+    public function getStockStatusAttribute(): ?string
+    {
+        if ($this->isRtcTracked()) {
+            return $this->rtc_servings_status;
+        }
+        if ($this->isBeverageTracked()) {
+            return $this->beverageItem?->stock_status ?? 'out_of_stock';
+        }
+
+        return null;
+    }
+
+    /** "Only 3 serving(s) of Pork Sisig left." — shown when an order asks for more than is in stock. */
+    public function stockShortageMessage(): string
+    {
+        $unit = $this->isBeverageTracked() ? '' : ' serving(s)';
+
+        return "Only {$this->available_stock}{$unit} of {$this->menu_name} left.";
     }
 
     /* ── Helpers ─────────────────────────────────────────────── */
@@ -128,7 +181,7 @@ class MenuItem extends Model
         return $this->is_active ? 'Active' : 'Inactive';
     }
 
-    /* ── Availability (automatic, from RTC servings) ─────────── */
+    /* ── Availability (automatic, from RTC servings / beverage stock) ─────────── */
 
     /** Fewer servings than this shows as Low Stock. */
     const LOW_SERVINGS = 10;
@@ -136,12 +189,16 @@ class MenuItem extends Model
     /**
      * 'available' | 'low_stock' | 'sold_out', worked out from servings stock:
      * 0 servings = Sold Out, fewer than LOW_SERVINGS = Low Stock, otherwise Available.
-     * Items that aren't stock-tracked (beverages, and food not marked "Requires RTC
-     * servings") are always Available. Taking a dish off the menu entirely is
-     * the separate Active / Inactive status.
+     * A beverage linked to a stock item follows that item's stock instead (0 = Sold Out,
+     * below its reorder level = Low Stock). Items that aren't stock-tracked (unlinked
+     * beverages, and food not marked "Requires RTC servings") are always Available.
+     * Taking a dish off the menu entirely is the separate Active / Inactive status.
      */
     public function getAvailabilityAttribute(): string
     {
+        if ($this->isBeverageTracked()) {
+            return $this->stock_status === 'out_of_stock' ? 'sold_out' : $this->stock_status;
+        }
         if (! $this->isRtcTracked()) {
             return 'available';
         }
@@ -162,13 +219,22 @@ class MenuItem extends Model
     /** Same rules as getAvailabilityAttribute(), for filtering lists. */
     public function scopeAvailability(Builder $q, string $availability): Builder
     {
-        $tracked = fn ($w) => $w->where('item_type', 'food')->where('requires_rtc', true);
+        $soldOut = fn ($w) => $w
+            ->where(fn ($f) => $f->where('item_type', 'food')->where('requires_rtc', true)
+                ->where(fn ($n) => $n->whereNull('rtc_servings')->orWhere('rtc_servings', '<=', 0)))
+            ->orWhere(fn ($b) => $b->where('item_type', 'beverage')
+                ->whereHas('beverageItem', fn ($i) => $i->where('quantity', '<=', 0)));
+
+        $lowStock = fn ($w) => $w
+            ->where(fn ($f) => $f->where('item_type', 'food')->where('requires_rtc', true)
+                ->where('rtc_servings', '>', 0)->where('rtc_servings', '<', self::LOW_SERVINGS))
+            ->orWhere(fn ($b) => $b->where('item_type', 'beverage')
+                ->whereHas('beverageItem', fn ($i) => $i->lowStock()));
 
         return match ($availability) {
-            'sold_out'  => $q->where($tracked)->where(fn ($w) => $w->whereNull('rtc_servings')->orWhere('rtc_servings', '<=', 0)),
-            'low_stock' => $q->where($tracked)->where('rtc_servings', '>', 0)->where('rtc_servings', '<', self::LOW_SERVINGS),
-            'available' => $q->where(fn ($w) => $w->where('item_type', '!=', 'food')->orWhere('requires_rtc', false)
-                                ->orWhere('rtc_servings', '>=', self::LOW_SERVINGS)),
+            'sold_out'  => $q->where($soldOut),
+            'low_stock' => $q->where($lowStock),
+            'available' => $q->whereNot($soldOut)->whereNot($lowStock),
             default     => $q,
         };
     }

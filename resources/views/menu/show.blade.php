@@ -203,6 +203,8 @@
                         <div style="font-size:.9rem;font-weight:700;color:{{ $availStyle[2] }}">{{ $menu->availability_label }}</div>
                         @if($menu->isRtcTracked())
                             <div style="font-size:.72rem;color:var(--muted)">{{ (int) $menu->rtc_servings }} {{ Str::plural('serving', (int) $menu->rtc_servings) }} left</div>
+                        @elseif($menu->isBeverageTracked())
+                            <div style="font-size:.72rem;color:var(--muted)">{{ $menu->available_stock }} left · {{ $menu->beverageItem?->item_name }}</div>
                         @endif
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:.3rem">Availability</div>
                     </div>

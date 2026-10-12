@@ -107,7 +107,7 @@ class StoreTableServerOrderRequest extends FormRequest
             $items->groupBy('menu_item_id')->each(function ($group, $menuItemId) use ($validator, $menuItems) {
                 $menuItem = $menuItems->get($menuItemId);
 
-                if (! $menuItem || ! $menuItem->isRtcTracked()) {
+                if (! $menuItem || ! $menuItem->isStockTracked()) {
                     return;
                 }
 
@@ -116,7 +116,7 @@ class StoreTableServerOrderRequest extends FormRequest
                 if ($needed > $menuItem->available_stock) {
                     $validator->errors()->add(
                         'items',
-                        "Only {$menuItem->available_stock} serving(s) of {$menuItem->menu_name} left."
+                        $menuItem->stockShortageMessage()
                     );
                 }
             });

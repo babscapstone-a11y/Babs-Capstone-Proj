@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateOrderKitchenStatusRequest;
+use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderStatus;
@@ -212,7 +213,8 @@ class KitchenController extends Controller
     }
 
     /**
-     * Reverses deductRtcStockForOrder(): gives back rtc_servings for every
+     * Reverses deductRtcStockForOrder(): gives back rtc_servings (or, for a
+     * stock-linked beverage, the pieces taken from its stock item) for every
      * order detail that was actually deducted (rtc_deducted_at set) and
      * clears that stamp, inside a lock so it can't race a concurrent
      * "start preparing" on the same menu items.
@@ -242,6 +244,14 @@ class KitchenController extends Controller
                     continue;
                 }
 
+                // A stock-linked beverage gives its pieces back to that stock item
+                if ($menuItem->isBeverageTracked()) {
+                    InventoryItem::whereKey($menuItem->beverage_inventory_item_id)->lockForUpdate()->first()
+                        ?->increment('quantity', $qty);
+
+                    continue;
+                }
+
                 $menuItem->update(['rtc_servings' => $menuItem->rtc_servings + $qty]);
             }
 
@@ -254,8 +264,9 @@ class KitchenController extends Controller
      * each has enough rtc_servings to cover the order's quantities, then
      * deducts them and advances the order status — all inside one
      * transaction so concurrent "start preparing" clicks can't oversell the
-     * same servings. Returns an error message on insufficient stock, or
-     * null on success.
+     * same servings. Stock-linked beverages are checked and deducted from
+     * their stock item the same way. Returns an error message on insufficient
+     * stock, or null on success.
      */
     private function deductRtcStockForOrder(Order $order, OrderStatus $newStatus): ?string
     {
@@ -283,16 +294,48 @@ class KitchenController extends Controller
                 }
             }
 
+            // Stock-linked beverages: one order uses one piece. Two drinks can share a stock
+            // item, so what's needed is added up per stock item before checking it.
+            $beverageNeeds = [];
+            foreach ($quantityByMenuItem as $menuItemId => $neededQty) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if ($menuItem && $menuItem->isBeverageTracked()) {
+                    $stockId = $menuItem->beverage_inventory_item_id;
+                    $beverageNeeds[$stockId] = ($beverageNeeds[$stockId] ?? 0) + $neededQty;
+                }
+            }
+
+            $beverageStock = InventoryItem::whereIn('id', array_keys($beverageNeeds))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($beverageNeeds as $stockId => $neededQty) {
+                $stockItem = $beverageStock->get($stockId);
+                $have      = (int) floor((float) $stockItem?->quantity);
+
+                if ($neededQty > $have) {
+                    return "Not enough stock for {$stockItem?->item_name} (need {$neededQty}, have {$have}). Stock in more before starting this order.";
+                }
+            }
+
             $now = now();
+
+            foreach ($beverageNeeds as $stockId => $neededQty) {
+                $beverageStock->get($stockId)->decrement('quantity', $neededQty);
+            }
 
             foreach ($quantityByMenuItem as $menuItemId => $neededQty) {
                 $menuItem = $menuItems->get($menuItemId);
 
-                if (! $menuItem || ! $menuItem->isRtcTracked()) {
+                if (! $menuItem || ! $menuItem->isStockTracked()) {
                     continue;
                 }
 
-                $menuItem->update(['rtc_servings' => $menuItem->rtc_servings - $neededQty]);
+                if ($menuItem->isRtcTracked()) {
+                    $menuItem->update(['rtc_servings' => $menuItem->rtc_servings - $neededQty]);
+                }
 
                 $details->where('menu_item_id', $menuItemId)
                     ->each(fn ($detail) => $detail->update(['rtc_deducted_at' => $now]));
