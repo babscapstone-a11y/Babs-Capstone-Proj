@@ -113,20 +113,6 @@
             padding: .75rem 1.25rem;
             border-top: 1px solid rgba(255,255,255,0.07);
         }
-        .user-chip {
-            display: flex; align-items: center; gap: .65rem;
-            padding: .45rem .7rem; border-radius: 10px;
-            background: rgba(255,255,255,0.05);
-            margin-bottom: .5rem;
-        }
-        .user-avatar {
-            width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
-            background: linear-gradient(135deg, var(--primary), #F97316);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--white); font-weight: 700; font-size: .75rem;
-        }
-        .user-name  { color: var(--white); font-size: .82rem; font-weight: 600; }
-        .user-role  { color: rgba(255,255,255,0.4); font-size: .68rem; }
         .btn-logout {
             display: flex; align-items: center; justify-content: center; gap: .5rem;
             width: 100%; padding: .5rem; border-radius: 8px;
@@ -419,13 +405,6 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="user-chip">
-                <div class="user-avatar">{{ auth()->user()->initials }}</div>
-                <div>
-                    <div class="user-name">{{ Str::limit(auth()->user()->name, 18) }}</div>
-                    <div class="user-role">{{ auth()->user()->role_display }}</div>
-                </div>
-            </div>
             <button type="button" class="btn-logout" onclick="openModal({
                     type: 'warn',
                     iconClass: 'fas fa-right-from-bracket',
