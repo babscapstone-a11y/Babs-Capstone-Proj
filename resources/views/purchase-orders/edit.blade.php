@@ -74,6 +74,7 @@
 .rcv-input::-webkit-outer-spin-button,.rcv-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .rcv-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 .peso-wrap{display:flex;align-items:center;gap:.25rem;font-weight:700;color:var(--muted)}
+.qty-locked{font-weight:700;color:var(--dark);white-space:nowrap}
 .unit-cost-hint{font-size:.7rem;color:var(--muted);text-align:center;min-height:1em}
 .badge-rcv-pending,.badge-rcv-match,.badge-rcv-short,.badge-rcv-over,.badge-rcv-none{padding:.2rem .55rem;border-radius:50px;font-size:.66rem;font-weight:700;text-transform:uppercase;display:inline-block;white-space:nowrap}
 .badge-rcv-pending{background:var(--surface-3);color:var(--muted)}
@@ -161,7 +162,7 @@
                             <th>Current Stock</th>
                             <th>Threshold</th>
                             <th>Recommended</th>
-                            <th>Qty to Purchase *</th>
+                            <th>Qty to Purchase{{ $recording ? '' : ' *' }}</th>
                             <th>Status</th>
                             @if($recording)
                             <th class="rcv-col">Qty Bought</th>
@@ -181,6 +182,10 @@
                             <td class="ro-val">{{ number_format($item->threshold,2) }} @unit($item->unit)</td>
                             <td class="ro-val">{{ number_format($item->quantity_recommended,2) }} @unit($item->unit)</td>
                             <td>
+                                @if($recording)
+                                    {{-- Locked once buying is done: only Qty Bought and Amount Paid are entered now --}}
+                                    <span class="qty-locked">{{ number_format($item->quantity_to_purchase,2) }} @unit($item->unit)</span>
+                                @else
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,2,'.','')) }}"
@@ -191,6 +196,7 @@
                                     <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
+                                @endif
                             </td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
                             @if($recording)
@@ -234,7 +240,7 @@
                             <th>Current Stock</th>
                             <th>Threshold</th>
                             <th>Recommended</th>
-                            <th>Qty to Purchase *</th>
+                            <th>Qty to Purchase{{ $recording ? '' : ' *' }}</th>
                             <th>Status</th>
                             @if($recording)
                             <th class="rcv-col">Qty Bought</th>
@@ -254,6 +260,10 @@
                             <td class="ro-val">{{ number_format($item->threshold,0) }} @unit($item->unit)</td>
                             <td class="ro-val">{{ number_format($item->quantity_recommended,0) }} @unit($item->unit)</td>
                             <td>
+                                @if($recording)
+                                    {{-- Locked once buying is done: only Qty Bought and Amount Paid are entered now --}}
+                                    <span class="qty-locked">{{ number_format($item->quantity_to_purchase,0) }} @unit($item->unit)</span>
+                                @else
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,0,'.','')) }}"
@@ -264,6 +274,7 @@
                                     <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
+                                @endif
                             </td>
                             <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
                             @if($recording)

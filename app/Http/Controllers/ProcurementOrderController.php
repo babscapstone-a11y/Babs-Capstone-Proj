@@ -129,16 +129,22 @@ class ProcurementOrderController extends Controller
             return back()->with('error', 'Finalized purchase orders cannot be modified.');
         }
 
+        // Recording stage (after buying): the planned quantities are locked — only the quantity
+        // bought and amount paid are entered. Planning stage has no bought/paid inputs.
+        $recording = $request->input('mode') === 'record';
+
         $rules = [
             'notes'      => ['nullable', 'string', 'max:1000'],
-            'quantities' => ['required', 'array'],
+            'quantities' => [$recording ? 'nullable' : 'required', 'array'],
             'received'   => ['nullable', 'array'],
             'paid'       => ['nullable', 'array'],
         ];
         $messages = [];
         foreach ($purchaseOrder->items as $item) {
             $min = max((float) $item->threshold, 0.01);
-            $rules["quantities.{$item->id}"] = ['required', 'numeric', "min:{$min}"];
+            if (! $recording) {
+                $rules["quantities.{$item->id}"] = ['required', 'numeric', "min:{$min}"];
+            }
             $rules["received.{$item->id}"]   = ['nullable', 'numeric', 'min:0'];
             $rules["paid.{$item->id}"]       = ['nullable', 'numeric', 'min:0'];
             $messages["quantities.{$item->id}.min"] = "{$item->item_name}: quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit}).";
@@ -148,16 +154,14 @@ class ProcurementOrderController extends Controller
 
         $request->validate($rules, $messages);
 
-        // Planning stage has no bought/paid inputs, so leave any recorded values untouched there
-        $recording = $request->input('mode') === 'record';
-
         // Notes are only on the planning page; don't clear them when saving from the recording page
         if ($request->has('notes')) {
             $purchaseOrder->update(['notes' => $request->notes]);
         }
 
         foreach ($purchaseOrder->items as $item) {
-            $changes = ['quantity_to_purchase' => (float) $request->input("quantities.{$item->id}")];
+            // Quantity to purchase is only editable while planning; bought/paid only while recording
+            $changes = $recording ? [] : ['quantity_to_purchase' => (float) $request->input("quantities.{$item->id}")];
 
             if ($recording) {
                 $received = $request->input("received.{$item->id}");
