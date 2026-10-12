@@ -128,11 +128,6 @@ class Order extends Model
         return $this->hasOne(CancellationRequest::class);
     }
 
-    public function specialDiscountRequests(): HasMany
-    {
-        return $this->hasMany(SpecialDiscountRequest::class);
-    }
-
     /* ── Scopes ── */
 
     /**

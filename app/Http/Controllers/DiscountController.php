@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DiscountRequest;
 use App\Models\Discount;
-use App\Models\SpecialDiscountRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,10 +40,9 @@ class DiscountController extends Controller
         $totalInactive = Discount::inactive()->count();
         $totalPromo    = Discount::where('eligibility_type', 'promotional')->count();
         $totalExpired  = Discount::active()->expired()->count();
-        $pendingSpecialRequests = SpecialDiscountRequest::pending()->count();
 
         return view('discounts.index', compact(
-            'discounts', 'totalActive', 'totalInactive', 'totalPromo', 'totalExpired', 'pendingSpecialRequests'
+            'discounts', 'totalActive', 'totalInactive', 'totalPromo', 'totalExpired'
         ));
     }
 

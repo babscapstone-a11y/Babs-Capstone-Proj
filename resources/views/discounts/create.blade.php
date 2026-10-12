@@ -113,7 +113,7 @@
                                     <input type="radio" name="discount_type" id="type_special" value="special" {{ old('discount_type')==='special' ? 'checked' : '' }} onchange="updateTypeUI()">
                                     <label class="type-radio-label" for="type_special">
                                         <div class="type-radio-icon tr-spec"><i class="fas fa-hand-holding-dollar"></i></div>
-                                        <div class="type-radio-text"><div class="t-label">Special Discount</div><div class="t-sub">Cashier requests amount</div></div>
+                                        <div class="type-radio-text"><div class="t-label">Special Discount</div><div class="t-sub">Cashier enters amount</div></div>
                                     </label>
                                 </div>
                             </div>
@@ -134,7 +134,7 @@
                         <div class="field" id="specialNoteWrap" style="display:none">
                             <div class="special-note">
                                 <i class="fas fa-circle-info"></i>
-                                No preset value — at checkout, the cashier will pick this discount and type a peso amount for the current order. That amount stays "pending" until you approve it here in <strong>Special Discount Requests</strong>; only then can it be deducted from the bill.
+                                No preset value — at checkout, the cashier picks this discount and types the peso amount to deduct for the current order. It is applied to the bill right away, with no approval needed.
                             </div>
                         </div>
 
@@ -304,7 +304,7 @@ function updatePreview() {
     const fmtVal = isSpecial ? 'Custom Amount' : (isPct ? val.toFixed(0) + '%' : '₱' + val.toFixed(2));
     document.getElementById('prevName').textContent  = name;
     document.getElementById('prevValue').textContent = fmtVal;
-    document.getElementById('prevType').textContent  = isSpecial ? 'Special Discount (Requires Approval)' : (isPct ? 'Percentage Discount' : 'Fixed Amount Discount');
+    document.getElementById('prevType').textContent  = isSpecial ? 'Special Discount (Cashier-Entered Amount)' : (isPct ? 'Percentage Discount' : 'Fixed Amount Discount');
     document.getElementById('prevElig').textContent  = elig ? 'Eligibility: ' + (eligLabels[elig] || elig) : 'No eligibility selected';
 }
 
