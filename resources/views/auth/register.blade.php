@@ -174,7 +174,7 @@
         padding: 2rem 2.25rem;
         background: var(--bg);
         position: relative;
-        overflow-y: auto;
+        overflow: hidden;
         min-height: 100vh;
     }
 
@@ -249,6 +249,47 @@
 
     /* Divider */
     .card-divider { height: 1px; background: rgba(17,24,39,0.07); margin: 1.2rem 0; }
+
+    /* ── Step indicator ── */
+    .step-bar {
+        display: flex; align-items: center; gap: .6rem;
+        list-style: none; margin: 0 0 1.2rem; padding: 0;
+    }
+    .step-item {
+        display: flex; align-items: center; gap: .45rem;
+        font-size: .8rem; font-weight: 600; color: var(--muted);
+        white-space: nowrap;
+    }
+    .step-num {
+        width: 26px; height: 26px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(107,114,128,0.14); color: var(--muted);
+        font-size: .78rem; font-weight: 700; flex-shrink: 0;
+        transition: background .25s ease, color .25s ease;
+    }
+    .step-item.is-active { color: var(--dark); }
+    .step-item.is-active .step-num { background: var(--primary); color: var(--white); }
+    .step-item.is-done .step-num { background: var(--success); color: var(--white); }
+    .step-line { flex: 1; height: 2px; border-radius: 2px; background: rgba(17,24,39,0.1); }
+
+    /* ── Form steps — only the active one is shown ── */
+    .form-step { display: none; }
+    .form-step.is-active { display: block; animation: pageFadeIn .3s ease both; }
+
+    .step-actions { display: flex; gap: .7rem; margin-top: 1.15rem; }
+    .step-actions .btn-register { flex: 1; margin-top: 0; }
+    .btn-step-back {
+        display: flex; align-items: center; justify-content: center;
+        padding: .8rem 1.15rem;
+        border-radius: 13px;
+        border: 1.5px solid rgba(17,24,39,0.12);
+        background: var(--white); color: #374151;
+        font-size: .92rem; font-weight: 600; font-family: inherit;
+        cursor: pointer; white-space: nowrap;
+        transition: border-color .2s ease, color .2s ease;
+    }
+    .btn-step-back:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-step-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
     /* ── Input system ── */
     .field-block { margin-bottom: .9rem; }
@@ -349,6 +390,62 @@
     }
     .terms-row a { color: var(--primary); text-decoration: none; font-weight: 600; }
     .terms-row a:hover { text-decoration: underline; }
+
+    /* ── Terms and Conditions modal ── */
+    .terms-modal {
+        position: fixed; inset: 0; z-index: 1000;
+        display: none; align-items: center; justify-content: center;
+        padding: 1.25rem;
+        background: rgba(17,24,39,0.6);
+        backdrop-filter: blur(4px);
+    }
+    .terms-modal.is-open { display: flex; animation: pageFadeIn .2s ease both; }
+    .terms-dialog {
+        width: 100%; max-width: 720px; max-height: 88vh;
+        display: flex; flex-direction: column;
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: 0 32px 80px rgba(17,24,39,0.3);
+        overflow: hidden;
+    }
+    .terms-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: 1.1rem 1.4rem;
+        border-bottom: 1px solid rgba(17,24,39,0.08);
+    }
+    .terms-head h3 { margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--dark); }
+    .terms-close {
+        background: transparent; border: none; cursor: pointer;
+        width: 34px; height: 34px; border-radius: 50%;
+        color: var(--muted); font-size: 1rem; flex-shrink: 0;
+        transition: background .2s, color .2s;
+    }
+    .terms-close:hover { background: rgba(220,38,38,0.1); color: var(--primary); }
+    .terms-body {
+        padding: 1.2rem 1.4rem;
+        overflow-y: auto;
+        font-size: .86rem; line-height: 1.65; color: #374151;
+    }
+    .terms-body .terms-doc-sub { color: var(--muted); font-weight: 600; margin: 0 0 .4rem; }
+    .terms-body h4 { margin: 1.3rem 0 .45rem; font-size: .95rem; font-weight: 700; color: var(--dark); }
+    .terms-body p { margin: 0 0 .7rem; text-align: justify; }
+    .terms-body ul { margin: 0 0 .7rem; padding-left: 1.2rem; list-style: disc; }
+    .terms-body li { margin-bottom: .4rem; }
+    .terms-foot {
+        padding: .9rem 1.4rem;
+        border-top: 1px solid rgba(17,24,39,0.08);
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .terms-progress { font-size: .8rem; font-weight: 600; color: var(--warn); }
+    .terms-progress.is-done { color: var(--success); }
+    .terms-foot button {
+        background: var(--primary); color: var(--white);
+        border: none; border-radius: 11px;
+        padding: .6rem 1.4rem;
+        font-family: inherit; font-size: .88rem; font-weight: 700;
+        cursor: pointer; transition: background .2s;
+    }
+    .terms-foot button:hover { background: var(--primary-dark); }
 
     /* ── Submit button ── */
     .btn-register {
@@ -490,8 +587,29 @@
                 </div>
             @endif
 
+            {{-- Open on step 2 only when every validation error belongs to step 2 --}}
+            @php
+                $startStep = $errors->any() && ! $errors->hasAny(['first_name', 'last_name', 'phone']) ? 2 : 1;
+            @endphp
+
+            <!-- Step indicator -->
+            <ol class="step-bar" aria-label="Registration steps">
+                <li @class(['step-item', 'is-active' => $startStep === 1, 'is-done' => $startStep === 2]) data-step="1">
+                    <span class="step-num">1</span>
+                    <span>Personal Info</span>
+                </li>
+                <li class="step-line" aria-hidden="true"></li>
+                <li @class(['step-item', 'is-active' => $startStep === 2]) data-step="2">
+                    <span class="step-num">2</span>
+                    <span>Account Details</span>
+                </li>
+            </ol>
+
             <form method="POST" action="{{ route('register') }}" id="registerForm" novalidate>
                 @csrf
+
+                <!-- ════════ STEP 1 — Personal info ════════ -->
+                <div @class(['form-step', 'is-active' => $startStep === 1]) data-step="1">
 
                 <!-- First / Last Name -->
                 <div class="name-row">
@@ -559,6 +677,48 @@
                     </div>
                 </div>
 
+                <!-- Phone -->
+                <div class="field-block">
+                    <label class="form-label" for="phone">
+                        <i class="fas fa-phone" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
+                        Phone Number
+                    </label>
+                    <div class="input-wrap @error('phone') has-error @enderror">
+                        <span class="input-icon" aria-hidden="true"><i class="fas fa-mobile-screen"></i></span>
+                        <input
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            value="{{ old('phone') }}"
+                            required
+                            autocomplete="tel"
+                            placeholder="09XXXXXXXXX"
+                            class="input-field"
+                            inputmode="numeric"
+                            maxlength="11"
+                            pattern="[0-9]{11}"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)"
+                            aria-describedby="{{ $errors->has('phone') ? 'phone-error' : '' }}"
+                            aria-invalid="{{ $errors->has('phone') ? 'true' : 'false' }}"
+                        >
+                    </div>
+                    @error('phone')
+                        <div class="field-error" id="phone-error" role="alert">
+                            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                <button type="button" id="nextStepBtn" class="btn-register">
+                    Next&nbsp;<i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+
+                </div>
+
+                <!-- ════════ STEP 2 — Account details ════════ -->
+                <div @class(['form-step', 'is-active' => $startStep === 2]) data-step="2">
+
                 <!-- Email -->
                 <div class="field-block">
                     <label class="form-label" for="email">
@@ -586,31 +746,6 @@
                             {{ $message }}
                         </div>
                     @enderror
-                </div>
-
-                <!-- Phone (optional — UI only, not backend-validated) -->
-                <div class="field-block">
-                    <label class="form-label" for="phone">
-                        <i class="fas fa-phone" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Phone Number
-                        <span class="label-opt">Optional</span>
-                    </label>
-                    <div class="input-wrap">
-                        <span class="input-icon" aria-hidden="true"><i class="fas fa-mobile-screen"></i></span>
-                        <input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            value="{{ old('phone') }}"
-                            autocomplete="tel"
-                            placeholder="09XXXXXXXXX"
-                            class="input-field"
-                            inputmode="numeric"
-                            maxlength="11"
-                            pattern="[0-9]{11}"
-                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)"
-                        >
-                    </div>
                 </div>
 
                 <!-- Password -->
@@ -694,13 +829,15 @@
 
                 <!-- Terms -->
                 <div class="terms-row">
-                    <input type="checkbox" id="terms" name="terms" required>
+                    <input type="checkbox" id="terms" name="terms" required @checked(old('terms')) aria-describedby="terms-hint">
                     <label for="terms">
                         I agree to the
-                        <a href="#" tabindex="-1">Terms of Service</a>
-                        and
-                        <a href="#" tabindex="-1">Privacy Policy</a>
+                        <a href="#" id="openTerms" aria-haspopup="dialog">Terms and Conditions</a>
                     </label>
+                </div>
+                <div class="field-error" id="terms-hint" style="display:none" aria-live="polite">
+                    <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                    <span id="terms-hint-text"></span>
                 </div>
                 @error('terms')
                     <div class="field-error" role="alert" style="margin-top:.3rem">
@@ -709,7 +846,11 @@
                     </div>
                 @enderror
 
-                <!-- Submit -->
+                <!-- Back / Submit -->
+                <div class="step-actions">
+                <button type="button" id="prevStepBtn" class="btn-step-back">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Back
+                </button>
                 <button
                     id="registerBtn"
                     type="submit"
@@ -724,6 +865,9 @@
                         Creating account…
                     </span>
                 </button>
+                </div>
+
+                </div>
 
             </form>
 
@@ -735,6 +879,28 @@
         </div>
     </div>
 
+</div>
+
+<!-- Terms and Conditions modal -->
+<div class="terms-modal" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+    <div class="terms-dialog">
+        <div class="terms-head">
+            <h3 id="terms-title">Terms and Conditions</h3>
+            <button type="button" class="terms-close" id="closeTermsX" aria-label="Close Terms and Conditions">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="terms-body" id="termsBody" tabindex="0">
+            @include('partials.terms-and-conditions')
+        </div>
+        <div class="terms-foot">
+            <span class="terms-progress" id="termsProgress" aria-live="polite">
+                <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                Scroll to the bottom to continue
+            </span>
+            <button type="button" id="closeTermsBtn">Close</button>
+        </div>
+    </div>
 </div>
 
 <!-- Font Awesome -->
@@ -789,7 +955,80 @@
     var regLoading  = document.getElementById('regBtnLoading');
     var termsBox    = document.getElementById('terms');
 
+    /* ── Two-step form ── */
+    var formSteps   = form.querySelectorAll('.form-step');
+    var stepItems   = document.querySelectorAll('.step-item');
+    var currentStep = {{ $startStep }};
+    var firstName   = document.getElementById('first_name');
+    var lastName    = document.getElementById('last_name');
+    var phone       = document.getElementById('phone');
+    var nameRe      = /^[\p{L}\s'.\-]+$/u;
+
+    function showStep(n) {
+        currentStep = n;
+        formSteps.forEach(function (step) {
+            step.classList.toggle('is-active', Number(step.dataset.step) === n);
+        });
+        stepItems.forEach(function (item) {
+            var k = Number(item.dataset.step);
+            item.classList.toggle('is-active', k === n);
+            item.classList.toggle('is-done', k < n);
+        });
+        (n === 1 ? firstName : document.getElementById('email')).focus();
+    }
+
+    /* Show (or clear, when message is empty) an error under one field */
+    function setFieldError(input, message) {
+        var block = input.closest('.field-block');
+        block.querySelectorAll('.field-error').forEach(function (el) { el.remove(); });
+        input.closest('.input-wrap').classList.toggle('has-error', !!message);
+        if (!message) return;
+        var err = document.createElement('div');
+        err.className = 'field-error';
+        err.setAttribute('role', 'alert');
+        err.innerHTML = '<i class="fas fa-circle-exclamation" aria-hidden="true"></i>';
+        err.appendChild(document.createTextNode(message));
+        block.appendChild(err);
+    }
+
+    function nameError(value, label) {
+        if (!value.trim()) return 'Please enter your ' + label + '.';
+        if (!nameRe.test(value)) return 'Letters only — spaces, hyphens, apostrophes and periods are allowed.';
+        return '';
+    }
+
+    /* Step 1 must be valid before moving on to step 2 */
+    function validateStepOne() {
+        var checks = [
+            [firstName, nameError(firstName.value, 'first name')],
+            [lastName,  nameError(lastName.value, 'last name')],
+            [phone,     !phone.value ? 'Please enter your phone number.'
+                        : (/^[0-9]{11}$/.test(phone.value) ? '' : 'Phone number must be exactly 11 digits.')],
+        ];
+        var firstInvalid = null;
+        checks.forEach(function (check) {
+            setFieldError(check[0], check[1]);
+            if (check[1] && !firstInvalid) firstInvalid = check[0];
+        });
+        if (firstInvalid) firstInvalid.focus();
+        return !firstInvalid;
+    }
+
+    function goToStepTwo() { if (validateStepOne()) showStep(2); }
+
+    [firstName, lastName, phone].forEach(function (input) {
+        input.addEventListener('input', function () { setFieldError(input, ''); });
+    });
+    document.getElementById('nextStepBtn').addEventListener('click', goToStepTwo);
+    document.getElementById('prevStepBtn').addEventListener('click', function () { showStep(1); });
+
     form && form.addEventListener('submit', function (e) {
+        /* Pressing Enter on step 1 moves to step 2 instead of submitting */
+        if (currentStep === 1) {
+            e.preventDefault();
+            goToStepTwo();
+            return;
+        }
         /* Client-side: password mismatch */
         if (pwdInput.value !== confirmInput.value) {
             e.preventDefault();
@@ -801,6 +1040,9 @@
         /* Client-side: terms not accepted */
         if (termsBox && !termsBox.checked) {
             e.preventDefault();
+            showTermsHint(termsRead
+                ? 'Please tick the box to agree to the Terms and Conditions.'
+                : 'Please open and read the Terms and Conditions to the bottom first.');
             termsBox.focus();
             return;
         }
@@ -810,6 +1052,62 @@
         regBtnText.style.display    = 'none';
         regLoading.style.display    = 'inline';
         regBtn.disabled             = true;
+    });
+
+    /* ── Terms and Conditions modal ── */
+    var termsModal = document.getElementById('termsModal');
+    var openTerms  = document.getElementById('openTerms');
+    function closeTerms() {
+        termsModal.classList.remove('is-open');
+        document.body.style.overflow = '';
+        openTerms.focus();
+    }
+    function openTermsModal() {
+        termsModal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('closeTermsX').focus();
+        checkTermsRead();
+    }
+    openTerms && openTerms.addEventListener('click', function (e) {
+        e.preventDefault();
+        openTermsModal();
+    });
+
+    /* ── The agree box can only be ticked after the terms were scrolled to the bottom ── */
+    var termsBody     = document.getElementById('termsBody');
+    var termsProgress = document.getElementById('termsProgress');
+    var termsHint     = document.getElementById('terms-hint');
+    /* Already ticked = the form came back with errors after the terms were read */
+    var termsRead     = termsBox.checked;
+
+    function showTermsHint(message) {
+        document.getElementById('terms-hint-text').textContent = message;
+        termsHint.style.display = 'flex';
+    }
+    function markTermsRead() {
+        termsRead = true;
+        termsHint.style.display = 'none';
+        termsProgress.classList.add('is-done');
+        termsProgress.innerHTML = '<i class="fas fa-circle-check" aria-hidden="true"></i> You can now tick the agree box';
+    }
+    function checkTermsRead() {
+        if (termsRead) { markTermsRead(); return; }
+        if (termsBody.scrollTop + termsBody.clientHeight >= termsBody.scrollHeight - 8) markTermsRead();
+    }
+    termsBody.addEventListener('scroll', checkTermsRead);
+
+    termsBox.addEventListener('click', function (e) {
+        if (termsRead) { termsHint.style.display = 'none'; return; }
+        e.preventDefault();
+        showTermsHint('Please read the Terms and Conditions to the bottom first.');
+        openTermsModal();
+    });
+    document.getElementById('closeTermsX').addEventListener('click', closeTerms);
+    document.getElementById('closeTermsBtn').addEventListener('click', closeTerms);
+    /* Click on the dark backdrop (outside the dialog) closes it */
+    termsModal.addEventListener('click', function (e) { if (e.target === termsModal) closeTerms(); });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && termsModal.classList.contains('is-open')) closeTerms();
     });
 
     /* ── Left-panel parallax (desktop only) ── */

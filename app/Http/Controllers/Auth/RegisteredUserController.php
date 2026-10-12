@@ -32,10 +32,13 @@ class RegisteredUserController extends Controller
                 Rule::unique(Customer::class),
                 Rule::unique(User::class),
             ],
-            'phone'      => ['nullable', 'digits:11'],
+            'phone'      => ['required', 'digits:11'],
             'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+            'terms'      => ['accepted'],
         ], [
-            'phone.digits' => 'Phone number must be exactly 11 digits.',
+            'phone.required' => 'Please enter your phone number.',
+            'phone.digits'   => 'Phone number must be exactly 11 digits.',
+            'terms.accepted' => 'You must agree to the Terms and Conditions.',
         ]);
 
         $customer = Customer::create([

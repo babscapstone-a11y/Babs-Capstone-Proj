@@ -42,7 +42,7 @@
     <li data-rule="lower"><i class="fas fa-circle"></i> A lowercase letter</li>
     <li data-rule="upper"><i class="fas fa-circle"></i> An uppercase letter</li>
     <li data-rule="number"><i class="fas fa-circle"></i> A number</li>
-    <li data-rule="symbol"><i class="fas fa-circle"></i> A special character (e.g. ! @ # $ %)</li>
+    <li data-rule="symbol"><i class="fas fa-circle"></i> A special character</li>
 </ul>
 <script>
 (function () {
