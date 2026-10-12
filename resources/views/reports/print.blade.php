@@ -126,23 +126,12 @@
         @if($type === 'sales')
             <div class="summary-cards">
                 <div class="sum-card"><div class="sl">Total Sales</div><div class="sv">₱{{ number_format($data['summary']['total_sales'], 2) }}</div></div>
-                <div class="sum-card"><div class="sl">Transactions</div><div class="sv">{{ number_format($data['summary']['transaction_count']) }}</div></div>
-                <div class="sum-card"><div class="sl">Avg. Transaction</div><div class="sv">₱{{ number_format($data['summary']['average_transaction'], 2) }}</div></div>
+                <div class="sum-card"><div class="sl">Total Purchases</div><div class="sv">₱{{ number_format($data['summary']['total_purchases'], 2) }}</div></div>
                 <div class="sum-card"><div class="sl">Total Discounts</div><div class="sv">₱{{ number_format($data['summary']['total_discounts'], 2) }}</div></div>
                 <div class="sum-card"><div class="sl">Net Sales</div><div class="sv">₱{{ number_format($data['summary']['net_sales'], 2) }}</div></div>
+                @php $grossProfit = $data['summary']['gross_profit']; @endphp
+                <div class="sum-card"><div class="sl">Gross Profit</div><div class="sv">{{ $grossProfit < 0 ? '−' : '' }}₱{{ number_format(abs($grossProfit), 2) }}</div></div>
             </div>
-
-            <div class="section-title">Top Selling Items</div>
-            <table class="rpt-tbl">
-                <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
-                <tbody>
-                    @forelse($data['top_items'] as $i => $item)
-                        <tr><td>{{ $i + 1 }}</td><td>{{ $item['item_name'] }}</td><td>{{ ucfirst($item['category']) }}</td><td>{{ number_format($item['quantity_sold']) }}</td><td>₱{{ number_format($item['revenue'], 2) }}</td></tr>
-                    @empty
-                        <tr><td colspan="5" style="text-align:center;color:#9CA3AF;padding:1rem">No items sold for the selected filters.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
 
             <div class="section-title">Detailed Report — Sales Transactions</div>
             <table class="rpt-tbl">
@@ -161,12 +150,13 @@
             </table>
 
         @elseif($type === 'inventory')
-            <div class="summary-cards">
-                <div class="sum-card"><div class="sl">Total Items</div><div class="sv">{{ $data['summary']['total_items'] }}</div></div>
-                <div class="sum-card"><div class="sl">Low Stock</div><div class="sv">{{ $data['summary']['low_stock_items'] }}</div></div>
-                <div class="sum-card"><div class="sl">Out of Stock</div><div class="sv">{{ $data['summary']['out_of_stock_items'] }}</div></div>
-                <div class="sum-card"><div class="sl">RTC Items</div><div class="sv">{{ $data['summary']['rtc_items'] }}</div></div>
+            <div class="summary-cards" style="grid-template-columns:repeat(3, 1fr)">
+                <div class="sum-card"><div class="sl">Total Inventory Items</div><div class="sv">{{ $data['summary']['total_items'] }}</div></div>
+                <div class="sum-card"><div class="sl">Low Stock Items</div><div class="sv">{{ $data['summary']['low_stock_items'] }}</div></div>
+                <div class="sum-card"><div class="sl">Out of Stock Items</div><div class="sv">{{ $data['summary']['out_of_stock_items'] }}</div></div>
+                <div class="sum-card"><div class="sl">Raw Meat Items</div><div class="sv">{{ $data['summary']['raw_meat_items'] }}</div></div>
                 <div class="sum-card"><div class="sl">Beverage Items</div><div class="sv">{{ $data['summary']['beverage_items'] }}</div></div>
+                <div class="sum-card"><div class="sl">RTC Items</div><div class="sv">{{ $data['summary']['rtc_items'] }}</div></div>
             </div>
 
             @if($filters['category'] !== 'beverage')
@@ -197,6 +187,20 @@
                 </table>
             @endif
 
+            @if($filters['category'] !== 'beverage')
+                <div class="section-title">Detailed Report — RTC Items</div>
+                <table class="rpt-tbl">
+                    <thead><tr><th>Item</th><th>RTC Servings</th><th>Portion Size</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @forelse($data['rtc_item_rows'] as $row)
+                            <tr><td>{{ $row['item_name'] }}</td><td>{{ number_format($row['servings'], 0) }}</td><td>@if($row['portion_size'] !== null){{ number_format($row['portion_size'], 2) }} @unit($row['portion_unit'])/serving @else — @endif</td><td>{{ $row['status'] }}</td></tr>
+                        @empty
+                            <tr><td colspan="4" style="text-align:center;color:#9CA3AF;padding:1rem">No RTC items found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @endif
+
             <div class="section-title">Inventory Transactions</div>
             <table class="rpt-tbl">
                 <thead><tr><th>Date</th><th>Item</th><th>Qty Purchased</th><th>Qty Added/Adjusted</th><th>Type</th><th>Administrator</th></tr></thead>
@@ -212,12 +216,23 @@
         @else
             <div class="summary-cards">
                 <div class="sum-card"><div class="sl">Total Orders</div><div class="sv">{{ $data['summary']['total_orders'] }}</div></div>
-                <div class="sum-card"><div class="sl">Pending</div><div class="sv">{{ $data['summary']['pending_orders'] }}</div></div>
-                <div class="sum-card"><div class="sl">Preparing</div><div class="sv">{{ $data['summary']['preparing_orders'] }}</div></div>
-                <div class="sum-card"><div class="sl">Ready</div><div class="sv">{{ $data['summary']['ready_orders'] }}</div></div>
-                <div class="sum-card"><div class="sl">Completed</div><div class="sv">{{ $data['summary']['completed_orders'] }}</div></div>
-                <div class="sum-card"><div class="sl">Cancelled</div><div class="sv">{{ $data['summary']['cancelled_orders'] }}</div></div>
+                <div class="sum-card"><div class="sl">Dine-In Orders</div><div class="sv">{{ $data['summary']['dine_in_orders'] }}</div></div>
+                <div class="sum-card"><div class="sl">Take-Out Orders</div><div class="sv">{{ $data['summary']['takeout_orders'] }}</div></div>
+                <div class="sum-card"><div class="sl">Advance Orders</div><div class="sv">{{ $data['summary']['advance_orders'] }}</div></div>
+                <div class="sum-card"><div class="sl">Pick-up Orders</div><div class="sv">{{ $data['summary']['pickup_orders'] }}</div></div>
             </div>
+
+            <div class="section-title">Top Selling Items</div>
+            <table class="rpt-tbl">
+                <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @forelse($data['top_items'] as $i => $item)
+                        <tr><td>{{ $i + 1 }}</td><td>{{ $item['item_name'] }}</td><td>{{ ucfirst($item['category']) }}</td><td>{{ number_format($item['quantity_sold']) }}</td><td>₱{{ number_format($item['revenue'], 2) }}</td></tr>
+                    @empty
+                        <tr><td colspan="5" style="text-align:center;color:#9CA3AF;padding:1rem">No items sold for the selected filters.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
 
             <div class="section-title">Detailed Report — Orders</div>
             <table class="rpt-tbl">

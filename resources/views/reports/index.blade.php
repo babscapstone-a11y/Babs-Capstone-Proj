@@ -22,23 +22,21 @@
 
 @section('styles')
 <style>
-    .type-select-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .type-card {
-        display: block; background: var(--surface); border: 2px solid var(--border); border-radius: 16px;
-        padding: 1.4rem 1.5rem; text-decoration: none; transition: all .18s ease; cursor: pointer;
-        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05);
+    /* Report type tabs */
+    .report-tabs { display: flex; gap: .25rem; margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+    .report-tab {
+        display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.1rem;
+        border-bottom: 2.5px solid transparent; border-radius: 10px 10px 0 0; white-space: nowrap;
+        font-size: .9rem; font-weight: 600; color: var(--muted); text-decoration: none; transition: color .15s, background .15s;
     }
-    .type-card:hover { border-color: rgba(220,38,38,0.35); transform: translateY(-2px); }
-    .type-card.active { border-color: var(--primary); background: linear-gradient(180deg, rgba(220,38,38,0.05), transparent); box-shadow: 0 8px 20px rgba(220,38,38,0.12); }
-    .type-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: .85rem; color: var(--white); }
-    .type-card-title { font-size: .98rem; font-weight: 700; color: var(--dark); margin-bottom: .25rem; }
-    .type-card-desc { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+    .report-tab i { font-size: .9rem; }
+    .report-tab:hover { color: var(--dark); background: rgba(var(--ink-rgb),0.04); }
+    .report-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
 
     .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; align-items: end; }
-    .filter-actions { display: flex; gap: .6rem; margin-top: 1.1rem; flex-wrap: wrap; }
-    .filter-check { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: var(--dark); font-weight: 500; padding: .68rem 0; }
 
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .summary-grid.three-col { grid-template-columns: repeat(3, 1fr); }
     .stat-card { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); padding: 1.15rem 1.3rem; box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05); }
     .stat-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .4rem; }
     .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--dark); line-height: 1.1; }
@@ -46,10 +44,7 @@
     .stat-card.accent-amber .stat-value { color: var(--accent); }
     .stat-card.accent-green .stat-value { color: var(--green-600); }
 
-    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-    .charts-grid.two-col { grid-template-columns: 1fr 1fr; }
     .chart-box { position: relative; height: 300px; }
-    .timing-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
 
     .report-table-wrap { overflow-x: auto; }
     table.report-table { width: 100%; border-collapse: collapse; font-size: .84rem; white-space: nowrap; }
@@ -71,9 +66,22 @@
 
     .section-heading { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 1.75rem 0 .75rem; }
 
+    /* Table pagination (10 rows per page) */
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1rem; }
+    .pagination-info { font-size: .8rem; color: var(--muted); }
+    .pagination-links { display: flex; gap: .35rem; align-items: center; }
+    .pagination-links button {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 32px; height: 32px; padding: 0 .4rem; border-radius: 8px; font-size: .8rem; font-weight: 600; font-family: inherit;
+        border: 1.5px solid var(--border); background: transparent; color: var(--muted); cursor: pointer;
+    }
+    .pagination-links button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: rgba(220,38,38,0.04); }
+    .pagination-links button:disabled { opacity: .4; cursor: default; }
+    .pagination-links button.active-page { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .pagination-links span { color: var(--muted); font-size: .8rem; padding: 0 .15rem; }
+
     @media (max-width: 900px) {
-        .type-select-grid { grid-template-columns: 1fr; }
-        .charts-grid, .charts-grid.two-col { grid-template-columns: 1fr; }
+        .summary-grid.three-col { grid-template-columns: 1fr; }
     }
 </style>
 @endsection
@@ -83,28 +91,26 @@
 <input type="hidden" name="type" value="{{ $type }}">
 
 {{-- ── REQ056: Report Type Selector ─────────────────────────────── --}}
-<div class="type-select-grid">
-    <a href="{{ route('reports.index', ['type' => 'sales']) }}" class="type-card {{ $type === 'sales' ? 'active' : '' }}">
-        <div class="type-card-icon" style="background:linear-gradient(135deg,#DC2626,#F97316)"><i class="fas fa-sack-dollar"></i></div>
-        <div class="type-card-title">Sales Report</div>
-        <div class="type-card-desc">View revenue and sales performance from completed transactions.</div>
+<nav class="report-tabs" aria-label="Report type">
+    <a href="{{ route('reports.index', ['type' => 'sales']) }}" class="report-tab {{ $type === 'sales' ? 'active' : '' }}"
+       @if($type === 'sales') aria-current="page" @endif title="Revenue and sales performance from completed transactions">
+        <i class="fas fa-sack-dollar"></i> Sales Report
     </a>
-    <a href="{{ route('reports.index', ['type' => 'inventory']) }}" class="type-card {{ $type === 'inventory' ? 'active' : '' }}">
-        <div class="type-card-icon" style="background:linear-gradient(135deg,#F59E0B,#F97316)"><i class="fas fa-boxes-stacked"></i></div>
-        <div class="type-card-title">Inventory Report</div>
-        <div class="type-card-desc">View current RTC raw meat and beverage stock information.</div>
+    <a href="{{ route('reports.index', ['type' => 'inventory']) }}" class="report-tab {{ $type === 'inventory' ? 'active' : '' }}"
+       @if($type === 'inventory') aria-current="page" @endif title="Current RTC raw meat and beverage stock information">
+        <i class="fas fa-boxes-stacked"></i> Inventory Report
     </a>
-    <a href="{{ route('reports.index', ['type' => 'orders']) }}" class="type-card {{ $type === 'orders' ? 'active' : '' }}">
-        <div class="type-card-icon" style="background:linear-gradient(135deg,#111827,#374151)"><i class="fas fa-clipboard-list"></i></div>
-        <div class="type-card-title">Order Performance</div>
-        <div class="type-card-desc">View order volume, statuses, and fulfillment performance.</div>
+    <a href="{{ route('reports.index', ['type' => 'orders']) }}" class="report-tab {{ $type === 'orders' ? 'active' : '' }}"
+       @if($type === 'orders') aria-current="page" @endif title="Order volume, statuses, and fulfillment performance">
+        <i class="fas fa-clipboard-list"></i> Order Performance
     </a>
-</div>
+</nav>
 
 {{-- ── REQ057: Filters ──────────────────────────────────────────── --}}
 <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-filter" style="color:var(--primary);margin-right:.4rem"></i>Report Generation Filters</h3>
+        <a href="{{ route('reports.index', ['type' => $type]) }}" class="btn btn-outline btn-sm"><i class="fas fa-rotate-left"></i> Reset Filters</a>
     </div>
     <div class="card-body">
         <div class="filter-grid">
@@ -143,10 +149,6 @@
                         <option value="monthly" @selected($filters['chart_interval'] === 'monthly')>Monthly</option>
                     </select>
                 </div>
-                <label class="filter-check">
-                    <input type="checkbox" name="include_unpaid" value="1" @checked($filters['include_unpaid']) onchange="autoSubmit()">
-                    Include Cancelled / Unpaid Orders
-                </label>
             @elseif($type === 'inventory')
                 <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Category</label>
@@ -177,10 +179,6 @@
                 </div>
             @endif
         </div>
-
-        <div class="filter-actions">
-            <a href="{{ route('reports.index', ['type' => $type]) }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset Filters</a>
-        </div>
     </div>
 </div>
 
@@ -194,52 +192,15 @@
 @if($type === 'sales')
     <div class="summary-grid">
         <div class="stat-card accent-primary"><div class="stat-label">Total Sales</div><div class="stat-value">₱{{ number_format($data['summary']['total_sales'], 2) }}</div></div>
-        <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value">{{ number_format($data['summary']['transaction_count']) }}</div></div>
-        <div class="stat-card"><div class="stat-label">Avg. Transaction Value</div><div class="stat-value">₱{{ number_format($data['summary']['average_transaction'], 2) }}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Purchases</div><div class="stat-value">₱{{ number_format($data['summary']['total_purchases'], 2) }}</div></div>
         <div class="stat-card accent-amber"><div class="stat-label">Total Discounts</div><div class="stat-value">₱{{ number_format($data['summary']['total_discounts'], 2) }}</div></div>
         <div class="stat-card accent-green"><div class="stat-label">Net Sales</div><div class="stat-value">₱{{ number_format($data['summary']['net_sales'], 2) }}</div></div>
+        @php $grossProfit = $data['summary']['gross_profit']; @endphp
+        <div class="stat-card {{ $grossProfit < 0 ? 'accent-primary' : 'accent-green' }}" title="Net Sales minus Total Purchases"><div class="stat-label">Gross Profit</div><div class="stat-value">{{ $grossProfit < 0 ? '−' : '' }}₱{{ number_format(abs($grossProfit), 2) }}</div></div>
     </div>
 
-    <div class="charts-grid">
-        <div class="card"><div class="card-header"><h3 class="card-title">Sales Performance</h3></div>
-            <div class="card-body"><div class="chart-box"><canvas id="salesChart"></canvas></div></div>
-        </div>
-        <div class="card"><div class="card-header"><h3 class="card-title">At a Glance</h3></div>
-            <div class="card-body">
-                <p style="font-size:.85rem;color:var(--muted);line-height:1.8">
-                    Showing <strong>{{ $data['summary']['transaction_count'] }}</strong> completed transaction(s) for
-                    <strong>{{ $rangeLabel }}</strong>.<br>
-                    Net sales reflect paid transactions only, after discounts.
-                    @if($filters['include_unpaid'])
-                        <br><br><span style="color:var(--amber-700)"><i class="fas fa-triangle-exclamation"></i> Cancelled/unpaid orders are shown in the table below for visibility, but are excluded from all totals.</span>
-                    @endif
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="margin-bottom:1.5rem">
-        <div class="card-header"><h3 class="card-title"><i class="fas fa-ranking-star" style="color:var(--primary);margin-right:.4rem"></i>Top Selling Items</h3></div>
-        <div class="card-body">
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
-                    <tbody>
-                        @forelse($data['top_items'] as $i => $item)
-                            <tr>
-                                <td>{{ $i + 1 }}</td>
-                                <td>{{ $item['item_name'] }}</td>
-                                <td>{{ ucfirst($item['category']) }}</td>
-                                <td>{{ number_format($item['quantity_sold']) }}</td>
-                                <td>₱{{ number_format($item['revenue'], 2) }}</td>
-                            </tr>
-                        @empty
-                            <tr class="empty-row"><td colspan="5">No items sold for the selected filters.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="card" style="margin-bottom:1.5rem"><div class="card-header"><h3 class="card-title">Sales Performance</h3></div>
+        <div class="card-body"><div class="chart-box"><canvas id="salesChart"></canvas></div></div>
     </div>
 
     <div class="card">
@@ -285,45 +246,34 @@
     </div>
 
 @elseif($type === 'inventory')
-    <div class="summary-grid">
+    <div class="summary-grid three-col">
         <div class="stat-card"><div class="stat-label">Total Inventory Items</div><div class="stat-value">{{ $data['summary']['total_items'] }}</div></div>
         <div class="stat-card accent-amber"><div class="stat-label">Low Stock Items</div><div class="stat-value">{{ $data['summary']['low_stock_items'] }}</div></div>
         <div class="stat-card accent-primary"><div class="stat-label">Out of Stock Items</div><div class="stat-value">{{ $data['summary']['out_of_stock_items'] }}</div></div>
-        <div class="stat-card"><div class="stat-label">RTC Items</div><div class="stat-value">{{ $data['summary']['rtc_items'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">Raw Meat Items</div><div class="stat-value">{{ $data['summary']['raw_meat_items'] }}</div></div>
         <div class="stat-card"><div class="stat-label">Beverage Items</div><div class="stat-value">{{ $data['summary']['beverage_items'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">RTC Items</div><div class="stat-value">{{ $data['summary']['rtc_items'] }}</div></div>
     </div>
 
-    <div class="charts-grid two-col">
-        <div class="card"><div class="card-header"><h3 class="card-title">Stock Status Distribution</h3></div>
-            <div class="card-body"><div class="chart-box"><canvas id="inventoryChart"></canvas></div></div>
+    <div class="card" style="margin-bottom:1.5rem"><div class="card-header"><h3 class="card-title">Stock Status Distribution</h3></div>
+        <div class="card-body"><div class="chart-box"><canvas id="inventoryChart"></canvas></div></div>
+    </div>
+
+    <div class="table-toolbar">
+        <div class="input-wrap table-search">
+            <span class="input-icon"><i class="fas fa-magnifying-glass"></i></span>
+            <input type="text" name="search" id="searchInput" class="form-input" placeholder="Search item name..." value="{{ $filters['search'] }}">
         </div>
-        <div class="card"><div class="card-header"><h3 class="card-title">At a Glance</h3></div>
+        <div style="display:flex;gap:.6rem">
+            <button type="submit" formaction="{{ route('reports.print') }}" formtarget="_blank" class="btn btn-outline"><i class="fas fa-print"></i> Print Report</button>
+            <button type="submit" formaction="{{ route('reports.export') }}" class="btn btn-secondary"><i class="fas fa-file-csv"></i> Export CSV</button>
+        </div>
+    </div>
+
+    @if($filters['category'] !== 'beverage')
+        <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-drumstick-bite" style="color:var(--primary);margin-right:.4rem"></i>Raw Meat Inventory</h3></div>
             <div class="card-body">
-                <p style="font-size:.85rem;color:var(--muted);line-height:1.8">
-                    <strong>{{ $data['summary']['total_items'] }}</strong> tracked items —
-                    <strong style="color:var(--amber-700)">{{ $data['summary']['low_stock_items'] }}</strong> running low,
-                    <strong style="color:var(--red-600)">{{ $data['summary']['out_of_stock_items'] }}</strong> out of stock.<br><br>
-                    Only Pork, Beef, Chicken, Fish (RTC) and beverages are tracked — no ingredient-level inventory.
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <div class="table-toolbar">
-                <div class="input-wrap table-search">
-                    <span class="input-icon"><i class="fas fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" id="searchInput" class="form-input" placeholder="Search item name..." value="{{ $filters['search'] }}">
-                </div>
-                <div style="display:flex;gap:.6rem">
-                    <button type="submit" formaction="{{ route('reports.print') }}" formtarget="_blank" class="btn btn-outline"><i class="fas fa-print"></i> Print Report</button>
-                    <button type="submit" formaction="{{ route('reports.export') }}" class="btn btn-secondary"><i class="fas fa-file-csv"></i> Export CSV</button>
-                </div>
-            </div>
-
-            @if($filters['category'] !== 'beverage')
-                <div class="section-heading">RTC Raw Meat</div>
                 <div class="report-table-wrap">
                     <table class="report-table report-searchable">
                         <thead><tr>
@@ -347,10 +297,14 @@
                         </tbody>
                     </table>
                 </div>
-            @endif
+            </div>
+        </div>
+    @endif
 
-            @if($filters['category'] !== 'rtc')
-                <div class="section-heading">Beverage Inventory</div>
+    @if($filters['category'] !== 'rtc')
+        <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-bottle-water" style="color:var(--primary);margin-right:.4rem"></i>Beverage Inventory</h3></div>
+            <div class="card-body">
                 <div class="report-table-wrap">
                     <table class="report-table report-searchable">
                         <thead><tr><th>Beverage Name</th><th>Category</th><th>Current Quantity</th><th>Stock Threshold</th><th>Status</th></tr></thead>
@@ -369,9 +323,40 @@
                         </tbody>
                     </table>
                 </div>
-            @endif
+            </div>
+        </div>
+    @endif
 
-            <div class="section-heading">Inventory Transaction Information ({{ $rangeLabel }})</div>
+    @if($filters['category'] !== 'beverage')
+        <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-utensils" style="color:var(--primary);margin-right:.4rem"></i>RTC Inventory</h3></div>
+            <div class="card-body">
+                <div class="report-table-wrap">
+                    <table class="report-table report-searchable">
+                        <thead><tr><th>Item Name</th><th>RTC Servings</th><th>Portion Size</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @forelse($data['rtc_item_rows'] as $row)
+                                <tr>
+                                    <td>{{ $row['item_name'] }}</td>
+                                    <td>{{ number_format($row['servings'], 0) }}</td>
+                                    <td>@if($row['portion_size'] !== null){{ number_format($row['portion_size'], 2) }} @unit($row['portion_unit'])/serving @else — @endif</td>
+                                    <td><span class="badge badge-{{ str_replace('_', '', $row['status_key']) }}">{{ $row['status'] }}</span></td>
+                                </tr>
+                            @empty
+                                <tr class="empty-row"><td colspan="4">No RTC items found.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-right-left" style="color:var(--primary);margin-right:.4rem"></i>Inventory Transaction Information</h3>
+            <span style="font-size:.82rem;color:var(--muted);font-weight:500">{{ $rangeLabel }}</span>
+        </div>
+        <div class="card-body">
             <div class="report-table-wrap">
                 <table class="report-table" id="reportTable">
                     <thead><tr><th>Date</th><th>Item</th><th>Qty Purchased</th><th>Qty Added/Adjusted</th><th>Transaction Type</th><th>Administrator</th><th>Timestamp</th></tr></thead>
@@ -398,29 +383,36 @@
 @else
     <div class="summary-grid">
         <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value">{{ $data['summary']['total_orders'] }}</div></div>
-        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value">{{ $data['summary']['pending_orders'] }}</div></div>
-        <div class="stat-card accent-amber"><div class="stat-label">Preparing</div><div class="stat-value">{{ $data['summary']['preparing_orders'] }}</div></div>
-        <div class="stat-card"><div class="stat-label">Ready</div><div class="stat-value">{{ $data['summary']['ready_orders'] }}</div></div>
-        <div class="stat-card accent-green"><div class="stat-label">Completed</div><div class="stat-value">{{ $data['summary']['completed_orders'] }}</div></div>
-        <div class="stat-card accent-primary"><div class="stat-label">Cancelled</div><div class="stat-value">{{ $data['summary']['cancelled_orders'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">Dine-In Orders</div><div class="stat-value">{{ $data['summary']['dine_in_orders'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">Take-Out Orders</div><div class="stat-value">{{ $data['summary']['takeout_orders'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">Advance Orders</div><div class="stat-value">{{ $data['summary']['advance_orders'] }}</div></div>
+        <div class="stat-card"><div class="stat-label">Pick-up Orders</div><div class="stat-value">{{ $data['summary']['pickup_orders'] }}</div></div>
     </div>
 
-    <div class="charts-grid two-col">
-        <div class="card"><div class="card-header"><h3 class="card-title">Order Type Distribution</h3></div>
-            <div class="card-body"><div class="chart-box"><canvas id="orderTypeChart"></canvas></div></div>
-        </div>
-        <div class="card"><div class="card-header"><h3 class="card-title">Order Status Distribution</h3></div>
-            <div class="card-body"><div class="chart-box"><canvas id="orderStatusChart"></canvas></div></div>
-        </div>
+    <div class="card" style="margin-bottom:1.5rem"><div class="card-header"><h3 class="card-title">Order Type Distribution</h3></div>
+        <div class="card-body"><div class="chart-box"><canvas id="orderTypeChart"></canvas></div></div>
     </div>
 
     <div class="card" style="margin-bottom:1.5rem">
-        <div class="card-header"><h3 class="card-title">Fulfillment Timing</h3></div>
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-ranking-star" style="color:var(--primary);margin-right:.4rem"></i>Top Selling Items</h3></div>
         <div class="card-body">
-            <div class="timing-row">
-                <div class="stat-card"><div class="stat-label">Avg. Order Processing Time</div><div class="stat-value" style="font-size:1.2rem">{{ $data['timing']['avg_processing_minutes'] !== null ? $data['timing']['avg_processing_minutes'].' min' : 'N/A' }}</div></div>
-                <div class="stat-card"><div class="stat-label">Avg. Preparation → Handoff Time</div><div class="stat-value" style="font-size:1.2rem">{{ $data['timing']['avg_preparation_minutes'] !== null ? $data['timing']['avg_preparation_minutes'].' min' : 'N/A' }}</div></div>
-                <div class="stat-card"><div class="stat-label">Avg. Completion Time</div><div class="stat-value" style="font-size:1.2rem">{{ $data['timing']['avg_completion_minutes'] !== null ? $data['timing']['avg_completion_minutes'].' min' : 'N/A' }}</div></div>
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+                    <tbody>
+                        @forelse($data['top_items'] as $i => $item)
+                            <tr>
+                                <td>{{ $i + 1 }}</td>
+                                <td>{{ $item['item_name'] }}</td>
+                                <td>{{ ucfirst($item['category']) }}</td>
+                                <td>{{ number_format($item['quantity_sold']) }}</td>
+                                <td>₱{{ number_format($item['revenue'], 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr class="empty-row"><td colspan="5">No items sold for the selected filters.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -500,23 +492,78 @@ function submitIfCustomRangeComplete() {
     }
 }
 
-// ── REQ057/live search: 300ms-debounced client-side row filter ──
+// ── REQ057/live search + pagination: every report table shows 10 rows per page;
+//    the 300ms-debounced search narrows the rows first, then they are paged. ──
 (function () {
+    var PER_PAGE = 10;
     var input = document.getElementById('searchInput');
+    var pagers = [];
+
+    document.querySelectorAll('table.report-table').forEach(function (table) {
+        var rows = Array.prototype.filter.call(table.querySelectorAll('tbody tr'), function (row) {
+            return !row.classList.contains('empty-row');
+        });
+        if (!rows.length) return;
+
+        var bar = document.createElement('div');
+        bar.className = 'pagination-bar';
+        bar.innerHTML = '<div class="pagination-info"></div><div class="pagination-links"></div>';
+        (table.closest('.report-table-wrap') || table).insertAdjacentElement('afterend', bar);
+
+        var page = 1;
+
+        function pageButton(label, target, opts) {
+            var btn = document.createElement('button');
+            btn.type = 'button';   // the page sits inside the filter form — never submit it
+            btn.innerHTML = label;
+            if (opts && opts.active) btn.className = 'active-page';
+            if (opts && opts.disabled) btn.disabled = true;
+            btn.addEventListener('click', function () { page = target; render(); });
+            return btn;
+        }
+
+        function render() {
+            var term = input ? input.value.trim().toLowerCase() : '';
+            var matched = rows.filter(function (row) {
+                return term === '' || row.textContent.toLowerCase().indexOf(term) !== -1;
+            });
+            var pages = Math.max(1, Math.ceil(matched.length / PER_PAGE));
+            page = Math.min(Math.max(1, page), pages);
+            var start = (page - 1) * PER_PAGE;
+
+            rows.forEach(function (row) { row.style.display = 'none'; });
+            matched.slice(start, start + PER_PAGE).forEach(function (row) { row.style.display = ''; });
+
+            bar.querySelector('.pagination-info').textContent = matched.length
+                ? 'Showing ' + (start + 1) + '–' + Math.min(start + PER_PAGE, matched.length) + ' of ' + matched.length
+                : 'No matching rows';
+
+            var links = bar.querySelector('.pagination-links');
+            links.innerHTML = '';
+            if (pages > 1) {
+                links.appendChild(pageButton('<i class="fas fa-chevron-left"></i>', page - 1, { disabled: page === 1 }));
+                for (var p = 1; p <= pages; p++) {
+                    if (p === 1 || p === pages || Math.abs(p - page) <= 1) {
+                        links.appendChild(pageButton(p, p, { active: p === page }));
+                    } else if (p === page - 2 || p === page + 2) {
+                        var gap = document.createElement('span');
+                        gap.textContent = '…';
+                        links.appendChild(gap);
+                    }
+                }
+                links.appendChild(pageButton('<i class="fas fa-chevron-right"></i>', page + 1, { disabled: page === pages }));
+            }
+        }
+
+        pagers.push(function () { page = 1; render(); });
+        render();
+    });
+
     if (!input) return;
     var timer = null;
     input.addEventListener('input', function () {
         clearTimeout(timer);
-        var term = input.value.trim().toLowerCase();
-        timer = setTimeout(function () {
-            document.querySelectorAll('table.report-table').forEach(function (table) {
-                table.querySelectorAll('tbody tr').forEach(function (row) {
-                    if (row.classList.contains('empty-row')) return;
-                    var text = row.textContent.toLowerCase();
-                    row.style.display = (term === '' || text.indexOf(term) !== -1) ? '' : 'none';
-                });
-            });
-        }, 300);
+        timer = setTimeout(function () { pagers.forEach(function (reset) { reset(); }); }, 300);
     });
 })();
 
@@ -542,7 +589,7 @@ new Chart(document.getElementById('inventoryChart'), {
         labels: ['In Stock', 'Low Stock', 'Out of Stock'],
         datasets: [{
             data: [
-                {{ max($data['summary']['total_items'] - $data['summary']['low_stock_items'] - $data['summary']['out_of_stock_items'], 0) }},
+                {{ max($data['summary']['raw_meat_items'] + $data['summary']['beverage_items'] - $data['summary']['low_stock_items'] - $data['summary']['out_of_stock_items'], 0) }},
                 {{ $data['summary']['low_stock_items'] }},
                 {{ $data['summary']['out_of_stock_items'] }}
             ],
@@ -557,17 +604,9 @@ new Chart(document.getElementById('orderTypeChart'), {
     type: 'doughnut',
     data: {
         labels: @json($data['order_type_chart']['labels']),
-        datasets: [{ data: @json($data['order_type_chart']['data']), backgroundColor: ['#3B82F6', '#DC2626', '#F59E0B'], borderWidth: 0 }]
+        datasets: [{ data: @json($data['order_type_chart']['data']), backgroundColor: ['#DC2626', '#F59E0B', '#3B82F6', '#16A34A'], borderWidth: 0 }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-});
-new Chart(document.getElementById('orderStatusChart'), {
-    type: 'bar',
-    data: {
-        labels: @json($data['order_status_chart']['labels']),
-        datasets: [{ label: 'Orders', data: @json($data['order_status_chart']['data']), backgroundColor: @json($data['order_status_chart']['colors']) }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
 });
 @endif
 </script>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatus;
@@ -77,7 +78,13 @@ class ReportService
         $totalDiscounts   = (float) $payments->sum(fn (Payment $p) => (float) ($p->invoice->discount_amount ?? 0));
         $netSales         = (float) $payments->sum(fn (Payment $p) => (float) ($p->invoice->final_total ?? $p->amount_paid));
         $transactionCount = $payments->count();
-        $avgTransaction   = $transactionCount > 0 ? $netSales / $transactionCount : 0.0;
+
+        // Total Purchases: what was spent stocking in inventory over the same period.
+        // Menu categories map onto stock types (food is made from RTC raw meat).
+        $totalPurchases = (float) PurchaseOrder::query()
+            ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
+            ->when($category !== 'all', fn ($q) => $q->where('po_type', $category === 'beverage' ? 'beverage' : 'rtc'))
+            ->sum('total_cost');
 
         $rows = $payments->map(fn (Payment $p) => [
             'transaction_number' => $p->transaction_number,
@@ -138,13 +145,13 @@ class ReportService
             'summary' => [
                 'total_sales'         => $totalSales,
                 'transaction_count'   => $transactionCount,
-                'average_transaction' => $avgTransaction,
+                'total_purchases'     => $totalPurchases,
                 'total_discounts'     => $totalDiscounts,
                 'net_sales'           => $netSales,
+                'gross_profit'        => $netSales - $totalPurchases,
             ],
             'rows'      => $allRows,
             'chart'     => $this->buildSalesChart($payments, $from, $to, $interval),
-            'top_items' => $this->buildTopSellingItems($payments, $category),
             'meta'  => [
                 'from' => $from, 'to' => $to, 'category' => $category,
                 'include_unpaid' => $includeUnpaid, 'interval' => $interval,
@@ -192,17 +199,17 @@ class ReportService
     }
 
     /**
-     * Ranks menu items by units sold across the payments already resolved
-     * for the Sales Report — same paid-only, date/category/search-filtered
-     * set backing the summary and table, so the ranking never drifts from
+     * Ranks menu items by units sold across the paid orders already resolved
+     * for the Order Performance Report — same date/order type/category/search
+     * filters backing the summary and table, so the ranking never drifts from
      * what the Administrator is already looking at.
      */
-    private function buildTopSellingItems(Collection $payments, string $category, int $limit = 10): array
+    private function buildTopSellingItems(Collection $orders, string $menuCategoryId, int $limit = 10): array
     {
-        $lines = $payments->flatMap(fn (Payment $p) => $p->order?->details ?? collect());
+        $lines = $orders->where('payment_status', 'paid')->flatMap(fn (Order $o) => $o->details);
 
-        if ($category !== 'all') {
-            $lines = $lines->filter(fn (OrderDetail $d) => $d->menuItem?->item_type === $category);
+        if ($menuCategoryId !== 'all') {
+            $lines = $lines->filter(fn (OrderDetail $d) => (string) $d->menuItem?->category_id === $menuCategoryId);
         }
 
         return $lines->groupBy(fn (OrderDetail $d) => $d->menu_item_id ?? $d->item_name)
@@ -264,12 +271,35 @@ class ReportService
             'status_key' => $i->stock_status,
         ])->values();
 
+        // RTC items: menu dishes tracked by ready-to-cook servings (same list as the RTC Inventory page).
+        $rtcItemRows = MenuItem::rtcTracked()->orderBy('menu_name')->get()
+            ->when($search !== '', fn (Collection $c) => $c->filter(fn (MenuItem $m) => stripos($m->menu_name, $search) !== false))
+            ->map(fn (MenuItem $m) => [
+                'item_name'    => $m->menu_name,
+                'servings'     => (float) $m->rtc_servings,
+                'portion_size' => $m->rtc_quantity !== null ? (float) $m->rtc_quantity : null,
+                'portion_unit' => $m->rtc_unit,
+                'status'       => match ($m->rtc_servings_status) {
+                    'low_stock'    => 'Low Servings',
+                    'out_of_stock' => 'Out of Servings',
+                    default        => 'Available',
+                },
+                'status_key'   => $m->rtc_servings_status,
+            ])->values();
+
+        // Same counts as the Dashboard's Inventory Items card: the total is raw meat +
+        // beverages + RTC items; low/out of stock cover raw meat and beverages only.
+        $rawMeatCount  = InventoryItem::rtc()->count();
+        $beverageCount = InventoryItem::beverage()->count();
+        $rtcItemCount  = MenuItem::rtcTracked()->count();
+
         $summary = [
-            'total_items'        => InventoryItem::count(),
+            'total_items'        => $rawMeatCount + $beverageCount + $rtcItemCount,
+            'raw_meat_items'     => $rawMeatCount,
+            'beverage_items'     => $beverageCount,
+            'rtc_items'          => $rtcItemCount,
             'low_stock_items'    => InventoryItem::lowStock()->count(),
             'out_of_stock_items' => InventoryItem::outOfStock()->count(),
-            'rtc_items'          => InventoryItem::rtc()->count(),
-            'beverage_items'     => InventoryItem::beverage()->count(),
         ];
 
         $stockIns = PurchaseOrder::with(['inventoryItem', 'recorder.staff'])
@@ -326,6 +356,7 @@ class ReportService
             'summary'       => $summary,
             'rtc_rows'      => $rtcRows,
             'beverage_rows' => $beverageRows,
+            'rtc_item_rows' => $rtcItemRows,
             'transactions'  => $transactions,
             'meta'          => ['from' => $from, 'to' => $to, 'category' => $category],
         ];
@@ -341,7 +372,7 @@ class ReportService
         $search         = trim((string) ($filters['search'] ?? ''));
 
         $query = Order::whereBetween('created_at', [$from, $to])
-            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'invoice.payment']);
+            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'invoice.payment', 'details.menuItem']);
 
         if ($orderType !== 'all') {
             $query->where('order_type', $orderType);
@@ -361,18 +392,19 @@ class ReportService
 
         $statusCounts = $orders->groupBy(fn (Order $o) => $o->status_name)->map->count();
 
+        // Online orders are either Advance Orders or same-day Pick-Ups, but checkout saves
+        // both as order_type "online". An Advance Order is the one with a headcount
+        // (party_size) or a pick-up day later than the day it was placed.
+        $online  = $orders->where('order_type', 'online');
+        $advance = $online->filter(fn (Order $o) => $o->party_size !== null
+            || ($o->pickup_at && ! $o->pickup_at->isSameDay($o->created_at)));
+
         $summary = [
-            'total_orders'     => $orders->count(),
-            'pending_orders'   => $statusCounts->get('Pending', 0),
-            'preparing_orders' => $statusCounts->get('Processing', 0),
-            'ready_orders'     => $statusCounts->get('Ready', 0),
-            // Payment can land before or after an order is actually
-            // served/packaged (see CashierController::finalizeOrderPayment,
-            // which never touches order_status_id), so "Completed" is no
-            // longer a status_name to count on — payment_status is what
-            // actually means "done" now.
-            'completed_orders' => $orders->where('payment_status', 'paid')->count(),
-            'cancelled_orders' => $statusCounts->get('Cancelled', 0),
+            'total_orders'   => $orders->count(),
+            'dine_in_orders' => $orders->where('order_type', 'dine_in')->count(),
+            'takeout_orders' => $orders->where('order_type', 'takeout')->count(),
+            'advance_orders' => $advance->count(),
+            'pickup_orders'  => $online->count() - $advance->count(),
         ];
 
         $rows = $orders->map(function (Order $o) {
@@ -394,11 +426,12 @@ class ReportService
         })->values();
 
         $orderTypeChart = [
-            'labels' => ['Online', 'Dine-In', 'Take-Out'],
+            'labels' => ['Dine-In', 'Take-Out', 'Advance', 'Pick-up'],
             'data'   => [
-                $orders->where('order_type', 'online')->count(),
-                $orders->where('order_type', 'dine_in')->count(),
-                $orders->where('order_type', 'takeout')->count(),
+                $summary['dine_in_orders'],
+                $summary['takeout_orders'],
+                $summary['advance_orders'],
+                $summary['pickup_orders'],
             ],
         ];
 
@@ -429,6 +462,7 @@ class ReportService
             'summary'            => $summary,
             'rows'               => $rows,
             'order_type_chart'   => $orderTypeChart,
+            'top_items'          => $this->buildTopSellingItems($orders, (string) $menuCategoryId),
             'order_status_chart' => $orderStatusChart,
             'timing'             => $timing,
             'meta'               => [
