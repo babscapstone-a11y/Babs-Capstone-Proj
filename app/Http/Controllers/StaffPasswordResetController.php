@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PasswordResetOtp;
 use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
+use App\Notifications\PasswordResetOtpNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class StaffPasswordResetController extends Controller
@@ -26,7 +28,7 @@ class StaffPasswordResetController extends Controller
         return view('users.password-resets', compact('requests', 'pendingCount'));
     }
 
-    /* ── REQ011: Approve → send Laravel reset email ─────────── */
+    /* ── REQ011: Approve → email a 6-digit reset code ───────── */
 
     public function approve(StaffPasswordResetRequest $passwordResetRequest): RedirectResponse
     {
@@ -36,21 +38,30 @@ class StaffPasswordResetController extends Controller
             return back()->with('error', 'This request has already been processed.');
         }
 
+        $user    = $passwordResetRequest->user;
+        $minutes = PasswordResetOtp::APPROVED_EXPIRES_MINUTES;
+
+        // Send the code first: if the email fails, the request stays pending so it can be retried.
+        try {
+            $user->notify(new PasswordResetOtpNotification(
+                PasswordResetOtp::issue($user->email, $minutes),
+                $minutes,
+                URL::temporarySignedRoute('password.otp.enter', now()->addMinutes($minutes), ['email' => $user->email]),
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+            PasswordResetOtp::where('email', $user->email)->delete();
+
+            return back()->with('error', 'The reset code email could not be sent, so the request is still pending. Check your mail configuration and try again.');
+        }
+
         $passwordResetRequest->update([
             'status'       => 'approved',
             'processed_by' => auth()->id(),
             'processed_at' => now(),
         ]);
 
-        $status = Password::sendResetLink(
-            ['email' => $passwordResetRequest->user->email]
-        );
-
-        if ($status !== Password::RESET_LINK_SENT) {
-            return back()->with('error', 'Request approved but failed to send the reset email. Check your mail configuration.');
-        }
-
-        return back()->with('success', "Password reset email sent to {$passwordResetRequest->user->email}.");
+        return back()->with('success', "A 6-digit password reset code was emailed to {$user->email}.");
     }
 
     /* ── REQ011: Reject ─────────────────────────────────────── */

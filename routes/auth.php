@@ -49,6 +49,10 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:6,1')
         ->name('password.otp.verify.store');
 
+    Route::get('forgot-password/enter-code', [OtpPasswordResetController::class, 'enterFromEmail'])
+        ->middleware('signed')
+        ->name('password.otp.enter');
+
     Route::get('forgot-password/reset', [OtpPasswordResetController::class, 'showResetForm'])
         ->name('password.otp.reset');
 

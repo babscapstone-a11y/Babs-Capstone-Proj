@@ -34,6 +34,17 @@ class OtpPasswordResetController extends Controller
     }
 
     /**
+     * Signed "Enter Code" link from the email sent when an admin approves a staff
+     * reset request: remembers whose code it is and opens the "enter the code" view.
+     */
+    public function enterFromEmail(Request $request): RedirectResponse
+    {
+        $request->session()->put('password_reset_otp_email', (string) $request->query('email'));
+
+        return redirect()->route('password.otp.verify');
+    }
+
+    /**
      * Verify the submitted code.
      *
      * @throws ValidationException
@@ -59,7 +70,9 @@ class OtpPasswordResetController extends Controller
         }
 
         if (! Hash::check($request->otp, $record->otp)) {
-            $record->increment('attempts');
+            // expires_at is re-sent on purpose: MySQL/MariaDB auto-updates that timestamp column to
+            // "now" on any other change, which would expire the code after one wrong attempt.
+            $record->increment('attempts', 1, ['expires_at' => $record->expires_at]);
 
             if ($record->attempts >= self::MAX_ATTEMPTS) {
                 $record->delete();
