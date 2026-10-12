@@ -466,6 +466,21 @@
             <form method="POST" action="{{ route('login') }}" id="loginForm" novalidate>
                 @csrf
 
+                <!-- Sign-in error, shown above the fields -->
+                @error('login')
+                    <div style="margin-bottom:.9rem">
+                        <div class="field-error" id="login-error" role="alert" style="margin-top:0">
+                            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                            {{ $message }}
+                        </div>
+                        @if(session('registration_otp_email'))
+                            <a href="{{ route('register.otp.verify') }}" style="display:inline-block;margin-top:.4rem;color:var(--primary);font-weight:600;font-size:.82rem;text-decoration:underline;">
+                                Enter verification code
+                            </a>
+                        @endif
+                    </div>
+                @enderror
+
                 <!-- Email or Username -->
                 <div class="field-block">
                     <label class="form-label" for="login">Email or Username</label>
@@ -485,17 +500,6 @@
                             aria-invalid="{{ $errors->has('login') ? 'true' : 'false' }}"
                         >
                     </div>
-                    @error('login')
-                        <div class="field-error" id="login-error" role="alert">
-                            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
-                            {{ $message }}
-                        </div>
-                        @if(session('registration_otp_email'))
-                            <a href="{{ route('register.otp.verify') }}" style="display:inline-block;margin-top:.4rem;color:var(--primary);font-weight:600;font-size:.82rem;text-decoration:underline;">
-                                Enter verification code
-                            </a>
-                        @endif
-                    @enderror
                 </div>
 
                 <!-- Password -->
