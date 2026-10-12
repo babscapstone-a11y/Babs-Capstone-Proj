@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CancellationRequest;
 use App\Models\InventoryItem;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RestaurantDowntime;
@@ -87,13 +88,21 @@ class DashboardController extends Controller
             ->get();
 
         // ── Needs Restocking (out of stock first, then low stock) ──
-        $restockCount    = InventoryItem::outOfStock()->count() + InventoryItem::lowStock()->count();
+        $stockLow        = InventoryItem::lowStock()->count();
+        $stockOut        = InventoryItem::outOfStock()->count();
+        $restockCount    = $stockOut + $stockLow;
         $needsRestocking = InventoryItem::outOfStock()
             ->union(InventoryItem::lowStock())
             ->orderBy('item_type')
             ->orderBy('item_name')
             ->limit(8)
             ->get();
+
+        // ── Inventory Summary card (same counts as the Stock Inventory page) ──
+        $rawMeatCount  = InventoryItem::rtc()->count();
+        $beverageCount = InventoryItem::beverage()->count();
+        $rtcItemCount  = MenuItem::rtcTracked()->count();
+        $summaryTotal  = $rawMeatCount + $beverageCount + $rtcItemCount;
 
         $activeDowntime   = RestaurantDowntime::current();
         $upcomingDowntime = RestaurantDowntime::next();
@@ -105,7 +114,8 @@ class DashboardController extends Controller
             'salesChartLabels', 'salesChartData',
             'todaySales', 'todayTransactions', 'activeOrders', 'completedOrdersToday', 'ordersChartData',
             'inventoryTotal', 'inventoryOut', 'inventoryLow', 'inventoryOk', 'lowStockItems',
-            'needsRestocking', 'restockCount',
+            'needsRestocking', 'restockCount', 'stockLow', 'stockOut',
+            'rawMeatCount', 'beverageCount', 'rtcItemCount', 'summaryTotal',
             'activeDowntime', 'upcomingDowntime'
         ));
     }

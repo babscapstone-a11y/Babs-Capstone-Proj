@@ -98,6 +98,48 @@
     }
     .stat-placeholder { font-style: italic; }
 
+    /* ── Inventory summary card ─────────────────────────────── */
+    .inv-summary {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) 3fr minmax(150px, 1fr);
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(var(--ink-rgb),0.05);
+        overflow: hidden;
+        margin-bottom: 1.75rem;
+    }
+    .inv-big {
+        display: flex; flex-direction: column; justify-content: center;
+        padding: 1.35rem 1.4rem;
+        color: inherit; text-decoration: none;
+        transition: background .18s ease;
+    }
+    .inv-big .stat-value { font-size: 2.25rem; }
+    .inv-big .stat-label { margin-bottom: 0; }
+    .inv-middle {
+        display: flex; flex-direction: column;
+        border-left: 1.5px solid var(--border);
+        border-right: 1.5px solid var(--border);
+    }
+    .inv-row { display: flex; flex: 1; }
+    .inv-row + .inv-row { border-top: 1.5px solid var(--border); }
+    .inv-cell {
+        flex: 1;
+        display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+        padding: .95rem 1.15rem;
+        color: inherit; text-decoration: none;
+        transition: background .18s ease;
+    }
+    .inv-cell + .inv-cell { border-left: 1.5px solid var(--border); }
+    .inv-cell:hover, .inv-big:hover { background: var(--surface-2); }
+    .inv-cell-label {
+        display: flex; align-items: center; gap: .5rem;
+        font-size: .78rem; font-weight: 600; color: var(--text-2);
+    }
+    .inv-cell-label i { width: 1rem; text-align: center; }
+    .inv-cell-value { font-size: 1.3rem; font-weight: 800; color: var(--dark); line-height: 1; }
+
     /* ── Section headings ───────────────────────────────────── */
     .section-heading {
         font-size: .72rem; font-weight: 700; text-transform: uppercase;
@@ -212,6 +254,10 @@
     }
     @media (max-width: 700px) {
         .stats-grid    { grid-template-columns: 1fr; }
+        .inv-summary   { grid-template-columns: 1fr; }
+        .inv-middle    { border-left: none; border-right: none; border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); }
+        .inv-row       { flex-direction: column; }
+        .inv-cell + .inv-cell { border-left: none; border-top: 1.5px solid var(--border); }
         .welcome-banner { flex-direction: column; align-items: flex-start; }
         .welcome-meta { justify-content: flex-start; }
         .welcome-greeting { font-size: 1.25rem; }
@@ -360,6 +406,52 @@
         </div>
     </div>
 
+</div>
+
+{{-- Inventory Summary: total items, broken down by type and by stock status --}}
+<div class="section-heading anim-4">
+    <span><i class="fas fa-boxes-stacked" style="margin-right:.4rem;color:var(--primary)"></i> Inventory Items</span>
+    <a href="{{ route('inventory.index') }}" style="font-size:.75rem;color:var(--primary);font-weight:600;text-transform:none;letter-spacing:0">
+        View Inventory <i class="fas fa-arrow-right" style="font-size:.65rem"></i>
+    </a>
+</div>
+<div class="inv-summary anim-4">
+    <a href="{{ route('inventory.index') }}" class="inv-big">
+        <div class="stat-value">{{ $summaryTotal }}</div>
+        <div class="stat-label">Total Items</div>
+    </a>
+
+    <div class="inv-middle">
+        <div class="inv-row">
+            <a href="{{ route('inventory.rtc') }}" class="inv-cell">
+                <span class="inv-cell-label"><i class="fas fa-drumstick-bite" style="color:var(--blue-600)"></i> Raw</span>
+                <span class="inv-cell-value">{{ $rawMeatCount }}</span>
+            </a>
+            <a href="{{ route('inventory.beverages') }}" class="inv-cell">
+                <span class="inv-cell-label"><i class="fas fa-bottle-water" style="color:var(--green-600)"></i> Beverage</span>
+                <span class="inv-cell-value">{{ $beverageCount }}</span>
+            </a>
+            <a href="{{ route('inventory.rtc-inventory') }}" class="inv-cell">
+                <span class="inv-cell-label"><i class="fas fa-utensils" style="color:var(--blue-600)"></i> RTC</span>
+                <span class="inv-cell-value">{{ $rtcItemCount }}</span>
+            </a>
+        </div>
+        <div class="inv-row">
+            <a href="{{ route('inventory.restocking', ['status' => 'low_stock']) }}" class="inv-cell">
+                <span class="inv-cell-label"><i class="fas fa-triangle-exclamation" style="color:var(--amber-600)"></i> Low Stock</span>
+                <span class="inv-cell-value" style="color:var(--amber-600)">{{ $stockLow }}</span>
+            </a>
+            <a href="{{ route('inventory.restocking', ['status' => 'out_of_stock']) }}" class="inv-cell">
+                <span class="inv-cell-label"><i class="fas fa-circle-xmark" style="color:var(--red-600)"></i> Out of Stock</span>
+                <span class="inv-cell-value" style="color:var(--red-600)">{{ $stockOut }}</span>
+            </a>
+        </div>
+    </div>
+
+    <a href="{{ route('inventory.restocking') }}" class="inv-big">
+        <div class="stat-value" style="color:{{ $restockCount > 0 ? 'var(--red-600)' : 'var(--green-600)' }}">{{ $restockCount }}</div>
+        <div class="stat-label">Critical Items</div>
+    </a>
 </div>
 
 {{-- Needs Restocking (moved here from the Purchase Orders page) --}}
