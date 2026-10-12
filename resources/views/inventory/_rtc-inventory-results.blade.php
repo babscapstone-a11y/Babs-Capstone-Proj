@@ -8,8 +8,8 @@
                 <tr>
                     <th>#</th>
                     <th>Item Name</th>
-                    <th>RTC Servings</th>
-                    <th>Portion Size</th>
+                    <th style="text-align:center">RTC Servings</th>
+                    <th style="text-align:center">Portion Size</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -21,16 +21,16 @@
                     <td>
                         <div style="font-weight:700;color:var(--dark)">{{ $item->menu_name }}</div>
                     </td>
-                    <td>
+                    <td style="text-align:center">
                         @if($item->rtc_servings > 0)
                         <span style="font-weight:700;color:var(--blue-700)">{{ number_format($item->rtc_servings, 0) }}</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td style="text-align:center">
                         @if($item->rtc_quantity)
-                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 2) }}</span>
+                        <span style="font-size:.8rem">{{ number_format($item->rtc_quantity, 2) }}@unit($item->rtc_unit)</span>
                         @else
                         <span style="color:var(--muted);font-size:.8rem">Not set</span>
                         @endif
