@@ -39,9 +39,11 @@ class StockInController extends Controller
             'inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'quantity_purchased' => ['required', 'numeric', 'min:0.01'],
             'unit'              => ['required', 'string', 'max:50'],
-            'total_cost'        => ['nullable', 'numeric', 'min:0'],
+            'total_cost'        => ['required', 'numeric', 'min:0.01'],
             'purchase_date'     => ['required', 'date', 'before_or_equal:today'],
         ], [
+            'total_cost.required' => 'Please enter the total cost.',
+            'total_cost.min'      => 'Total cost must be greater than 0.',
             'purchase_date.before_or_equal' => 'The purchase date cannot be in the future.',
         ]);
 

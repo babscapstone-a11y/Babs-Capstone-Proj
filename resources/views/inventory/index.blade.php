@@ -344,8 +344,8 @@
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
-                        <label>Total Cost</label>
-                        <input type="number" class="no-spin" name="total_cost" id="siCost" step="0.01" min="0" placeholder="0.00" oninput="updateSIPreview()">
+                        <label>Total Cost <span style="color:var(--red-600)">*</span></label>
+                        <input type="number" class="no-spin" name="total_cost" id="siCost" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
                     </div>
                     <div class="field">
                         <label>Purchase Date <span style="color:var(--red-600)">*</span></label>
@@ -585,8 +585,8 @@ function proceedStockIn() {
         errBox.style.display = '';
         return;
     }
-    if (cost !== '' && parseFloat(cost) < 0) {
-        errBox.textContent = 'Total cost cannot be negative.';
+    if (cost === '' || !(parseFloat(cost) > 0)) {
+        errBox.textContent = 'Please enter a total cost greater than 0.';
         errBox.style.display = '';
         return;
     }
