@@ -22,6 +22,10 @@
 
 @section('styles')
 <style>
+    /* Custom Range dates: calendar in the admin red, field sized like the other filters */
+    :root { --cd-accent: var(--primary); --cd-accent-rgb: 220,38,38; }
+    .cd-field.report-date-btn { width: 100%; height: auto; padding: .68rem .9rem; border-radius: 12px; font-size: .9rem; }
+
     /* Report type tabs */
     .report-tabs { display: flex; gap: .25rem; margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--border); overflow-x: auto; overflow-y: hidden; }
     .report-tab {
@@ -125,11 +129,20 @@
 
             <div class="form-group" id="customStartWrap" style="margin-bottom:0;display:{{ $filters['date_range'] === 'custom' ? 'block' : 'none' }}">
                 <label class="form-label">Start Date</label>
-                <input type="date" name="start_date" id="startDateInput" class="form-select" value="{{ $filters['start_date'] }}" onchange="submitIfCustomRangeComplete()">
+                {{-- Calendar pop-up (partials/date-picker), same as the Downtime form --}}
+                <input type="hidden" name="start_date" id="startDateInput" value="{{ $filters['start_date'] }}">
+                <button type="button" class="cd-field report-date-btn" data-picker="date" data-for="startDateInput" data-placeholder="Start date"
+                        aria-haspopup="dialog" aria-label="Start date" onclick="DatePick.open(this)">
+                    <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                </button>
             </div>
             <div class="form-group" id="customEndWrap" style="margin-bottom:0;display:{{ $filters['date_range'] === 'custom' ? 'block' : 'none' }}">
                 <label class="form-label">End Date</label>
-                <input type="date" name="end_date" id="endDateInput" class="form-select" value="{{ $filters['end_date'] }}" onchange="submitIfCustomRangeComplete()">
+                <input type="hidden" name="end_date" id="endDateInput" value="{{ $filters['end_date'] }}" data-min="{{ $filters['start_date'] }}">
+                <button type="button" class="cd-field report-date-btn" data-picker="date" data-for="endDateInput" data-placeholder="End date"
+                        aria-haspopup="dialog" aria-label="End date" onclick="DatePick.open(this)">
+                    <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                </button>
             </div>
 
             @if($type === 'sales')
@@ -465,6 +478,8 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 @include('partials.chart-theme')
+@include('partials.clock-dial')
+@include('partials.date-picker')
 <script>
 // Every filter field auto-applies on change — no "Apply Filters" button needed.
 function autoSubmit() {
@@ -491,6 +506,16 @@ function submitIfCustomRangeComplete() {
         autoSubmit();
     }
 }
+
+// Picking a day in the calendar fires "change" on the hidden input
+document.getElementById('startDateInput').addEventListener('change', function () {
+    // Keep End Date on or after Start Date
+    var end = document.getElementById('endDateInput');
+    end.dataset.min = this.value;
+    if (this.value && end.value && end.value < this.value) DatePick.set('endDateInput', '');
+    submitIfCustomRangeComplete();
+});
+document.getElementById('endDateInput').addEventListener('change', submitIfCustomRangeComplete);
 
 // ── REQ057/live search + pagination: every report table shows 10 rows per page;
 //    the 300ms-debounced search narrows the rows first, then they are paged. ──
