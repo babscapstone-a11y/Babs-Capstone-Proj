@@ -254,15 +254,15 @@
                 </div>
 
                 <div class="field">
-                    <label>Category Name *</label>
+                    <label>Category Name <span style="color:var(--red-600)">*</span></label>
                     <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork, Chicken…">
                 </div>
                 <div class="field">
-                    <label>Min Stock Level *</label>
+                    <label>Min Stock Level <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level') }}">
                 </div>
                 <div class="field" style="margin-bottom:0">
-                    <label>Unit *</label>
+                    <label>Unit <span style="color:var(--red-600)">*</span></label>
                     <select name="unit" id="addUnitRaw" required>
                         <option value="">Select unit…</option>
                         <option value="Gram" {{ old('unit') === 'Gram' ? 'selected' : '' }}>Gram</option>
@@ -277,7 +277,7 @@
                 </div>
                 {{-- Beverage bought by the Case/Box: how many pieces are inside, so Stock-In can convert --}}
                 <div class="field" id="addPackSizeField" style="margin:1.1rem 0 0;display:none">
-                    <label>Pieces per <span id="addPackSizeUnit">Case</span> *</label>
+                    <label>Pieces per <span id="addPackSizeUnit">Case</span> <span style="color:var(--red-600)">*</span></label>
                     <input type="number" class="no-spin" name="pieces_per_pack" id="addPackSize" step="1" min="2" max="999" required value="{{ old('pieces_per_pack') }}" placeholder="e.g. 6 or 12">
                     <div id="addPackSizeHint" style="font-size:.73rem;color:var(--muted);margin-top:.3rem"></div>
                 </div>
@@ -319,7 +319,7 @@
                 </div>
 
                 <div class="field">
-                    <label>Inventory Item *</label>
+                    <label>Inventory Item <span style="color:var(--red-600)">*</span></label>
                     <select name="inventory_item_id" id="siItemId" data-searchable data-search-placeholder="Search inventory items…" required onchange="onSIItemChange()">
                         <option value="">Select item…</option>
                         @foreach($rtcItems as $item)
@@ -332,11 +332,11 @@
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
                     <div class="field">
-                        <label>Quantity Purchased *</label>
+                        <label>Quantity Purchased <span style="color:var(--red-600)">*</span></label>
                         <input type="number" class="no-spin" name="quantity_purchased" id="siQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateSIPreview()">
                     </div>
                     <div class="field">
-                        <label>Unit *</label>
+                        <label>Unit <span style="color:var(--red-600)">*</span></label>
                         <select name="unit" id="siUnit" required onchange="updateSIPreview()">
                             <option value="">Select item first…</option>
                         </select>
@@ -348,7 +348,7 @@
                         <input type="number" class="no-spin" name="total_cost" id="siCost" step="0.01" min="0" placeholder="0.00" oninput="updateSIPreview()">
                     </div>
                     <div class="field">
-                        <label>Purchase Date *</label>
+                        <label>Purchase Date <span style="color:var(--red-600)">*</span></label>
                         {{-- Calendar pop-up (partials/date-picker); purchases can't be dated in the future --}}
                         <input type="hidden" name="purchase_date" id="siDate" value="{{ old('purchase_date', now()->format('Y-m-d')) }}" data-max="{{ now()->format('Y-m-d') }}">
                         <button type="button" class="cd-field" data-picker="date" data-for="siDate" aria-haspopup="dialog" aria-label="Purchase date" onclick="DatePick.open(this)">

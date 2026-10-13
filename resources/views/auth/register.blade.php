@@ -306,6 +306,7 @@
         font-size: .85rem; margin-bottom: .4rem;
         display: flex; align-items: center; gap: .35rem;
     }
+    .form-label .req { color: var(--error); font-weight: 700; }
     .label-opt {
         font-size: .72rem; font-weight: 500;
         color: var(--muted);
@@ -616,7 +617,7 @@
                     <div class="field-block">
                         <label class="form-label" for="first_name">
                             <i class="fas fa-user" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                            First Name
+                            First Name <span class="req" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('first_name') has-error @enderror">
                             <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
@@ -648,7 +649,7 @@
                     <div class="field-block">
                         <label class="form-label" for="last_name">
                             <i class="fas fa-user" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                            Last Name
+                            Last Name <span class="req" aria-hidden="true">*</span>
                         </label>
                         <div class="input-wrap @error('last_name') has-error @enderror">
                             <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
@@ -681,7 +682,7 @@
                 <div class="field-block">
                     <label class="form-label" for="phone">
                         <i class="fas fa-phone" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Phone Number
+                        Phone Number <span class="req" aria-hidden="true">*</span>
                     </label>
                     <div class="input-wrap @error('phone') has-error @enderror">
                         <span class="input-icon" aria-hidden="true"><i class="fas fa-mobile-screen"></i></span>
@@ -723,7 +724,7 @@
                 <div class="field-block">
                     <label class="form-label" for="email">
                         <i class="fas fa-envelope" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Email Address
+                        Email Address <span class="req" aria-hidden="true">*</span>
                     </label>
                     <div class="input-wrap @error('email') has-error @enderror">
                         <span class="input-icon" aria-hidden="true"><i class="fas fa-envelope"></i></span>
@@ -752,7 +753,7 @@
                 <div class="field-block">
                     <label class="form-label" for="password">
                         <i class="fas fa-lock" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Password
+                        Password <span class="req" aria-hidden="true">*</span>
                     </label>
                     <div class="input-wrap @error('password') has-error @enderror">
                         <span class="input-icon" aria-hidden="true"><i class="fas fa-lock"></i></span>
@@ -791,7 +792,7 @@
                 <div class="field-block">
                     <label class="form-label" for="password_confirmation">
                         <i class="fas fa-shield-halved" style="color:var(--primary);font-size:.8rem" aria-hidden="true"></i>
-                        Confirm Password
+                        Confirm Password <span class="req" aria-hidden="true">*</span>
                     </label>
                     <div class="input-wrap" id="confirmWrap">
                         <span class="input-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>

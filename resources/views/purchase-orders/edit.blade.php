@@ -371,7 +371,7 @@
                 @endif
 
                 <div class="field">
-                    <label>Inventory Item *</label>
+                    <label>Inventory Item <span style="color:var(--red-600)">*</span></label>
                     <select name="inventory_item_id" id="addPoItemSelect" data-searchable data-search-placeholder="Search inventory items…" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
                         <option value="">Select item…</option>
                         @forelse($availableItems as $ai)
@@ -387,7 +387,7 @@
                     <div class="field-hint" id="addPoItemStockHint">&nbsp;</div>
                 </div>
                 <div class="field" style="margin-bottom:0">
-                    <label>Quantity to Purchase *</label>
+                    <label>Quantity to Purchase <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="quantity_to_purchase" id="addPoItemQty" step="0.01" min="0.01" required
                            value="{{ old('quantity_to_purchase') }}" placeholder="0.00" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
                     <div class="field-hint">Unit: <span id="addPoItemUnit">—</span> &nbsp;|&nbsp; Min: <span id="addPoItemMin">—</span></div>

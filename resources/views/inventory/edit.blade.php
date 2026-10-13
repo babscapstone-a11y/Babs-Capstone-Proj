@@ -71,7 +71,7 @@
             </div>
             <div class="field-grid">
                 <div class="field">
-                    <label>Unit *</label>
+                    <label>Unit <span style="color:var(--red-600)">*</span></label>
                     <input type="text" name="unit" required value="{{ old('unit', $item->unit) }}" placeholder="e.g. kg, pcs, liters">
                 </div>
                 <div class="field">
@@ -83,12 +83,12 @@
             <div class="section-label" style="margin-top:1.5rem">Stock Thresholds</div>
             <div class="field-grid">
                 <div class="field">
-                    <label>Reorder Level *</label>
+                    <label>Reorder Level <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="reorder_level" step="0.01" min="0" required value="{{ old('reorder_level', $item->reorder_level) }}">
                     <div class="help">Alert triggers when qty drops to/below this</div>
                 </div>
                 <div class="field">
-                    <label>Min Stock Level *</label>
+                    <label>Min Stock Level <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level', $item->min_stock_level) }}">
                     <div class="help">Minimum safe quantity to maintain</div>
                 </div>
@@ -109,7 +109,7 @@
                     <div class="help">Stock is counted per @unit($item->unit). Choose Case or Box to also stock in by that pack.</div>
                 </div>
                 <div class="field" id="packSizeField" style="{{ $pack ? '' : 'display:none' }}">
-                    <label>Pieces per <span id="packSizeUnit">{{ $pack ?: 'Case' }}</span> *</label>
+                    <label>Pieces per <span id="packSizeUnit">{{ $pack ?: 'Case' }}</span> <span style="color:var(--red-600)">*</span></label>
                     <input type="number" class="no-spin" name="pieces_per_pack" id="packSize" step="1" min="2" max="999" value="{{ old('pieces_per_pack', $item->pieces_per_pack) }}" placeholder="e.g. 6 or 12" {{ $pack ? 'required' : 'disabled' }}>
                     <div class="help">How many @unit($item->unit) are in one pack. Stock-In adds that many per pack received.</div>
                 </div>
@@ -129,7 +129,7 @@
             <div class="section-label" style="margin-top:1.5rem">RTC Conversion Rules</div>
             <div class="field-grid">
                 <div class="field">
-                    <label>Portion Size *</label>
+                    <label>Portion Size <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="portion_size" step="0.001" min="0.001" required value="{{ old('portion_size', $item->portion_size) }}">
                     <div class="help">Raw @unit($item->unit) used per RTC serving</div>
                 </div>
