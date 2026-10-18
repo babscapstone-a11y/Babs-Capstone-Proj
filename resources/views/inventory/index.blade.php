@@ -188,7 +188,7 @@
                     <div class="activity-icon blue"><i class="fas fa-arrows-rotate"></i></div>
                     <div class="activity-body">
                         <div class="activity-name">{{ $log->menuItem?->menu_name ?? '—' }}</div>
-                        <div class="activity-meta">from {{ $log->inventoryItem?->item_name ?? '—' }} &bull; {{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
+                        <div class="activity-meta">from {{ $log->meat_names }} &bull; {{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
                     </div>
                     <div class="activity-qty">{{ number_format($log->rtc_units_produced, 0) }} srv.</div>
                 </div>

@@ -86,7 +86,7 @@
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
             <button type="button" class="btn" style="background:#7C3AED;color:#fff" onclick="openAdjust()"><i class="fas fa-pen-to-square"></i> Adjust</button>
-            <button class="btn btn-green" onclick="openLocalModal('convertModal')"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
+            <button class="btn btn-green" onclick="cvOpen()"><i class="fas fa-arrows-rotate"></i> Convert to RTC</button>
         </div>
     </div>
 
@@ -131,108 +131,8 @@
     'decimals' => 0, 'searchHint' => 'Search menu items…',
 ])
 
-{{-- ── Convert Modal ── --}}
-<div class="modal-backdrop" id="convertModal">
-    <div class="modal">
-        <div class="modal-hd">
-            <h3><i class="fas fa-arrows-rotate"></i> Convert Raw Meat → RTC Servings</h3>
-            <button class="modal-close-btn" onclick="closeLocalModal('convertModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <form method="POST" action="{{ route('inventory.conversions.store') }}" id="convertForm">
-            @csrf
-            <div class="modal-body">
-                @if($errors->has('inventory_item_id') || $errors->has('menu_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
-                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> Please fix the following errors:<ul style="margin:.4rem 0 0 1rem;padding:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
-                @endif
-                <div class="error-msg" id="cvClientError" style="display:none"></div>
-                <div class="field">
-                    <label>Menu Item <span style="color:var(--red-600)">*</span></label>
-                    <select name="menu_item_id" id="cvMenuItem" data-searchable data-search-placeholder="Search menu items…" required>
-                        <option value="">Select menu item…</option>
-                        @foreach($menuItems as $menuItem)
-                        <option value="{{ $menuItem->id }}">{{ $menuItem->menu_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Raw Meat Item <span style="color:var(--red-600)">*</span></label>
-                    <select name="inventory_item_id" id="cvItemId" data-searchable data-search-placeholder="Search raw meat items…" required onchange="updateConvertCalc()">
-                        <option value="">Select item…</option>
-                        @foreach($rawItems as $item)
-                        <option value="{{ $item->id }}"
-                            data-qty="{{ $item->quantity }}"
-                            data-unit="@unit($item->unit)"
-                            data-portion="{{ $item->portion_size ?? 0.25 }}"
-                            data-punit="@unit($item->portion_unit ?? $item->unit)">
-                            {{ $item->item_name }} ({{ number_format($item->quantity,2) }} @unit($item->unit) available)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
-                    <div class="field">
-                        <label>Raw Quantity to Use <span style="color:var(--red-600)">*</span></label>
-                        <input type="number" class="no-spin" name="raw_quantity_used" id="cvRawQty" step="0.01" min="0.01" required placeholder="0.00" oninput="updateConvertCalc()">
-                    </div>
-                    <div class="field">
-                        <label>Portion Size (per serving) <span style="color:var(--red-600)">*</span></label>
-                        <input type="number" class="no-spin" name="portion_size" id="cvPortion" step="0.001" min="0.001" required placeholder="0.25" oninput="updateConvertCalc()">
-                        <div class="help" id="cvPortionHelp"></div>
-                    </div>
-                </div>
-                <div class="conv-calc" id="convCalc" style="display:none">
-                    <div class="calc-label"><i class="fas fa-calculator"></i> Conversion Preview</div>
-                    <div class="conv-result"><span id="cvUnits">0</span> <span>RTC Servings</span></div>
-                    <div style="font-size:.78rem;color:var(--blue-700);margin-top:.3rem">
-                        <span id="cvRawUsed">0</span> ÷ <span id="cvPortionShow">0</span> = <span id="cvUnitsShow">0</span> servings
-                        &bull; Remaining raw: <span id="cvRemaining">0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeLocalModal('convertModal')">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="proceedConvert()"><i class="fas fa-arrow-right"></i> Review Conversion</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Convert Confirmation modal --}}
-<div class="modal-backdrop" id="convertConfirmModal">
-    <div class="modal" style="max-width:460px">
-        <div class="modal-hd">
-            <h3><i class="fas fa-clipboard-check"></i> Confirm Conversion</h3>
-            <button class="modal-close-btn" onclick="closeLocalModal('convertConfirmModal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <div class="field" style="margin-bottom:.6rem">
-                <label style="margin-bottom:.15rem">Raw Meat Item</label>
-                <div style="font-weight:700;color:var(--dark)" id="cvConfirmItem">—</div>
-            </div>
-            <div class="field" style="margin-bottom:.6rem">
-                <label style="margin-bottom:.15rem">Menu Item</label>
-                <div style="font-weight:700;color:var(--dark)" id="cvConfirmName">—</div>
-            </div>
-            <div class="conv-calc">
-                <div class="calc-label"><i class="fas fa-calculator"></i> Summary</div>
-                <div class="conv-result"><span id="cvConfirmUnits">0</span> <span>RTC Servings</span></div>
-                <div class="conv-flow">
-                    <div class="flow-box"><div class="fl-val" id="cvConfirmRaw">0</div><div class="fl-lbl">Raw Used</div></div>
-                    <div class="flow-arrow">÷</div>
-                    <div class="flow-box"><div class="fl-val" id="cvConfirmPortion">0</div><div class="fl-lbl">Per Serving</div></div>
-                    <div class="flow-arrow">=</div>
-                    <div class="flow-box"><div class="fl-val" id="cvConfirmUnits2">0</div><div class="fl-lbl">Servings</div></div>
-                </div>
-                <div style="font-size:.75rem;color:#60A5FA;margin-top:.5rem">Remaining raw: <strong id="cvConfirmRemain">0</strong></div>
-            </div>
-            <p style="margin-top:1rem;font-size:.82rem;color:var(--muted)">This will deduct raw stock and add RTC servings. Please confirm the numbers above are correct.</p>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline" onclick="backToConvertForm()">Back</button>
-            <button type="button" class="btn btn-primary" onclick="submitConvert()"><i class="fas fa-check"></i> Confirm &amp; Save</button>
-        </div>
-    </div>
-</div>
+{{-- Convert Raw Meat → RTC Servings (shared form) --}}
+@include('inventory.partials.convert-modal', ['menuItems' => $menuItems, 'rawItems' => $rawItems, 'submitClass' => 'btn-primary'])
 @endsection
 
 @section('scripts')
@@ -251,108 +151,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function openConvertFor(menuItemId, portion, punit) {
-    document.getElementById('cvMenuItem').value = menuItemId;
-    document.getElementById('cvPortion').value = portion;
-    document.getElementById('cvPortionHelp').textContent = punit ? `Default: ${portion} ${unitShort(punit)} per serving` : '';
-    updateConvertCalc();
-    openLocalModal('convertModal');
-}
-
-function updateConvertCalc() {
-    const sel = document.getElementById('cvItemId');
-    const opt = sel.selectedOptions[0];
-    const rawQty  = parseFloat(document.getElementById('cvRawQty').value) || 0;
-    const portion = parseFloat(document.getElementById('cvPortion').value) || 0;
-    const calc = document.getElementById('convCalc');
-    if (!opt || !opt.value || !rawQty || !portion) { calc.style.display='none'; return; }
-    const avail    = parseFloat(opt.dataset.qty) || 0;
-    const unit     = opt.dataset.unit;
-    const punit    = opt.dataset.punit;
-    const units    = Math.floor(rawQty / portion);
-    const remaining = avail - rawQty;
-    document.getElementById('cvUnits').textContent = units;
-    document.getElementById('cvRawUsed').textContent = rawQty.toFixed(2) + ' ' + unit;
-    document.getElementById('cvPortionShow').textContent = portion.toFixed(2) + ' ' + punit;
-    document.getElementById('cvUnitsShow').textContent = units;
-    document.getElementById('cvRemaining').textContent = remaining.toFixed(2) + ' ' + unit;
-    calc.style.display = '';
-    document.getElementById('cvPortionHelp').textContent = opt.dataset.portion ? `Default: ${opt.dataset.portion} ${punit}/serving` : '';
-}
-
-function proceedConvert() {
-    const errBox = document.getElementById('cvClientError');
-    errBox.style.display = 'none';
-
-    const sel = document.getElementById('cvItemId');
-    const opt = sel.selectedOptions[0];
-    const menuSel = document.getElementById('cvMenuItem');
-    const menuOpt = menuSel.selectedOptions[0];
-    const rawQty = parseFloat(document.getElementById('cvRawQty').value);
-    const portion = parseFloat(document.getElementById('cvPortion').value);
-
-    if (!opt || !opt.value) {
-        errBox.textContent = 'Please select a raw meat item.';
-        errBox.style.display = '';
-        return;
-    }
-    if (!menuOpt || !menuOpt.value) {
-        errBox.textContent = 'Please select a menu item.';
-        errBox.style.display = '';
-        return;
-    }
-    if (!rawQty || rawQty <= 0) {
-        errBox.textContent = 'Please enter a raw quantity greater than 0.';
-        errBox.style.display = '';
-        return;
-    }
-    if (!portion || portion <= 0) {
-        errBox.textContent = 'Please enter a portion size greater than 0.';
-        errBox.style.display = '';
-        return;
-    }
-
-    const avail = parseFloat(opt.dataset.qty) || 0;
-    const unit  = opt.dataset.unit;
-    const punit = opt.dataset.punit || unit;
-
-    if (rawQty > avail) {
-        errBox.textContent = 'Insufficient raw stock. Available: ' + avail.toFixed(2) + ' ' + unit + '.';
-        errBox.style.display = '';
-        return;
-    }
-
-    const units = Math.floor(rawQty / portion);
-    if (units < 1) {
-        errBox.textContent = 'This quantity is too small to produce even 1 RTC serving (need at least ' + portion.toFixed(2) + ' ' + punit + ').';
-        errBox.style.display = '';
-        return;
-    }
-
-    const remain = avail - rawQty;
-    document.getElementById('cvConfirmItem').textContent = opt.text.split('(')[0].trim();
-    document.getElementById('cvConfirmName').textContent = menuOpt.text.trim();
-    document.getElementById('cvConfirmUnits').textContent = units;
-    document.getElementById('cvConfirmUnits2').textContent = units;
-    document.getElementById('cvConfirmRaw').textContent = rawQty.toFixed(2) + ' ' + unit;
-    document.getElementById('cvConfirmPortion').textContent = portion.toFixed(2) + ' ' + punit;
-    document.getElementById('cvConfirmRemain').textContent = remain.toFixed(2) + ' ' + unit;
-
-    closeLocalModal('convertModal');
-    openLocalModal('convertConfirmModal');
-}
-
-function backToConvertForm() {
-    closeLocalModal('convertConfirmModal');
-    openLocalModal('convertModal');
-}
-
-function submitConvert() {
-    document.getElementById('convertForm').submit();
-}
-
-@if($errors->has('inventory_item_id') || $errors->has('menu_item_id') || $errors->has('raw_quantity_used') || $errors->has('portion_size'))
-openLocalModal('convertModal');
-@endif
 </script>
 @endsection

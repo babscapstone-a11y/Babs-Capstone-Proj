@@ -320,15 +320,23 @@ class ReportService
             ->whereBetween('created_at', [$from, $to])
             ->when($category !== 'all', fn ($q) => $q->whereHas('inventoryItem', fn ($iq) => $iq->where('item_type', $category)))
             ->get()
-            ->map(fn (ConversionLog $c) => [
-                'date'          => $c->created_at?->format('Y-m-d'),
-                'item'          => $c->inventoryItem?->item_name ?? '—',
-                'qty_purchased' => null,
-                'qty_added'     => (float) ($c->new_rtc_servings - $c->previous_rtc_servings),
-                'type'          => 'RTC Conversion',
-                'admin'         => $c->converter?->name ?: '—',
-                'timestamp'     => $c->created_at,
-            ]);
+            // A dish made from several raw meats is one conversion: count its servings once
+            ->groupBy('batch_key')
+            ->map(function ($batch) {
+                $batch = $batch->sortBy('id');
+                $c     = $batch->first();
+
+                return [
+                    'date'          => $c->created_at?->format('Y-m-d'),
+                    'item'          => $batch->map(fn (ConversionLog $l) => $l->inventoryItem?->item_name ?? '—')->implode(', '),
+                    'qty_purchased' => null,
+                    'qty_added'     => (float) ($c->new_rtc_servings - $c->previous_rtc_servings),
+                    'type'          => 'RTC Conversion',
+                    'admin'         => $c->converter?->name ?: '—',
+                    'timestamp'     => $c->created_at,
+                ];
+            })
+            ->values();
 
         $adjustments = InventoryAdjustment::with(['inventoryItem', 'adjuster.staff'])
             ->whereBetween('created_at', [$from, $to])
