@@ -259,7 +259,11 @@
         <i class="fas fa-hourglass-half"></i>
         <div>
             <strong>Awaiting Payment Verification</strong><br>
-            Our staff is reviewing your down-payment. You'll be notified as soon as it's verified.
+            @if($order->hasSubmittedPaymentProof())
+                Our staff is reviewing your payment screenshot. You'll be notified as soon as it's verified.
+            @else
+                We haven't received your payment yet. Once your QR payment goes through, your order is sent to the kitchen automatically.
+            @endif
         </div>
     </div>
     @endif

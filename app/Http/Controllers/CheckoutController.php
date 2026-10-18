@@ -226,7 +226,7 @@ class CheckoutController extends Controller
                 ]);
 
                 return redirect()->route('account.orders.show', $order)
-                    ->with('success', 'Payment received! We will verify and confirm your order shortly.');
+                    ->with('success', 'Payment received! Your order has been sent to the kitchen.');
             }
 
             if ($resolved === 'failed') {

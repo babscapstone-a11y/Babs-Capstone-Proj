@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -563,6 +564,43 @@ class Order extends Model
     public function needsApproval(): bool
     {
         return $this->isOnline() && $this->approval_status === 'pending' && $this->cancelled_at === null;
+    }
+
+    /**
+     * A QR payment PayMongo confirmed is proof enough: send the order straight to the kitchen
+     * without waiting for a cashier (reviewed_by stays empty = approved automatically).
+     * Orders with a pending cancellation request are left for the cashier to decide.
+     */
+    public function approveForConfirmedPayment(): void
+    {
+        DB::transaction(function () {
+            $locked = self::whereKey($this->id)->lockForUpdate()->first();
+
+            if (! $locked || ! $locked->needsApproval() || $locked->cancellationRequest?->isPending()) {
+                return;
+            }
+
+            $locked->update([
+                'approval_status' => 'approved',
+                'reviewed_by'     => null,
+                'reviewed_at'     => now(),
+            ]);
+        });
+    }
+
+    /**
+     * The customer uploaded a payment screenshot + reference number (both required on upload),
+     * so a cashier can verify it and approve the order manually.
+     */
+    public function hasSubmittedPaymentProof(): bool
+    {
+        return (bool) $this->paymentProof?->proof_image;
+    }
+
+    /** Approved without a cashier, because PayMongo confirmed the QR payment */
+    public function wasAutoApproved(): bool
+    {
+        return $this->approval_status === 'approved' && $this->reviewed_by === null && $this->reviewed_at !== null;
     }
 
     /**

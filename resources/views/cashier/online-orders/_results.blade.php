@@ -54,11 +54,15 @@
                     <td style="text-align:right;font-weight:700">₱{{ number_format($order->total_amount, 2) }}</td>
                     <td>
                         @php
-                            $dpBadge = match($order->approval_status) {
-                                'approved' => ['badge-approved', 'Verified'],
-                                'rejected' => ['badge-rejected', 'Rejected'],
-                                'cancelled'=> ['badge-cancelled', 'N/A'],
-                                default    => ['badge-pending', 'Awaiting Verification'],
+                            // Paid by QR (PayMongo confirmed) = approved automatically; pending = unpaid,
+                            // or the customer uploaded a screenshot for the cashier to verify
+                            $dpBadge = match(true) {
+                                $order->wasAutoApproved()              => ['badge-approved', 'Paid via QR'],
+                                $order->approval_status === 'approved' => ['badge-approved', 'Verified'],
+                                $order->approval_status === 'rejected' => ['badge-rejected', 'Rejected'],
+                                $order->approval_status === 'cancelled'=> ['badge-cancelled', 'N/A'],
+                                $order->hasSubmittedPaymentProof()     => ['badge-pending', 'Proof Submitted'],
+                                default                                => ['badge-cancelled', 'Unpaid'],
                             };
                         @endphp
                         <span class="badge {{ $dpBadge[0] }}">{{ $dpBadge[1] }}</span>
@@ -70,9 +74,16 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             @if($order->approval_status === 'pending')
+                                @if($order->hasSubmittedPaymentProof())
                                 <button type="button" class="act-btn act-success" title="Approve" aria-label="Approve" onclick="confirmApprove({{ $order->id }}, '{{ $order->order_number }}')">
                                     <i class="fas fa-check"></i>
                                 </button>
+                                @else
+                                <button type="button" class="act-btn act-success" disabled style="opacity:.35;cursor:not-allowed"
+                                        title="Unpaid — can be approved once the customer uploads their payment screenshot and reference number" aria-label="Approve (unavailable until payment proof is uploaded)">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                @endif
                                 <button type="button" class="act-btn act-danger" title="Reject" aria-label="Reject" onclick="openRejectModal({{ $order->id }})">
                                     <i class="fas fa-xmark"></i>
                                 </button>

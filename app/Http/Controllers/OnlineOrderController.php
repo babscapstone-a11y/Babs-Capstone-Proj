@@ -85,6 +85,9 @@ class OnlineOrderController extends Controller
     /**
      * POST /cashier/online-orders/{order}/approve — REQ106: verify the
      * down-payment and forward the order to the Kitchen Display System.
+     * QR payments confirmed by PayMongo are approved automatically
+     * (Order::approveForConfirmedPayment), so this is for orders whose customer
+     * uploaded a payment screenshot and reference number instead.
      */
     public function approve(Order $order): JsonResponse
     {
@@ -95,6 +98,10 @@ class OnlineOrderController extends Controller
 
             if (! $locked->needsApproval()) {
                 return null;
+            }
+
+            if (! $locked->hasSubmittedPaymentProof()) {
+                return 'no-proof';
             }
 
             $locked->update([
@@ -116,6 +123,10 @@ class OnlineOrderController extends Controller
 
         if (! $approved) {
             return response()->json(['message' => 'This order has already been reviewed.'], 409);
+        }
+
+        if ($approved === 'no-proof') {
+            return response()->json(['message' => 'This order is still unpaid. It can be approved once the customer uploads their payment screenshot and reference number.'], 422);
         }
 
         return response()->json(['message' => 'Online Order Approved Successfully.']);

@@ -191,6 +191,8 @@
                             {{ $order->reviewed_at?->format('M d, Y h:i A') }}
                             @if($order->reviewedBy)
                                 &middot; by {{ $order->reviewedBy->staff?->full_name ?? $order->reviewedBy->email }}
+                            @elseif($order->wasAutoApproved())
+                                &middot; automatically (QR payment confirmed)
                             @endif
                         </div>
                         @if($order->approval_status === 'rejected' && $order->rejection_reason)
@@ -274,9 +276,18 @@
             <div class="card-body">
                 @if($order->approval_status === 'pending')
                     <div style="display:flex;flex-direction:column;gap:.6rem">
+                        @if($order->hasSubmittedPaymentProof())
                         <button type="button" class="btn btn-primary btn-block" onclick="confirmApproveDetail()">
                             <i class="fas fa-check"></i> Approve Order
                         </button>
+                        @else
+                        <div class="instructions-box" style="margin:0">
+                            <i class="fas fa-hourglass-half"></i> <strong>Unpaid.</strong> This order can be approved once the customer uploads their payment screenshot and reference number. QR payments confirmed by PayMongo are sent to the kitchen automatically.
+                        </div>
+                        <button type="button" class="btn btn-primary btn-block" disabled style="opacity:.5;cursor:not-allowed">
+                            <i class="fas fa-check"></i> Approve Order
+                        </button>
+                        @endif
                         <button type="button" class="btn btn-outline btn-block" onclick="openRejectModal({{ $order->id }})">
                             <i class="fas fa-xmark"></i> Reject Order
                         </button>
@@ -285,8 +296,12 @@
                     <div class="reviewed-box approved">
                         <i class="fas fa-circle-check"></i>
                         <div>
+                            @if($order->wasAutoApproved())
+                            This order was <strong>approved automatically</strong> on {{ $order->reviewed_at?->format('M d, Y h:i A') }} because PayMongo confirmed the QR payment, and forwarded to the Kitchen Display System.
+                            @else
                             This order was <strong>approved</strong>{{ $order->reviewedBy ? ' by ' . ($order->reviewedBy->staff?->full_name ?? $order->reviewedBy->email) : '' }}
                             on {{ $order->reviewed_at?->format('M d, Y h:i A') }} and forwarded to the Kitchen Display System.
+                            @endif
                         </div>
                     </div>
                 @elseif($order->approval_status === 'rejected')

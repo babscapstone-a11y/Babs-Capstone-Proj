@@ -41,12 +41,16 @@ class PaymentProof extends Model
     /** How long a QR Ph code stays scannable before PayMongo expires it. */
     const QR_EXPIRY_MINUTES = 30;
 
-    /* ── Customer email: receipt once the GCash payment is confirmed (App\Support\OrderMail) ── */
+    /* ── Payment confirmed: order goes straight to the kitchen + customer receipt email (App\Support\OrderMail) ── */
 
     protected static function booted(): void
     {
         static::updated(function (PaymentProof $proof) {
             if ($proof->wasChanged('status') && $proof->status === 'paid' && $proof->order) {
+                // Confirmed by PayMongo (return page, QR status poll or webhook): no cashier approval needed.
+                // When a cashier approves a screenshot, the order is already approved and this does nothing.
+                $proof->order->approveForConfirmedPayment();
+
                 \App\Support\OrderMail::paymentReceived($proof->order);
             }
         });

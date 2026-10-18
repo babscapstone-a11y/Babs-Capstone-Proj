@@ -91,7 +91,7 @@
             <div class="submitted-box">
                 <i class="fas fa-circle-check"></i>
                 <div style="font-weight:700;font-size:1.05rem">Payment Confirmed!</div>
-                <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order is now awaiting cashier review.</div>
+                <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order has been sent to the kitchen.</div>
             </div>
         </div>
     </div>
@@ -233,7 +233,7 @@ function showQrphPaidState() {
         <div class="card"><div class="card-body"><div class="submitted-box">
             <i class="fas fa-circle-check"></i>
             <div style="font-weight:700;font-size:1.05rem">Payment Confirmed!</div>
-            <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order is now awaiting cashier review.</div>
+            <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem">We automatically confirmed your GCash payment. Your order has been sent to the kitchen.</div>
         </div></div></div>
         <a href="{{ route('account.orders.show', $order) }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> View Order</a>
     `;
