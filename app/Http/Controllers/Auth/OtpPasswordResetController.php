@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
+use App\Support\LoginLockout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,6 +60,12 @@ class OtpPasswordResetController extends Controller
 
         if (! $email) {
             return redirect()->route('password.request');
+        }
+
+        // Locked out since the code was requested: a code can't be used to get around the lock
+        if (LoginLockout::isLocked($email)) {
+            return redirect()->route('password.request')
+                ->withErrors(['email' => PasswordResetLinkController::lockedResetMessage($email)]);
         }
 
         $record = PasswordResetOtp::where('email', $email)->first();
@@ -122,6 +129,13 @@ class OtpPasswordResetController extends Controller
 
         if (! $user) {
             return redirect()->route('password.request');
+        }
+
+        if (LoginLockout::isLocked($email)) {
+            $request->session()->forget('password_reset_otp_verified_email');
+
+            return redirect()->route('password.request')
+                ->withErrors(['email' => PasswordResetLinkController::lockedResetMessage($email)]);
         }
 
         $user->forceFill([

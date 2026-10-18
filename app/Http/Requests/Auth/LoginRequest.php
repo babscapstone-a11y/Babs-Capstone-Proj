@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use App\Models\EmailVerificationOtp;
 use App\Notifications\EmailVerificationOtpNotification;
+use App\Support\LoginLockout;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,6 +49,11 @@ class LoginRequest extends FormRequest
         $login = $this->string('login')->toString();
         $isEmail = str_contains($login, '@');
 
+        // Locked after too many wrong passwords: refuse even a correct password until it expires
+        if (LoginLockout::isLocked($login)) {
+            throw ValidationException::withMessages(['login' => LoginLockout::lockedMessage($login)]);
+        }
+
         // Staff/admin accounts can sign in with either their email or username;
         // customers only ever have an email, so a bare username never matches them.
         $staffCredentials = [$isEmail ? 'email' : 'username' => $login, 'password' => $this->password];
@@ -59,8 +65,14 @@ class LoginRequest extends FormRequest
         } else {
             RateLimiter::hit($this->throttleKey());
 
+            // Count the wrong password; the third one locks the account for an hour
+            $left = LoginLockout::recordFailure($login);
+
             throw ValidationException::withMessages([
-                'login' => 'Invalid Username or Password',
+                'login' => $left === 0
+                    ? LoginLockout::lockedMessage($login)
+                    : 'Invalid Username or Password. ' . $left . ' ' . Str::plural('attempt', $left)
+                        . ' left before this account is locked for ' . (LoginLockout::LOCK_MINUTES / 60) . ' hour.',
             ]);
         }
 
@@ -106,6 +118,7 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+        LoginLockout::clear($login);
     }
 
     /**

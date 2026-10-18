@@ -8,6 +8,7 @@ use App\Models\PasswordResetOtp;
 use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordResetOtpNotification;
+use App\Support\LoginLockout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,13 @@ class PasswordResetLinkController extends Controller
         return view('auth.forgot-password');
     }
 
+    /** Shown at every reset-password step while the account is locked out. */
+    public static function lockedResetMessage(string $email): string
+    {
+        return 'This account is locked after ' . LoginLockout::MAX_ATTEMPTS
+            . ' failed login attempts, so its password can\'t be reset right now. ' . LoginLockout::retryText($email);
+    }
+
     /**
      * Handle an incoming password reset OTP request.
      *
@@ -35,6 +43,11 @@ class PasswordResetLinkController extends Controller
         ]);
 
         $email = $request->email;
+
+        // A locked account (too many wrong passwords) can't get around the lock by resetting
+        if (LoginLockout::isLocked($email)) {
+            return back()->withInput()->withErrors(['email' => self::lockedResetMessage($email)]);
+        }
 
         $staffUser = User::where('email', $email)->first();
 
