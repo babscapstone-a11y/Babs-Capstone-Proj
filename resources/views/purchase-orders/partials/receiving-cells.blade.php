@@ -7,6 +7,7 @@
     <div class="qty-wrap">
         <input type="number" name="received[{{ $item->id }}]" value="{{ $receivedVal }}"
                class="qty-input rcv-input js-received" step="{{ $step }}" min="0" placeholder="—"
+               data-ordered="{{ number_format($item->quantity_to_purchase, $decimals, '.', '') }}"
                title="Quantity actually bought (@unit($item->unit)). Enter 0 if this item was not bought."
                oninput="updateReceivingRow(this)">
         <span class="field-hint" style="margin:0">@unit($item->unit)</span>

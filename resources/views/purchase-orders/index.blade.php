@@ -64,23 +64,19 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-boxes-stacked"></i> View Restocking List</a>
-            @if($lowStockCount + $outOfStockCount > 0)
             <button type="button" class="btn btn-primary" onclick="openModal({
                     type: 'warn',
                     iconClass: 'fas fa-wand-magic-sparkles',
                     title: 'Generate Purchase Order?',
-                    desc: 'This will create a new draft Purchase Order from all current low/out-of-stock items.',
+                    desc: {{ Js::from($lowStockCount + $outOfStockCount > 0
+                        ? 'This will create a new draft Purchase Order from all current low/out-of-stock items.'
+                        : 'No items are low or out of stock. This will create an empty draft Purchase Order where you can add items manually.') }},
                     action: '{{ route('purchase-orders.generate') }}',
                     method: 'POST',
                     confirmText: 'Generate'
                 })">
                 <i class="fas fa-wand-magic-sparkles"></i> Generate Purchase Order
             </button>
-            @else
-            <button type="button" class="btn btn-primary" disabled title="No low/out-of-stock items to restock" style="opacity:.5;cursor:not-allowed">
-                <i class="fas fa-wand-magic-sparkles"></i> Generate Purchase Order
-            </button>
-            @endif
         </div>
     </div>
 
@@ -187,7 +183,9 @@
                                 type: 'warn',
                                 iconClass: 'fas fa-wand-magic-sparkles',
                                 title: 'Generate Purchase Order?',
-                                desc: 'This will create a draft Purchase Order from all current restocking items.',
+                                desc: {{ Js::from($lowStockCount + $outOfStockCount > 0
+                                    ? 'This will create a draft Purchase Order from all current restocking items.'
+                                    : 'No items are low or out of stock. This will create an empty draft Purchase Order where you can add items manually.') }},
                                 action: '{{ route('purchase-orders.generate') }}',
                                 method: 'POST',
                                 confirmText: 'Generate'

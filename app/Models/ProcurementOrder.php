@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ProcurementOrder extends Model
 {
     protected $fillable = [
         'po_number', 'status', 'notes', 'total_items', 'prepared_by', 'finalized_at',
-        'stocked_in_at', 'stocked_in_by',
+        'stocked_in_at', 'stocked_in_by', 'source_po_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,18 @@ class ProcurementOrder extends Model
     public function stockedInBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'stocked_in_by');
+    }
+
+    /** The earlier PO this one was generated from (its short / not-bought items) */
+    public function sourcePo(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_po_id');
+    }
+
+    /** The follow-up PO generated from this one's short / not-bought items */
+    public function followUp(): HasOne
+    {
+        return $this->hasOne(self::class, 'source_po_id');
     }
 
     /** Stock-in transactions created from this purchase order */
@@ -75,6 +88,28 @@ class ProcurementOrder extends Model
     public function incompleteItems()
     {
         return $this->items->reject(fn (ProcurementOrderItem $item) => $item->isReceivingComplete());
+    }
+
+    /** Items that were bought short or not bought at all — what a follow-up PO would carry over */
+    public function remainingItems()
+    {
+        return $this->items->filter(fn (ProcurementOrderItem $item) => in_array($item->receiving_status, ['short', 'not_bought'], true));
+    }
+
+    /**
+     * Lowest quantity to purchase allowed for a line: its threshold (beverages at least 1).
+     * On a follow-up PO the leftover quantity is also accepted, even if below the threshold.
+     */
+    public function minimumFor(ProcurementOrderItem $item): float
+    {
+        $floor = $item->item_type === 'beverage' ? 1 : 0.01;
+        $min   = (float) $item->threshold;
+
+        if ($this->source_po_id) {
+            $min = min($min, (float) $item->quantity_recommended);
+        }
+
+        return max($min, $floor);
     }
 
     public function getStatusLabelAttribute(): string

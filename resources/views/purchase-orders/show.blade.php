@@ -68,6 +68,16 @@
         'method'      => 'POST',
         'confirmText' => 'Record Stock-In',
     ];
+    $remainingCount = $po->remainingItems()->count();
+    $reorderConfirm = [
+        'type'        => 'warn',
+        'iconClass'   => 'fas fa-rotate-right',
+        'title'       => 'Order Remaining Items?',
+        'desc'        => "A new draft Purchase Order will be created for the {$remainingCount} item(s) on {$po->po_number} that were bought short or not bought, with only the missing quantity of each.",
+        'action'      => route('purchase-orders.reorder-remaining', $po),
+        'method'      => 'POST',
+        'confirmText' => 'Create Draft',
+    ];
 @endphp
 <div class="po-page">
 
@@ -109,7 +119,7 @@
     @else
     <div class="notice notice-amber">
         <i class="fas fa-file-pen" style="font-size:1.1rem"></i>
-        <div class="grow">This is a draft. <strong>Print</strong> it and bring it when buying the items, then click <strong>Record Purchase</strong> to enter the quantity bought and amount paid, and finalize.</div>
+        <div class="grow">This is a draft. <strong>Print</strong> it and bring it when buying the items, then click <strong>Record Purchase</strong> to enter the quantity bought and amount paid, and finalize. Finalizing adds the bought items to inventory.</div>
     </div>
     @endif
 
@@ -121,6 +131,9 @@
         <div class="info-item"><div class="info-label">Total Amount Paid</div><div class="info-value">₱{{ number_format($po->total_amount_paid, 2) }}</div></div>
         <div class="info-item"><div class="info-label">Prepared By</div><div class="info-value">{{ $po->preparedBy?->name ?? 'Admin' }}</div></div>
         <div class="info-item"><div class="info-label">Date Created</div><div class="info-value">{{ $po->created_at->format('M d, Y') }}</div></div>
+        @if($po->sourcePo)
+        <div class="info-item"><div class="info-label">Follow-up Of</div><div class="info-value"><a href="{{ route('purchase-orders.show', $po->sourcePo) }}" style="color:var(--primary)">{{ $po->sourcePo->po_number }}</a></div></div>
+        @endif
         @if($po->isFinalized())
         <div class="info-item"><div class="info-label">Finalized On</div><div class="info-value">{{ $po->finalized_at?->format('M d, Y h:i A') }}</div></div>
         @endif
@@ -152,6 +165,13 @@
             <a href="{{ route('purchase-orders.edit', [$po, 'mode' => 'record']) }}" class="btn btn-green"><i class="fas fa-cart-shopping"></i> Record Purchase</a>
             @elseif($po->awaitingStockIn())
             <button type="button" class="btn btn-green" onclick="openModal({{ Js::from($stockInConfirm) }})"><i class="fas fa-dolly"></i> Record Stock-In</button>
+            @endif
+            @if($po->isFinalized())
+                @if($po->followUp)
+                <a href="{{ route('purchase-orders.show', $po->followUp) }}" class="btn btn-outline"><i class="fas fa-arrow-right"></i> View Follow-up {{ $po->followUp->po_number }}</a>
+                @elseif($remainingCount > 0)
+                <button type="button" class="btn btn-primary" onclick="openModal({{ Js::from($reorderConfirm) }})"><i class="fas fa-rotate-right"></i> Order Remaining Items ({{ $remainingCount }})</button>
+                @endif
             @endif
         </div>
     </div>

@@ -135,7 +135,7 @@
         <div class="step {{ $recording ? 'done' : 'current' }}"><span class="step-num">1</span><div><strong>Plan the order</strong>Adjust quantities, add or remove items, then Save Changes.</div></div>
         <div class="step {{ $recording ? 'done' : '' }}"><span class="step-num">2</span><div><strong>Print &amp; buy</strong>Print the PO from its view page and bring it when buying the items.</div></div>
         <div class="step {{ $recording ? 'current' : '' }}"><span class="step-num">3</span><div><strong>Record the purchase</strong>Click Record Purchase, then enter the quantity bought and amount paid (0 if not bought).</div></div>
-        <div class="step"><span class="step-num">4</span><div><strong>Finalize &amp; stock in</strong>Save &amp; Finalize, then click Record Stock-In to update inventory.</div></div>
+        <div class="step"><span class="step-num">4</span><div><strong>Finalize &amp; stock in</strong>Click Save &amp; Finalize to add the bought items to inventory.</div></div>
     </div>
 
     @if($errors->any())
@@ -174,7 +174,7 @@
                     </thead>
                     <tbody>
                         @foreach($rtcItems as $i => $item)
-                        @php $rtcMin = max((float) $item->threshold, 0.01); @endphp
+                        @php $rtcMin = $po->minimumFor($item); @endphp
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
@@ -252,7 +252,7 @@
                     </thead>
                     <tbody>
                         @foreach($bevItems as $i => $item)
-                        @php $bevMin = max((float) $item->threshold, 1); @endphp
+                        @php $bevMin = $po->minimumFor($item); @endphp
                         <tr>
                             <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                             <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
@@ -434,7 +434,7 @@ function doFinalize() {
         type: 'warn',
         iconClass: 'fas fa-check-double',
         title: 'Finalize Purchase Order?',
-        desc: 'Your entries will be saved and "' + {{ Js::from($po->po_number) }} + '" will become read-only. You can then record the stock-in.',
+        desc: 'Your entries will be saved and "' + {{ Js::from($po->po_number) }} + '" will become read-only. The bought items will be added to inventory right away.',
         confirmText: 'Save & Finalize',
         onConfirm: function () {
             document.getElementById('formIntent').value = 'finalize';
@@ -447,13 +447,13 @@ function doFinalize() {
 var RCV_CLASSES = ['badge-rcv-pending', 'badge-rcv-match', 'badge-rcv-short', 'badge-rcv-over', 'badge-rcv-none'];
 
 function receivingStatus(row) {
-    var orderedEl = row.querySelector('input[name^="quantities"]');
-    var recvEl    = row.querySelector('.js-received');
-    var paidEl    = row.querySelector('.js-paid');
+    var recvEl = row.querySelector('.js-received');
+    var paidEl = row.querySelector('.js-paid');
     if (recvEl.value === '') return ['badge-rcv-pending', 'Pending'];
 
+    // Planned quantity is locked text while recording, so it's read from the Qty Bought box
     var received = parseFloat(recvEl.value) || 0;
-    var ordered  = parseFloat(orderedEl.value) || 0;
+    var ordered  = parseFloat(recvEl.dataset.ordered) || 0;
     if (received <= 0) return ['badge-rcv-none', 'Not Bought'];
     if (paidEl.value === '') return ['badge-rcv-pending', 'Enter Amount'];
     if (Math.abs(received - ordered) < 0.0001) return ['badge-rcv-match', 'Complete'];
@@ -490,9 +490,6 @@ function updateSummary() {
 }
 
 document.querySelectorAll('.js-received').forEach(function (el) { updateReceivingRow(el); });
-document.querySelectorAll('input[name^="quantities"]').forEach(function (el) {
-    el.addEventListener('input', function () { updateReceivingRow(el); });
-});
 
 // Scrolling the mouse wheel over a focused number box would change its value; let the page scroll instead
 document.querySelectorAll('.rcv-input').forEach(function (el) {
