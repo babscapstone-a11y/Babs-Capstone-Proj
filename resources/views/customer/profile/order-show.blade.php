@@ -353,8 +353,8 @@
             <div class="oh-total">₱{{ number_format($order->total_amount, 2) }}</div>
             <div class="oh-total-label">Grand Total</div>
             <div style="margin-top:.75rem">
-                <span class="badge" style="background:{{ $order->status_color }}25;color:{{ $order->status_color }};font-size:.78rem;padding:.3rem .9rem" id="heroStatusBadge">
-                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{ $order->status_color }};margin-right:.25rem"></span>
+                <span class="badge" style="background:{{ $order->customer_status_color }}25;color:{{ $order->customer_status_color }};font-size:.78rem;padding:.3rem .9rem" id="heroStatusBadge">
+                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{ $order->customer_status_color }};margin-right:.25rem"></span>
                     {{ $order->customer_status_label }}
                 </span>
             </div>
@@ -436,8 +436,9 @@
                 <div class="timeline" id="timelineContainer">
                     @foreach($allStatuses as $idx => $sName)
                     @php
-                        $isDone    = $currentIdx !== false && $idx < $currentIdx;
-                        $isCurrent = $currentIdx !== false && $idx === $currentIdx;
+                        // A completed order has every step done, including the last one
+                        $isDone    = $currentIdx !== false && ($idx < $currentIdx || $order->isFullyClosed());
+                        $isCurrent = $currentIdx !== false && $idx === $currentIdx && ! $isDone;
                         $icon      = $statusIcons[$sName] ?? 'fa-circle';
                         $stepClass = $isDone ? 'done' : ($isCurrent ? 'current' : '');
                     @endphp
@@ -453,7 +454,7 @@
                     @endforeach
                 </div>
 
-                @if($order->estimated_completion)
+                @if($order->estimated_completion && ! $order->isFullyClosed())
                 @php($waitMinutes = $order->created_at->diffInMinutes($order->estimated_completion))
                 <div id="estimatedCompletionContainer" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.45rem;flex-wrap:wrap">
                     <i class="fas fa-clock" style="color:var(--accent)"></i>
@@ -567,7 +568,7 @@
                 @endif
                 <div class="info-item">
                     <span class="info-label">Order Status</span>
-                    <span class="badge" style="background:{{ $order->status_color }}1a;color:{{ $order->status_color }};width:fit-content" id="statusBadge">
+                    <span class="badge" style="background:{{ $order->customer_status_color }}1a;color:{{ $order->customer_status_color }};width:fit-content" id="statusBadge">
                         {{ $order->customer_status_label }}
                     </span>
                 </div>

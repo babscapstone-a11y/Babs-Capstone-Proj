@@ -333,6 +333,12 @@ class Order extends Model
         return $this->orderStatus?->color ?? '#6B7280';
     }
 
+    /** Colour for customer_status_label: green once the order is completed, otherwise the status colour */
+    public function getCustomerStatusColorAttribute(): string
+    {
+        return ! $this->isCancelled() && $this->isFullyClosed() ? '#16A34A' : $this->status_color;
+    }
+
     public function getCustomerStatusLabelAttribute(): string
     {
         // Cancellation always wins: approval_status stays whatever it was
@@ -341,6 +347,12 @@ class Order extends Model
         // pre-cancellation approval state (e.g. "Awaiting Payment Verification").
         if ($this->isCancelled()) {
             return 'Cancelled';
+        }
+
+        // Paid and handed off (served / packaged): nothing left to happen, same as the
+        // timeline's final "Completed" step, even though the raw status stays Served/Packaged
+        if ($this->isFullyClosed()) {
+            return 'Completed';
         }
 
         if ($this->isOnline() && $this->approval_status && $this->approval_status !== 'approved') {

@@ -615,8 +615,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="status-dot" style="background:{{ $order->status_color }}1a; color:{{ $order->status_color }}">
-                                            {{ $order->status_name }}
+                                        <span class="status-dot" style="background:{{ $order->customer_status_color }}1a; color:{{ $order->customer_status_color }}">
+                                            {{ $order->customer_status_label }}
                                         </span>
                                         @if($order->cancellationRequest?->isPending())
                                         <div style="margin-top:.3rem"><span class="status-dot" style="background:#FEF3C7;color:#92400E"><i class="fas fa-hourglass-half" style="font-size:.6rem"></i> Cancellation Pending</span></div>
