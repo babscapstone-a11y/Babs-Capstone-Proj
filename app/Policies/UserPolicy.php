@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -30,10 +31,18 @@ class UserPolicy
         return $currentUser->isAdmin() && $currentUser->id !== $target->id;
     }
 
-    /* Admins can toggle status — but NOT their own account */
-    public function toggleStatus(User $currentUser, User $target): bool
+    /* Admins can toggle status — but NOT their own account, and NOT deactivate another active admin */
+    public function toggleStatus(User $currentUser, User $target): Response
     {
-        return $currentUser->isAdmin() && $currentUser->id !== $target->id;
+        if (! $currentUser->isAdmin() || $currentUser->id === $target->id) {
+            return Response::deny('You are not allowed to change the status of this account.');
+        }
+
+        if ($target->isAdmin() && $target->status === 'active') {
+            return Response::deny('An administrator account cannot be deactivated by another administrator.');
+        }
+
+        return Response::allow();
     }
 
     /* Only admins can manage (approve/reject) password reset requests */

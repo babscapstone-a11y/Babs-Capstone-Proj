@@ -53,6 +53,8 @@
                         <a href="{{ route('users.edit', $user) }}" class="act-btn act-edit" title="Edit" aria-label="Edit">
                             <i class="fas fa-pen"></i>
                         </a>
+                        @endcan
+                        @can('toggleStatus', $user)
                         <button type="button"
                             class="act-btn {{ $user->status === 'active' ? 'act-danger' : 'act-success' }}"
                             title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}" aria-label="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}"

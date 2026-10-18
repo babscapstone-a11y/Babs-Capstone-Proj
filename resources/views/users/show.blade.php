@@ -123,7 +123,12 @@
                     </div>
                 @endif
 
-                @if($user->status === 'active')
+                @cannot('toggleStatus', $user)
+                    <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(107,114,128,0.08);border:1.5px solid rgba(107,114,128,0.2);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.5rem">
+                        <i class="fas fa-shield-halved" style="width:16px;text-align:center"></i>
+                        Administrator accounts can't be deactivated by another administrator
+                    </div>
+                @elseif($user->status === 'active')
                     <button type="button" class="action-btn-full deactivate"
                         onclick="openToggleModal('{{ route('users.toggle-status', $user) }}', '{{ addslashes($user->name) }}', 'active')">
                         <i class="fas fa-ban" style="width:16px;text-align:center"></i> Deactivate Account
