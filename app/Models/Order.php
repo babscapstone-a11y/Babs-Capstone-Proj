@@ -516,6 +516,18 @@ class Order extends Model
         return $verified ? (float) $this->paymentProof->amount : 0.0;
     }
 
+    /** Paid in full online (nothing left to collect at the counter) */
+    public function isFullyPaidOnline(): bool
+    {
+        if (! $this->relationLoaded('details')) {
+            $this->load('details');
+        }
+
+        $paidOnline = $this->amountPaidOnline();
+
+        return $paidOnline > 0 && $paidOnline + 0.004 >= (float) $this->details->sum('subtotal');
+    }
+
     public function isAwaitingPayment(): bool
     {
         return $this->payment_status === 'pending'

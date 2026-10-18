@@ -120,8 +120,17 @@
                     <div class="r-row"><span class="label">Service Charge</span><span class="value">₱{{ number_format($payment->invoice->service_charge, 2) }}</span></div>
                 @endif
                 <div class="r-row grand"><span class="label">Grand Total</span><span class="value">₱{{ number_format($payment->invoice->final_total, 2) }}</span></div>
-                <div class="r-row"><span class="label">Amount Received</span><span class="value">₱{{ number_format($payment->amount_received, 2) }}</span></div>
-                <div class="r-row"><span class="label">Change</span><span class="value">₱{{ number_format($payment->change_amount, 2) }}</span></div>
+                @php $paidOnline = $payment->order?->amountPaidOnline() ?? 0; @endphp
+                @if($paidOnline > 0)
+                    <div class="r-row"><span class="label">Paid Online (GCash)</span><span class="value">₱{{ number_format($paidOnline, 2) }}</span></div>
+                @endif
+                @if($paidOnline > 0 && (float) $payment->amount_paid <= 0)
+                    {{-- Fully paid online: nothing was collected at the counter --}}
+                    <div class="r-row"><span class="label">Balance Due</span><span class="value">₱0.00</span></div>
+                @else
+                    <div class="r-row"><span class="label">Amount Received</span><span class="value">₱{{ number_format($payment->amount_received, 2) }}</span></div>
+                    <div class="r-row"><span class="label">Change</span><span class="value">₱{{ number_format($payment->change_amount, 2) }}</span></div>
+                @endif
                 <div class="r-row"><span class="label">Payment Method</span><span class="value">{{ $payment->modeOfPayment?->method_name }}</span></div>
             </div>
 

@@ -233,6 +233,7 @@
                         <span class="order-result-chip"><i class="fas fa-user"></i> ${o.customer_name}</span>
                         <span class="order-result-chip">${o.order_type_label}${o.table_number ? ' · Table ' + o.table_number : ''}</span>
                         <span class="order-result-chip"><i class="fas fa-clock"></i> ${new Date(o.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                        ${o.is_fully_paid_online ? '<span class="order-result-chip" style="background:rgba(22,163,74,.12);color:#15803D"><i class="fas fa-circle-check"></i> Fully Paid</span>' : ''}
                     </div>
                 </div>
                 <div class="order-result-status" style="background:${o.status_color}1a;color:${o.status_color}">${o.status_label}</div>
@@ -325,6 +326,29 @@
                     <button type="button" class="btn btn-outline btn-block" onclick="cancelBilling()">
                         <i class="fas fa-xmark"></i> Close
                     </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Paid in full online: nothing to collect, so no payment form — just print the receipt
+        if (order.is_fully_paid_online) {
+            panel.innerHTML = `
+                <div class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
+                <div class="billing-summary-row"><span>Paid Online (GCash)</span><span class="neg">- ${formatPeso(order.amount_paid_online)}</span></div>
+                <div class="billing-summary-row total"><span>Balance Due</span><span>${formatPeso(0)}</span></div>
+                <div class="receipt-success" style="padding:1.25rem 0 0">
+                    <i class="fas fa-circle-check"></i>
+                    <h3>Fully Paid Online</h3>
+                    <p>The customer already paid for Order #${order.order_number} in full through GCash. There's nothing to collect — just print the receipt.</p>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-primary btn-block" id="printPrepaidBtn" onclick="printPrepaidReceipt()">
+                            <i class="fas fa-print"></i> Print Receipt
+                        </button>
+                        <button type="button" class="btn btn-outline btn-block" onclick="cancelBilling()">
+                            <i class="fas fa-xmark"></i> Close
+                        </button>
+                    </div>
                 </div>
             `;
             return;
@@ -600,6 +624,41 @@
         } catch (e) {
             closeConfirmModal();
             showToast('Failed to process payment.', 'error');
+        }
+    }
+
+    // Fully paid online: records the sale (₱0 collected) and opens the receipt in one click.
+    // The tab is opened right away so the browser doesn't block it as a pop-up.
+    async function printPrepaidReceipt() {
+        if (!currentOrder) return;
+        const btn = document.getElementById('printPrepaidBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> <span>Preparing Receipt...</span>';
+        const receiptTab = window.open('', '_blank');
+
+        try {
+            const res = await fetch(`${ORDERS_URL}/${currentOrder.id}/settle-prepaid`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (receiptTab) receiptTab.close();
+                showToast(data.message || 'Failed to prepare the receipt.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-print"></i> Print Receipt';
+                return;
+            }
+
+            if (receiptTab) receiptTab.location = data.receipt_url;
+            showToast(data.message, 'success');
+            renderPaymentSuccess(data.receipt_url);
+        } catch (e) {
+            if (receiptTab) receiptTab.close();
+            showToast('Failed to prepare the receipt.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-print"></i> Print Receipt';
         }
     }
 

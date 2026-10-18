@@ -156,6 +156,41 @@ class CashierController extends Controller
     }
 
     /**
+     * POST /cashier/orders/{order}/settle-prepaid — an online order the customer already paid
+     * in full (GCash QR) has nothing left to collect: record the sale with ₱0 collected and hand
+     * back its receipt. The billing screen calls this from its "Print Receipt" button, so the
+     * cashier never enters an amount or confirms a payment for these orders.
+     */
+    public function settlePrepaid(Order $order): JsonResponse
+    {
+        $this->authorize('pay', $order);
+
+        $order->load(['details', 'paymentProof']);
+
+        if (! $order->isFullyPaidOnline()) {
+            return response()->json(['message' => 'This order still has a balance to collect.'], 422);
+        }
+
+        $subtotal = (float) $order->details->sum('subtotal');
+
+        $payment = $this->finalizeOrderPayment(
+            $order, null, $subtotal, 0.0, 0.0,
+            $subtotal, 0.0, 'cashless', 0.0, 0.0,
+            $order->paymentProof?->reference_number
+        );
+
+        if (! $payment) {
+            return response()->json(['message' => 'This order has already been paid or is not ready for billing.'], 409);
+        }
+
+        return response()->json([
+            'message'     => 'Order is fully paid online. Receipt ready to print.',
+            'payment_id'  => $payment->id,
+            'receipt_url' => route('cashier.receipts.show', $payment),
+        ]);
+    }
+
+    /**
      * POST /cashier/orders/{order}/gcash-intent — cashier-initiated GCash
      * payment: quotes the bill (same discount/service-charge rules as a
      * cash sale) and starts a PayMongo GCash Payment Intent. The returned
@@ -579,6 +614,7 @@ class CashierController extends Controller
             'item_count'        => $order->item_count,
             'total_amount'      => (float) $order->details->sum('subtotal'),
             'amount_paid_online' => $order->amountPaidOnline(),
+            'is_fully_paid_online' => $order->isFullyPaidOnline(),
         ];
     }
 
@@ -602,6 +638,7 @@ class CashierController extends Controller
             'item_count'           => $order->item_count,
             'subtotal'             => $subtotal,
             'amount_paid_online'   => $order->amountPaidOnline(),
+            'is_fully_paid_online' => $order->isFullyPaidOnline(),
             'items' => $order->details->map(fn ($d) => [
                 'name'      => $d->item_name,
                 'image_url' => $d->menuItem?->image_url,

@@ -170,6 +170,7 @@ Route::middleware(['auth', 'cashier'])->prefix('cashier')->name('cashier.')->gro
     Route::get('/orders',    [CashierController::class, 'orders'])        ->name('orders.index');
     Route::get('/orders/{order}', [CashierController::class, 'showOrder'])->name('orders.show');
     Route::post('/orders/{order}/payment', [CashierController::class, 'processPayment'])->name('orders.pay');
+    Route::post('/orders/{order}/settle-prepaid', [CashierController::class, 'settlePrepaid'])->name('orders.settle-prepaid');
     Route::get('/discounts', [CashierController::class, 'discounts'])     ->name('discounts.index');
     Route::get('/receipts/{payment}', [CashierController::class, 'receipt'])->name('receipts.show');
 
