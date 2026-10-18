@@ -378,7 +378,7 @@
                         <option value="{{ $ai->id }}" data-unit="@unit($ai->unit)" data-stock="{{ number_format($ai->quantity,2) }}"
                                 data-threshold="{{ number_format(max((float) $ai->reorder_level, 0.01),2,'.','') }}"
                                 {{ (string) old('inventory_item_id') === (string) $ai->id ? 'selected' : '' }}>
-                            {{ $ai->item_name }} ({{ $ai->item_type === 'rtc' ? 'RTC Raw Meat' : 'Beverage' }})
+                            {{ $ai->item_name }}
                         </option>
                         @empty
                         <option value="" disabled>No additional inventory items available</option>
