@@ -159,7 +159,7 @@
                 <div id="cartRows">
                     @foreach($cart->items as $item)
                     @php $mi = $item->menuItem; @endphp
-                    <div class="cart-row" id="cart-row-{{ $item->id }}" data-id="{{ $item->id }}" data-price="{{ $item->unit_price }}">
+                    <div class="cart-row" id="cart-row-{{ $item->id }}" data-id="{{ $item->id }}" data-price="{{ $item->unit_price }}" data-name="{{ $mi->menu_name }}">
                         <div class="cart-row-img">
                             @if($mi->image_url && !str_contains($mi->image_url, 'placeholder'))
                                 <img src="{{ $mi->image_url }}" alt="{{ $mi->menu_name }}">
@@ -270,6 +270,26 @@ async function changeQty(cartItemId, step) {
     const newQty = (parseInt(qtyEl.textContent, 10) || 1) + step;
     if (newQty < 1) { removeItem(cartItemId); return; } // "−" on a quantity of 1 asks to remove the item
     if (newQty > 99) { showToast('You can order up to 99 of one item.', 'info'); return; }
+
+    // Going up to 10, 20, 30…: make sure the customer really means to order that many
+    if (step > 0 && newQty % 10 === 0) {
+        openConfirmModal({
+            title: `Order ${newQty} of this item?`,
+            desc: `Are you sure you want to order ${newQty} × ${row.dataset.name}?`,
+            confirmText: `Yes, make it ${newQty}`,
+            onConfirm: () => { closeConfirmModal(); saveQty(cartItemId, newQty); },
+        });
+        return;
+    }
+
+    saveQty(cartItemId, newQty);
+}
+
+async function saveQty(cartItemId, newQty) {
+    const row   = document.getElementById(`cart-row-${cartItemId}`);
+    const qtyEl = document.getElementById(`qty-${cartItemId}`);
+    const btns  = row.querySelectorAll('.qty-btn');
+    if (row.dataset.busy) return;
 
     row.dataset.busy = '1';
     btns.forEach(b => b.disabled = true);

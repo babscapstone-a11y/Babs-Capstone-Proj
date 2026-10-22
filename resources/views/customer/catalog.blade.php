@@ -834,9 +834,11 @@ const qtyIncBtn = document.getElementById('qtyInc');
 const qtyDecBtn = document.getElementById('qtyDec');
 
 let currentMaxQty = null; // null = unlimited (not RTC stock-tracked)
+let currentItemName = '';
 
 function openItemModal(id, name, desc, price, category, type, image, maxQty) {
     currentItemId    = id;
+    currentItemName  = name;
     currentItemPrice = parseFloat(price);
     currentQty       = 1;
     currentMaxQty    = (maxQty === null || maxQty === undefined) ? null : Number(maxQty);
@@ -912,8 +914,22 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 
 qtyIncBtn.addEventListener('click', () => {
     const limit = currentMaxQty !== null ? Math.min(99, currentMaxQty) : 99;
-    if (currentQty < limit) { currentQty++; qtyVal.textContent = currentQty; updateModalAddBtn(); }
-    updateQtyButtonStates();
+    if (currentQty >= limit) { updateQtyButtonStates(); return; }
+
+    const next  = currentQty + 1;
+    const apply = () => { currentQty = next; qtyVal.textContent = currentQty; updateModalAddBtn(); updateQtyButtonStates(); };
+
+    // Going up to 10, 20, 30…: make sure the customer really means to order that many
+    if (next % 10 === 0) {
+        openConfirmModal({
+            title: `Order ${next} of this item?`,
+            desc: `Are you sure you want to order ${next} × ${currentItemName}?`,
+            confirmText: `Yes, make it ${next}`,
+            onConfirm: () => { closeConfirmModal(); apply(); },
+        });
+        return;
+    }
+    apply();
 });
 qtyDecBtn.addEventListener('click', () => {
     if (currentQty > 1) { currentQty--; qtyVal.textContent = currentQty; updateModalAddBtn(); }
