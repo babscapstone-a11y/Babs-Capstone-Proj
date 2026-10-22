@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\CancellationRequestController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\CatalogController;
@@ -130,14 +129,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])
          ->name('discounts.toggle-status');
 
-    // ── Order Cancellation Review Module (REQ047–REQ050) — Module 8 ────
-    Route::prefix('cancellations')->name('cancellations.')->group(function () {
-        Route::get('/',                              [CancellationRequestController::class, 'index'])  ->name('index');
-        Route::get('/{cancellationRequest}',          [CancellationRequestController::class, 'show'])   ->name('show');
-        Route::put('/{cancellationRequest}/approve',  [CancellationRequestController::class, 'approve'])->name('approve');
-        Route::put('/{cancellationRequest}/reject',   [CancellationRequestController::class, 'reject']) ->name('reject');
-    });
-
     // ── Report Generation Module (REQ056–REQ060) — Module 10 ───────────
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/',        [ReportController::class, 'index'])  ->name('index');
@@ -216,7 +207,6 @@ Route::middleware(['auth:customer', 'customer'])->prefix('account')->name('accou
     Route::put('/password',  [CustomerProfileController::class, 'updatePassword']) ->name('password.update');
     Route::get('/orders/{order}', [CustomerProfileController::class, 'showOrder']) ->name('orders.show');
     Route::get('/orders/{order}/status', [CustomerProfileController::class, 'orderStatus']) ->name('orders.status');
-    Route::post('/orders/{order}/cancellation-request', [CustomerProfileController::class, 'storeCancellationRequest']) ->name('orders.cancellation-request.store');
 });
 
 /* ── Digital Menu Catalog (Customer only) ────────────────────── */

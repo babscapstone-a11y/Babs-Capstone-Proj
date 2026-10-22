@@ -163,6 +163,18 @@ class Order extends Model
      * Kitchen Display System uses, since before that they're still sitting
      * in the separate Online Orders approval queue, not on the floor.
      */
+    /**
+     * Online orders waiting on a cashier: pending and with a payment screenshot submitted.
+     * An order whose customer only opened the QR code (no proof yet) isn't shown to cashiers;
+     * a QR payment PayMongo confirms is approved automatically and skips this queue.
+     */
+    public function scopeAwaitingCashierReview(Builder $q): Builder
+    {
+        return $q->where('approval_status', 'pending')
+            ->whereNull('cancelled_at')
+            ->whereHas('paymentProof', fn ($pq) => $pq->whereNotNull('proof_image'));
+    }
+
     public function scopeVisibleForBilling(Builder $q): Builder
     {
         return $q->where('payment_status', 'pending')
@@ -593,14 +605,13 @@ class Order extends Model
     /**
      * A QR payment PayMongo confirmed is proof enough: send the order straight to the kitchen
      * without waiting for a cashier (reviewed_by stays empty = approved automatically).
-     * Orders with a pending cancellation request are left for the cashier to decide.
      */
     public function approveForConfirmedPayment(): void
     {
         DB::transaction(function () {
             $locked = self::whereKey($this->id)->lockForUpdate()->first();
 
-            if (! $locked || ! $locked->needsApproval() || $locked->cancellationRequest?->isPending()) {
+            if (! $locked || ! $locked->needsApproval()) {
                 return;
             }
 
@@ -625,18 +636,6 @@ class Order extends Model
     public function wasAutoApproved(): bool
     {
         return $this->approval_status === 'approved' && $this->reviewed_by === null && $this->reviewed_at !== null;
-    }
-
-    /**
-     * Cancellation Policy: only an order still sitting in the kitchen's
-     * intake queue (raw status "Pending" — shown to staff as "Order
-     * Received") may be cancelled. Once the kitchen has started preparing
-     * it (Processing/Ready/Completed), a cancellation request must be
-     * rejected. An already-cancelled order is closed to further requests.
-     */
-    public function isCancellationEligible(): bool
-    {
-        return $this->status_name === 'Pending';
     }
 
     /* ── Service Fulfillment (Module 20) ── */

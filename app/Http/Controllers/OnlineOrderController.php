@@ -28,8 +28,10 @@ class OnlineOrderController extends Controller
         // Once a customer's cancellation request is approved, the order is
         // done for good and shouldn't linger in the approval queue anymore —
         // even if it was still "pending" review when that happened.
-        $query = Order::onlineOrders()->where('approval_status', $status)
-            ->whereNull('cancelled_at')
+        // Pending = only orders with a payment screenshot submitted; unpaid ones stay hidden
+        $query = ($status === 'pending'
+                ? Order::onlineOrders()->awaitingCashierReview()
+                : Order::onlineOrders()->where('approval_status', $status)->whereNull('cancelled_at'))
             ->with(['customer', 'paymentProof', 'details']);
 
         if ($search = trim((string) $request->input('q'))) {
@@ -65,8 +67,7 @@ class OnlineOrderController extends Controller
     public function pendingCount(): JsonResponse
     {
         return response()->json([
-            'pendingCount' => Order::onlineOrders()->where('approval_status', 'pending')
-                ->whereNull('cancelled_at')->count(),
+            'pendingCount' => Order::onlineOrders()->awaitingCashierReview()->count(),
         ]);
     }
 
@@ -167,8 +168,7 @@ class OnlineOrderController extends Controller
     private function summaryCounts(): array
     {
         return [
-            'pendingCount'   => Order::onlineOrders()->where('approval_status', 'pending')
-                                    ->whereNull('cancelled_at')->count(),
+            'pendingCount'   => Order::onlineOrders()->awaitingCashierReview()->count(),
             'approvedToday'  => Order::onlineOrders()->where('approval_status', 'approved')
                                     ->whereDate('reviewed_at', today())->count(),
             'rejectedToday'  => Order::onlineOrders()->where('approval_status', 'rejected')

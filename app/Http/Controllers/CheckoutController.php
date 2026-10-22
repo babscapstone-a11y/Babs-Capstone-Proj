@@ -397,7 +397,7 @@ class CheckoutController extends Controller
             abort(403);
         }
 
-        if ($order->isCancelled() || $order->cancellationRequest?->isPending()) {
+        if ($order->isCancelled()) {
             return redirect()->route('account.orders.show', $order)
                 ->with('error', 'This order has been cancelled, so payment can no longer be completed.');
         }

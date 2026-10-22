@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CancellationRequest;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\Order;
@@ -22,17 +21,6 @@ class DashboardController extends Controller
         $activeStaff = User::whereHas('role', fn ($q) => $q->whereIn('role_name', $staffRoles))
                            ->where('status', 'active')->count();
         $pendingResets = StaffPasswordResetRequest::pending()->count();
-
-        // ── Order Cancellation Review Module (REQ047–REQ050) ───────────
-        $pendingCancellations = CancellationRequest::pending()->count();
-        $approvedCancellationsToday = CancellationRequest::approved()->whereDate('review_date', today())->count();
-        $rejectedCancellationsToday = CancellationRequest::rejected()->whereDate('review_date', today())->count();
-        $cancelledOrders = Order::whereHas('orderStatus', fn ($q) => $q->where('status_name', 'Cancelled'))->count();
-
-        $recentCancellationRequests = CancellationRequest::with(['order.orderStatus', 'customer'])
-            ->latest()
-            ->take(6)
-            ->get();
 
         // ── Sales Overview widget: net sales for the last 7 days ───────
         $dailySales = Payment::with('invoice')
@@ -109,8 +97,6 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'totalStaff', 'activeStaff', 'pendingResets',
-            'pendingCancellations', 'approvedCancellationsToday', 'rejectedCancellationsToday',
-            'cancelledOrders', 'recentCancellationRequests',
             'salesChartLabels', 'salesChartData',
             'todaySales', 'todayTransactions', 'activeOrders', 'completedOrdersToday', 'ordersChartData',
             'inventoryTotal', 'inventoryOut', 'inventoryLow', 'inventoryOk', 'lowStockItems',

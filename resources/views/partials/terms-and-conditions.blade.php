@@ -23,12 +23,11 @@
 <p>Failure to complete the required payment (whether full payment or the 50% downpayment) for advance and pick-up orders will result in the order remaining unverified and unprocessed.</p>
 
 <h4>5. Order Cancellation Policy</h4>
-<p>We understand that circumstances may change; however, to prevent food waste, financial loss, and the need for refunds, Babs Resto enforces a strict cancellation policy:</p>
+<p>We understand that circumstances may change; however, to prevent food waste, financial loss, and the need for refunds, Babs Resto enforces a strict no-cancellation policy:</p>
 <ul>
-    <li>Only unpaid orders may be submitted for cancellation. Customers may request cancellation through the system interface only while the order status remains as "Pending" or "Confirmed" and no payment has been made.</li>
-    <li>Orders that have received any form of payment, whether full payment or a fifty percent (50%) downpayment, are considered final and cannot be cancelled. This policy is enforced to eliminate the need for refund processing and to ensure committed resources are not wasted.</li>
-    <li>All cancellation requests for unpaid orders are subject to a thorough review and final approval by the Restaurant Administrator.</li>
-    <li>Once the kitchen staff begins processing the order and updates the status to "Started" or "Preparing," the system will automatically restrict any further cancellation attempts regardless of payment status, and the customer will be held liable for the full amount of the order.</li>
+    <li>Orders placed through the online ordering system cannot be cancelled. Please review your items, quantities, and pick-up schedule carefully before completing payment.</li>
+    <li>Orders that have received any form of payment, whether full payment or a fifty percent (50%) downpayment, are considered final. This policy is enforced to eliminate the need for refund processing and to ensure committed resources are not wasted.</li>
+    <li>Orders that are not paid will remain unverified and will not be prepared by the kitchen.</li>
 </ul>
 
 <h4>6. Discounts and Promotional Privileges</h4>

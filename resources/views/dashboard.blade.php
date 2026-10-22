@@ -235,7 +235,7 @@
     .anim-6 { animation: fadeUp .5s .40s ease both; }
     .anim-7 { animation: fadeUp .5s .48s ease both; }
 
-    /* ── Cancellation review widget ──────────────────────────── */
+    /* ── Compact table (used by dashboard widgets) ─────────────── */
     .cancel-table-wrap { overflow-x: auto; }
     .cancel-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
     .cancel-table thead th {
@@ -519,99 +519,6 @@
                     })">
                     <i class="fas fa-wand-magic-sparkles"></i> Generate PO Draft
                 </button>
-            </div>
-        @endif
-    </div>
-</div>
-
-{{-- Order Cancellation Review (REQ047–REQ050) --}}
-<div class="anim-4" style="margin-bottom:1.75rem">
-    <div class="section-heading">
-        <span><i class="fas fa-ban" style="margin-right:.4rem;color:var(--primary)"></i> Order Cancellation Review</span>
-        <a href="{{ route('cancellations.index') }}" style="font-size:.75rem;color:var(--primary);font-weight:600;text-transform:none;letter-spacing:0">
-            View All <i class="fas fa-arrow-right" style="font-size:.65rem"></i>
-        </a>
-    </div>
-
-    <div class="stats-grid" style="margin-bottom:1.1rem">
-        <div class="stat-card" style="--card-accent: linear-gradient(90deg, #F59E0B, #F97316)">
-            <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:var(--amber-600)"><i class="fas fa-hourglass-half"></i></div>
-            <div class="stat-label">Pending Cancellation Requests</div>
-            <div class="stat-value" style="color:var(--amber-600)">{{ $pendingCancellations }}</div>
-        </div>
-        <div class="stat-card" style="--card-accent: linear-gradient(90deg, #16A34A, #059669)">
-            <div class="stat-icon" style="background:rgba(22,163,74,0.10);color:var(--green-600)"><i class="fas fa-circle-check"></i></div>
-            <div class="stat-label">Approved Today</div>
-            <div class="stat-value" style="color:var(--green-600)">{{ $approvedCancellationsToday }}</div>
-        </div>
-        <div class="stat-card" style="--card-accent: linear-gradient(90deg, #DC2626, #F97316)">
-            <div class="stat-icon" style="background:rgba(220,38,38,0.10);color:var(--primary)"><i class="fas fa-circle-xmark"></i></div>
-            <div class="stat-label">Rejected Today</div>
-            <div class="stat-value" style="color:var(--primary)">{{ $rejectedCancellationsToday }}</div>
-        </div>
-        <div class="stat-card" style="--card-accent: linear-gradient(90deg, #6B7280, #111827)">
-            <div class="stat-icon" style="background:rgba(107,114,128,0.12);color:var(--text-2)"><i class="fas fa-ban"></i></div>
-            <div class="stat-label">Cancelled Orders</div>
-            <div class="stat-value" style="color:var(--text-2)">{{ $cancelledOrders }}</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">Recent Requests</h2>
-        </div>
-        @if($recentCancellationRequests->isEmpty())
-            <div style="padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.85rem">
-                <i class="fas fa-ban" style="font-size:2rem;display:block;margin-bottom:.65rem;opacity:.25"></i>
-                No cancellation requests yet.
-            </div>
-        @else
-            <div class="cancel-table-wrap">
-                <table class="cancel-table">
-                    <thead>
-                        <tr>
-                            <th>Request #</th>
-                            <th>Order #</th>
-                            <th>Customer</th>
-                            <th>Order Status</th>
-                            <th>Request Date</th>
-                            <th>Review Status</th>
-                            <th style="text-align:right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($recentCancellationRequests as $cr)
-                        <tr>
-                            <td style="font-weight:600;font-size:.78rem">{{ $cr->request_number ?? '#'.$cr->id }}</td>
-                            <td>{{ $cr->order?->order_number ?? '—' }}</td>
-                            <td>{{ $cr->customer?->full_name ?? 'Unknown' }}</td>
-                            <td>
-                                @if($cr->order)
-                                <span class="badge" style="background:{{ $cr->order->status_color }}1a;color:{{ $cr->order->status_color }}">{{ $cr->order->status_name }}</span>
-                                @else — @endif
-                            </td>
-                            <td style="font-size:.78rem;color:var(--muted);white-space:nowrap">{{ $cr->created_at->format('M d, Y h:i A') }}</td>
-                            <td><span class="badge {{ $cr->review_status_badge_class }}">{{ $cr->review_status_label }}</span></td>
-                            <td>
-                                <div class="row-acts" style="justify-content:flex-end">
-                                    <a href="{{ route('cancellations.show', $cr) }}" class="act-btn act-view" title="Review" aria-label="Review"><i class="fas fa-eye"></i></a>
-                                    @if($cr->isPending())
-                                    <button type="button" class="act-btn act-success" title="Approve" aria-label="Approve"
-                                        onclick="openModal({
-                                            type: 'warn', iconClass: 'fas fa-circle-check',
-                                            title: 'Approve Cancellation?',
-                                            desc: 'Are you sure you want to approve this cancellation request?',
-                                            action: '{{ route('cancellations.approve', $cr) }}',
-                                            method: 'PUT', confirmText: 'Approve',
-                                        })"><i class="fas fa-check"></i></button>
-                                    <a href="{{ route('cancellations.show', $cr) }}" class="act-btn act-danger" title="Reject" aria-label="Reject"><i class="fas fa-xmark"></i></a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
             </div>
         @endif
     </div>

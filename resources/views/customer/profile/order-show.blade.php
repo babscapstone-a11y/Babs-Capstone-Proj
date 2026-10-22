@@ -224,15 +224,13 @@
         // Payment" CTA back to the QR page), or they already uploaded a
         // screenshot and are just waiting on the cashier to check it (the
         // "Awaiting Payment Verification" banner below, unchanged).
-        // Never offer to resume payment once the order is cancelled or a
-        // cancellation request is pending review — there's nothing to pay for —
-        // or once staff have reviewed it (approved = payment verified).
+        // Never offer to resume payment once the order is cancelled — there's
+        // nothing to pay for — or once staff have reviewed it (approved = payment verified).
         $needsPayment = $order->isOnline() && $order->paymentProof
             && in_array($order->paymentProof->status, ['awaiting_payment', 'failed'], true)
             && ! $order->paymentProof->proof_image
             && ! in_array($order->approval_status, ['approved', 'rejected'], true)
-            && ! $order->isCancelled()
-            && ! $order->cancellationRequest?->isPending();
+            && ! $order->isCancelled();
         $qrExpired = $needsPayment && ($order->paymentProof->status === 'failed' || $order->paymentProof->isQrExpired());
     @endphp
 
@@ -254,7 +252,7 @@
 
     {{-- Online pre-order: awaiting cashier verification --}}
     @if(! $needsPayment && $order->isOnline() && $order->approval_status === 'pending'
-        && ! $order->isCancelled() && ! $order->cancellationRequest?->isPending())
+        && ! $order->isCancelled())
     <div class="cancel-banner fade-up" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
         <i class="fas fa-hourglass-half"></i>
         <div>
@@ -286,32 +284,6 @@
     </div>
     @endif
 
-    {{-- Cancellation request: awaiting admin review --}}
-    @if(! $order->isCancelled() && $order->cancellationRequest?->isPending())
-    <div class="cancel-banner fade-up" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">
-        <i class="fas fa-hourglass-half"></i>
-        <div>
-            <strong>Cancellation Request Under Review</strong><br>
-            We received your cancellation request on {{ $order->cancellationRequest->created_at->format('F d, Y h:i A') }}. An Administrator will review it shortly.
-        </div>
-    </div>
-    @endif
-
-    {{-- Cancellation request: rejected --}}
-    @if(! $order->isCancelled() && $order->cancellationRequest?->isRejected())
-    <div class="cancel-banner fade-up">
-        <i class="fas fa-circle-xmark"></i>
-        <div>
-            <strong>Cancellation Request Rejected</strong><br>
-            @if($order->cancellationRequest->rejection_reason)
-                Reason: {{ $order->cancellationRequest->rejection_reason }}
-            @else
-                Your cancellation request was not approved.
-            @endif
-            <div style="font-size:.76rem;margin-top:.2rem;color:#B91C1C99">This order continues through its normal preparation workflow.</div>
-        </div>
-    </div>
-    @endif
 
     {{-- Cancellation banner --}}
     @if($order->isCancelled())
@@ -616,11 +588,6 @@
 
         {{-- Actions --}}
         <div style="display:flex;flex-direction:column;gap:.6rem">
-            @if($order->isCancellationEligible() && ! $order->cancellationRequest)
-            <button type="button" class="btn btn-outline" style="justify-content:center;border-color:#FCA5A5;color:#B91C1C" onclick="document.getElementById('cancelReqModal').classList.add('open')">
-                <i class="fas fa-ban"></i> Request Cancellation
-            </button>
-            @endif
             <a href="{{ route('account.index', ['tab' => 'orders']) }}" class="btn btn-outline" style="justify-content:center">
                 <i class="fas fa-arrow-left"></i> Back to Orders
             </a>
@@ -634,32 +601,6 @@
 
 </div>
 
-{{-- Request Cancellation modal --}}
-@if($order->isCancellationEligible() && ! $order->cancellationRequest)
-<div class="modal-overlay" id="cancelReqModal" role="dialog" aria-modal="true">
-    <div class="modal-box">
-        <div class="modal-icon" style="background:rgba(220,38,38,0.10);color:var(--primary)"><i class="fas fa-ban"></i></div>
-        <h3 class="modal-title">Request Cancellation</h3>
-        <p class="modal-desc">Tell us why you'd like to cancel this order. An Administrator will review your request before it's cancelled.</p>
-        <form method="POST" action="{{ route('account.orders.cancellation-request.store', $order) }}">
-            @csrf
-            <textarea name="cancellation_reason" required maxlength="500" rows="3" placeholder="e.g. Ordered by mistake, changed my mind…"
-                      style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-size:.85rem;font-family:inherit;color:var(--text);outline:none;resize:vertical;margin-bottom:1.25rem"></textarea>
-            <div class="modal-actions">
-                <button type="button" class="btn-modal-cancel" onclick="document.getElementById('cancelReqModal').classList.remove('open')">Never Mind</button>
-                <button type="submit" class="btn-modal-confirm" style="background:var(--primary)">
-                    <i class="fas fa-paper-plane"></i> Submit Request
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-<script>
-document.getElementById('cancelReqModal').addEventListener('click', function (e) {
-    if (e.target === this) this.classList.remove('open');
-});
-</script>
-@endif
 @endsection
 
 @section('layout-styles')
@@ -684,7 +625,6 @@ document.getElementById('cancelReqModal').addEventListener('click', function (e)
 const orderStatusUrl = "{{ route('account.orders.status', $order) }}";
 let lastStatus = @json($order->status_name);
 let lastApprovalStatus = @json($order->approval_status);
-let lastCancellationStatus = @json($order->cancellationRequest?->review_status);
 let lastExtraPrepMinutes = @json($order->extra_prep_minutes);
 
 async function pollOrderStatus() {
@@ -693,7 +633,7 @@ async function pollOrderStatus() {
         const data = await res.json();
 
         if (data.status_name !== lastStatus || data.approval_status !== lastApprovalStatus
-            || data.cancellation_status !== lastCancellationStatus || data.is_cancelled || data.is_completed
+            || data.is_cancelled || data.is_completed
             || data.extra_prep_minutes !== lastExtraPrepMinutes) {
             window.location.reload();
             return;
