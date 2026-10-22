@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PasswordResetOtp;
-use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordResetOtpNotification;
 use App\Support\LoginLockout;
@@ -31,6 +30,12 @@ class PasswordResetLinkController extends Controller
             . ' failed login attempts, so its password can\'t be reset right now. ' . LoginLockout::retryText($email);
     }
 
+    /** Shown to non-admin staff once their (code-verified) request is waiting for an admin. */
+    public static function awaitingApprovalMessage(): string
+    {
+        return 'Your password reset request has been submitted. Once an admin approves it, log in with your default password (your last name + birthday, e.g. delacruz01152000) and you will be asked to set a new one.';
+    }
+
     /**
      * Handle an incoming password reset OTP request.
      *
@@ -51,12 +56,18 @@ class PasswordResetLinkController extends Controller
 
         $staffUser = User::staffAccounts()->where('email', $email)->first();
 
-        // Admins approve everyone else's requests, so they don't wait for approval themselves:
-        // they get the same emailed code an approved request produces, straight away.
-        if ($staffUser && $staffUser->isAdmin()) {
+        // Every staff member first proves the email is theirs with an emailed code. Admins then set
+        // a new password themselves; other staff (cashier / kitchen / table server) have their
+        // request sent to an admin, who resets it to the default (see OtpPasswordResetController).
+        if ($staffUser) {
             if (! $staffUser->isActive()) {
                 return back()->withInput()
                     ->withErrors(['email' => 'This account has been deactivated, so its password can\'t be reset.']);
+            }
+
+            if (! $staffUser->isAdmin() && $staffUser->passwordResetRequests()->pending()->exists()) {
+                return redirect()->route('password.request')
+                    ->with('status', self::awaitingApprovalMessage());
             }
 
             try {
@@ -72,31 +83,9 @@ class PasswordResetLinkController extends Controller
             $request->session()->put('password_reset_otp_email', $staffUser->email);
 
             return redirect()->route('password.otp.verify')
-                ->with('status', 'A 6-digit code has been sent to your email.');
-        }
-
-        // Other staff (cashier / kitchen / table server) go through admin approval
-        // instead of an instant self-service reset.
-        if ($staffUser) {
-            // Already approved: the code was emailed then, so take them straight to entering it.
-            $approvedCode = PasswordResetOtp::where('email', $staffUser->email)->first();
-            if ($approvedCode && ! $approvedCode->isExpired()) {
-                $request->session()->put('password_reset_otp_email', $staffUser->email);
-
-                return redirect()->route('password.otp.verify')
-                    ->with('status', 'Your request was approved. Enter the 6-digit code we emailed you.');
-            }
-
-            if (! $staffUser->passwordResetRequests()->pending()->exists()) {
-                StaffPasswordResetRequest::create([
-                    'user_id'      => $staffUser->id,
-                    'requested_by' => $staffUser->id,
-                    'status'       => 'pending',
-                ]);
-            }
-
-            return redirect()->route('password.request')
-                ->with('status', 'Your password reset request has been submitted. Once an admin approves it, log in with your default password (your last name + birthday, e.g. delacruz01152000) and you will be asked to set a new one.');
+                ->with('status', $staffUser->isAdmin()
+                    ? 'A 6-digit code has been sent to your email.'
+                    : 'A 6-digit code has been sent to your email. Enter it to send your password reset request to an admin.');
         }
 
         $customer = Customer::withEmail($email)->first();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\PasswordResetOtp;
+use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
 use App\Support\LoginLockout;
 use Illuminate\Auth\Events\PasswordReset;
@@ -93,6 +94,24 @@ class OtpPasswordResetController extends Controller
 
         $record->delete();
         $request->session()->forget('password_reset_otp_email');
+
+        // Cashier / kitchen / table server: the code only proves the email is theirs. The request
+        // now goes to an admin, who resets the password to the default (last name + birthday).
+        $staffUser = User::staffAccounts()->where('email', $email)->first();
+        if ($staffUser && ! $staffUser->isAdmin()) {
+            if (! $staffUser->passwordResetRequests()->pending()->exists()) {
+                StaffPasswordResetRequest::create([
+                    'user_id'      => $staffUser->id,
+                    'requested_by' => $staffUser->id,
+                    'status'       => 'pending',
+                ]);
+            }
+
+            return redirect()->route('password.request')
+                ->with('status', PasswordResetLinkController::awaitingApprovalMessage());
+        }
+
+        // Admins and customers set a new password themselves
         $request->session()->put('password_reset_otp_verified_email', $email);
 
         return redirect()->route('password.otp.reset');
@@ -125,7 +144,10 @@ class OtpPasswordResetController extends Controller
         // Staff and customer passwords are both stored in users
         $user = $email ? User::where('email', $email)->first() : null;
 
-        if (! $user) {
+        // Only admins and customers set their own password; other staff go through admin approval
+        if (! $user || ! ($user->isAdmin() || $user->isCustomer())) {
+            $request->session()->forget('password_reset_otp_verified_email');
+
             return redirect()->route('password.request');
         }
 
