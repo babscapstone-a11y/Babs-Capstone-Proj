@@ -138,8 +138,10 @@
                     @csrf
                     <div class="field" style="margin-top:0">
                         <label for="reference_number">GCash Reference Number</label>
-                        <input type="text" id="reference_number" name="reference_number" placeholder="e.g. 1234 5678 9012" required>
-                        <div class="hint">Found in your GCash payment confirmation.</div>
+                        <input type="text" id="reference_number" name="reference_number" placeholder="e.g. 1234567890123" required
+                               inputmode="numeric" pattern="[0-9]+" maxlength="100" autocomplete="off"
+                               title="Numbers only" oninput="this.value = this.value.replace(/\D/g, '')">
+                        <div class="hint">Numbers only — found in your GCash payment confirmation.</div>
                     </div>
                     <div class="field">
                         <label for="proof_image">Screenshot of Payment</label>
