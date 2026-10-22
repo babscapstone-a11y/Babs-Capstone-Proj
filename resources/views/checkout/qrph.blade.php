@@ -169,9 +169,24 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const proofForm = document.getElementById('proofForm');
 
 if (proofForm) {
-    proofForm.addEventListener('submit', async (e) => {
+    // The browser checks the required fields first; then the customer confirms before it's sent,
+    // since a submitted proof can't be changed or uploaded again
+    proofForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const ref  = document.getElementById('reference_number').value.trim();
+        const file = document.getElementById('proof_image').files[0];
+
+        openConfirmModal({
+            title: 'Submit Payment Proof?',
+            desc: `Reference No. ${ref}` + (file ? ` with screenshot "${file.name}"` : '')
+                + ` for ₱{{ number_format($paymentProof->amount, 2) }}. Please check these are correct — you can't change them after submitting.`,
+            confirmText: 'Submit Proof',
+            onConfirm: () => { closeConfirmModal(); sendProof(); },
+        });
+    });
+
+    async function sendProof() {
         const btn = document.getElementById('submitProofBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spin"></span> <span>Submitting...</span>';
@@ -197,7 +212,7 @@ if (proofForm) {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Submit Payment Proof</span>';
         }
-    });
+    }
 }
 
 /* Auto-confirmation polling — mirrors the cashier billing screen's QR
