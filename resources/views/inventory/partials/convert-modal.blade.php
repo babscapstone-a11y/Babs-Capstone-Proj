@@ -157,6 +157,7 @@
 
             row.querySelector('.cv-raw-unit').textContent = unitText(l.unit);
             row.querySelector('.cv-portion-unit').textContent = isKg(l.unit) ? 'g' : unitText(l.unit);
+            row.querySelector('.cv-portion-label').textContent = isKg(l.unit) ? 'grams' : (l.unit === 'Piece' ? 'pieces' : unitText(l.unit));
             row.querySelector('.cv-portion').placeholder = isKg(l.unit) ? '250' : '1';
             row.querySelector('.cv-remove').style.visibility = all.length > 1 ? 'visible' : 'hidden';
 

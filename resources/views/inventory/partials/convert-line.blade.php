@@ -38,7 +38,7 @@
             </div>
         </div>
         <div class="field" style="margin-bottom:0">
-            <label>Portion Size (per serving) <span style="color:var(--red-600)">*</span></label>
+            <label>Portion Size (<span class="cv-portion-label">grams</span> per serving) <span style="color:var(--red-600)">*</span></label>
             <div class="cv-input-wrap">
                 <input type="number" class="no-spin cv-portion" name="lines[{{ $index }}][portion_size]" step="any" min="0.001" required
                        placeholder="250" value="{{ $line['portion_size'] ?? '' }}" oninput="cvUpdate()">
