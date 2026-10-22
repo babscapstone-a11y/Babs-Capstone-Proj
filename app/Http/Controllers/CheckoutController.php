@@ -112,9 +112,13 @@ class CheckoutController extends Controller
                 'payment_status'        => 'pending',
                 'payment_method'        => 'cashless',
                 'special_instructions'  => $request->special_instructions,
-                'pickup_at'             => $request->pickup_at,
-                'party_size'            => $request->schedule === 'advance' ? $request->integer('party_size') : null,
-                'approval_status'       => 'pending',
+            ]);
+
+            // Online-only details live in the online_orders subtype table
+            $order->onlineOrder()->create([
+                'pickup_at'       => $request->pickup_at,
+                'party_size'      => $request->schedule === 'advance' ? $request->integer('party_size') : null,
+                'approval_status' => 'pending',
             ]);
 
             foreach ($cart->items as $item) {
@@ -310,9 +314,13 @@ class CheckoutController extends Controller
                 'payment_status'        => 'pending',
                 'payment_method'        => 'cashless',
                 'special_instructions'  => $request->special_instructions,
-                'pickup_at'             => $request->pickup_at,
-                'party_size'            => $request->schedule === 'advance' ? $request->integer('party_size') : null,
-                'approval_status'       => 'pending',
+            ]);
+
+            // Online-only details live in the online_orders subtype table
+            $order->onlineOrder()->create([
+                'pickup_at'       => $request->pickup_at,
+                'party_size'      => $request->schedule === 'advance' ? $request->integer('party_size') : null,
+                'approval_status' => 'pending',
             ]);
 
             foreach ($cart->items as $item) {

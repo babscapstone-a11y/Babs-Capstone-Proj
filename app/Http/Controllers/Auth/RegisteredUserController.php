@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\EmailVerificationOtp;
+use App\Models\Role;
 use App\Models\User;
 use App\Notifications\EmailVerificationOtpNotification;
 use App\Rules\PersonName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -29,7 +31,6 @@ class RegisteredUserController extends Controller
             'last_name'  => ['required', 'string', 'max:100', new PersonName],
             'email'      => [
                 'required', 'string', 'lowercase', 'email', 'max:255',
-                Rule::unique(Customer::class),
                 Rule::unique(User::class),
             ],
             'phone'      => ['required', 'digits:11'],
@@ -41,14 +42,22 @@ class RegisteredUserController extends Controller
             'terms.accepted' => 'You must agree to the Terms and Conditions.',
         ]);
 
-        $customer = Customer::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'contact_no' => $request->phone,
-            'status'     => 'active',
-        ]);
+        // The login goes in users (role "customer"), the profile in customers
+        $customer = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+                'role_id'  => Role::where('role_name', Role::CUSTOMER)->value('id'),
+                'status'   => 'active',
+            ]);
+
+            return Customer::create([
+                'user_id'    => $user->id,
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
+                'contact_no' => $request->phone,
+            ])->setRelation('user', $user);
+        });
 
         $otp = (string) random_int(100000, 999999);
 

@@ -96,7 +96,6 @@ class UserController extends Controller
                 'first_name' => $request->first_name,
                 'last_name'  => $request->last_name,
                 'birthday'   => $request->birthday,
-                'email'      => $request->email,
                 'contact_no' => $request->phone ?? '',
                 'user_id'    => $user->id,
             ]);
@@ -152,7 +151,6 @@ class UserController extends Controller
                     'first_name' => $request->first_name,
                     'last_name'  => $request->last_name,
                     'birthday'   => $request->birthday ?? $user->staff->birthday,
-                    'email'      => $request->email,
                     'contact_no' => $request->phone ?? $user->staff->contact_no,
                 ]);
             } else {
@@ -160,7 +158,6 @@ class UserController extends Controller
                     'first_name' => $request->first_name,
                     'last_name'  => $request->last_name,
                     'birthday'   => $request->birthday,
-                    'email'      => $request->email,
                     'contact_no' => $request->phone ?? '',
                     'user_id'    => $user->id,
                 ]);

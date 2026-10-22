@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Auth\CustomerUserProvider;
+use App\Auth\StaffUserProvider;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -23,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::defaultView('pagination::compact');
+
+        // Role-based logins: staff and customers both sign in against `users`, each guard
+        // only accepting its own roles (see config/auth.php)
+        Auth::provider('staff-users', fn ($app, array $config) => new StaffUserProvider($app['hash'], $config['model']));
+        Auth::provider('customer-users', fn ($app, array $config) => new CustomerUserProvider($app['hash'], $config['model']));
 
         // Strong password everywhere a password is set (staff accounts, customer registration,
         // change password, and both reset-password flows): 8+ characters with lowercase,

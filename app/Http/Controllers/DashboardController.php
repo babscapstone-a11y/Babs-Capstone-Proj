@@ -41,9 +41,7 @@ class DashboardController extends Controller
         $todayTransactions = Payment::whereDate('payment_date', today())->count();
 
         // ── Order stats (online orders still awaiting approval aren't "active" yet) ──
-        $liveOrders = fn () => Order::where(function ($q) {
-            $q->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
-        });
+        $liveOrders = fn () => Order::releasedToKitchen();
         $activeOrders = $liveOrders()
             ->whereHas('orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']))
             ->count();

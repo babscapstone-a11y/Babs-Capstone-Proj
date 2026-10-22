@@ -9,6 +9,9 @@ class Role extends Model
 {
     protected $fillable = ['role_name', 'display_name'];
 
+    /** Role of customer accounts; every other role is a staff role */
+    const CUSTOMER = 'customer';
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

@@ -14,7 +14,6 @@ class Staff extends Model
         'first_name',
         'last_name',
         'birthday',
-        'email',
         'contact_no',
         'user_id',
     ];
@@ -42,7 +41,6 @@ class Staff extends Model
 
         return $lastName . $this->birthday->format('mdY');
     }
-
 
     public function getFullNameAttribute(): string
     {

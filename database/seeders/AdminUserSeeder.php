@@ -33,7 +33,6 @@ class AdminUserSeeder extends Seeder
             [
                 'first_name' => 'Administrator',
                 'last_name'  => '',
-                'email'      => $admin->email,
                 'contact_no' => '',
             ]
         );
@@ -53,7 +52,6 @@ class AdminUserSeeder extends Seeder
             [
                 'first_name' => 'Owner',
                 'last_name'  => '',
-                'email'      => $owner->email,
                 'contact_no' => '',
             ]
         );

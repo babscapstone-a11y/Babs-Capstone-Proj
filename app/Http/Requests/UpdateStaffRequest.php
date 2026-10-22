@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Rules\PersonName;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,7 +35,8 @@ class UpdateStaffRequest extends FormRequest
             // Optional so staff created before birthdays were recorded can still be edited;
             // needed before their password can be reset to the default
             'birthday' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
-            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            // Staff roles only: the customer role is given at customer registration
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')->where(fn ($q) => $q->where('role_name', '!=', Role::CUSTOMER))],
             'status'  => ['required', 'in:active,inactive'],
         ];
     }

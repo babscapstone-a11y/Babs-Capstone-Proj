@@ -49,7 +49,7 @@ class PasswordResetLinkController extends Controller
             return back()->withInput()->withErrors(['email' => self::lockedResetMessage($email)]);
         }
 
-        $staffUser = User::where('email', $email)->first();
+        $staffUser = User::staffAccounts()->where('email', $email)->first();
 
         // Admins approve everyone else's requests, so they don't wait for approval themselves:
         // they get the same emailed code an approved request produces, straight away.
@@ -99,7 +99,7 @@ class PasswordResetLinkController extends Controller
                 ->with('status', 'Your password reset request has been submitted. Once an admin approves it, log in with your default password (your last name + birthday, e.g. delacruz01152000) and you will be asked to set a new one.');
         }
 
-        $customer = Customer::where('email', $email)->first();
+        $customer = Customer::withEmail($email)->first();
 
         // Tell the user when the email isn't registered, so a typo can be fixed right away.
         // (This route is rate-limited — throttle:6,1 — which limits using it to probe for accounts.)

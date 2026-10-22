@@ -21,3 +21,7 @@ Artisan::command('login:unlock {login : The email or username of the locked acco
 })->purpose('Lift a login lockout (3 failed attempts) before the hour is up');
 
 Schedule::command('orders:cancel-unclaimed')->everyFiveMinutes();
+
+// Sends queued customer emails (App\Jobs\SendOrderMail) on the server, where no
+// worker runs permanently; locally `composer run dev` already runs one
+Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();

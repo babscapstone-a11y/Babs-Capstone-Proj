@@ -69,10 +69,10 @@ class EmailVerificationOtpController extends Controller
             return back()->withErrors(['otp' => 'That code is incorrect.']);
         }
 
-        $customer = Customer::where('email', $email)->first();
+        $customer = Customer::withEmail($email)->first();
 
         if ($customer) {
-            $customer->forceFill(['email_verified_at' => now()])->save();
+            $customer->user->forceFill(['email_verified_at' => now()])->save();
         }
 
         $record->delete();
@@ -92,7 +92,7 @@ class EmailVerificationOtpController extends Controller
             return redirect()->route('login');
         }
 
-        $customer = Customer::where('email', $email)->first();
+        $customer = Customer::withEmail($email)->first();
 
         if ($customer && ! $customer->isEmailVerified()) {
             $otp = (string) random_int(100000, 999999);

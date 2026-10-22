@@ -30,7 +30,7 @@ class KitchenController extends Controller
         // Backup for the scheduler: drop prepared online orders nobody picked up by closing time
         Order::cancelUnclaimedPickupsThrottled();
 
-        $orders =Order::with(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem'])
+        $orders =Order::with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem'])
             ->where(function ($query) {
                 $query->whereHas('orderStatus', function ($q) {
                     $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);
@@ -50,10 +50,7 @@ class KitchenController extends Controller
             })
             // Online pre-orders stay invisible to the kitchen until a cashier
             // has verified the down-payment and approved them (Module 23).
-            ->where(function ($query) {
-                $query->where('order_type', '!=', 'online')
-                      ->orWhere('approval_status', 'approved');
-            })
+            ->releasedToKitchen()
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Order $order) => $this->serializeOrder($order));

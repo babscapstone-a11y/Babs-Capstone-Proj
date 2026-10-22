@@ -68,13 +68,15 @@ return [
     */
 
     'providers' => [
+        // Both sign in against the `users` table; each only accepts its own roles
+        // (App\Auth\StaffUserProvider / App\Auth\CustomerUserProvider)
         'users' => [
-            'driver' => 'eloquent',
+            'driver' => 'staff-users',
             'model' => env('AUTH_MODEL', User::class),
         ],
 
         'customers' => [
-            'driver' => 'eloquent',
+            'driver' => 'customer-users',
             'model' => Customer::class,
         ],
 

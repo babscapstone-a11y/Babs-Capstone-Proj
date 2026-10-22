@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RejectOnlineOrderRequest;
+use App\Models\OnlineOrder;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,8 +32,8 @@ class OnlineOrderController extends Controller
         // Pending = only orders with a payment screenshot submitted; unpaid ones stay hidden
         $query = ($status === 'pending'
                 ? Order::onlineOrders()->awaitingCashierReview()
-                : Order::onlineOrders()->where('approval_status', $status)->whereNull('cancelled_at'))
-            ->with(['customer', 'paymentProof', 'details']);
+                : Order::onlineOrders()->withApprovalStatus($status)->notCancelled())
+            ->with(['customer.user', 'paymentProof', 'details', 'onlineOrder']);
 
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
@@ -78,7 +79,7 @@ class OnlineOrderController extends Controller
     {
         $this->authorize('viewOnline', $order);
 
-        $order->load(['customer', 'details.menuItem', 'paymentProof', 'reviewedBy.staff', 'orderStatus']);
+        $order->load(['customer', 'details.menuItem', 'paymentProof', 'onlineOrder.reviewedBy.staff', 'orderStatus']);
 
         return view('cashier.online-orders.show', compact('order'));
     }
@@ -105,7 +106,7 @@ class OnlineOrderController extends Controller
                 return 'no-proof';
             }
 
-            $locked->update([
+            $locked->onlineOrder->update([
                 'approval_status' => 'approved',
                 'reviewed_by'     => auth()->id(),
                 'reviewed_at'     => now(),
@@ -148,7 +149,7 @@ class OnlineOrderController extends Controller
                 return null;
             }
 
-            $locked->update([
+            $locked->onlineOrder->update([
                 'approval_status'  => 'rejected',
                 'reviewed_by'      => auth()->id(),
                 'reviewed_at'      => now(),
@@ -169,11 +170,11 @@ class OnlineOrderController extends Controller
     {
         return [
             'pendingCount'   => Order::onlineOrders()->awaitingCashierReview()->count(),
-            'approvedToday'  => Order::onlineOrders()->where('approval_status', 'approved')
+            'approvedToday'  => OnlineOrder::where('approval_status', 'approved')
                                     ->whereDate('reviewed_at', today())->count(),
-            'rejectedToday'  => Order::onlineOrders()->where('approval_status', 'rejected')
+            'rejectedToday'  => OnlineOrder::where('approval_status', 'rejected')
                                     ->whereDate('reviewed_at', today())->count(),
-            'totalVerified'  => Order::onlineOrders()->where('approval_status', 'approved')->count(),
+            'totalVerified'  => OnlineOrder::where('approval_status', 'approved')->count(),
         ];
     }
 }

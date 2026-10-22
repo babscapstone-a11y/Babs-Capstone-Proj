@@ -189,8 +189,8 @@
                         <div class="timeline-title">Order {{ $order->approval_status_label }}</div>
                         <div class="timeline-time">
                             {{ $order->reviewed_at?->format('M d, Y h:i A') }}
-                            @if($order->reviewedBy)
-                                &middot; by {{ $order->reviewedBy->staff?->full_name ?? $order->reviewedBy->email }}
+                            @if($order->onlineOrder?->reviewedBy)
+                                &middot; by {{ $order->onlineOrder?->reviewedBy->staff?->full_name ?? $order->onlineOrder?->reviewedBy->email }}
                             @elseif($order->wasAutoApproved())
                                 &middot; automatically (QR payment confirmed)
                             @endif
@@ -299,7 +299,7 @@
                             @if($order->wasAutoApproved())
                             This order was <strong>approved automatically</strong> on {{ $order->reviewed_at?->format('M d, Y h:i A') }} because PayMongo confirmed the QR payment, and forwarded to the Kitchen Display System.
                             @else
-                            This order was <strong>approved</strong>{{ $order->reviewedBy ? ' by ' . ($order->reviewedBy->staff?->full_name ?? $order->reviewedBy->email) : '' }}
+                            This order was <strong>approved</strong>{{ $order->onlineOrder?->reviewedBy ? ' by ' . ($order->onlineOrder?->reviewedBy->staff?->full_name ?? $order->onlineOrder?->reviewedBy->email) : '' }}
                             on {{ $order->reviewed_at?->format('M d, Y h:i A') }} and forwarded to the Kitchen Display System.
                             @endif
                         </div>
@@ -308,7 +308,7 @@
                     <div class="reviewed-box rejected">
                         <i class="fas fa-circle-xmark"></i>
                         <div>
-                            This order was <strong>rejected</strong>{{ $order->reviewedBy ? ' by ' . ($order->reviewedBy->staff?->full_name ?? $order->reviewedBy->email) : '' }}
+                            This order was <strong>rejected</strong>{{ $order->onlineOrder?->reviewedBy ? ' by ' . ($order->onlineOrder?->reviewedBy->staff?->full_name ?? $order->onlineOrder?->reviewedBy->email) : '' }}
                             on {{ $order->reviewed_at?->format('M d, Y h:i A') }}.
                             <div style="margin-top:.3rem">Reason: {{ $order->rejection_reason }}</div>
                         </div>

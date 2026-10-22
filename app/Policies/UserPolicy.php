@@ -13,10 +13,10 @@ class UserPolicy
         return $currentUser->isAdmin();
     }
 
-    /* Admins can view any individual staff profile */
+    /* Admins can view any individual staff profile (customer accounts are managed under Customers) */
     public function view(User $currentUser, User $target): bool
     {
-        return $currentUser->isAdmin();
+        return $currentUser->isAdmin() && ! $target->isCustomer();
     }
 
     /* Only admins can create new staff accounts */
@@ -28,13 +28,13 @@ class UserPolicy
     /* Admins can edit staff — but NOT their own account through this module */
     public function update(User $currentUser, User $target): bool
     {
-        return $currentUser->isAdmin() && $currentUser->id !== $target->id;
+        return $currentUser->isAdmin() && $currentUser->id !== $target->id && ! $target->isCustomer();
     }
 
     /* Admins can toggle status — but NOT their own account, and NOT deactivate another active admin */
     public function toggleStatus(User $currentUser, User $target): Response
     {
-        if (! $currentUser->isAdmin() || $currentUser->id === $target->id) {
+        if (! $currentUser->isAdmin() || $currentUser->id === $target->id || $target->isCustomer()) {
             return Response::deny('You are not allowed to change the status of this account.');
         }
 

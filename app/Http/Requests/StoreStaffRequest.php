@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Rules\PersonName;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStaffRequest extends FormRequest
 {
@@ -21,7 +23,8 @@ class StoreStaffRequest extends FormRequest
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'username'   => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
             'phone'      => ['required', 'digits:11'],
-            'role_id'    => ['required', 'integer', 'exists:roles,id'],
+            // Staff roles only: the customer role is given at customer registration
+            'role_id'    => ['required', 'integer', Rule::exists('roles', 'id')->where(fn ($q) => $q->where('role_name', '!=', Role::CUSTOMER))],
             // No password here: the account starts on a default one (last name + birthday)
             'birthday'   => ['required', 'date', 'before:today', 'after:1900-01-01'],
         ];

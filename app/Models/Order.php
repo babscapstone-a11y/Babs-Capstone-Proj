@@ -15,17 +15,11 @@ class Order extends Model
         'order_number', 'total_amount', 'customer_id', 'placed_by', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'extra_prep_minutes',
-        'cancelled_at', 'cancellation_reason',
-        'pickup_at', 'party_size', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
         'ready_at', 'served_by', 'served_at', 'packaged_at',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
-        'cancelled_at' => 'datetime',
-        'pickup_at'    => 'datetime',
-        'party_size'   => 'integer',
-        'reviewed_at'  => 'datetime',
         'ready_at'     => 'datetime',
         'served_at'    => 'datetime',
         'packaged_at'  => 'datetime',
@@ -52,19 +46,7 @@ class Order extends Model
     protected static function booted(): void
     {
         static::updated(function (Order $order) {
-            if ($order->wasChanged('cancelled_at') && $order->cancelled_at && ! $order->getOriginal('cancelled_at')) {
-                \App\Support\OrderMail::cancelled($order);
-            }
-
-            if ($order->wasChanged('approval_status')) {
-                match ($order->approval_status) {
-                    'rejected' => \App\Support\OrderMail::rejected($order),
-                    // Covers the screenshot-upload path; a GCash payment confirmed
-                    // automatically has already been emailed (sent once only)
-                    'approved' => \App\Support\OrderMail::paymentReceived($order),
-                    default    => null,
-                };
-            }
+            // Cancellation, approval and rejection emails are sent from OnlineOrder, which holds those fields
 
             if ($order->wasChanged('payment_status') && $order->payment_status === 'paid') {
                 \App\Support\OrderMail::finalReceipt($order);
@@ -114,19 +96,9 @@ class Order extends Model
         return $this->hasOne(PaymentProof::class);
     }
 
-    public function reviewedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'reviewed_by');
-    }
-
     public function servedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'served_by');
-    }
-
-    public function cancellationRequest(): HasOne
-    {
-        return $this->hasOne(CancellationRequest::class);
     }
 
     /* ── Scopes ── */
@@ -170,18 +142,40 @@ class Order extends Model
      */
     public function scopeAwaitingCashierReview(Builder $q): Builder
     {
-        return $q->where('approval_status', 'pending')
-            ->whereNull('cancelled_at')
+        return $q->withApprovalStatus('pending')
+            ->notCancelled()
             ->whereHas('paymentProof', fn ($pq) => $pq->whereNotNull('proof_image'));
+    }
+
+    /** Online orders that haven't been cancelled (cancelled_at lives in online_orders) */
+    public function scopeNotCancelled(Builder $q): Builder
+    {
+        return $q->whereHas('onlineOrder', fn ($oq) => $oq->whereNull('cancelled_at'));
+    }
+
+    /** Online orders whose approval (stored in online_orders) is the given status */
+    public function scopeWithApprovalStatus(Builder $q, string $status): Builder
+    {
+        return $q->whereHas('onlineOrder', fn ($oq) => $oq->where('approval_status', $status));
+    }
+
+    /**
+     * Orders that have reached the floor: every dine-in / take-out order, but
+     * online orders only once a cashier (or a confirmed QR payment) approved them.
+     */
+    public function scopeReleasedToKitchen(Builder $q): Builder
+    {
+        return $q->where(function ($q) {
+            $q->where('order_type', '!=', 'online')
+              ->orWhereHas('onlineOrder', fn ($oq) => $oq->where('approval_status', 'approved'));
+        });
     }
 
     public function scopeVisibleForBilling(Builder $q): Builder
     {
         return $q->where('payment_status', 'pending')
             ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served', 'Packaged', 'Completed']))
-            ->where(function ($q) {
-                $q->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
-            });
+            ->releasedToKitchen();
     }
 
     /**
@@ -206,9 +200,7 @@ class Order extends Model
                     });
             });
         })
-        ->where(function ($query) {
-            $query->where('order_type', '!=', 'online')->orWhere('approval_status', 'approved');
-        });
+        ->releasedToKitchen();
     }
 
     /* ── Order Number Generation ── */
@@ -246,19 +238,22 @@ class Order extends Model
         }
 
         $orders = self::where('order_type', 'online')
-            ->whereNull('cancelled_at')
-            ->whereNotNull('pickup_at')
-            ->where('pickup_at', '<', $cutoff)
+            ->whereHas('onlineOrder', fn (Builder $q) => $q->whereNull('cancelled_at')
+                ->whereNotNull('pickup_at')->where('pickup_at', '<', $cutoff))
             ->whereHas('orderStatus', fn (Builder $q) => $q->whereIn('status_name', ['Ready', 'Packaged']))
+            ->with('onlineOrder')
             ->get();
 
         // One by one (not a bulk update) so each order's "cancelled" email goes out
+        // (sent once the transaction commits, so it sees both changes)
         foreach ($orders as $order) {
-            $order->update([
-                'order_status_id'     => $cancelledStatusId,
-                'cancelled_at'        => now(),
-                'cancellation_reason' => self::UNCLAIMED_REASON,
-            ]);
+            DB::transaction(function () use ($order, $cancelledStatusId) {
+                $order->update(['order_status_id' => $cancelledStatusId]);
+                $order->onlineOrder->update([
+                    'cancelled_at'        => now(),
+                    'cancellation_reason' => self::UNCLAIMED_REASON,
+                ]);
+            });
         }
 
         return $orders->count();
@@ -270,6 +265,48 @@ class Order extends Model
         if (\Illuminate\Support\Facades\Cache::add('orders:unclaimed-check', true, 60)) {
             self::cancelUnclaimedPickups();
         }
+    }
+
+    /* ── Online-order fields (stored in online_orders, read here as if on the order) ── */
+
+    public function getPickupAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return $this->onlineOrder?->pickup_at;
+    }
+
+    public function getPartySizeAttribute(): ?int
+    {
+        return $this->onlineOrder?->party_size;
+    }
+
+    public function getApprovalStatusAttribute(): ?string
+    {
+        return $this->onlineOrder?->approval_status;
+    }
+
+    public function getReviewedByAttribute(): ?int
+    {
+        return $this->onlineOrder?->reviewed_by;
+    }
+
+    public function getReviewedAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return $this->onlineOrder?->reviewed_at;
+    }
+
+    public function getRejectionReasonAttribute(): ?string
+    {
+        return $this->onlineOrder?->rejection_reason;
+    }
+
+    public function getCancelledAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return $this->onlineOrder?->cancelled_at;
+    }
+
+    public function getCancellationReasonAttribute(): ?string
+    {
+        return $this->onlineOrder?->cancellation_reason;
     }
 
     /* ── Computed Attributes ── */
@@ -583,11 +620,6 @@ class Order extends Model
         return $this->isCancelled() || ($this->payment_status === 'paid' && ($this->served_at !== null || $this->packaged_at !== null));
     }
 
-    public function isDelivery(): bool
-    {
-        return $this->order_type === 'online';
-    }
-
     public function isOnline(): bool
     {
         return $this->order_type === 'online';
@@ -615,7 +647,7 @@ class Order extends Model
                 return;
             }
 
-            $locked->update([
+            $locked->onlineOrder->update([
                 'approval_status' => 'approved',
                 'reviewed_by'     => null,
                 'reviewed_at'     => now(),

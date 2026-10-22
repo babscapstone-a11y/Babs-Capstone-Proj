@@ -629,7 +629,6 @@ class CashierController extends Controller
             'order_type'           => $order->order_type,
             'order_type_label'     => $order->order_type_label,
             'table_number'         => $order->dineInOrder?->table_number,
-            'delivery_address'     => $order->onlineOrder?->delivery_address,
             'created_at'           => $order->created_at?->toIso8601String(),
             'status_label'         => $order->status_name,
             'status_color'         => $order->status_color,

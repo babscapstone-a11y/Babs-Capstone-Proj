@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasPublicId;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -53,6 +54,12 @@ class User extends Authenticatable
         return $this->hasOne(Staff::class);
     }
 
+    /** Profile of a customer account (role "customer") */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(Customer::class);
+    }
+
     public function passwordResetRequests(): HasMany
     {
         return $this->hasMany(StaffPasswordResetRequest::class, 'user_id');
@@ -63,12 +70,26 @@ class User extends Authenticatable
         return $this->hasMany(StaffPasswordResetRequest::class, 'requested_by');
     }
 
-    public function reviewedCancellationRequests(): HasMany
+    /* ── Scopes ──────────────────────────────────────────────── */
+
+    /** Staff logins (admin, cashier, kitchen staff, table server) — every role except customer */
+    public function scopeStaffAccounts(Builder $query): Builder
     {
-        return $this->hasMany(CancellationRequest::class, 'reviewed_by');
+        return $query->whereHas('role', fn ($q) => $q->where('role_name', '!=', Role::CUSTOMER));
+    }
+
+    /** Customer logins (role "customer") */
+    public function scopeCustomerAccounts(Builder $query): Builder
+    {
+        return $query->whereHas('role', fn ($q) => $q->where('role_name', Role::CUSTOMER));
     }
 
     /* ── Helpers ─────────────────────────────────────────────── */
+
+    public function isCustomer(): bool
+    {
+        return $this->role?->role_name === Role::CUSTOMER;
+    }
 
     public function isAdmin(): bool
     {

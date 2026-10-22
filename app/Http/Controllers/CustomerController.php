@@ -6,6 +6,7 @@ use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
@@ -14,20 +15,20 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
-        $query = Customer::with('address');
+        $query = Customer::with(['address', 'user']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name',  'like', "%{$search}%")
-                  ->orWhere('email',      'like', "%{$search}%")
+                  ->orWhereHas('user', fn ($u) => $u->where('email', 'like', "%{$search}%"))
                   ->orWhere('contact_no', 'like', "%{$search}%")
                   ->orWhere('id', is_numeric($search) ? $search : 0);
             });
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $query->withStatus($request->input('status'));
         }
 
         $sortField = in_array($request->input('sort'), ['full_name', 'created_at'])
@@ -51,8 +52,8 @@ class CustomerController extends Controller
         }
 
         $totalCustomers    = Customer::count();
-        $activeCustomers   = Customer::where('status', 'active')->count();
-        $inactiveCustomers = Customer::where('status', 'inactive')->count();
+        $activeCustomers   = Customer::withStatus('active')->count();
+        $inactiveCustomers = Customer::withStatus('inactive')->count();
 
         return view('customers.index', compact(
             'customers', 'totalCustomers', 'activeCustomers', 'inactiveCustomers'
@@ -92,13 +93,19 @@ class CustomerController extends Controller
                 'reason.max'      => 'The reason may not be longer than 255 characters.',
             ]);
 
-            $customer->update([
-                'status'              => 'inactive',
-                'deactivation_reason' => trim($data['reason']),
-                'deactivated_at'      => now(),
-            ]);
+            // Account status lives on the users row; the reason stays with the customer profile
+            DB::transaction(function () use ($customer, $data) {
+                $customer->user->update(['status' => 'inactive']);
+                $customer->update([
+                    'deactivation_reason' => trim($data['reason']),
+                    'deactivated_at'      => now(),
+                ]);
+            });
         } else {
-            $customer->update(['status' => 'active', 'deactivation_reason' => null, 'deactivated_at' => null]);
+            DB::transaction(function () use ($customer) {
+                $customer->user->update(['status' => 'active']);
+                $customer->update(['deactivation_reason' => null, 'deactivated_at' => null]);
+            });
         }
 
         $label = $newStatus === 'active' ? 'activated' : 'deactivated';

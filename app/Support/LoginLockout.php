@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -79,11 +78,9 @@ class LoginLockout
     {
         $login = Str::lower(trim($login));
 
+        // Staff and customer logins are both users rows
         if ($id = User::whereRaw('LOWER(email) = ?', [$login])->orWhereRaw('LOWER(username) = ?', [$login])->value('id')) {
-            return "login-lock:staff:{$id}";
-        }
-        if ($id = Customer::whereRaw('LOWER(email) = ?', [$login])->value('id')) {
-            return "login-lock:customer:{$id}";
+            return "login-lock:user:{$id}";
         }
 
         return 'login-lock:unknown:' . sha1($login);

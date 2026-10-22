@@ -166,17 +166,6 @@
 }
 .cancel-banner i { font-size: 1.1rem; margin-top: .05rem; flex-shrink: 0; }
 
-/* Delivery info */
-.delivery-box {
-    background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px;
-    padding: 1rem 1.25rem;
-    display: flex; flex-direction: column; gap: .6rem;
-    font-size: .84rem;
-}
-.delivery-box .db-row { display: flex; align-items: flex-start; gap: .65rem; }
-.delivery-box .db-row i { color: #16A34A; margin-top: .1rem; flex-shrink: 0; }
-.delivery-box .db-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #15803D; margin-bottom: .1rem; }
-.delivery-box .db-val   { font-weight: 600; color: var(--dark); }
 
 .instructions-box {
     background: #FAFBFC; border: 1.5px solid var(--border); border-radius: 12px;
@@ -560,31 +549,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- Delivery info --}}
-        @if($order->isDelivery() && $order->onlineOrder)
-        <div class="card">
-            <div class="card-header"><h2><i class="fas fa-motorcycle"></i> Delivery Information</h2></div>
-            <div class="card-body">
-                <div class="delivery-box">
-                    <div class="db-row">
-                        <i class="fas fa-location-dot"></i>
-                        <div>
-                            <div class="db-label">Delivery Address</div>
-                            <div class="db-val">{{ $order->onlineOrder->delivery_address }}</div>
-                        </div>
-                    </div>
-                    <div class="db-row">
-                        <i class="fas fa-phone"></i>
-                        <div>
-                            <div class="db-label">Contact Number</div>
-                            <div class="db-val">{{ $order->onlineOrder->contact_number }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
 
         {{-- Actions --}}
         <div style="display:flex;flex-direction:column;gap:.6rem">

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\PasswordResetOtp;
 use App\Models\User;
 use App\Support\LoginLockout;
@@ -123,9 +122,8 @@ class OtpPasswordResetController extends Controller
         ]);
 
         $email = $request->session()->get('password_reset_otp_verified_email');
-        $user = $email
-            ? User::where('email', $email)->first() ?? Customer::where('email', $email)->first()
-            : null;
+        // Staff and customer passwords are both stored in users
+        $user = $email ? User::where('email', $email)->first() : null;
 
         if (! $user) {
             return redirect()->route('password.request');

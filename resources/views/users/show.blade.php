@@ -252,7 +252,7 @@
                 </div>
                 <div>
                     <div class="detail-label">Email</div>
-                    <div style="font-size:.86rem;color:var(--dark);margin-top:.2rem">{{ $user->staff->email }}</div>
+                    <div style="font-size:.86rem;color:var(--dark);margin-top:.2rem">{{ $user->email }}</div>
                 </div>
                 <div>
                     <div class="detail-label">Username</div>

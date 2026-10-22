@@ -27,7 +27,7 @@ class CustomerProfileController extends Controller
         $customer = auth('customer')->user()->load('address');
 
         $orders = Order::where('customer_id', $customer->id)
-            ->with(['orderStatus', 'details'])
+            ->with(['orderStatus', 'details', 'onlineOrder'])
             ->orderByDesc('created_at')
             ->paginate(8, ['*'], 'page')
             ->appends(['tab' => 'orders']);   // page links stay on the Order History tab
@@ -89,12 +89,13 @@ class CustomerProfileController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if (! Hash::check($request->current_password, $customer->password)) {
+        if (! Hash::check($request->current_password, $customer->getAuthPassword())) {
             return redirect()->route('account.index', ['tab' => 'security'])
                 ->withErrors(['current_password' => 'The current password is incorrect.']);
         }
 
-        $customer->update(['password' => Hash::make($request->new_password)]);
+        // The password is stored on the customer's users row
+        $customer->user->update(['password' => Hash::make($request->new_password)]);
 
         return redirect()->route('account.index', ['tab' => 'security'])
             ->with('success', 'Password changed successfully!');
