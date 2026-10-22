@@ -20,6 +20,4 @@ Artisan::command('login:unlock {login : The email or username of the locked acco
     $this->info($wasLocked ? "Unlocked {$login}." : "{$login} wasn't locked; its failed-attempt count was reset.");
 })->purpose('Lift a login lockout (3 failed attempts) before the hour is up');
 
-// Needs the Laravel scheduler running: `php artisan schedule:work` locally,
-// or a cron entry for `php artisan schedule:run` every minute on the server.
 Schedule::command('orders:cancel-unclaimed')->everyFiveMinutes();
