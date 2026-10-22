@@ -64,6 +64,13 @@
 .field input,.field select{width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface);box-sizing:border-box}
 .field input:focus,.field select:focus{border-color:var(--primary)}
 .field-hint{font-size:.76rem;color:var(--muted);margin-top:.3rem}
+#addPoItemModal .modal{max-width:540px}
+.po-add-line{border:1.5px solid var(--border);border-radius:12px;padding:.85rem .95rem;margin-bottom:.75rem;background:var(--surface-2)}
+.po-add-line-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
+.po-add-line-hd label{font-size:.8rem;font-weight:600;color:var(--dark)}
+.po-add-remove{width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem}
+.po-add-remove:hover{background:var(--red-100);color:var(--primary)}
+.po-add-more{width:100%;justify-content:center;border-style:dashed !important}
 .error-msg{background:var(--red-50);border:1.5px solid var(--red-200);border-radius:10px;padding:.7rem 1rem;font-size:.8rem;color:var(--red-700);margin-bottom:1.1rem}
 
 /* Actual purchase (receiving) columns */
@@ -189,11 +196,10 @@
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,2,'.','')) }}"
-                                           class="qty-input" step="0.01" min="{{ number_format($rtcMin,2,'.','') }}" required
+                                           class="qty-input no-spin" step="0.01" min="{{ number_format($rtcMin,2,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,2,'.','') }}"
-                                           title="Must be at least the minimum threshold ({{ number_format($rtcMin,2) }} @unit($item->unit))"
+                                           title="Any amount above 0 @unit($item->unit). The threshold is a guide only."
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($rtcMin,2) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                                 @endif
@@ -267,11 +273,10 @@
                                 <div class="qty-wrap">
                                     <input type="number" name="quantities[{{ $item->id }}]"
                                            value="{{ old('quantities.'.$item->id, number_format($item->quantity_to_purchase,0,'.','')) }}"
-                                           class="qty-input" step="1" min="{{ number_format($bevMin,0,'.','') }}" required
+                                           class="qty-input no-spin" step="1" min="{{ number_format($bevMin,0,'.','') }}" required
                                            data-original="{{ number_format($item->quantity_to_purchase,0,'.','') }}"
-                                           title="Must be at least the minimum threshold ({{ number_format($bevMin,0) }} @unit($item->unit))"
+                                           title="At least 1 @unit($item->unit). The threshold is a guide only."
                                            onchange="markChanged(this)" oninput="markChanged(this)">
-                                    <span class="field-hint" style="margin:0">Min: {{ number_format($bevMin,0) }} @unit($item->unit)</span>
                                     <span class="changed-hint" id="hint-{{ $item->id }}"><i class="fas fa-check-circle"></i> Modified</span>
                                 </div>
                                 @endif
@@ -337,14 +342,11 @@
                 <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
                 <div class="divider"></div>
                 @if($recording)
-                <button type="submit" class="btn btn-outline" style="border-color:var(--primary);color:var(--primary)">
-                    <i class="fas fa-floppy-disk"></i> Save Changes
-                </button>
                 <button type="button" class="btn btn-green" onclick="doFinalize()">
                     <i class="fas fa-check-double"></i> Save &amp; Finalize
                 </button>
                 @else
-                <button type="submit" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="doSaveChanges()">
                     <i class="fas fa-floppy-disk"></i> Save Changes
                 </button>
                 @endif
@@ -363,41 +365,37 @@
             <h3><i class="fas fa-plus"></i> Add Item to Purchase Order</h3>
             <button class="modal-close-btn" onclick="closeLocalModal('addPoItemModal')"><i class="fas fa-times"></i></button>
         </div>
-        <form method="POST" action="{{ route('purchase-orders.items.store', $recording ? [$po, 'mode' => 'record'] : $po) }}">
+        @php
+            $addHasErrors = $errors->has('items') || $errors->has('items.*');
+            $addOldRows   = array_values(old('items', [[]])) ?: [[]];
+        @endphp
+        <form method="POST" action="{{ route('purchase-orders.items.store', $recording ? [$po, 'mode' => 'record'] : $po) }}" id="addPoItemForm" onsubmit="return poAddValidate()">
             @csrf
-            <div class="modal-body">
-                @if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))
-                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ $errors->first('inventory_item_id') ?: $errors->first('quantity_to_purchase') }}</div>
+            <div class="modal-body" style="max-height:65vh;overflow-y:auto">
+                @if($addHasErrors)
+                <div class="error-msg"><i class="fas fa-circle-exclamation"></i> {{ collect($errors->get('items'))->merge(collect($errors->get('items.*'))->flatten())->unique()->implode(' ') }}</div>
                 @endif
+                <div class="error-msg" id="poAddClientError" style="display:none"></div>
 
-                <div class="field">
-                    <label>Inventory Item <span style="color:var(--red-600)">*</span></label>
-                    <select name="inventory_item_id" id="addPoItemSelect" data-searchable data-search-placeholder="Search inventory items…" required onchange="onAddPoItemChange()" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
-                        <option value="">Select item…</option>
-                        @forelse($availableItems as $ai)
-                        <option value="{{ $ai->id }}" data-unit="@unit($ai->unit)" data-stock="{{ number_format($ai->quantity,2) }}"
-                                data-threshold="{{ number_format(max((float) $ai->reorder_level, 0.01),2,'.','') }}"
-                                {{ (string) old('inventory_item_id') === (string) $ai->id ? 'selected' : '' }}>
-                            {{ $ai->item_name }}
-                        </option>
-                        @empty
-                        <option value="" disabled>No additional inventory items available</option>
-                        @endforelse
-                    </select>
-                    <div class="field-hint" id="addPoItemStockHint">&nbsp;</div>
-                </div>
-                <div class="field" style="margin-bottom:0">
-                    <label>Quantity to Purchase <span style="color:var(--red-600)">*</span></label>
-                    <input type="number" name="quantity_to_purchase" id="addPoItemQty" step="0.01" min="0.01" required
-                           value="{{ old('quantity_to_purchase') }}" placeholder="0.00" {{ $availableItems->isEmpty() ? 'disabled' : '' }}>
-                    <div class="field-hint">Unit: <span id="addPoItemUnit">—</span> &nbsp;|&nbsp; Min: <span id="addPoItemMin">—</span></div>
-                </div>
+                @if($availableItems->isEmpty())
+                    <div class="field-hint" style="text-align:center;padding:1rem 0">No additional inventory items available — every item is already on this purchase order.</div>
+                @else
+                    <div id="poAddLines">
+                        @foreach($addOldRows as $i => $row)
+                            @include('purchase-orders.partials.add-item-line', ['index' => $i, 'row' => $row])
+                        @endforeach
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm po-add-more" onclick="poAddLine()"><i class="fas fa-plus"></i> Add Another Item</button>
+                @endif
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeLocalModal('addPoItemModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" {{ $availableItems->isEmpty() ? 'disabled' : '' }}><i class="fas fa-plus"></i> Add Item</button>
+                <button type="submit" class="btn btn-primary" id="poAddSubmit" {{ $availableItems->isEmpty() ? 'disabled' : '' }}><i class="fas fa-plus"></i> Add Item</button>
             </div>
         </form>
+        <template id="poAddLineTemplate">
+            @include('purchase-orders.partials.add-item-line', ['index' => '__I__', 'row' => []])
+        </template>
     </div>
 </div>
 @endsection
@@ -499,32 +497,113 @@ document.querySelectorAll('.rcv-input').forEach(function (el) {
 });
 @endif
 
+@unless($recording)
+/* ── Planning stage: check the quantities, then confirm before saving ── */
+function doSaveChanges() {
+    var form = document.getElementById('editForm');
+    var inputs = Array.prototype.slice.call(form.querySelectorAll('input[name^="quantities"]'));
+
+    if (!inputs.length) {
+        openModal({
+            type: 'warn',
+            iconClass: 'fas fa-circle-exclamation',
+            title: 'No Items Yet',
+            desc: 'Add at least one item to the purchase order before saving.',
+            confirmText: 'OK',
+            onConfirm: function () {}
+        });
+        return;
+    }
+    // Empty, zero or invalid quantities are pointed out on the box itself
+    if (!form.reportValidity()) return;
+
+    var changed = inputs.filter(function (el) { return el.classList.contains('changed'); }).length;
+    openModal({
+        type: 'warn',
+        iconClass: 'fas fa-floppy-disk',
+        title: 'Save Purchase Order?',
+        desc: 'Save "' + {{ Js::from($po->po_number) }} + '" with ' + inputs.length + ' item(s)'
+            + (changed ? ' (' + changed + ' quantity change' + (changed === 1 ? '' : 's') + ')' : '')
+            + '? You can then view and print it.',
+        confirmText: 'Save Changes',
+        onConfirm: function () { form.submit(); }
+    });
+}
+
+// Pressing Enter in a box goes through the same check (form.submit() above doesn't trigger this)
+document.getElementById('editForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    doSaveChanges();
+});
+@endunless
+
 function openLocalModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeLocalModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 document.querySelectorAll('.modal-backdrop').forEach(function (el) {
     el.addEventListener('click', function (e) { if (e.target === el) closeLocalModal(el.id); });
 });
 
-function onAddPoItemChange() {
-    var sel = document.getElementById('addPoItemSelect');
-    var opt = sel.selectedOptions[0];
-    var unit = opt ? opt.dataset.unit : '';
-    var threshold = opt ? opt.dataset.threshold : '';
-    var qtyInput = document.getElementById('addPoItemQty');
+/* ── Add Item window: one or more item rows ("Add Another Item") ── */
+var poAddNextIndex = {{ count($addOldRows) }};
 
-    document.getElementById('addPoItemUnit').textContent = unit || '—';
-    document.getElementById('addPoItemMin').textContent = threshold || '—';
-    document.getElementById('addPoItemStockHint').innerHTML = (opt && opt.dataset.stock)
-        ? 'Current stock: ' + opt.dataset.stock + ' ' + unit
-        : '&nbsp;';
+function poAddRows() { return Array.prototype.slice.call(document.querySelectorAll('#poAddLines [data-po-add-line]')); }
 
-    qtyInput.min = threshold || '0.01';
-    if (threshold && parseFloat(qtyInput.value) < parseFloat(threshold)) {
-        qtyInput.value = threshold;
-    }
+// Per-row stock/threshold hint and allowed quantity, remove buttons, and the submit button's label
+function poAddUpdate() {
+    var rows = poAddRows();
+    rows.forEach(function (row) {
+        var opt = row.querySelector('.po-add-item').selectedOptions[0];
+        var qty = row.querySelector('.po-add-qty');
+        var chosen = opt && opt.value;
+        var unit = chosen ? opt.dataset.unit : '';
+        var isBeverage = chosen && opt.dataset.type === 'beverage';
+
+        // Threshold is shown as a guide; any amount above 0 is accepted (beverages: whole units)
+        row.querySelector('.po-add-hint').innerHTML = chosen
+            ? 'Current stock: ' + opt.dataset.stock + ' ' + unit + ' &nbsp;|&nbsp; Threshold: ' + opt.dataset.threshold + ' ' + unit
+            : 'Current stock: — &nbsp;|&nbsp; Threshold: —';
+        qty.min  = isBeverage ? '1' : '0.01';
+        qty.step = isBeverage ? '1' : '0.01';
+        row.querySelector('.po-add-remove').style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+    });
+
+    var submit = document.getElementById('poAddSubmit');
+    if (submit && rows.length) submit.innerHTML = '<i class="fas fa-plus"></i> ' + (rows.length > 1 ? 'Add ' + rows.length + ' Items' : 'Add Item');
 }
 
-@if($errors->has('inventory_item_id') || $errors->has('quantity_to_purchase'))
+function poAddLine() {
+    var html = document.getElementById('poAddLineTemplate').innerHTML.split('__I__').join(poAddNextIndex++);
+    document.getElementById('poAddLines').insertAdjacentHTML('beforeend', html);
+    poAddUpdate();
+}
+
+function poRemoveLine(btn) {
+    if (poAddRows().length > 1) btn.closest('[data-po-add-line]').remove();
+    poAddUpdate();
+}
+
+// Same item twice is caught before sending (the server checks it too)
+function poAddValidate() {
+    var err = document.getElementById('poAddClientError');
+    var seen = {};
+    err.style.display = 'none';
+    for (var i = 0, rows = poAddRows(); i < rows.length; i++) {
+        var opt = rows[i].querySelector('.po-add-item').selectedOptions[0];
+        if (opt && opt.value) {
+            if (seen[opt.value]) {
+                err.textContent = opt.text.trim() + ' is selected more than once.';
+                err.style.display = '';
+                return false;
+            }
+            seen[opt.value] = true;
+        }
+    }
+    return true;
+}
+
+if (document.getElementById('poAddLines')) poAddUpdate();
+
+@if($addHasErrors)
 openLocalModal('addPoItemModal');
 @endif
 </script>

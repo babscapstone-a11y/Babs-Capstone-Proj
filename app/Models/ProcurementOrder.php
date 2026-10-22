@@ -97,19 +97,17 @@ class ProcurementOrder extends Model
     }
 
     /**
-     * Lowest quantity to purchase allowed for a line: its threshold (beverages at least 1).
-     * On a follow-up PO the leftover quantity is also accepted, even if below the threshold.
+     * Lowest quantity to purchase allowed for a line: any amount above 0 (beverages are bought
+     * whole, so at least 1). The item's threshold is only a guide, not a minimum.
      */
     public function minimumFor(ProcurementOrderItem $item): float
     {
-        $floor = $item->item_type === 'beverage' ? 1 : 0.01;
-        $min   = (float) $item->threshold;
+        return self::minimumQuantity($item->item_type);
+    }
 
-        if ($this->source_po_id) {
-            $min = min($min, (float) $item->quantity_recommended);
-        }
-
-        return max($min, $floor);
+    public static function minimumQuantity(?string $itemType): float
+    {
+        return $itemType === 'beverage' ? 1 : 0.01;
     }
 
     public function getStatusLabelAttribute(): string

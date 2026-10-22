@@ -217,7 +217,7 @@ class ProcurementOrderController extends Controller
             }
             $rules["received.{$item->id}"]   = ['nullable', 'numeric', 'min:0'];
             $rules["paid.{$item->id}"]       = ['nullable', 'numeric', 'min:0'];
-            $messages["quantities.{$item->id}.min"] = "{$item->item_name}: quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit}).";
+            $messages["quantities.{$item->id}.min"] = "{$item->item_name}: quantity to purchase must be at least {$min} {$item->unit}.";
             $messages["received.{$item->id}.min"]   = "{$item->item_name}: quantity bought cannot be negative.";
             $messages["paid.{$item->id}.min"]       = "{$item->item_name}: amount paid cannot be negative.";
         }
@@ -264,41 +264,60 @@ class ProcurementOrderController extends Controller
             return back()->with('error', 'Finalized purchase orders cannot be modified.');
         }
 
+        // One or more items at once ("Add Another Item" in the Add Item window)
         $request->validate([
-            'inventory_item_id'    => ['required', 'exists:inventory_items,id'],
-            'quantity_to_purchase' => ['required', 'numeric', 'min:0.01'],
+            'items'                        => ['required', 'array', 'min:1'],
+            'items.*.inventory_item_id'    => ['required', 'distinct', 'exists:inventory_items,id'],
+            'items.*.quantity_to_purchase' => ['required', 'numeric', 'min:0.01'],
+        ], [
+            'items.required'                        => 'Add at least one item.',
+            'items.*.inventory_item_id.required'    => 'Select an inventory item on every row.',
+            'items.*.inventory_item_id.distinct'    => 'The same item is selected more than once.',
+            'items.*.quantity_to_purchase.required' => 'Enter the quantity to purchase on every row.',
+            'items.*.quantity_to_purchase.min'      => 'Quantity to purchase must be greater than 0.',
         ]);
 
-        if ($purchaseOrder->items()->where('inventory_item_id', $request->inventory_item_id)->exists()) {
-            return back()->with('error', 'That item is already on this purchase order.')->withInput();
+        $lines = [];
+        foreach (array_values($request->input('items')) as $row) {
+            $item = InventoryItem::findOrFail($row['inventory_item_id']);
+            $qty  = (float) $row['quantity_to_purchase'];
+            $min  = ProcurementOrder::minimumQuantity($item->item_type);
+
+            if ($purchaseOrder->items()->where('inventory_item_id', $item->id)->exists()) {
+                return back()->withErrors(['items' => "{$item->item_name} is already on this purchase order."])->withInput();
+            }
+            if ($qty < $min) {
+                return back()->withErrors(['items' => "{$item->item_name}: quantity to purchase must be at least {$min} {$item->unit}."])->withInput();
+            }
+
+            $lines[] = [$item, $qty];
         }
 
-        $item = InventoryItem::findOrFail($request->inventory_item_id);
-        $min  = max((float) $item->reorder_level, 0.01);
+        // All rows are checked first, so either every item is added or none is
+        DB::transaction(function () use ($purchaseOrder, $lines) {
+            foreach ($lines as [$item, $qty]) {
+                $purchaseOrder->items()->create([
+                    'inventory_item_id'    => $item->id,
+                    'item_name'            => $item->item_name,
+                    'category'             => $item->category,
+                    'item_type'            => $item->item_type,
+                    'current_stock'        => $item->quantity,
+                    'threshold'            => $item->reorder_level,
+                    'quantity_recommended' => $qty,
+                    'quantity_to_purchase' => $qty,
+                    'unit'                 => $item->unit,
+                    'stock_status'         => $item->stock_status,
+                ]);
+            }
 
-        if ((float) $request->quantity_to_purchase < $min) {
-            return back()
-                ->withErrors(['quantity_to_purchase' => "Quantity to purchase cannot be below the minimum threshold ({$min} {$item->unit})."])
-                ->withInput();
-        }
+            $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
+        });
 
-        $purchaseOrder->items()->create([
-            'inventory_item_id'    => $item->id,
-            'item_name'            => $item->item_name,
-            'category'             => $item->category,
-            'item_type'            => $item->item_type,
-            'current_stock'        => $item->quantity,
-            'threshold'            => $item->reorder_level,
-            'quantity_recommended' => (float) $request->quantity_to_purchase,
-            'quantity_to_purchase' => (float) $request->quantity_to_purchase,
-            'unit'                 => $item->unit,
-            'stock_status'         => $item->stock_status,
-        ]);
-
-        $purchaseOrder->update(['total_items' => $purchaseOrder->items()->count()]);
+        $names = collect($lines)->map(fn ($l) => $l[0]->item_name);
+        $added = $names->count() === 1 ? $names->first() : $names->count() . ' items (' . $names->implode(', ') . ')';
 
         return redirect($this->editUrl($purchaseOrder, $request->query('mode') === 'record'))
-            ->with('success', "{$item->item_name} added to the purchase order.");
+            ->with('success', "{$added} added to the purchase order.");
     }
 
     public function removeItem(Request $request, ProcurementOrder $purchaseOrder, ProcurementOrderItem $item): RedirectResponse
