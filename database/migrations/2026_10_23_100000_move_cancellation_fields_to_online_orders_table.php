@@ -12,22 +12,29 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    /** Each step is skipped when already done, so a run that stopped partway can be run again. */
     public function up(): void
     {
         Schema::table('online_orders', function (Blueprint $table) {
-            $table->timestamp('cancelled_at')->nullable()->after('rejection_reason');
-            $table->string('cancellation_reason', 500)->nullable()->after('cancelled_at');
+            if (! Schema::hasColumn('online_orders', 'cancelled_at')) {
+                $table->timestamp('cancelled_at')->nullable()->after('rejection_reason');
+            }
+            if (! Schema::hasColumn('online_orders', 'cancellation_reason')) {
+                $table->string('cancellation_reason', 500)->nullable()->after('cancelled_at');
+            }
         });
 
-        DB::statement("
-            UPDATE online_orders oo
-            JOIN orders o ON o.id = oo.order_id
-            SET oo.cancelled_at = o.cancelled_at, oo.cancellation_reason = o.cancellation_reason
-        ");
+        if (Schema::hasColumn('orders', 'cancelled_at')) {
+            DB::statement("
+                UPDATE online_orders oo
+                JOIN orders o ON o.id = oo.order_id
+                SET oo.cancelled_at = o.cancelled_at, oo.cancellation_reason = o.cancellation_reason
+            ");
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['cancelled_at', 'cancellation_reason']);
-        });
+            Schema::table('orders', function (Blueprint $table) {
+                $table->dropColumn(['cancelled_at', 'cancellation_reason']);
+            });
+        }
     }
 
     public function down(): void

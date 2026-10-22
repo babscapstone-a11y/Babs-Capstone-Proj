@@ -15,24 +15,50 @@ return new class extends Migration
 {
     private const MOVED = ['pickup_at', 'party_size', 'approval_status', 'reviewed_by', 'reviewed_at', 'rejection_reason'];
 
+    /**
+     * Every step is skipped when already done, so a run that stopped partway (MySQL can't roll
+     * back table changes) can simply be run again.
+     */
     public function up(): void
     {
+        // The delivery columns are dropped first: on databases where they're NOT NULL
+        // (as first created), copying rows in below would fail while they still exist
+        $delivery = array_values(array_filter(['delivery_address', 'contact_number'],
+            fn ($col) => Schema::hasColumn('online_orders', $col)));
+        if ($delivery) {
+            Schema::table('online_orders', fn (Blueprint $table) => $table->dropColumn($delivery));
+        }
+
         Schema::table('online_orders', function (Blueprint $table) {
-            $table->dateTime('pickup_at')->nullable()->after('order_id');
-            $table->unsignedSmallInteger('party_size')->nullable()->after('pickup_at');
-            $table->enum('approval_status', ['pending', 'approved', 'rejected', 'cancelled'])
-                  ->default('pending')->after('party_size');
-            $table->foreignId('reviewed_by')->nullable()->after('approval_status')
-                  ->constrained('users')->nullOnDelete();
-            $table->timestamp('reviewed_at')->nullable()->after('reviewed_by');
-            $table->string('rejection_reason', 500)->nullable()->after('reviewed_at');
+            if (! Schema::hasColumn('online_orders', 'pickup_at')) {
+                $table->dateTime('pickup_at')->nullable()->after('order_id');
+            }
+            if (! Schema::hasColumn('online_orders', 'party_size')) {
+                $table->unsignedSmallInteger('party_size')->nullable()->after('pickup_at');
+            }
+            if (! Schema::hasColumn('online_orders', 'approval_status')) {
+                $table->enum('approval_status', ['pending', 'approved', 'rejected', 'cancelled'])
+                      ->default('pending')->after('party_size');
+            }
+            if (! Schema::hasColumn('online_orders', 'reviewed_by')) {
+                $table->foreignId('reviewed_by')->nullable()->after('approval_status')
+                      ->constrained('users')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('online_orders', 'reviewed_at')) {
+                $table->timestamp('reviewed_at')->nullable()->after('reviewed_by');
+            }
+            if (! Schema::hasColumn('online_orders', 'rejection_reason')) {
+                $table->string('rejection_reason', 500)->nullable()->after('reviewed_at');
+            }
 
             // One online_orders row per order (one-to-one with orders)
-            $table->unique('order_id');
+            if (! Schema::hasIndex('online_orders', 'online_orders_order_id_unique')) {
+                $table->unique('order_id');
+            }
         });
 
         // Copy every existing online order's data into its new subtype row
-        DB::statement("
+        if (Schema::hasColumn('orders', 'approval_status')) DB::statement("
             INSERT INTO online_orders
                 (order_id, pickup_at, party_size, approval_status, reviewed_by, reviewed_at, rejection_reason, created_at, updated_at)
             SELECT o.id, o.pickup_at, o.party_size, COALESCE(o.approval_status, 'pending'),
@@ -42,13 +68,17 @@ return new class extends Migration
               AND NOT EXISTS (SELECT 1 FROM online_orders oo WHERE oo.order_id = o.id)
         ");
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign(['reviewed_by']);
-            $table->dropColumn(self::MOVED);
-        });
+        $hasReviewerKey = collect(Schema::getForeignKeys('orders'))
+            ->contains(fn ($fk) => $fk['columns'] === ['reviewed_by']);
+        $moved = array_values(array_filter(self::MOVED, fn ($col) => Schema::hasColumn('orders', $col)));
 
-        Schema::table('online_orders', function (Blueprint $table) {
-            $table->dropColumn(['delivery_address', 'contact_number']);
+        Schema::table('orders', function (Blueprint $table) use ($hasReviewerKey, $moved) {
+            if ($hasReviewerKey) {
+                $table->dropForeign(['reviewed_by']);
+            }
+            if ($moved) {
+                $table->dropColumn($moved);
+            }
         });
     }
 

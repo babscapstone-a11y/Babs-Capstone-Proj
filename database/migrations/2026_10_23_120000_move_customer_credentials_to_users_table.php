@@ -19,9 +19,25 @@ return new class extends Migration
 {
     private const CREDENTIALS = ['email', 'email_verified_at', 'password', 'remember_token', 'status'];
 
+    /** Each step is skipped when already done, so a run that stopped partway can be run again. */
     public function up(): void
     {
         $now = now();
+        $linked = Schema::hasColumn('customers', 'user_id');
+
+        // Stop before changing anything if a customer's email is already a staff login:
+        // users.email is unique, so that customer couldn't be moved over
+        if (Schema::hasColumn('customers', 'email')) {
+            $clashes = DB::table('customers')
+                ->join('users', 'users.email', '=', 'customers.email')
+                ->when($linked, fn ($q) => $q->whereNull('customers.user_id'))
+                ->pluck('customers.email');
+
+            if ($clashes->isNotEmpty()) {
+                throw new RuntimeException('These customer emails are already used by staff accounts; change one of each '
+                    . 'pair first, then run the migration again: ' . $clashes->implode(', '));
+            }
+        }
 
         // Id 5 (after the four staff roles) when it's free; MySQL never reuses a deleted id on its own
         $customerRoleId = DB::table('roles')->where('role_name', 'customer')->value('id')
@@ -30,40 +46,58 @@ return new class extends Migration
                 'role_name' => 'customer', 'display_name' => 'Customer', 'created_at' => $now, 'updated_at' => $now,
             ], fn ($v) => $v !== null));
 
-        Schema::table('customers', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->unique()->after('public_id')
-                  ->constrained('users')->restrictOnDelete();
-        });
+        if (! $linked) {
+            Schema::table('customers', function (Blueprint $table) {
+                $table->foreignId('user_id')->nullable()->unique()->after('public_id')
+                      ->constrained('users')->restrictOnDelete();
+            });
+        }
 
         // One login per customer, with the same email, password hash and status, so
         // customers keep signing in exactly as before
-        foreach (DB::table('customers')->orderBy('id')->get() as $customer) {
-            $userId = DB::table('users')->insertGetId([
-                'public_id'         => User::newPublicId(),
-                'role_id'           => $customerRoleId,
-                'email'             => $customer->email,
-                'username'          => null,
-                'status'            => $customer->status,
-                'email_verified_at' => $customer->email_verified_at,
-                'password'          => $customer->password ?? Hash::make(Str::random(40)),
-                'remember_token'    => $customer->remember_token,
-                'created_at'        => $customer->created_at,
-                'updated_at'        => $customer->updated_at,
-            ]);
+        $unlinked = Schema::hasColumn('customers', 'email')
+            ? DB::table('customers')->whereNull('user_id')->orderBy('id')->get()
+            : collect();
 
-            DB::table('customers')->where('id', $customer->id)->update(['user_id' => $userId]);
+        foreach ($unlinked as $customer) {
+            DB::transaction(function () use ($customer, $customerRoleId) {
+                $userId = DB::table('users')->insertGetId([
+                    'public_id'         => User::newPublicId(),
+                    'role_id'           => $customerRoleId,
+                    'email'             => $customer->email,
+                    'username'          => null,
+                    'status'            => $customer->status,
+                    'email_verified_at' => $customer->email_verified_at ?? null,
+                    'password'          => $customer->password ?? Hash::make(Str::random(40)),
+                    'remember_token'    => $customer->remember_token ?? null,
+                    'created_at'        => $customer->created_at,
+                    'updated_at'        => $customer->updated_at,
+                ]);
+
+                DB::table('customers')->where('id', $customer->id)->update(['user_id' => $userId]);
+            });
         }
 
-        Schema::table('customers', function (Blueprint $table) {
+        $credentials = array_values(array_filter(self::CREDENTIALS, fn ($col) => Schema::hasColumn('customers', $col)));
+
+        Schema::table('customers', function (Blueprint $table) use ($credentials) {
             $table->unsignedBigInteger('user_id')->nullable(false)->change();
-            $table->dropUnique('customers_email_unique');
-            $table->dropColumn(self::CREDENTIALS);
+            if (Schema::hasIndex('customers', 'customers_email_unique')) {
+                $table->dropUnique('customers_email_unique');
+            }
+            if ($credentials) {
+                $table->dropColumn($credentials);
+            }
         });
 
-        Schema::table('staff', function (Blueprint $table) {
-            $table->dropUnique('staff_email_unique');
-            $table->dropColumn('email');
-        });
+        if (Schema::hasColumn('staff', 'email')) {
+            Schema::table('staff', function (Blueprint $table) {
+                if (Schema::hasIndex('staff', 'staff_email_unique')) {
+                    $table->dropUnique('staff_email_unique');
+                }
+                $table->dropColumn('email');
+            });
+        }
     }
 
     public function down(): void
