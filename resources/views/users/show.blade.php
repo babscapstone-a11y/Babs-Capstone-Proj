@@ -123,6 +123,27 @@
                     </div>
                 @endif
 
+                {{-- Back to the default password (last name + birthday); they set a new one at next log-in --}}
+                @if($user->staff?->birthday)
+                    <button type="button" class="action-btn-full edit"
+                        onclick="openModal({
+                            type: 'warn',
+                            iconClass: 'fas fa-key',
+                            title: 'Reset to Default Password?',
+                            desc: {{ Js::from($user->name . '\'s password will be reset to their default (last name + birthday). They will be asked to set a new password the next time they log in.') }},
+                            action: '{{ route('users.reset-password', $user) }}',
+                            method: 'PUT',
+                            confirmText: 'Reset Password'
+                        })">
+                        <i class="fas fa-key" style="width:16px;text-align:center"></i> Reset to Default Password
+                    </button>
+                @else
+                    <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(107,114,128,0.08);border:1.5px solid rgba(107,114,128,0.2);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.5rem">
+                        <i class="fas fa-key" style="width:16px;text-align:center"></i>
+                        Add a birthday (Edit Staff Account) to enable password resets
+                    </div>
+                @endif
+
                 @cannot('toggleStatus', $user)
                     <div style="padding:.62rem .9rem;border-radius:10px;background:rgba(107,114,128,0.08);border:1.5px solid rgba(107,114,128,0.2);font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:.5rem">
                         <i class="fas fa-shield-halved" style="width:16px;text-align:center"></i>
@@ -146,6 +167,25 @@
 
     {{-- Right — Details & history --}}
     <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+        {{-- Just created / reset: show the default password once so the admin can hand it over --}}
+        @if(session('defaultPassword'))
+        <div style="padding:1rem 1.1rem;border-radius:12px;background:rgba(37,99,235,0.06);border:1.5px solid rgba(37,99,235,0.22);font-size:.86rem;color:var(--dark)">
+            <div style="font-weight:700;margin-bottom:.45rem"><i class="fas fa-key" style="color:#2563EB"></i> Default Password</div>
+            <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+                <code id="defaultPwd" style="font-size:1.05rem;font-weight:700;letter-spacing:.03em;padding:.35rem .7rem;border-radius:8px;background:var(--surface);border:1px solid var(--border)">{{ session('defaultPassword') }}</code>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="var b = this; navigator.clipboard.writeText(document.getElementById('defaultPwd').textContent).then(function(){ b.innerHTML = '<i class=&quot;fas fa-check&quot;></i> Copied'; })">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>
+            <div style="color:var(--muted);font-size:.8rem;margin-top:.5rem">Give this to {{ $user->staff?->first_name ?? 'the staff member' }}. It is shown only now — they must set a new password when they log in.</div>
+        </div>
+        @elseif($user->must_change_password)
+        <div style="padding:.9rem 1.1rem;border-radius:12px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.22);display:flex;align-items:center;gap:.65rem;font-size:.86rem;color:var(--amber-700, #B45309)">
+            <i class="fas fa-hourglass-half"></i>
+            This account is still on its default password (last name + birthday). The staff member will be asked to set a new one when they log in.
+        </div>
+        @endif
 
         {{-- Inactive warning --}}
         @if($user->status === 'inactive')
@@ -221,6 +261,10 @@
                 <div>
                     <div class="detail-label">Contact No.</div>
                     <div style="font-size:.86rem;color:var(--dark);margin-top:.2rem">{{ $user->staff->contact_no ?: '—' }}</div>
+                </div>
+                <div>
+                    <div class="detail-label">Birthday</div>
+                    <div style="font-size:.86rem;color:var(--dark);margin-top:.2rem">{{ $user->staff->birthday?->format('F d, Y') ?? '—' }}</div>
                 </div>
             </div>
         </div>

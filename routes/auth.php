@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationOtpController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\FirstPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OtpPasswordResetController;
 use App\Http\Controllers\Auth\PasswordController;
@@ -85,6 +86,10 @@ Route::middleware('auth')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+
+    // Staff on a default password (new account or reset by an admin) set their own here
+    Route::get('first-password', [FirstPasswordController::class, 'create'])->name('password.first');
+    Route::put('first-password', [FirstPasswordController::class, 'update'])->name('password.first.update');
 });
 
 // Logout must accept either guard — customers authenticate via the 'customer' guard,

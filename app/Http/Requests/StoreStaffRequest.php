@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Models\User;
 use App\Rules\PersonName;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 class StoreStaffRequest extends FormRequest
 {
@@ -23,8 +22,8 @@ class StoreStaffRequest extends FormRequest
             'username'   => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
             'phone'      => ['required', 'digits:11'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
-            // Strong password rule is defined once in AppServiceProvider (Password::defaults)
-            'password'   => ['required', 'confirmed', Password::defaults()],
+            // No password here: the account starts on a default one (last name + birthday)
+            'birthday'   => ['required', 'date', 'before:today', 'after:1900-01-01'],
         ];
     }
 
@@ -36,6 +35,8 @@ class StoreStaffRequest extends FormRequest
             'phone.required'    => 'Please enter the staff member\'s phone number.',
             'phone.digits'      => 'Phone number must be exactly 11 digits.',
             'username.alpha_dash' => 'Username may only contain letters, numbers, dashes, and underscores.',
+            'birthday.required' => 'Please enter the staff member\'s birthday. It is used for their default password.',
+            'birthday.before'   => 'Birthday must be a date in the past.',
         ];
     }
 }

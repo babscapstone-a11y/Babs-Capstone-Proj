@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PasswordResetOtp;
 use App\Models\StaffPasswordResetRequest;
 use App\Models\User;
-use App\Notifications\PasswordResetOtpNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class StaffPasswordResetController extends Controller
@@ -28,8 +25,12 @@ class StaffPasswordResetController extends Controller
         return view('users.password-resets', compact('requests', 'pendingCount'));
     }
 
-    /* ── REQ011: Approve → email a 6-digit reset code ───────── */
+    /* ── REQ011: Approve → reset to the default password ────── */
 
+    /**
+     * Puts the account back on its default password (last name + birthday). The staff
+     * member logs in with it and is then made to set a new password.
+     */
     public function approve(StaffPasswordResetRequest $passwordResetRequest): RedirectResponse
     {
         $this->authorize('managePasswordResets', User::class);
@@ -38,21 +39,12 @@ class StaffPasswordResetController extends Controller
             return back()->with('error', 'This request has already been processed.');
         }
 
-        $user    = $passwordResetRequest->user;
-        $minutes = PasswordResetOtp::APPROVED_EXPIRES_MINUTES;
+        $user    = $passwordResetRequest->user->load('staff');
+        $default = $user->resetToDefaultPassword();
 
-        // Send the code first: if the email fails, the request stays pending so it can be retried.
-        try {
-            $user->notify(new PasswordResetOtpNotification(
-                PasswordResetOtp::issue($user->email, $minutes),
-                $minutes,
-                URL::temporarySignedRoute('password.otp.enter', now()->addMinutes($minutes), ['email' => $user->email]),
-            ));
-        } catch (\Throwable $e) {
-            report($e);
-            PasswordResetOtp::where('email', $user->email)->delete();
-
-            return back()->with('error', 'The reset code email could not be sent, so the request is still pending. Check your mail configuration and try again.');
+        // Without a birthday there's no default to reset to: the request stays pending
+        if ($default === null) {
+            return back()->with('error', "{$user->name} has no birthday on file, so their password can't be reset to the default. Add it in Edit Staff Account, then approve again.");
         }
 
         $passwordResetRequest->update([
@@ -61,7 +53,9 @@ class StaffPasswordResetController extends Controller
             'processed_at' => now(),
         ]);
 
-        return back()->with('success', "A 6-digit password reset code was emailed to {$user->email}.");
+        return back()
+            ->with('success', "{$user->name}'s password was reset to the default. They will be asked to set a new one when they log in.")
+            ->with('defaultPassword', $default);
     }
 
     /* ── REQ011: Reject ─────────────────────────────────────── */

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'email',
         'username',
         'password',
+        'must_change_password',
         'role_id',
         'status',
     ];
@@ -35,6 +36,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'must_change_password' => 'boolean',
             'deleted_at'        => 'datetime',
         ];
     }
@@ -86,6 +88,35 @@ class User extends Authenticatable
     public function isTableServer(): bool
     {
         return $this->role?->role_name === 'table_server';
+    }
+
+    /**
+     * Puts a staff account back on its default password (last name + birthday) and has the next
+     * log-in ask for a new one. Returns the default password, or null when no birthday is on file.
+     */
+    public function resetToDefaultPassword(): ?string
+    {
+        $default = $this->staff?->defaultPassword();
+
+        if ($default === null) {
+            return null;
+        }
+
+        $this->forceFill(['password' => $default, 'must_change_password' => true])->save();
+
+        return $default;
+    }
+
+    /** Where a staff member lands after logging in (or after setting their first password) */
+    public function homeRoute(): string
+    {
+        return match (true) {
+            $this->isAdmin()       => route('dashboard'),
+            $this->isCashier()     => route('cashier.billing'),
+            $this->isKitchenStaff() => route('kitchen.index'),
+            $this->isTableServer() => route('table-server.index'),
+            default                => route('profile.edit'),
+        };
     }
 
     public function isActive(): bool

@@ -15,6 +15,12 @@
 <style>
     .form-grid   { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
     .form-grid .span-2 { grid-column:1/-1; }
+    /* Birthday: calendar pop-up button inside the same box as the other inputs */
+    .input-wrap.bday-wrap .cd-field.bday-field { flex:1; height:auto; min-height:44px; border:0; border-radius:0 12px 12px 0;
+        background:transparent; padding:.68rem .85rem .68rem 0; font-size:.9rem; box-shadow:none; }
+    .input-wrap.bday-wrap .cd-field.bday-field i { color:var(--muted); }
+    .bday-wrap:has(.cd-field.active) { border-color:var(--primary); box-shadow:0 0 0 4px rgba(220,38,38,0.08); }
+    .bday-wrap:has(.cd-field.has-error) { border-color:#EF4444; box-shadow:0 0 0 4px rgba(239,68,68,0.08); }
     .section-label {
         font-size:.72rem; font-weight:700; letter-spacing:.07em;
         text-transform:uppercase; color:var(--muted);
@@ -148,39 +154,34 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password">
-                            <i class="fas fa-lock" style="color:var(--primary);font-size:.78rem"></i> Password <span class="req-mark" aria-hidden="true">*</span>
+                        <label class="form-label" for="birthday">
+                            <i class="fas fa-cake-candles" style="color:var(--primary);font-size:.78rem"></i> Birthday <span class="req-mark" aria-hidden="true">*</span>
                         </label>
-                        <div class="input-wrap @error('password') has-error @enderror">
-                            <span class="input-icon"><i class="fas fa-lock"></i></span>
-                            <input id="password" name="password" type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false" class="form-input"
-                                   required placeholder="Create a strong password" autocomplete="new-password"
-                                   aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}">
-                            <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password">
-                                <i class="fas fa-eye" id="togglePwdIcon"></i>
+                        {{-- Same calendar pop-up as the downtime schedule, with month/year drop-downs --}}
+                        <input type="hidden" name="birthday" id="birthday" value="{{ old('birthday') }}"
+                               data-min="1900-01-01" data-max="{{ now()->subDay()->toDateString() }}" data-start="{{ now()->subYears(25)->startOfYear()->toDateString() }}">
+                        <div class="input-wrap bday-wrap">
+                            <span class="input-icon"><i class="fas fa-calendar"></i></span>
+                            <button type="button" class="cd-field bday-field {{ $errors->has('birthday') ? 'has-error' : '' }}" id="birthdayBtn"
+                                    data-picker="date" data-for="birthday" data-year-select data-placeholder="Select birthday"
+                                    aria-haspopup="dialog" aria-label="Birthday" onclick="DatePick.open(this)">
+                                <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
                             </button>
                         </div>
-                        @include('partials.password-checklist', ['inputId' => 'password'])
-                        @error('password')
+                        @error('birthday')
                             <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
                         @enderror
+                        <div class="field-error" id="birthdayError" style="display:none">
+                            <i class="fas fa-circle-exclamation"></i> Please select the staff member's birthday.
+                        </div>
                     </div>
 
-                    <div class="form-group col-right">
-                        <label class="form-label" for="password_confirmation">
-                            <i class="fas fa-shield-halved" style="color:var(--primary);font-size:.78rem"></i> Confirm Password <span class="req-mark" aria-hidden="true">*</span>
-                        </label>
-                        <div class="input-wrap" id="confirmWrap">
-                            <span class="input-icon"><i class="fas fa-shield-halved"></i></span>
-                            <input id="password_confirmation" name="password_confirmation" type="password" onpaste="return false" oncopy="return false" oncut="return false" ondrop="return false"
-                                   class="form-input" required placeholder="Re-enter password" autocomplete="new-password">
-                            <button type="button" class="toggle-pwd" id="toggleConfirm" aria-label="Show confirm password">
-                                <i class="fas fa-eye" id="toggleConfirmIcon"></i>
-                            </button>
-                        </div>
-                        <div class="field-error" id="matchError" style="display:none">
-                            <i class="fas fa-circle-exclamation"></i> Passwords do not match
-                        </div>
+                    {{-- No password to type: the system makes a default one from last name + birthday --}}
+                    <div class="form-group span-2" style="background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.18);border-radius:12px;padding:.8rem 1rem;font-size:.82rem;color:var(--text-2, #374151)">
+                        <i class="fas fa-key" style="color:#2563EB"></i>
+                        <strong>Default password:</strong> the system creates it from the last name and birthday —
+                        e.g. <em>Dela Cruz</em>, born Jan 15, 2000 → <code>delacruz01152000</code>.
+                        The staff member must set a new password the first time they log in.
                     </div>
 
                 </div>
@@ -236,6 +237,7 @@
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Email</span><strong id="confirmEmail" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Username</span><strong id="confirmUsername" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Phone</span><strong id="confirmPhone" style="text-align:right"></strong></div>
+                <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Birthday</span><strong id="confirmBirthday" style="text-align:right"></strong></div>
                 <div style="display:flex;justify-content:space-between;gap:.75rem"><span style="color:var(--muted)">Role</span><strong id="confirmRole" style="text-align:right"></strong></div>
             </div>
             <div class="modal-actions">
@@ -250,33 +252,11 @@
 @endsection
 
 @section('scripts')
+@include('partials.clock-dial')
+@include('partials.date-picker')
 <script>
-// Password show/hide
-var pwd    = document.getElementById('password');
-var pwdBtn = document.getElementById('togglePwd');
-var pwdIcon= document.getElementById('togglePwdIcon');
-pwdBtn.addEventListener('click', function() {
-    var show = pwd.type === 'text';
-    pwd.type = show ? 'password' : 'text';
-    pwdIcon.className = show ? 'fas fa-eye' : 'fas fa-eye-slash';
-    pwdBtn.setAttribute('aria-label', show ? 'Show password' : 'Hide password');
-});
-
-var conf     = document.getElementById('password_confirmation');
-var confBtn  = document.getElementById('toggleConfirm');
-var confIcon = document.getElementById('toggleConfirmIcon');
-var confWrap = document.getElementById('confirmWrap');
-var matchErr = document.getElementById('matchError');
-confBtn.addEventListener('click', function() {
-    var show = conf.type === 'text';
-    conf.type = show ? 'password' : 'text';
-    confIcon.className = show ? 'fas fa-eye' : 'fas fa-eye-slash';
-});
-conf.addEventListener('input', function() {
-    if (!this.value) { matchErr.style.display='none'; confWrap.classList.remove('has-error'); return; }
-    var match = this.value === pwd.value;
-    matchErr.style.display = match ? 'none' : 'flex';
-    confWrap.classList.toggle('has-error', !match);
+document.getElementById('birthday').addEventListener('change', function () {
+    document.getElementById('birthdayError').style.display = 'none';
 });
 
 // Intercept submit → show confirmation modal instead of posting straight away
@@ -290,6 +270,12 @@ createForm.addEventListener('submit', function(e) {
 
     if (!this.checkValidity()) { this.reportValidity(); return; }
 
+    // Birthday is a calendar pop-up (hidden input), so the browser can't check it — do it here
+    var bdayOk = !!document.getElementById('birthday').value;
+    document.getElementById('birthdayError').style.display = bdayOk ? 'none' : 'flex';
+    document.getElementById('birthdayBtn').classList.toggle('has-error', !bdayOk);
+    if (!bdayOk) { document.getElementById('birthdayBtn').focus(); return; }
+
     // Role is required. Its radios are hidden behind styled cards, so the browser can't point at them —
     // check it here (after the visible fields) and show our own message.
     var roleChosen = !!document.querySelector('input[name="role_id"]:checked');
@@ -298,13 +284,6 @@ createForm.addEventListener('submit', function(e) {
         document.querySelector('.role-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
-    if (pwd.value !== conf.value) {
-        matchErr.style.display = 'flex';
-        confWrap.classList.add('has-error');
-        conf.focus();
-        return;
-    }
-
     var roleInput  = document.querySelector('input[name="role_id"]:checked');
     var roleLabel  = roleInput ? document.querySelector('label[for="' + roleInput.id + '"] .role-name') : null;
 
@@ -312,6 +291,10 @@ createForm.addEventListener('submit', function(e) {
     document.getElementById('confirmEmail').textContent  = document.getElementById('email').value;
     document.getElementById('confirmUsername').textContent = document.getElementById('username').value;
     document.getElementById('confirmPhone').textContent  = document.getElementById('phone').value || '—';
+    var bday = document.getElementById('birthday').value;
+    document.getElementById('confirmBirthday').textContent = bday
+        ? new Date(bday + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '—';
     document.getElementById('confirmRole').textContent   = roleLabel ? roleLabel.textContent : '—';
 
     document.getElementById('createConfirmModal').classList.add('open');

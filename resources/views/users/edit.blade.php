@@ -17,6 +17,12 @@
 <style>
     .form-grid   { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
     .form-grid .span-2 { grid-column:1/-1; }
+    /* Birthday: calendar pop-up button inside the same box as the other inputs */
+    .input-wrap.bday-wrap .cd-field.bday-field { flex:1; height:auto; min-height:44px; border:0; border-radius:0 12px 12px 0;
+        background:transparent; padding:.68rem .85rem .68rem 0; font-size:.9rem; box-shadow:none; }
+    .input-wrap.bday-wrap .cd-field.bday-field i { color:var(--muted); }
+    .bday-wrap:has(.cd-field.active) { border-color:var(--primary); box-shadow:0 0 0 4px rgba(220,38,38,0.08); }
+    .bday-wrap:has(.cd-field.has-error) { border-color:#EF4444; box-shadow:0 0 0 4px rgba(239,68,68,0.08); }
     .section-label {
         font-size:.72rem; font-weight:700; letter-spacing:.07em;
         text-transform:uppercase; color:var(--muted);
@@ -180,6 +186,27 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label" for="birthday">
+                            <i class="fas fa-cake-candles" style="color:var(--primary);font-size:.78rem"></i> Birthday
+                            @unless($user->staff?->birthday)<span class="form-label-opt">Needed for password resets</span>@endunless
+                        </label>
+                        {{-- Same calendar pop-up as the downtime schedule, with month/year drop-downs --}}
+                        <input type="hidden" name="birthday" id="birthday" value="{{ old('birthday', $user->staff?->birthday?->toDateString()) }}"
+                               data-min="1900-01-01" data-max="{{ now()->subDay()->toDateString() }}" data-start="{{ now()->subYears(25)->startOfYear()->toDateString() }}">
+                        <div class="input-wrap bday-wrap">
+                            <span class="input-icon"><i class="fas fa-calendar"></i></span>
+                            <button type="button" class="cd-field bday-field {{ $errors->has('birthday') ? 'has-error' : '' }}"
+                                    data-picker="date" data-for="birthday" data-year-select data-placeholder="Select birthday"
+                                    aria-haspopup="dialog" aria-label="Birthday" onclick="DatePick.open(this)">
+                                <span class="cd-text"></span><i class="fas fa-calendar-days"></i>
+                            </button>
+                        </div>
+                        @error('birthday')
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
 
                 {{-- Role --}}
@@ -238,4 +265,10 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+{{-- Calendar pop-up for the Birthday field (same as the downtime schedule) --}}
+@include('partials.clock-dial')
+@include('partials.date-picker')
 @endsection

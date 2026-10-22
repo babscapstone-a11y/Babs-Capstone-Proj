@@ -47,6 +47,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Enforce active-account check on every authenticated web request
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureAccountIsActive::class);
 
+        // Staff still on a default password must set their own before using the system
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
+
         // PayMongo calls this server-to-server and can't carry a CSRF token.
         $middleware->validateCsrfTokens(except: [
             'webhooks/paymongo',

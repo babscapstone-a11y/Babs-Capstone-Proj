@@ -61,6 +61,15 @@
 
 @section('content')
 
+{{-- Just approved: show the default password once so the admin can hand it over --}}
+@if(session('defaultPassword'))
+<div style="padding:1rem 1.1rem;border-radius:12px;background:rgba(37,99,235,0.06);border:1.5px solid rgba(37,99,235,0.22);font-size:.86rem;color:var(--dark);margin-bottom:1.25rem">
+    <div style="font-weight:700;margin-bottom:.45rem"><i class="fas fa-key" style="color:#2563EB"></i> Default Password</div>
+    <code style="font-size:1.05rem;font-weight:700;letter-spacing:.03em;padding:.35rem .7rem;border-radius:8px;background:var(--surface);border:1px solid var(--border)">{{ session('defaultPassword') }}</code>
+    <div style="color:var(--muted);font-size:.8rem;margin-top:.5rem">Give this to the staff member. It is shown only now — they must set a new password when they log in.</div>
+</div>
+@endif
+
 {{-- Stats --}}
 <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
     @foreach([['pending','Pending','D97706'],['approved','Approved','16A34A'],['rejected','Rejected','DC2626']] as [$s,$l,$c])
@@ -149,9 +158,9 @@
                                 {{-- Approve --}}
                                 <form method="POST"
                                       action="{{ route('password-reset-requests.approve', $req) }}"
-                                      onsubmit="return confirm('Approve this request and email a 6-digit password reset code to{{ addslashes($req->user?->email ?? '') }}?')">
+                                      onsubmit="return confirm('Approve this request and reset {{ addslashes($req->user?->name ?? 'this staff member') }}\'s password to their default (last name + birthday)? They will set a new one when they log in.')">
                                     @csrf @method('PUT')
-                                    <button type="submit" class="act-btn act-success" title="Approve & Send Code" aria-label="Approve and send code">
+                                    <button type="submit" class="act-btn act-success" title="Approve & Reset to Default Password" aria-label="Approve and reset to default password">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </form>

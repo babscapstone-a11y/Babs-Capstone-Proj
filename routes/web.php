@@ -61,6 +61,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::put('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
          ->name('users.toggle-status');
+    Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])
+         ->name('users.reset-password');
 
     // Staff password reset requests — self-triggered from the login page (REQ011)
     Route::get('password-reset-requests', [StaffPasswordResetController::class, 'index'])

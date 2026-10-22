@@ -7,6 +7,9 @@
     DatePick.set(inputId, 'Y-m-d' | '') fills a field from script.
     Optional on the button: data-placeholder="From date" (text when empty, default "Select date")
     and data-clearable (adds a Clear button, e.g. for optional filter dates).
+    data-year-select on the button swaps the title for month + year drop-downs, for dates far
+    from today such as a birthday; data-start="Y-m-d" on the hidden input is the month shown
+    when it's still empty.
 --}}
 <style>
 .dp-panel { width: 284px; }
@@ -29,6 +32,10 @@
 .dp-panel .dp-today { background: transparent; color: var(--cd-accent, #D97706); padding-left: .3rem; }
 .dp-panel .dp-clear { background: transparent; color: var(--muted); margin-left: auto; }
 .dp-panel .dp-clear:hover { color: var(--cd-accent, #D97706); }
+.dp-title .dp-sel { border: 1px solid rgba(var(--ink-rgb, 17,24,39),0.12); border-radius: 8px; padding: .2rem .35rem;
+                    background: var(--surface, #fff); color: var(--dark); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.dp-title .dp-sel:focus { outline: 2px solid var(--cd-accent, #D97706); outline-offset: 1px; }
+.dp-title .dp-sel + .dp-sel { margin-left: .3rem; }
 </style>
 
 <script>
@@ -56,11 +63,27 @@
 
     var grid = panel.querySelector('.dp-grid');
     // view = month on screen; cursor = day with keyboard focus; min/max = allowed days ('' = no limit)
-    var view = null, cursor = '', selected = '', min = '', max = '', field = null;
+    var view = null, cursor = '', selected = '', min = '', max = '', field = null, yearSelect = false;
     var outside = function (date) { return (min && date < min) || (max && date > max); };
 
+    // Month + year drop-downs (data-year-select): years limited by min/max, else 100 back / 10 ahead
+    function titleSelects() {
+        var thisYear = new Date().getFullYear();
+        var from = min ? +min.slice(0, 4) : thisYear - 100;
+        var to   = max ? +max.slice(0, 4) : thisYear + 10;
+        var months = MONTHS.map(function (m, i) {
+            return '<option value="' + i + '"' + (i === view.getMonth() ? ' selected' : '') + '>' + m + '</option>';
+        }).join('');
+        var years = '';
+        for (var y = to; y >= from; y--) years += '<option value="' + y + '"' + (y === view.getFullYear() ? ' selected' : '') + '>' + y + '</option>';
+        return '<select class="dp-sel" data-part="month" aria-label="Month">' + months + '</select>' +
+               '<select class="dp-sel" data-part="year" aria-label="Year">' + years + '</select>';
+    }
+
     function render() {
-        panel.querySelector('.dp-title').textContent = MONTHS[view.getMonth()] + ' ' + view.getFullYear();
+        var title = panel.querySelector('.dp-title');
+        if (yearSelect) title.innerHTML = titleSelects();
+        else title.textContent = MONTHS[view.getMonth()] + ' ' + view.getFullYear();
         var firstOfMonth = ymd(view).slice(0, 7);
         panel.querySelector('[data-step="-1"]').disabled = !! min && firstOfMonth <= min.slice(0, 7);
         panel.querySelector('[data-step="1"]').disabled = !! max && firstOfMonth >= max.slice(0, 7);
@@ -117,6 +140,16 @@
             render();
         });
     });
+    // Picking a month or year from the drop-downs jumps straight there
+    panel.querySelector('.dp-title').addEventListener('change', function (e) {
+        var sel = e.target.closest('.dp-sel');
+        if (! sel) return;
+        var month = +panel.querySelector('.dp-sel[data-part="month"]').value;
+        var year  = +panel.querySelector('.dp-sel[data-part="year"]').value;
+        view = new Date(year, month, 1);
+        render();
+        panel.querySelector('.dp-sel[data-part="' + sel.dataset.part + '"]').focus();
+    });
     var todayBtn = panel.querySelector('.dp-today');   // hidden when today isn't allowed (e.g. advance orders)
     todayBtn.addEventListener('click', function () { apply(ymd(new Date())); });
     panel.querySelector('.cd-cancel').addEventListener('click', close);
@@ -149,8 +182,9 @@
         selected = valid(hidden.value) ? hidden.value : '';
         min = hidden.dataset.min || '';
         max = hidden.dataset.max || '';
+        yearSelect = btn.hasAttribute('data-year-select');
         var today = ymd(new Date());
-        cursor = selected || (min && min > today ? min : today);
+        cursor = selected || (valid(hidden.dataset.start) ? hidden.dataset.start : (min && min > today ? min : today));
         todayBtn.style.visibility = outside(today) ? 'hidden' : '';
         clearBtn.style.display = btn.hasAttribute('data-clearable') && selected ? '' : 'none';
         var c = parse(cursor);

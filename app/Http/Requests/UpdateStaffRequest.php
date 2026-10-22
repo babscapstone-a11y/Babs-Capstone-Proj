@@ -31,6 +31,9 @@ class UpdateStaffRequest extends FormRequest
                 Rule::unique('users', 'username')->ignore($userId),
             ],
             'phone'   => ['nullable', 'digits:11'],
+            // Optional so staff created before birthdays were recorded can still be edited;
+            // needed before their password can be reset to the default
+            'birthday' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
             'status'  => ['required', 'in:active,inactive'],
         ];
@@ -43,6 +46,7 @@ class UpdateStaffRequest extends FormRequest
             'role_id.exists'      => 'The selected role is invalid.',
             'phone.digits'        => 'Phone number must be exactly 11 digits.',
             'username.alpha_dash' => 'Username may only contain letters, numbers, dashes, and underscores.',
+            'birthday.before'     => 'Birthday must be a date in the past.',
         ];
     }
 }

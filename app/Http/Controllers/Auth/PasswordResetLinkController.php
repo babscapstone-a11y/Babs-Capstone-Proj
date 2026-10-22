@@ -96,7 +96,7 @@ class PasswordResetLinkController extends Controller
             }
 
             return redirect()->route('password.request')
-                ->with('status', 'Your password reset request has been submitted. An admin will review it and email you a 6-digit code once approved.');
+                ->with('status', 'Your password reset request has been submitted. Once an admin approves it, log in with your default password (your last name + birthday, e.g. delacruz01152000) and you will be asked to set a new one.');
         }
 
         $customer = Customer::where('email', $email)->first();
