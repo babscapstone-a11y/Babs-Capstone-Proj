@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CategorySeeder::class);
         $this->call(OrderStatusSeeder::class);
         $this->call([
-            PaymentStatusSeeder::class,
             ModeOfPaymentSeeder::class,
             DiscountSeeder::class,
         ]);

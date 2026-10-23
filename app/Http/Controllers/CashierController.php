@@ -11,7 +11,6 @@ use App\Models\Invoice;
 use App\Models\ModeOfPayment;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\PaymentStatus;
 use App\Models\SpecialDiscountRequest;
 use App\Services\PaymongoClient;
 use Illuminate\Http\JsonResponse;
@@ -663,13 +662,11 @@ class CashierController extends Controller
                 return null;
             }
 
-            $paidStatusId    = PaymentStatus::where('status_name', 'Paid')->value('id');
             $modeOfPaymentId = ModeOfPayment::where('method_name', $paymentMethod === 'cash' ? 'Cash' : 'Cashless')->value('id');
 
             $invoice = Invoice::create([
                 'order_id'          => $locked->id,
                 'discount_id'       => $discount?->id,
-                'payment_status_id' => $paidStatusId,
                 'subtotal'          => $subtotal,
                 'discount_amount'   => $discountAmount,
                 'service_charge'    => $serviceCharge,

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Invoice extends Model
 {
     protected $fillable = [
-        'order_id', 'discount_id', 'payment_status_id',
+        'order_id', 'discount_id',
         'subtotal', 'discount_amount', 'service_charge', 'final_total',
     ];
 
@@ -30,11 +30,6 @@ class Invoice extends Model
     public function discount(): BelongsTo
     {
         return $this->belongsTo(Discount::class);
-    }
-
-    public function paymentStatus(): BelongsTo
-    {
-        return $this->belongsTo(PaymentStatus::class);
     }
 
     public function payment(): HasOne
