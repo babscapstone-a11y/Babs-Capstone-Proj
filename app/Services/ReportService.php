@@ -246,20 +246,15 @@ class ReportService
             $beverageItems = $beverageItems->filter(fn (InventoryItem $i) => stripos($i->item_name, $search) !== false)->values();
         }
 
-        $rtcRows = $rtcItems->map(function (InventoryItem $i) {
-            $portionSize = (float) $i->portion_size;
-
-            return [
-                'item_name'           => $i->item_name,
-                'category'            => $i->category,
-                'current_stock'       => (float) $i->quantity,
-                'unit'                => $i->unit,
-                'threshold'           => (float) $i->reorder_level,
-                'equivalent_servings' => $portionSize > 0 ? round(((float) $i->quantity) / $portionSize, 2) : null,
-                'status'              => $i->stock_status_label,
-                'status_key'          => $i->stock_status,
-            ];
-        })->values();
+        $rtcRows = $rtcItems->map(fn (InventoryItem $i) => [
+            'item_name'     => $i->item_name,
+            'category'      => $i->category,
+            'current_stock' => (float) $i->quantity,
+            'unit'          => $i->unit,
+            'threshold'     => (float) $i->reorder_level,
+            'status'        => $i->stock_status_label,
+            'status_key'    => $i->stock_status,
+        ])->values();
 
         $beverageRows = $beverageItems->map(fn (InventoryItem $i) => [
             'item_name'  => $i->item_name,

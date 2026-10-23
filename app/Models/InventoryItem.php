@@ -13,7 +13,7 @@ class InventoryItem extends Model
         'item_name', 'item_type', 'category', 'unit', 'pack_unit', 'pieces_per_pack',
         'quantity', 'min_stock_level', 'reorder_level',
         'cost_price', 'is_rtc',
-        'portion_size', 'portion_unit', 'supplier', 'is_active',
+        'is_active',
     ];
 
     protected $casts = [
@@ -22,7 +22,6 @@ class InventoryItem extends Model
         'min_stock_level' => 'decimal:4',
         'reorder_level'   => 'decimal:4',
         'cost_price'      => 'decimal:2',
-        'portion_size'    => 'decimal:4',
         'is_rtc'          => 'boolean',
         'is_active'       => 'boolean',
     ];

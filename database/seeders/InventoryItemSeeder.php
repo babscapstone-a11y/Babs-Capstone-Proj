@@ -11,18 +11,18 @@ class InventoryItemSeeder extends Seeder
     {
         // ── RTC (Ready-to-Cook) Raw Meat Items ──────────────────────────────
         $rtcItems = [
-            ['item_name' => 'Pork',          'category' => 'Pork',    'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
-            ['item_name' => 'Pork Belly',    'category' => 'Pork',    'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
-            ['item_name' => 'Liempo',        'category' => 'Pork',    'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 4,  'min_stock_level' => 2],
-            ['item_name' => 'Ground Pork',   'category' => 'Pork',    'unit' => 'kg', 'portion_size' => 0.20, 'portion_unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
-            ['item_name' => 'Beef',          'category' => 'Beef',    'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
-            ['item_name' => 'Chicken',       'category' => 'Chicken', 'unit' => 'pc', 'portion_size' => 1.00, 'portion_unit' => 'pc', 'reorder_level' => 20, 'min_stock_level' => 10],
-            ['item_name' => 'Chicken Thigh', 'category' => 'Chicken', 'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
-            ['item_name' => 'Fish',          'category' => 'Fish',    'unit' => 'kg', 'portion_size' => 0.30, 'portion_unit' => 'kg', 'reorder_level' => 4,  'min_stock_level' => 2],
-            ['item_name' => 'Bangus',        'category' => 'Fish',    'unit' => 'pc', 'portion_size' => 1.00, 'portion_unit' => 'pc', 'reorder_level' => 10, 'min_stock_level' => 5],
-            ['item_name' => 'Shrimp',        'category' => 'Seafood', 'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
-            ['item_name' => 'Squid',         'category' => 'Seafood', 'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
-            ['item_name' => 'Lamb',          'category' => 'Others',  'unit' => 'kg', 'portion_size' => 0.25, 'portion_unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
+            ['item_name' => 'Pork',          'category' => 'Pork',    'unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
+            ['item_name' => 'Pork Belly',    'category' => 'Pork',    'unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
+            ['item_name' => 'Liempo',        'category' => 'Pork',    'unit' => 'kg', 'reorder_level' => 4,  'min_stock_level' => 2],
+            ['item_name' => 'Ground Pork',   'category' => 'Pork',    'unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
+            ['item_name' => 'Beef',          'category' => 'Beef',    'unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
+            ['item_name' => 'Chicken',       'category' => 'Chicken', 'unit' => 'pc', 'reorder_level' => 20, 'min_stock_level' => 10],
+            ['item_name' => 'Chicken Thigh', 'category' => 'Chicken', 'unit' => 'kg', 'reorder_level' => 5,  'min_stock_level' => 3],
+            ['item_name' => 'Fish',          'category' => 'Fish',    'unit' => 'kg', 'reorder_level' => 4,  'min_stock_level' => 2],
+            ['item_name' => 'Bangus',        'category' => 'Fish',    'unit' => 'pc', 'reorder_level' => 10, 'min_stock_level' => 5],
+            ['item_name' => 'Shrimp',        'category' => 'Seafood', 'unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
+            ['item_name' => 'Squid',         'category' => 'Seafood', 'unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
+            ['item_name' => 'Lamb',          'category' => 'Others',  'unit' => 'kg', 'reorder_level' => 3,  'min_stock_level' => 2],
         ];
 
         foreach ($rtcItems as $item) {
