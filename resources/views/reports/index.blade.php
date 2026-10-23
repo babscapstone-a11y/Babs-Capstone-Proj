@@ -291,7 +291,7 @@
                     <table class="report-table report-searchable">
                         <thead><tr>
                             <th>Item Name</th><th>Current Raw Stock</th><th>Unit</th><th>Stock Threshold</th>
-                            <th>RTC Units Available</th><th>Equivalent Servings</th><th>Status</th>
+                            <th>Equivalent Servings</th><th>Status</th>
                         </tr></thead>
                         <tbody>
                             @forelse($data['rtc_rows'] as $row)
@@ -300,12 +300,11 @@
                                     <td>{{ number_format($row['current_stock'], 2) }}</td>
                                     <td>@unit($row['unit'])</td>
                                     <td>{{ number_format($row['threshold'], 2) }}</td>
-                                    <td>{{ number_format($row['rtc_units_available'], 2) }}</td>
                                     <td>{{ $row['equivalent_servings'] !== null ? number_format($row['equivalent_servings'], 2) : '—' }}</td>
                                     <td><span class="badge badge-{{ str_replace('_', '', $row['status_key']) }}">{{ $row['status'] }}</span></td>
                                 </tr>
                             @empty
-                                <tr class="empty-row"><td colspan="7">No RTC raw meat items found.</td></tr>
+                                <tr class="empty-row"><td colspan="6">No RTC raw meat items found.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

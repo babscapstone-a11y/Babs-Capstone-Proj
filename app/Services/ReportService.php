@@ -61,7 +61,7 @@ class ReportService
             ->with(['order.details.menuItem', 'order.walkInOrder', 'cashier.staff', 'modeOfPayment', 'invoice.discount']);
 
         if ($category !== 'all') {
-            $paymentsQuery->whereHas('order.details.menuItem', fn ($q) => $q->where('item_type', $category));
+            $paymentsQuery->whereHas('order.details.menuItem', fn ($q) => $q->ofType($category));
         }
 
         if ($search !== '') {
@@ -115,7 +115,7 @@ class ReportService
                 ->with(['orderStatus', 'details', 'walkInOrder']);
 
             if ($category !== 'all') {
-                $excludedQuery->whereHas('details.menuItem', fn ($q) => $q->where('item_type', $category));
+                $excludedQuery->whereHas('details.menuItem', fn ($q) => $q->ofType($category));
             }
             if ($search !== '') {
                 $excludedQuery->where('order_number', 'like', "%{$search}%");
@@ -255,7 +255,6 @@ class ReportService
                 'current_stock'       => (float) $i->quantity,
                 'unit'                => $i->unit,
                 'threshold'           => (float) $i->reorder_level,
-                'rtc_units_available' => (float) $i->rtc_servings,
                 'equivalent_servings' => $portionSize > 0 ? round(((float) $i->quantity) / $portionSize, 2) : null,
                 'status'              => $i->stock_status_label,
                 'status_key'          => $i->stock_status,
@@ -272,7 +271,7 @@ class ReportService
         ])->values();
 
         // RTC items: menu dishes tracked by ready-to-cook servings (same list as the RTC Inventory page).
-        $rtcItemRows = MenuItem::rtcTracked()->orderBy('menu_name')->get()
+        $rtcItemRows = MenuItem::rtcTracked()->with('rtcStock.inventoryItem')->orderBy('menu_name')->get()
             ->when($search !== '', fn (Collection $c) => $c->filter(fn (MenuItem $m) => stripos($m->menu_name, $search) !== false))
             ->map(fn (MenuItem $m) => [
                 'item_name'    => $m->menu_name,

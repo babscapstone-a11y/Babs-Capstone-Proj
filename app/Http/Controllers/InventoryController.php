@@ -6,6 +6,7 @@ use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
+use App\Models\MenuItemRtc;
 use App\Models\StockIn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -86,7 +87,7 @@ class InventoryController extends Controller
 
     public function rtcInventory(Request $request): View|JsonResponse
     {
-        $query = MenuItem::rtcTracked();
+        $query = MenuItem::rtcTracked()->with('rtcStock.inventoryItem');
 
         if ($search = $request->input('search')) {
             $query->where('menu_name', 'like', "%{$search}%");
@@ -95,7 +96,7 @@ class InventoryController extends Controller
             match($status) {
                 'low_stock'    => $query->rtcLowStock(),
                 'out_of_stock' => $query->rtcOutOfStock(),
-                'available'    => $query->where('rtc_servings', '>=', MenuItem::LOW_SERVINGS),
+                'available'    => $query->rtcAvailable(),
                 default        => null,
             };
         }
@@ -112,12 +113,12 @@ class InventoryController extends Controller
         $totalRtc      = MenuItem::rtcTracked()->count();
         $lowServings   = MenuItem::rtcTracked()->rtcLowStock()->count();
         $outOfServings = MenuItem::rtcTracked()->rtcOutOfStock()->count();
-        $totalServings = MenuItem::rtcTracked()->sum('rtc_servings');
+        $totalServings = MenuItemRtc::sum('servings');
         $rawItems      = InventoryItem::rtc()->orderBy('item_name')->get();
         $menuItems     = MenuItem::food()->orderBy('menu_name')->get();
 
         // Adjust Stock on this page corrects a dish's RTC servings
-        $adjustOptions = MenuItem::rtcTracked()->orderBy('menu_name')->get()
+        $adjustOptions = MenuItem::rtcTracked()->with('rtcStock')->orderBy('menu_name')->get()
             ->map(fn ($m) => ['id' => $m->id, 'name' => $m->menu_name, 'qty' => (float) $m->rtc_servings, 'unit' => 'srv'])->all();
 
         return view('inventory.rtc-inventory', compact('items', 'totalRtc', 'lowServings', 'outOfServings', 'totalServings', 'rawItems', 'menuItems', 'adjustOptions'));

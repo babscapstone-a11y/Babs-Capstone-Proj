@@ -6,13 +6,21 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * A dish or drink on the menu. Stock tracking lives in subtype tables: menu_item_rtc for food
+ * tracked by ready-to-cook servings, menu_item_beverages for drinks tracked by a stock item.
+ * The type (food / beverage) comes from the category. The rtc_* / requires_rtc / item_type /
+ * beverage_inventory_item_id attributes below read those, so screens work as before.
+ */
 class MenuItem extends Model
 {
     protected $fillable = [
         'menu_name',
-        'item_type',
         'description',
         'price',
         'prep_time_minutes',
@@ -20,22 +28,13 @@ class MenuItem extends Model
         'is_available',
         'is_active',
         'category_id',
-        'rtc_inventory_item_id',
-        'beverage_inventory_item_id',
-        'rtc_quantity',
-        'rtc_unit',
-        'requires_rtc',
-        'rtc_servings',
     ];
 
     protected $casts = [
         'price'              => 'decimal:2',
         'prep_time_minutes'  => 'integer',
-        'rtc_quantity'       => 'decimal:4',
-        'rtc_servings'       => 'decimal:4',
         'is_available'       => 'boolean',
         'is_active'          => 'boolean',
-        'requires_rtc'       => 'boolean',
     ];
 
     /* ── Relationships ───────────────────────────────────────── */
@@ -45,15 +44,28 @@ class MenuItem extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function rtcItem(): BelongsTo
+    /** RTC stock (raw meat, portion, servings) — only for dishes tracked by RTC servings */
+    public function rtcStock(): HasOne
     {
-        return $this->belongsTo(InventoryItem::class, 'rtc_inventory_item_id');
+        return $this->hasOne(MenuItemRtc::class);
     }
 
-    /** The stock item a beverage is served from — one order uses one piece of it. */
-    public function beverageItem(): BelongsTo
+    /** Stock link — only for beverages tracked by a stock item */
+    public function beverageStock(): HasOne
     {
-        return $this->belongsTo(InventoryItem::class, 'beverage_inventory_item_id');
+        return $this->hasOne(MenuItemBeverage::class);
+    }
+
+    /** The raw meat the dish is prepared from (through menu_item_rtc) */
+    public function rtcItem(): HasOneThrough
+    {
+        return $this->hasOneThrough(InventoryItem::class, MenuItemRtc::class, 'menu_item_id', 'id', 'id', 'inventory_item_id');
+    }
+
+    /** The stock item a beverage is served from — one order uses one piece of it (through menu_item_beverages). */
+    public function beverageItem(): HasOneThrough
+    {
+        return $this->hasOneThrough(InventoryItem::class, MenuItemBeverage::class, 'menu_item_id', 'id', 'id', 'inventory_item_id');
     }
 
     public function conversionLogs(): HasMany
@@ -65,22 +77,106 @@ class MenuItem extends Model
 
     public function scopeRtcTracked(Builder $q): Builder
     {
-        return $q->where('item_type', 'food')->where('requires_rtc', true);
+        return $q->has('rtcStock');
+    }
+
+    /** "food" or "beverage", from the category */
+    public function scopeOfType(Builder $q, string $type): Builder
+    {
+        return $q->whereHas('category', fn ($c) => $c->where('item_type', $type));
     }
 
     public function scopeFood(Builder $q): Builder
     {
-        return $q->where('item_type', 'food');
+        return $q->ofType('food');
     }
 
     public function scopeRtcLowStock(Builder $q): Builder
     {
-        return $q->where('rtc_servings', '>', 0)->where('rtc_servings', '<', 10);
+        return $q->whereHas('rtcStock', fn ($r) => $r->where('servings', '>', 0)->where('servings', '<', self::LOW_SERVINGS));
     }
 
     public function scopeRtcOutOfStock(Builder $q): Builder
     {
-        return $q->where('rtc_servings', '<=', 0);
+        return $q->whereHas('rtcStock', fn ($r) => $r->where('servings', '<=', 0));
+    }
+
+    public function scopeRtcAvailable(Builder $q): Builder
+    {
+        return $q->whereHas('rtcStock', fn ($r) => $r->where('servings', '>=', self::LOW_SERVINGS));
+    }
+
+    /* ── Stock attributes (stored in menu_item_rtc / menu_item_beverages / categories) ── */
+
+    public function getItemTypeAttribute(): string
+    {
+        return $this->category?->item_type ?? 'food';
+    }
+
+    public function getRequiresRtcAttribute(): bool
+    {
+        return $this->rtcStock !== null;
+    }
+
+    public function getRtcServingsAttribute(): float
+    {
+        return (float) ($this->rtcStock?->servings ?? 0);
+    }
+
+    public function getRtcInventoryItemIdAttribute(): ?int
+    {
+        return $this->rtcStock?->inventory_item_id;
+    }
+
+    /** Portion of raw meat per serving, in rtc_unit */
+    public function getRtcQuantityAttribute(): ?float
+    {
+        return $this->rtcStock?->portion_per_serving !== null ? (float) $this->rtcStock->portion_per_serving : null;
+    }
+
+    public function getRtcUnitAttribute(): ?string
+    {
+        return $this->rtcStock?->portion_unit;
+    }
+
+    public function getBeverageInventoryItemIdAttribute(): ?int
+    {
+        return $this->beverageStock?->inventory_item_id;
+    }
+
+    /**
+     * Applies the Add/Edit Menu Item stock settings: an RTC row while "Requires RTC servings" is
+     * ticked on food, a stock link while a beverage has a stock item. Returns an error message
+     * instead of dropping RTC tracking while servings are still in stock, or null when done.
+     */
+    public function syncStockTracking(bool $tracksRtc, ?int $beverageStockId): ?string
+    {
+        $tracksRtc       = $tracksRtc && $this->item_type === 'food';
+        $beverageStockId = $this->item_type === 'beverage' ? $beverageStockId : null;
+
+        $rtc = $this->rtcStock()->first();
+        if (! $tracksRtc && $rtc && (float) $rtc->servings > 0) {
+            $servings = (int) floor((float) $rtc->servings);
+
+            return "{$this->menu_name} still has {$servings} RTC " . Str::plural('serving', $servings)
+                . ' in stock. Deduct them on the RTC Inventory page before turning off "Requires RTC servings".';
+        }
+
+        if ($tracksRtc && ! $rtc) {
+            $this->rtcStock()->create(['servings' => 0]);
+        } elseif (! $tracksRtc && $rtc) {
+            $rtc->delete();
+        }
+
+        if ($beverageStockId) {
+            $this->beverageStock()->updateOrCreate([], ['inventory_item_id' => $beverageStockId]);
+        } else {
+            $this->beverageStock()->delete();
+        }
+
+        $this->unsetRelation('rtcStock')->unsetRelation('beverageStock')->unsetRelation('beverageItem')->unsetRelation('rtcItem');
+
+        return null;
     }
 
     public function getRtcServingsStatusAttribute(): string
@@ -98,7 +194,7 @@ class MenuItem extends Model
      */
     public function isRtcTracked(): bool
     {
-        return $this->item_type === 'food' && (bool) $this->requires_rtc;
+        return $this->rtcStock !== null;
     }
 
     /**
@@ -107,7 +203,7 @@ class MenuItem extends Model
      */
     public function isBeverageTracked(): bool
     {
-        return $this->item_type === 'beverage' && $this->beverage_inventory_item_id !== null;
+        return $this->beverageStock !== null;
     }
 
     /** Capped by stock either way: RTC servings for food, pieces in stock for a beverage. */
@@ -220,16 +316,12 @@ class MenuItem extends Model
     public function scopeAvailability(Builder $q, string $availability): Builder
     {
         $soldOut = fn ($w) => $w
-            ->where(fn ($f) => $f->where('item_type', 'food')->where('requires_rtc', true)
-                ->where(fn ($n) => $n->whereNull('rtc_servings')->orWhere('rtc_servings', '<=', 0)))
-            ->orWhere(fn ($b) => $b->where('item_type', 'beverage')
-                ->whereHas('beverageItem', fn ($i) => $i->where('quantity', '<=', 0)));
+            ->whereHas('rtcStock', fn ($r) => $r->where('servings', '<=', 0))
+            ->orWhereHas('beverageStock.inventoryItem', fn ($i) => $i->where('quantity', '<=', 0));
 
         $lowStock = fn ($w) => $w
-            ->where(fn ($f) => $f->where('item_type', 'food')->where('requires_rtc', true)
-                ->where('rtc_servings', '>', 0)->where('rtc_servings', '<', self::LOW_SERVINGS))
-            ->orWhere(fn ($b) => $b->where('item_type', 'beverage')
-                ->whereHas('beverageItem', fn ($i) => $i->lowStock()));
+            ->whereHas('rtcStock', fn ($r) => $r->where('servings', '>', 0)->where('servings', '<', self::LOW_SERVINGS))
+            ->orWhereHas('beverageStock.inventoryItem', fn ($i) => $i->lowStock());
 
         return match ($availability) {
             'sold_out'  => $q->where($soldOut),

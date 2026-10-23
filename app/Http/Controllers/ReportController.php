@@ -63,8 +63,8 @@ class ReportController extends Controller
 
         [$header, $rows] = match ($type) {
             'inventory' => [
-                ['Section', 'Item Name', 'Category', 'Current Stock / Qty', 'Unit', 'Threshold', 'RTC Units Available', 'Equivalent Servings', 'Status'],
-                collect($data['rtc_rows'])->map(fn ($r) => ['RTC Raw Meat', $r['item_name'], $r['category'], $r['current_stock'], $r['unit'], $r['threshold'], $r['rtc_units_available'], $r['equivalent_servings'], $r['status']])
+                ['Section', 'Item Name', 'Category', 'Current Stock / Qty', 'Unit', 'Threshold', 'RTC Servings', 'Equivalent Servings', 'Status'],
+                collect($data['rtc_rows'])->map(fn ($r) => ['RTC Raw Meat', $r['item_name'], $r['category'], $r['current_stock'], $r['unit'], $r['threshold'], '', $r['equivalent_servings'], $r['status']])
                     ->concat(collect($data['beverage_rows'])->map(fn ($r) => ['Beverage', $r['item_name'], $r['category'], $r['quantity'], '', $r['threshold'], '', '', $r['status']]))
                     ->concat(collect($data['rtc_item_rows'])->map(fn ($r) => ['RTC Item', $r['item_name'], '', '', '', '', $r['servings'], '', $r['status']])),
             ],

@@ -158,12 +158,12 @@
             @if($filters['category'] !== 'beverage')
                 <div class="section-title">Detailed Report — RTC Raw Meat</div>
                 <table class="rpt-tbl">
-                    <thead><tr><th>Item</th><th>Current Stock</th><th>Unit</th><th>Threshold</th><th>RTC Units</th><th>Equiv. Servings</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Item</th><th>Current Stock</th><th>Unit</th><th>Threshold</th><th>Equiv. Servings</th><th>Status</th></tr></thead>
                     <tbody>
                         @forelse($data['rtc_rows'] as $row)
-                            <tr><td>{{ $row['item_name'] }}</td><td>{{ number_format($row['current_stock'], 2) }}</td><td>@unit($row['unit'])</td><td>{{ number_format($row['threshold'], 2) }}</td><td>{{ number_format($row['rtc_units_available'], 2) }}</td><td>{{ $row['equivalent_servings'] !== null ? number_format($row['equivalent_servings'], 2) : '—' }}</td><td>{{ $row['status'] }}</td></tr>
+                            <tr><td>{{ $row['item_name'] }}</td><td>{{ number_format($row['current_stock'], 2) }}</td><td>@unit($row['unit'])</td><td>{{ number_format($row['threshold'], 2) }}</td><td>{{ $row['equivalent_servings'] !== null ? number_format($row['equivalent_servings'], 2) : '—' }}</td><td>{{ $row['status'] }}</td></tr>
                         @empty
-                            <tr><td colspan="7" style="text-align:center;color:#9CA3AF;padding:1rem">No RTC items found.</td></tr>
+                            <tr><td colspan="6" style="text-align:center;color:#9CA3AF;padding:1rem">No RTC items found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

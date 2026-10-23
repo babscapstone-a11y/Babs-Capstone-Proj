@@ -209,7 +209,7 @@ class KitchenController extends Controller
     }
 
     /**
-     * Reverses deductRtcStockForOrder(): gives back rtc_servings (or, for a
+     * Reverses deductRtcStockForOrder(): gives back RTC servings (or, for a
      * stock-linked beverage, the pieces taken from its stock item) for every
      * order detail that was actually deducted (rtc_deducted_at set) and
      * clears that stamp, inside a lock so it can't race a concurrent
@@ -230,6 +230,7 @@ class KitchenController extends Controller
 
             $menuItems = MenuItem::whereIn('id', $quantityByMenuItem->keys())
                 ->lockForUpdate()
+                ->with(['rtcStock' => fn ($q) => $q->lockForUpdate(), 'beverageStock'])
                 ->get()
                 ->keyBy('id');
 
@@ -242,13 +243,13 @@ class KitchenController extends Controller
 
                 // A stock-linked beverage gives its pieces back to that stock item
                 if ($menuItem->isBeverageTracked()) {
-                    InventoryItem::whereKey($menuItem->beverage_inventory_item_id)->lockForUpdate()->first()
+                    InventoryItem::whereKey($menuItem->beverageStock->inventory_item_id)->lockForUpdate()->first()
                         ?->increment('quantity', $qty);
 
                     continue;
                 }
 
-                $menuItem->update(['rtc_servings' => $menuItem->rtc_servings + $qty]);
+                $menuItem->rtcStock?->increment('servings', $qty);
             }
 
             $details->each(fn ($detail) => $detail->update(['rtc_deducted_at' => null]));
@@ -257,7 +258,7 @@ class KitchenController extends Controller
 
     /**
      * Locks the order and every RTC-tracked menu item it references, checks
-     * each has enough rtc_servings to cover the order's quantities, then
+     * each has enough RTC servings (menu_item_rtc) to cover the order's quantities, then
      * deducts them and advances the order status — all inside one
      * transaction so concurrent "start preparing" clicks can't oversell the
      * same servings. Stock-linked beverages are checked and deducted from
@@ -275,6 +276,7 @@ class KitchenController extends Controller
 
             $menuItems = MenuItem::whereIn('id', $quantityByMenuItem->keys())
                 ->lockForUpdate()
+                ->with(['rtcStock' => fn ($q) => $q->lockForUpdate(), 'beverageStock'])
                 ->get()
                 ->keyBy('id');
 
@@ -297,7 +299,7 @@ class KitchenController extends Controller
                 $menuItem = $menuItems->get($menuItemId);
 
                 if ($menuItem && $menuItem->isBeverageTracked()) {
-                    $stockId = $menuItem->beverage_inventory_item_id;
+                    $stockId = $menuItem->beverageStock->inventory_item_id;
                     $beverageNeeds[$stockId] = ($beverageNeeds[$stockId] ?? 0) + $neededQty;
                 }
             }
@@ -330,7 +332,7 @@ class KitchenController extends Controller
                 }
 
                 if ($menuItem->isRtcTracked()) {
-                    $menuItem->update(['rtc_servings' => $menuItem->rtc_servings - $neededQty]);
+                    $menuItem->rtcStock->decrement('servings', $neededQty);
                 }
 
                 $details->where('menu_item_id', $menuItemId)

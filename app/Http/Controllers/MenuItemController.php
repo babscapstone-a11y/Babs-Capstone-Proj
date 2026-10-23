@@ -10,6 +10,7 @@ use App\Models\MenuItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -19,7 +20,7 @@ class MenuItemController extends Controller
     {
         $this->authorize('viewAny', MenuItem::class);
 
-        $query = MenuItem::with(['category', 'beverageItem']);
+        $query = MenuItem::with(['category', 'rtcStock', 'beverageStock', 'beverageItem']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -32,7 +33,7 @@ class MenuItemController extends Controller
             $query->where('category_id', $categoryId);
         }
         if ($itemType = $request->input('item_type')) {
-            $query->where('item_type', $itemType);
+            $query->ofType($itemType);
         }
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
@@ -55,8 +56,8 @@ class MenuItemController extends Controller
         $activeItems    = MenuItem::where('is_active', true)->count();
         // Active dishes that can be ordered right now (Available or Low Stock — not Sold Out)
         $availableItems = $activeItems - MenuItem::where('is_active', true)->availability('sold_out')->count();
-        $foodCount      = MenuItem::where('item_type', 'food')->count();
-        $beverageCount  = MenuItem::where('item_type', 'beverage')->count();
+        $foodCount      = MenuItem::ofType('food')->count();
+        $beverageCount  = MenuItem::ofType('beverage')->count();
 
         return view('menu.index', compact(
             'menuItems', 'categories',
@@ -80,16 +81,17 @@ class MenuItemController extends Controller
         $this->authorize('create', MenuItem::class);
 
         $data = $request->validated();
-        // "Requires RTC servings" only applies to food; an unticked checkbox isn't sent at all
-        $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
-        // A stock link only applies to beverages
-        $data['beverage_inventory_item_id'] = $data['item_type'] === 'beverage' ? ($data['beverage_inventory_item_id'] ?? null) : null;
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('menu-items', 'public');
         }
 
-        MenuItem::create($data);
+        // The type comes from the category; stock tracking goes in menu_item_rtc / menu_item_beverages
+        // ("Requires RTC servings" only applies to food, a stock link only to beverages)
+        DB::transaction(function () use ($data, $request) {
+            MenuItem::create($data)->load('category')
+                ->syncStockTracking($request->boolean('requires_rtc'), $data['beverage_inventory_item_id'] ?? null);
+        });
 
         return redirect()->route('menu.index')
             ->with('success', "Menu item \"{$data['menu_name']}\" was added successfully.");
@@ -99,7 +101,7 @@ class MenuItemController extends Controller
     {
         $this->authorize('view', $menu);
 
-        $menu->load(['category', 'rtcItem', 'beverageItem']);
+        $menu->load(['category', 'rtcStock', 'rtcItem', 'beverageStock', 'beverageItem']);
 
         return view('menu.show', compact('menu'));
     }
@@ -120,9 +122,6 @@ class MenuItemController extends Controller
         $this->authorize('update', $menu);
 
         $data = $request->validated();
-        $data['requires_rtc'] = $data['item_type'] === 'food' && $request->boolean('requires_rtc');
-        // A stock link only applies to beverages
-        $data['beverage_inventory_item_id'] = $data['item_type'] === 'beverage' ? ($data['beverage_inventory_item_id'] ?? null) : null;
 
         if ($request->hasFile('image')) {
             if ($menu->image) {
@@ -133,7 +132,17 @@ class MenuItemController extends Controller
             unset($data['image']);
         }
 
-        $menu->update($data);
+        $error = DB::transaction(function () use ($menu, $data, $request) {
+            $menu->update($data);
+
+            // Stock tracking follows the (possibly changed) category's type
+            return $menu->load('category')
+                ->syncStockTracking($request->boolean('requires_rtc'), $data['beverage_inventory_item_id'] ?? null);
+        });
+
+        if ($error) {
+            return back()->withInput()->with('error', $error);
+        }
 
         return redirect()->route('menu.show', $menu)
             ->with('success', "Menu item \"{$menu->menu_name}\" was updated successfully.");

@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class InventoryItem extends Model
 {
     protected $fillable = [
         'item_name', 'item_type', 'category', 'unit', 'pack_unit', 'pieces_per_pack',
         'quantity', 'min_stock_level', 'reorder_level',
-        'cost_price', 'is_rtc', 'rtc_servings',
+        'cost_price', 'is_rtc',
         'portion_size', 'portion_unit', 'supplier', 'is_active',
     ];
 
@@ -21,7 +22,6 @@ class InventoryItem extends Model
         'min_stock_level' => 'decimal:4',
         'reorder_level'   => 'decimal:4',
         'cost_price'      => 'decimal:2',
-        'rtc_servings'    => 'decimal:4',
         'portion_size'    => 'decimal:4',
         'is_rtc'          => 'boolean',
         'is_active'       => 'boolean',
@@ -49,17 +49,6 @@ class InventoryItem extends Model
         return $q->where('quantity', '<=', 0);
     }
 
-    public function scopeServingsLowStock(Builder $q): Builder
-    {
-        return $q->where('rtc_servings', '>', 0)
-                 ->where('rtc_servings', '<', 10);
-    }
-
-    public function scopeServingsOutOfStock(Builder $q): Builder
-    {
-        return $q->where('rtc_servings', '<=', 0);
-    }
-
     /* ── Computed status ── */
     public function getStockStatusAttribute(): string
     {
@@ -79,15 +68,6 @@ class InventoryItem extends Model
             'low_stock'    => 'Low Stock',
             default        => 'Available',
         };
-    }
-
-    public function getRtcServingsStatusAttribute(): string
-    {
-        if ($this->item_type !== 'rtc') return 'n/a';
-        $servings = (float) $this->rtc_servings;
-        if ($servings <= 0) return 'out_of_stock';
-        if ($servings < 10) return 'low_stock';
-        return 'available';
     }
 
     public function getSuggestedRestockAttribute(): float
@@ -128,9 +108,10 @@ class InventoryItem extends Model
     }
 
     /* ── Relationships ── */
-    public function menuItems(): HasMany
+    /** Dishes prepared from this raw meat (through menu_item_rtc) */
+    public function menuItems(): HasManyThrough
     {
-        return $this->hasMany(MenuItem::class, 'rtc_inventory_item_id');
+        return $this->hasManyThrough(MenuItem::class, MenuItemRtc::class, 'inventory_item_id', 'id', 'id', 'menu_item_id');
     }
 
     public function stockIns(): HasMany

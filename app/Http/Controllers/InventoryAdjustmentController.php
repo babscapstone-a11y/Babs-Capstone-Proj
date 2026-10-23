@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
+use App\Models\MenuItemRtc;
 use App\Support\Units;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,23 +72,24 @@ class InventoryAdjustmentController extends Controller
                 return back()->with('error', 'RTC servings can only be deducted in whole numbers.');
             }
 
-            return $this->deduct($request, MenuItem::class, $menuItem->id, 'rtc_servings', 'menu_item_id',
-                $deduct, $menuItem->menu_name, 'serving(s)');
+            return $this->deduct($request, MenuItemRtc::class, $menuItem->rtcStock->id, 'servings', 'menu_item_id',
+                $menuItem->id, $deduct, $menuItem->menu_name, 'serving(s)');
         }
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
 
-        return $this->deduct($request, InventoryItem::class, $item->id, 'quantity', 'inventory_item_id',
+        return $this->deduct($request, InventoryItem::class, $item->id, 'quantity', 'inventory_item_id', $item->id,
             $deduct, $item->item_name, Units::short($item->unit));
     }
 
     /** Locks the row, refuses to go below zero, then saves the record and the new stock. */
-    private function deduct(Request $request, string $model, int $id, string $column, string $key,
+    /** $key / $keyValue: what the adjustment log points to (the inventory item or the menu item) */
+    private function deduct(Request $request, string $model, int $id, string $column, string $key, int $keyValue,
                             float $deduct, string $name, string $unit): RedirectResponse
     {
         $fmt = fn ($n) => rtrim(rtrim(number_format($n, 2), '0'), '.');
 
-        $after = DB::transaction(function () use ($request, $model, $id, $column, $key, $deduct) {
+        $after = DB::transaction(function () use ($request, $model, $id, $column, $key, $keyValue, $deduct) {
             $locked = $model::whereKey($id)->lockForUpdate()->first();
             $before = (float) $locked->{$column};
 
@@ -97,7 +99,7 @@ class InventoryAdjustmentController extends Controller
             $after = round($before - $deduct, 4);
 
             InventoryAdjustment::create([
-                $key                => $locked->id,
+                $key                => $keyValue,
                 'adjustment_type'   => $request->adjustment_type,
                 'quantity_before'   => $before,
                 'quantity_adjusted' => -$deduct,

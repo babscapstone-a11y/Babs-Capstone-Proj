@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ConversionLog;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
+use App\Models\MenuItemRtc;
 use App\Support\Units;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,9 @@ class ConversionController extends Controller
 
         $result = DB::transaction(function () use ($request) {
             $menuItem = MenuItem::whereKey($request->menu_item_id)->lockForUpdate()->firstOrFail();
+            // Converting stock for a dish means its servings are counted from now on
+            $rtc = MenuItemRtc::where('menu_item_id', $menuItem->id)->lockForUpdate()->first()
+                ?? $menuItem->rtcStock()->create(['servings' => 0]);
             $lines    = [];
 
             foreach (array_values($request->input('lines')) as $line) {
@@ -93,7 +97,7 @@ class ConversionController extends Controller
 
             // The dish can only be made as many times as its scarcest meat allows
             $unitsProduced    = min(array_column($lines, 'servings'));
-            $previousServings = (float) $menuItem->rtc_servings;
+            $previousServings = (float) $rtc->servings;
             $newServings      = $previousServings + $unitsProduced;
             $batchCode        = (string) Str::uuid();
 
@@ -122,13 +126,11 @@ class ConversionController extends Controller
 
             // The dish remembers its first (main) meat and portion as the default for next time
             $main = $lines[0];
-            $menuItem->update([
-                'rtc_servings'          => $newServings,
-                'rtc_inventory_item_id' => $main['item']->id,
-                'rtc_quantity'          => $main['enteredPortion'],
-                'rtc_unit'              => $main['item']->unit === 'Kilogram' ? 'Gram' : $main['item']->unit,
-                // Converting stock for a dish means its servings are counted from now on
-                'requires_rtc'          => true,
+            // (the portion is kept as entered: grams for meat in kilograms, see MenuItemRtc)
+            $rtc->update([
+                'servings'            => $newServings,
+                'inventory_item_id'   => $main['item']->id,
+                'portion_per_serving' => $main['enteredPortion'],
             ]);
 
             return [

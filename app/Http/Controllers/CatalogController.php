@@ -17,7 +17,7 @@ class CatalogController extends Controller
             ->orderBy('category_name')
             ->get();
 
-        $query = MenuItem::with(['category', 'beverageItem'])
+        $query = MenuItem::with(['category', 'rtcStock', 'beverageStock', 'beverageItem'])
             ->where('is_active', true)
             ->where('is_available', true);
 
