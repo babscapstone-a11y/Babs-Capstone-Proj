@@ -83,7 +83,7 @@ class ReportService
         // Menu categories map onto stock types (food is made from RTC raw meat).
         $totalPurchases = (float) StockIn::query()
             ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
-            ->when($category !== 'all', fn ($q) => $q->where('po_type', $category === 'beverage' ? 'beverage' : 'rtc'))
+            ->when($category !== 'all', fn ($q) => $q->ofType($category === 'beverage' ? 'beverage' : 'rtc'))
             ->sum('total_cost');
 
         $rows = $payments->map(fn (Payment $p) => [
@@ -304,7 +304,7 @@ class ReportService
 
         $stockIns = StockIn::with(['inventoryItem', 'recorder.staff'])
             ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
-            ->when($category !== 'all', fn ($q) => $q->where('po_type', $category))
+            ->when($category !== 'all', fn ($q) => $q->ofType($category))
             ->get()
             ->map(fn (StockIn $po) => [
                 'date'          => $po->purchase_date?->format('Y-m-d'),

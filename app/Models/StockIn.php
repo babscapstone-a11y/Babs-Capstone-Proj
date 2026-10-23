@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StockIn extends Model
 {
     protected $fillable = [
-        'procurement_order_id', 'inventory_item_id', 'po_type', 'supplier',
+        'procurement_order_id', 'inventory_item_id',
         'quantity_purchased', 'unit', 'unit_cost', 'total_cost',
         'previous_quantity', 'new_quantity',
         'purchase_date', 'remarks', 'recorded_by',
@@ -45,6 +45,9 @@ class StockIn extends Model
         return $this->belongsTo(User::class, 'recorded_by');
     }
 
-    public function scopeRtc(Builder $q): Builder      { return $q->where('po_type', 'rtc'); }
-    public function scopeBeverage(Builder $q): Builder { return $q->where('po_type', 'beverage'); }
+    /** Stock-ins of one item type ("rtc" raw meat / "beverage"), read from the stocked item */
+    public function scopeOfType(Builder $q, string $type): Builder
+    {
+        return $q->whereHas('inventoryItem', fn ($i) => $i->where('item_type', $type));
+    }
 }

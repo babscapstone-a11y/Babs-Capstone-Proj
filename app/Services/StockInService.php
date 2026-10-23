@@ -77,7 +77,6 @@ class StockInService
         // Record the stock-in transaction
         $transaction = StockIn::create(array_merge([
             'inventory_item_id'  => $item->id,
-            'po_type'            => $item->item_type,
             'quantity_purchased' => $purchased,
             'unit'               => $unit,
             'unit_cost'          => $unitCost,

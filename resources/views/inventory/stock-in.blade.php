@@ -101,7 +101,8 @@
                             <a href="{{ route('purchase-orders.show', $tx->procurementOrder) }}" style="font-size:.72rem;color:var(--blue-600);font-weight:600"><i class="fas fa-file-invoice"></i> via {{ $tx->procurementOrder->po_number }}</a>
                             @endif
                         </td>
-                        <td><span class="badge {{ $tx->po_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($tx->po_type) }}</span></td>
+                        @php $txType = $tx->inventoryItem?->item_type; @endphp
+                        <td><span class="badge {{ $txType === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper((string) $txType) }}</span></td>
                         <td style="color:var(--muted)">{{ number_format($tx->previous_quantity, 2) }} @unit($tx->unit)</td>
                         <td>
                             <span style="color:var(--green-600);font-weight:700">+{{ number_format($tx->quantity_purchased, 2) }} @unit($tx->unit)</span>

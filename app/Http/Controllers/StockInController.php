@@ -19,7 +19,7 @@ class StockInController extends Controller
             $query->whereHas('inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"));
         }
         if ($type = $request->input('type')) {
-            $query->where('po_type', $type);
+            $query->ofType($type);
         }
         if ($from = $request->input('from')) {
             $query->where('purchase_date', '>=', $from);
