@@ -14,15 +14,12 @@ class CartController extends Controller
 {
     private function getOrCreateCart(): Cart
     {
-        return Cart::firstOrCreate(
-            ['customer_id' => auth('customer')->id(), 'status' => 'active']
-        );
+        return Cart::firstOrCreate(['customer_id' => auth('customer')->id()]);
     }
 
     private function activeCart(): ?Cart
     {
         return Cart::where('customer_id', auth('customer')->id())
-            ->where('status', 'active')
             ->with(['items.menuItem.category'])
             ->first();
     }
@@ -102,7 +99,6 @@ class CartController extends Controller
                 'cart_id'      => $cart->id,
                 'menu_item_id' => $menuItem->id,
                 'quantity'     => $request->quantity,
-                'unit_price'   => $menuItem->price,
             ]);
         }
 

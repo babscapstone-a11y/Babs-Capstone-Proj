@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
-    protected $fillable = ['customer_id', 'status'];
+    /**
+     * The customer's current selection (one cart per customer). Checkout copies its items into
+     * order_details and deletes the cart.
+     */
+    protected $fillable = ['customer_id'];
 
     public function customer(): BelongsTo
     {

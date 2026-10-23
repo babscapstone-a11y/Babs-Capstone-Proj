@@ -84,7 +84,7 @@ class StoreOrderRequest extends FormRequest
                     return;
                 }
 
-                $cart = Cart::where('customer_id', auth('customer')->id())->where('status', 'active')->with('items')->first();
+                $cart = Cart::where('customer_id', auth('customer')->id())->with('items.menuItem')->first();
 
                 if ($cart && $cart->total < Order::HALF_PAYMENT_MIN_TOTAL) {
                     $validator->errors()->add('payment_type', 'Pay Half Now is only available for orders of ₱' . number_format(Order::HALF_PAYMENT_MIN_TOTAL) . ' and up. Please choose Pay in Full.');

@@ -28,7 +28,6 @@ class CheckoutController extends Controller
     private function activeCart()
     {
         return Cart::where('customer_id', auth('customer')->id())
-            ->where('status', 'active')
             ->with(['items.menuItem'])
             ->first();
     }
@@ -142,7 +141,8 @@ class CheckoutController extends Controller
                 'status'         => 'awaiting_payment',
             ]);
 
-            $cart->update(['status' => 'completed']);
+            // Its items now live on as the order's order_details
+            $cart->delete();
 
             return [$order, $paymentProof];
         });
@@ -344,7 +344,8 @@ class CheckoutController extends Controller
                 'status'         => 'awaiting_payment',
             ]);
 
-            $cart->update(['status' => 'completed']);
+            // Its items now live on as the order's order_details
+            $cart->delete();
 
             return [$order, $paymentProof];
         });

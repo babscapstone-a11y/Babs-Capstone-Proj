@@ -40,9 +40,7 @@ class CatalogController extends Controller
 
         // Cart badge count only — the catalog page links straight to the
         // cart page rather than rendering cart contents inline.
-        $cart = Cart::where('customer_id', auth('customer')->id())
-            ->where('status', 'active')
-            ->first();
+        $cart = Cart::where('customer_id', auth('customer')->id())->first();
 
         $cartCount = $cart ? $cart->item_count : 0;
 

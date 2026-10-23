@@ -17,8 +17,8 @@ class CustomerProfileController extends Controller
 {
     private function cartCount(): int
     {
-        // Only the active cart counts — carts already checked out keep their items
-        $cart = Cart::where('customer_id', auth('customer')->id())->where('status', 'active')->with('items')->first();
+        // A customer has one cart at most (checkout deletes it)
+        $cart = Cart::where('customer_id', auth('customer')->id())->with('items')->first();
         return $cart ? $cart->item_count : 0;
     }
 

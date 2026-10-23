@@ -7,11 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CartItem extends Model
 {
-    protected $fillable = ['cart_id', 'menu_item_id', 'quantity', 'notes', 'unit_price'];
+    protected $fillable = ['cart_id', 'menu_item_id', 'quantity', 'notes'];
 
     protected $casts = [
-        'unit_price' => 'decimal:2',
-        'quantity'   => 'integer',
+        'quantity' => 'integer',
     ];
 
     public function cart(): BelongsTo
@@ -24,8 +23,17 @@ class CartItem extends Model
         return $this->belongsTo(MenuItem::class);
     }
 
+    /**
+     * The dish's current menu price. Not stored on the cart line, so a price change shows in the
+     * cart right away; the price actually paid is saved in order_details at checkout.
+     */
+    public function getUnitPriceAttribute(): float
+    {
+        return (float) $this->menuItem?->price;
+    }
+
     public function getSubtotalAttribute(): float
     {
-        return (float) $this->unit_price * $this->quantity;
+        return $this->unit_price * $this->quantity;
     }
 }
