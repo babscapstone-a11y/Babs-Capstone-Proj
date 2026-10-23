@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PurchaseOrder extends Model
+/**
+ * One delivery of stock received into inventory (table stock_ins): how much of an item came
+ * in, its cost, and the stock level before and after. Created by App\Services\StockInService,
+ * either entered directly or when a purchase order (ProcurementOrder) is stocked in.
+ */
+class StockIn extends Model
 {
     protected $fillable = [
         'procurement_order_id', 'inventory_item_id', 'po_type', 'supplier',

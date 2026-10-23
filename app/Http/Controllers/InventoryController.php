@@ -6,7 +6,7 @@ use App\Models\ConversionLog;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
-use App\Models\PurchaseOrder;
+use App\Models\StockIn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class InventoryController extends Controller
         $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
 
         // Latest 5 of each; the View All pages list everything 10 per page
-        $recentStockIns    = PurchaseOrder::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
+        $recentStockIns    = StockIn::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
         // Latest 5 conversions; one made from several raw meats is shown once, listing all its meats
         $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])->latest()->limit(20)->get()
             ->groupBy('batch_key')->take(5)

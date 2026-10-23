@@ -135,7 +135,7 @@ class InventoryItem extends Model
 
     public function stockIns(): HasMany
     {
-        return $this->hasMany(PurchaseOrder::class);
+        return $this->hasMany(StockIn::class);
     }
 
     public function conversionLogs(): HasMany

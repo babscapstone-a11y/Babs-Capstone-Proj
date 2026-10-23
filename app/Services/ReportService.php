@@ -10,7 +10,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatus;
 use App\Models\Payment;
-use App\Models\PurchaseOrder;
+use App\Models\StockIn;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -81,7 +81,7 @@ class ReportService
 
         // Total Purchases: what was spent stocking in inventory over the same period.
         // Menu categories map onto stock types (food is made from RTC raw meat).
-        $totalPurchases = (float) PurchaseOrder::query()
+        $totalPurchases = (float) StockIn::query()
             ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
             ->when($category !== 'all', fn ($q) => $q->where('po_type', $category === 'beverage' ? 'beverage' : 'rtc'))
             ->sum('total_cost');
@@ -302,11 +302,11 @@ class ReportService
             'out_of_stock_items' => InventoryItem::outOfStock()->count(),
         ];
 
-        $stockIns = PurchaseOrder::with(['inventoryItem', 'recorder.staff'])
+        $stockIns = StockIn::with(['inventoryItem', 'recorder.staff'])
             ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
             ->when($category !== 'all', fn ($q) => $q->where('po_type', $category))
             ->get()
-            ->map(fn (PurchaseOrder $po) => [
+            ->map(fn (StockIn $po) => [
                 'date'          => $po->purchase_date?->format('Y-m-d'),
                 'item'          => $po->inventoryItem?->item_name ?? '—',
                 'qty_purchased' => (float) $po->quantity_purchased,

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\InventoryItem;
-use App\Models\PurchaseOrder;
+use App\Models\StockIn;
 
 /**
  * Records a stock-in transaction and adds the purchased quantity to inventory.
@@ -42,7 +42,7 @@ class StockInService
     }
 
     /**
-     * @param  array  $extra  Additional purchase_orders columns (e.g. procurement_order_id, remarks)
+     * @param  array  $extra  Additional stock_ins columns (e.g. procurement_order_id, remarks)
      */
     public function record(
         InventoryItem $item,
@@ -51,7 +51,7 @@ class StockInService
         ?float $totalCost,
         string $purchaseDate,
         array $extra = [],
-    ): PurchaseOrder {
+    ): StockIn {
         // Received by the pack (Case/Box): count it in the item's own unit (1 Case of 6 = 6 bottles),
         // so stock and history stay in whole pieces; the remarks keep how it actually arrived
         if ($unit === $item->pack_unit && ($packSize = $item->packSize())) {
@@ -75,7 +75,7 @@ class StockInService
         $newQtyEntered       = $previousQtyEntered + $purchased;
 
         // Record the stock-in transaction
-        $transaction = PurchaseOrder::create(array_merge([
+        $transaction = StockIn::create(array_merge([
             'inventory_item_id'  => $item->id,
             'po_type'            => $item->item_type,
             'quantity_purchased' => $purchased,

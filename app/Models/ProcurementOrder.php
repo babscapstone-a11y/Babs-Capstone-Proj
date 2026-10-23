@@ -50,7 +50,7 @@ class ProcurementOrder extends Model
     /** Stock-in transactions created from this purchase order */
     public function stockIns(): HasMany
     {
-        return $this->hasMany(PurchaseOrder::class);
+        return $this->hasMany(StockIn::class);
     }
 
     /* ── Helpers ── */

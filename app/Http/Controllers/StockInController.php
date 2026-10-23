@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
-use App\Models\PurchaseOrder;
+use App\Models\StockIn;
 use App\Services\StockInService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ class StockInController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = PurchaseOrder::with(['inventoryItem', 'recorder', 'procurementOrder']);
+        $query = StockIn::with(['inventoryItem', 'recorder', 'procurementOrder']);
 
         if ($search = $request->input('q')) {
             $query->whereHas('inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"));
