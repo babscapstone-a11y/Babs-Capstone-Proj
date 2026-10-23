@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTableServerOrderRequest;
 use App\Models\Category;
-use App\Models\DineInOrder;
+use App\Models\WalkInOrder;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -62,9 +62,8 @@ class TableServerOrderController extends Controller
                 'order_number'          => Order::generateOrderNumber(),
                 'total_amount'          => $total,
                 'customer_id'           => null,
-                'placed_by'             => auth()->id(),
                 'order_status_id'       => $pendingStatus?->id,
-                'order_type'            => $request->order_type,
+                'order_type'            => 'walk_in',
                 'payment_status'        => 'pending',
                 'payment_method'        => 'cash',
                 'special_instructions'  => $request->special_instructions,
@@ -84,12 +83,14 @@ class TableServerOrderController extends Controller
                 ]);
             }
 
-            if ($request->order_type === 'dine_in') {
-                DineInOrder::create([
-                    'order_id'     => $order->id,
-                    'table_number' => $request->table_number,
-                ]);
-            }
+            // Every walk-in order gets its walk-in details: dine-in or take-out, the table
+            // (dine-in only) and the food server who took it
+            WalkInOrder::create([
+                'order_id'     => $order->id,
+                'service_type' => $request->order_type,
+                'table_number' => $request->order_type === 'dine_in' ? $request->table_number : null,
+                'placed_by'    => auth()->id(),
+            ]);
 
             return $order;
         });
@@ -102,8 +103,8 @@ class TableServerOrderController extends Controller
 
     public function myOrders(): View
     {
-        $orders = Order::where('placed_by', auth()->id())
-            ->with(['orderStatus', 'details', 'dineInOrder'])
+        $orders = Order::whereHas('walkInOrder', fn ($w) => $w->where('placed_by', auth()->id()))
+            ->with(['orderStatus', 'details', 'walkInOrder'])
             ->latest()
             ->paginate(15);
 

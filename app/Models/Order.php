@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
     protected $fillable = [
-        'order_number', 'total_amount', 'customer_id', 'placed_by', 'order_status_id',
+        'order_number', 'total_amount', 'customer_id', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'extra_prep_minutes',
         'ready_at', 'served_by', 'served_at', 'packaged_at',
@@ -76,14 +77,16 @@ class Order extends Model
         return $this->hasOne(OnlineOrder::class);
     }
 
-    public function dineInOrder(): HasOne
+    /** Walk-in details (dine-in / take-out, table, who took it); none for online orders */
+    public function walkInOrder(): HasOne
     {
-        return $this->hasOne(DineInOrder::class);
+        return $this->hasOne(WalkInOrder::class);
     }
 
-    public function placedBy(): BelongsTo
+    /** The food server who took a walk-in order (stored on walk_in_orders) */
+    public function placedBy(): HasOneThrough
     {
-        return $this->belongsTo(User::class, 'placed_by');
+        return $this->hasOneThrough(User::class, WalkInOrder::class, 'order_id', 'id', 'id', 'placed_by');
     }
 
     public function invoice(): HasOne
@@ -129,6 +132,17 @@ class Order extends Model
     public function scopeOnlineOrders(Builder $q): Builder
     {
         return $q->where('order_type', 'online');
+    }
+
+    /**
+     * Orders of one service type as the screens and filters know it: "dine_in" / "takeout"
+     * (walk-in orders, from walk_in_orders) or "online".
+     */
+    public function scopeOfServiceType(Builder $q, string $type): Builder
+    {
+        return $type === 'online'
+            ? $q->where('order_type', 'online')
+            : $q->where('order_type', 'walk_in')->whereHas('walkInOrder', fn ($w) => $w->where('service_type', $type));
     }
 
     /**
@@ -316,19 +330,28 @@ class Order extends Model
 
     /* ── Computed Attributes ── */
 
+    /**
+     * "dine_in" / "takeout" for a walk-in order (from walk_in_orders), "online" for an online one.
+     * order_type itself only says the channel (walk_in / online).
+     */
+    public function getServiceTypeAttribute(): ?string
+    {
+        return $this->order_type === 'online' ? 'online' : $this->walkInOrder?->service_type;
+    }
+
     public function getOrderTypeLabelAttribute(): string
     {
-        return match($this->order_type) {
+        return match($this->service_type) {
             'dine_in' => 'Dine-In',
             'takeout' => 'Take-Out',
             'online'  => 'Take-Out (Online)',
-            default   => ucfirst($this->order_type ?? 'Unknown'),
+            default   => 'Walk-In',
         };
     }
 
     public function getOrderTypeIconAttribute(): string
     {
-        return match($this->order_type) {
+        return match($this->service_type) {
             'dine_in' => 'fa-utensils',
             'takeout' => 'fa-bag-shopping',
             'online'  => 'fa-mobile-screen-button',
@@ -421,7 +444,7 @@ class Order extends Model
         return match ($this->status_name) {
             'Pending'    => 'Order Received',
             'Processing' => 'Preparing',
-            'Ready'      => $this->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup',
+            'Ready'      => $this->service_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup',
             'Served'     => 'Served',
             'Packaged'   => 'Packaged — Ready for Pickup',
             'Completed'  => 'Completed',
@@ -694,7 +717,7 @@ class Order extends Model
      */
     public function usesPackagingFlow(): bool
     {
-        return $this->order_type !== 'dine_in';
+        return $this->service_type !== 'dine_in';
     }
 
     /**

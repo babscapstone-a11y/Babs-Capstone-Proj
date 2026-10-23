@@ -61,8 +61,8 @@
                         <td style="font-weight:700;color:var(--dark)">{{ $order->order_number }}</td>
                         <td>
                             {{ $order->order_type_label }}
-                            @if($order->dineInOrder?->table_number)
-                                · Table {{ $order->dineInOrder->table_number }}
+                            @if($order->walkInOrder?->table_number)
+                                · Table {{ $order->walkInOrder->table_number }}
                             @endif
                         </td>
                         <td>{{ $order->item_count }} {{ Str::plural('item', $order->item_count) }}</td>

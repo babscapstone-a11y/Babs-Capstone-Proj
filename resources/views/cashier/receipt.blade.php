@@ -88,7 +88,7 @@
             <div class="r-row"><span class="label">Order Type</span>
                 <span class="value">
                     {{ $payment->order?->order_type_label }}
-                    @if($payment->order?->dineInOrder?->table_number) · Table {{ $payment->order->dineInOrder->table_number }} @endif
+                    @if($payment->order?->walkInOrder?->table_number) · Table {{ $payment->order->walkInOrder->table_number }} @endif
                 </span>
             </div>
 

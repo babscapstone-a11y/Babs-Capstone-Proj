@@ -69,7 +69,7 @@
 @section('content')
 
 @php
-    $isDineIn = $order->order_type === 'dine_in';
+    $isDineIn = $order->service_type === 'dine_in';
     $fulfillmentStatus = $isDineIn ? 'Served' : 'Packaged';
     $steps = [
         ['name' => 'Pending',    'label' => 'Order Placed', 'icon' => 'fa-clock',         'time' => $order->created_at],
@@ -108,8 +108,8 @@
                 <div class="sf-meta-item"><div class="sf-meta-label">Order Type</div><div class="sf-meta-value">{{ $order->order_type_label }}</div></div>
                 <div class="sf-meta-item">
                     <div class="sf-meta-label">Table Card Number</div>
-                    <div class="sf-meta-value {{ $order->dineInOrder?->table_number ? 'table-highlight' : '' }}">
-                        {{ $order->dineInOrder?->table_number ?? '— (Take-Out)' }}
+                    <div class="sf-meta-value {{ $order->walkInOrder?->table_number ? 'table-highlight' : '' }}">
+                        {{ $order->walkInOrder?->table_number ?? '— (Take-Out)' }}
                     </div>
                 </div>
                 <div class="sf-meta-item"><div class="sf-meta-label">Order Date</div><div class="sf-meta-value">{{ $order->created_at->format('M d, Y · h:i A') }}</div></div>

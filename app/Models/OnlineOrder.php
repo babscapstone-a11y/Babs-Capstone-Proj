@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Online-only details of an order (subtype of `orders`): the customer's pick-up
- * schedule and the cashier's payment approval. Dine-in orders keep their own
- * details in `dine_in_orders` instead.
+ * schedule and the cashier's payment approval. Walk-in orders keep their own
+ * details in `walk_in_orders` instead.
  */
 class OnlineOrder extends Model
 {

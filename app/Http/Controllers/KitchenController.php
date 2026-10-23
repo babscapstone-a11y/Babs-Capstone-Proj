@@ -30,7 +30,7 @@ class KitchenController extends Controller
         // Backup for the scheduler: drop prepared online orders nobody picked up by closing time
         Order::cancelUnclaimedPickupsThrottled();
 
-        $orders =Order::with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem'])
+        $orders =Order::with(['orderStatus', 'customer', 'walkInOrder', 'onlineOrder', 'details.menuItem'])
             ->where(function ($query) {
                 $query->whereHas('orderStatus', function ($q) {
                     $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);
@@ -103,7 +103,7 @@ class KitchenController extends Controller
             $order->update(['order_status_id' => $newStatus->id]);
         }
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
+        $order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number} has been marked as {$order->kitchen_status_label}.",
@@ -158,7 +158,7 @@ class KitchenController extends Controller
             $order->update(['order_status_id' => $previous->id]);
         }
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
+        $order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number} reverted to {$order->kitchen_status_label}.",
@@ -201,7 +201,7 @@ class KitchenController extends Controller
             ),
         ]);
 
-        $order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details.menuItem']);
+        $order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details.menuItem']);
 
         return response()->json([
             'message' => "Order #{$order->order_number}'s prep time was extended by " . self::PREP_EXTENSION_STEP_MINUTES . ' minutes.',
@@ -355,9 +355,9 @@ class KitchenController extends Controller
             'id'                    => $order->id,
             'order_number'          => $order->order_number,
             'customer_name'         => $order->customer?->full_name ?? 'Walk-in',
-            'order_type'            => $order->order_type,
+            'order_type'            => $order->service_type,
             'order_type_label'      => $order->order_type_label,
-            'table_number'          => $order->dineInOrder?->table_number,
+            'table_number'          => $order->walkInOrder?->table_number,
             'status'                => $order->status_name,
             'status_label'          => $order->kitchen_status_label,
             'next_action'           => $order->next_kitchen_action,

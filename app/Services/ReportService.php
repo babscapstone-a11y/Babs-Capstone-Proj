@@ -58,7 +58,7 @@ class ReportService
         // paid/unpaid flag to check.
         $paymentsQuery = Payment::query()
             ->whereBetween('payment_date', [$from, $to])
-            ->with(['order.details.menuItem', 'cashier.staff', 'modeOfPayment', 'invoice.discount']);
+            ->with(['order.details.menuItem', 'order.walkInOrder', 'cashier.staff', 'modeOfPayment', 'invoice.discount']);
 
         if ($category !== 'all') {
             $paymentsQuery->whereHas('order.details.menuItem', fn ($q) => $q->where('item_type', $category));
@@ -112,7 +112,7 @@ class ReportService
                     $q->where('payment_status', '!=', 'paid')
                       ->orWhereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Cancelled'));
                 })
-                ->with(['orderStatus', 'details']);
+                ->with(['orderStatus', 'details', 'walkInOrder']);
 
             if ($category !== 'all') {
                 $excludedQuery->whereHas('details.menuItem', fn ($q) => $q->where('item_type', $category));
@@ -380,10 +380,10 @@ class ReportService
         $search         = trim((string) ($filters['search'] ?? ''));
 
         $query = Order::whereBetween('created_at', [$from, $to])
-            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'invoice.payment', 'details.menuItem']);
+            ->with(['orderStatus', 'customer', 'walkInOrder', 'onlineOrder', 'invoice.payment', 'details.menuItem']);
 
         if ($orderType !== 'all') {
-            $query->where('order_type', $orderType);
+            $query->ofServiceType($orderType);
         }
         if ($menuCategoryId !== 'all') {
             $query->whereHas('details.menuItem', fn ($q) => $q->where('category_id', $menuCategoryId));
@@ -409,8 +409,8 @@ class ReportService
 
         $summary = [
             'total_orders'   => $orders->count(),
-            'dine_in_orders' => $orders->where('order_type', 'dine_in')->count(),
-            'takeout_orders' => $orders->where('order_type', 'takeout')->count(),
+            'dine_in_orders' => $orders->filter(fn (Order $o) => $o->service_type === 'dine_in')->count(),
+            'takeout_orders' => $orders->filter(fn (Order $o) => $o->service_type === 'takeout')->count(),
             'advance_orders' => $advance->count(),
             'pickup_orders'  => $online->count() - $advance->count(),
         ];
@@ -423,7 +423,7 @@ class ReportService
                 'date'            => $o->created_at?->format('Y-m-d'),
                 'order_type'      => $o->order_type_label,
                 'customer'        => $o->customer_name,
-                'table_number'    => $o->dineInOrder?->table_number ?? '—',
+                'table_number'    => $o->walkInOrder?->table_number ?? '—',
                 'order_status'    => $o->kitchen_status_label,
                 'status_color'    => $o->status_color,
                 'payment_status'  => $o->payment_status_label,

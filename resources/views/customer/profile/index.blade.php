@@ -586,7 +586,7 @@
                             <tbody>
                                 @foreach($orders as $order)
                                 @php
-                                    $typeClass = match($order->order_type) {
+                                    $typeClass = match($order->service_type) {
                                         'dine_in' => 'ot-dine',
                                         'takeout' => 'ot-take',
                                         'online'  => 'ot-online',

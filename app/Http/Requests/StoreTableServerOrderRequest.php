@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\DineInOrder;
+use App\Models\WalkInOrder;
 use App\Models\MenuItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -73,7 +73,8 @@ class StoreTableServerOrderRequest extends FormRequest
             // Completed (e.g. drifted out of sync with payment_status via a
             // direct DB edit) — the transaction being closed is what
             // actually matters here, not which status row it's pointing at.
-            $hasActiveOrder = DineInOrder::where('table_number', $this->table_number)
+            $hasActiveOrder = WalkInOrder::where('service_type', 'dine_in')
+                ->where('table_number', $this->table_number)
                 ->whereHas('order', function ($oq) {
                     $oq->where('payment_status', '!=', 'paid')
                         ->where(function ($statusQ) {

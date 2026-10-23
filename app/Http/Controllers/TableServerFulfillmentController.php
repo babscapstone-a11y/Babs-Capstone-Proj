@@ -34,7 +34,7 @@ class TableServerFulfillmentController extends Controller
     public function readyOrders(): JsonResponse
     {
         $orders = Order::visibleForFulfillment()
-            ->with(['orderStatus', 'customer', 'dineInOrder', 'details', 'servedBy'])
+            ->with(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -62,7 +62,7 @@ class TableServerFulfillmentController extends Controller
                 ->with('error', "Order #{$order->order_number} is no longer in the fulfillment queue.");
         }
 
-        $order->load(['orderStatus', 'customer', 'dineInOrder', 'details', 'servedBy', 'placedBy']);
+        $order->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy', 'placedBy']);
 
         return view('table-server.service.show', ['order' => $order]);
     }
@@ -84,7 +84,7 @@ class TableServerFulfillmentController extends Controller
 
         return response()->json([
             'message' => 'Order successfully served.',
-            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details', 'servedBy'])),
+            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])),
         ]);
     }
 
@@ -105,7 +105,7 @@ class TableServerFulfillmentController extends Controller
 
         return response()->json([
             'message' => 'Order successfully packaged and ready for customer pickup.',
-            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'dineInOrder', 'details', 'servedBy'])),
+            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])),
         ]);
     }
 
@@ -142,9 +142,9 @@ class TableServerFulfillmentController extends Controller
             'id'                => $order->id,
             'order_number'      => $order->order_number,
             'customer_name'     => $order->customer?->full_name ?? 'Walk-in',
-            'order_type'        => $order->order_type,
+            'order_type'        => $order->service_type,
             'order_type_label'  => $order->order_type_label,
-            'table_number'      => $order->dineInOrder?->table_number,
+            'table_number'      => $order->walkInOrder?->table_number,
             // Uses the food-server-facing status (kitchen's internal
             // "Completed" hand-off signal reads as "Ready" here), not the
             // raw order status.

@@ -43,7 +43,7 @@ class CashierController extends Controller
     public function orders(Request $request): JsonResponse
     {
         $query = Order::visibleForBilling()
-            ->with(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details', 'paymentProof']);
+            ->with(['orderStatus', 'customer', 'walkInOrder', 'onlineOrder', 'details', 'paymentProof']);
 
         if ($search = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($search) {
@@ -52,14 +52,14 @@ class CashierController extends Controller
                       $cq->where('first_name', 'like', "%{$search}%")
                          ->orWhere('last_name', 'like', "%{$search}%");
                   })
-                  ->orWhereHas('dineInOrder', function ($dq) use ($search) {
+                  ->orWhereHas('walkInOrder', function ($dq) use ($search) {
                       $dq->where('table_number', 'like', "%{$search}%");
                   });
             });
         }
 
         if ($type = $request->input('type')) {
-            $query->where('order_type', $type);
+            $query->ofServiceType($type);
         }
 
         $orders = $query->orderByDesc('created_at')->get()
@@ -75,7 +75,7 @@ class CashierController extends Controller
     {
         $this->authorize('view', $order);
 
-        $order->load(['orderStatus', 'customer', 'dineInOrder', 'onlineOrder', 'details.menuItem', 'paymentProof']);
+        $order->load(['orderStatus', 'customer', 'walkInOrder', 'onlineOrder', 'details.menuItem', 'paymentProof']);
 
         return response()->json(['order' => $this->serializeOrderDetail($order)]);
     }
@@ -540,7 +540,7 @@ class CashierController extends Controller
     public function receipt(Payment $payment): View
     {
         $payment->load([
-            'order.details', 'order.customer', 'order.dineInOrder', 'order.onlineOrder',
+            'order.details', 'order.customer', 'order.walkInOrder', 'order.onlineOrder',
             'invoice.discount', 'cashier.staff', 'modeOfPayment',
         ]);
 
@@ -711,9 +711,9 @@ class CashierController extends Controller
             'id'                => $order->id,
             'order_number'      => $order->order_number,
             'customer_name'     => $order->customer_name,
-            'order_type'        => $order->order_type,
+            'order_type'        => $order->service_type,
             'order_type_label'  => $order->order_type_label,
-            'table_number'      => $order->dineInOrder?->table_number,
+            'table_number'      => $order->walkInOrder?->table_number,
             'created_at'        => $order->created_at?->toIso8601String(),
             'status_label'      => $order->status_name,
             'status_color'      => $order->status_color,
@@ -734,9 +734,9 @@ class CashierController extends Controller
             'id'                   => $order->id,
             'order_number'         => $order->order_number,
             'customer_name'        => $order->customer_name,
-            'order_type'           => $order->order_type,
+            'order_type'           => $order->service_type,
             'order_type_label'     => $order->order_type_label,
-            'table_number'         => $order->dineInOrder?->table_number,
+            'table_number'         => $order->walkInOrder?->table_number,
             'created_at'           => $order->created_at?->toIso8601String(),
             'status_label'         => $order->status_name,
             'status_color'         => $order->status_color,

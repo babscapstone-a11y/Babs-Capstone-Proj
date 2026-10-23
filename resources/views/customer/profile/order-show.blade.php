@@ -300,7 +300,7 @@
             <div class="oh-date">{{ $order->created_at->format('F d, Y \a\t h:i A') }}</div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
                 @php
-                    $typeClass = match($order->order_type) {
+                    $typeClass = match($order->service_type) {
                         'dine_in' => 'ot-dine', 'takeout' => 'ot-take', 'online' => 'ot-online', default => 'ot-dine'
                     };
                 @endphp
@@ -327,11 +327,11 @@
         // Dine-in orders get "Served" at the table; take-out/online orders get
         // "Packaged" at the counter — the step between Ready and Completed
         // differs by order type, same split the food-server module uses.
-        $handoffStatus = $order->order_type === 'dine_in' ? 'Served' : 'Packaged';
-        $handoffLabel  = $order->order_type === 'dine_in' ? 'Served' : 'Packaged';
-        $handoffIcon   = $order->order_type === 'dine_in' ? 'fa-utensils' : 'fa-box';
+        $handoffStatus = $order->service_type === 'dine_in' ? 'Served' : 'Packaged';
+        $handoffLabel  = $order->service_type === 'dine_in' ? 'Served' : 'Packaged';
+        $handoffIcon   = $order->service_type === 'dine_in' ? 'fa-utensils' : 'fa-box';
         $allStatuses   = ['Pending', 'Processing', 'Ready', $handoffStatus, 'Completed'];
-        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->order_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), $handoffStatus => $handoffLabel, 'Completed' => 'Completed'];
+        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->service_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), $handoffStatus => $handoffLabel, 'Completed' => 'Completed'];
         $cancelledRaw  = $order->isCancelled();
         $currentStatus = $order->status_name;
         $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
@@ -521,10 +521,10 @@
                     <span class="info-label">Order Type</span>
                     <span class="info-value">{{ $order->order_type_label }}</span>
                 </div>
-                @if($order->order_type === 'dine_in' && $order->dineInOrder?->table_number)
+                @if($order->service_type === 'dine_in' && $order->walkInOrder?->table_number)
                 <div class="info-item">
                     <span class="info-label">Table Number</span>
-                    <span class="info-value">{{ $order->dineInOrder->table_number }}</span>
+                    <span class="info-value">{{ $order->walkInOrder->table_number }}</span>
                 </div>
                 @endif
                 <div class="info-item">
