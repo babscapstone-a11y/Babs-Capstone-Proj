@@ -343,7 +343,7 @@
         // timeline to the final step once the order has *also* been handed
         // off; paid-but-not-yet-served still shows wherever the raw status
         // actually is (typically "Ready"), not jumped ahead.
-        $handedOff  = $order->served_at !== null || $order->packaged_at !== null;
+        $handedOff  = $order->handed_off_at !== null;
         $currentIdx = match (true) {
             $order->payment_status === 'paid' && $handedOff           => 4,
             $handedOff                                                => 3,

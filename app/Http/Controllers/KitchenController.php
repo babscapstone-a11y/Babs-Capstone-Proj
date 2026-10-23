@@ -42,8 +42,7 @@ class KitchenController extends Controller
                     // today's "Served" column for reference.
                     $q->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Served', 'Packaged', 'Completed']))
                       ->where(function ($dateQ) {
-                          $dateQ->whereDate('served_at', today())
-                                ->orWhereDate('packaged_at', today())
+                          $dateQ->whereDate('handed_off_at', today())
                                 ->orWhereDate('created_at', today());
                       });
                 });
@@ -138,7 +137,7 @@ class KitchenController extends Controller
             ], 422);
         }
 
-        if ($order->served_at || $order->packaged_at || $order->payment_status === 'paid') {
+        if ($order->handed_off_at || $order->payment_status === 'paid') {
             return response()->json([
                 'message' => "Order #{$order->order_number} has already been handed off / paid and can no longer be reverted.",
             ], 422);
@@ -347,7 +346,7 @@ class KitchenController extends Controller
     private function serializeOrder(Order $order): array
     {
         $canRevert = isset(self::REVERT_TRANSITIONS[$order->status_name])
-            && ! $order->served_at && ! $order->packaged_at && $order->payment_status !== 'paid';
+            && ! $order->handed_off_at && $order->payment_status !== 'paid';
 
         $previousStatusLabels = ['Processing' => 'Order Received', 'Ready' => 'Preparing'];
 

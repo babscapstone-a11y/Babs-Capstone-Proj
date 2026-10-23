@@ -34,7 +34,7 @@ class TableServerFulfillmentController extends Controller
     public function readyOrders(): JsonResponse
     {
         $orders = Order::visibleForFulfillment()
-            ->with(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])
+            ->with(['orderStatus', 'customer', 'walkInOrder', 'details', 'handedOffBy'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -62,7 +62,7 @@ class TableServerFulfillmentController extends Controller
                 ->with('error', "Order #{$order->order_number} is no longer in the fulfillment queue.");
         }
 
-        $order->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy', 'placedBy']);
+        $order->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'handedOffBy', 'placedBy']);
 
         return view('table-server.service.show', ['order' => $order]);
     }
@@ -78,13 +78,13 @@ class TableServerFulfillmentController extends Controller
 
         $order->update([
             'order_status_id' => $servedStatus->id,
-            'served_by'        => auth()->id(),
-            'served_at'        => now(),
+            'handed_off_by'    => auth()->id(),
+            'handed_off_at'    => now(),
         ]);
 
         return response()->json([
             'message' => 'Order successfully served.',
-            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])),
+            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'handedOffBy'])),
         ]);
     }
 
@@ -99,13 +99,13 @@ class TableServerFulfillmentController extends Controller
 
         $order->update([
             'order_status_id' => $packagedStatus->id,
-            'served_by'        => auth()->id(),
-            'packaged_at'      => now(),
+            'handed_off_by'    => auth()->id(),
+            'handed_off_at'    => now(),
         ]);
 
         return response()->json([
             'message' => 'Order successfully packaged and ready for customer pickup.',
-            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'servedBy'])),
+            'order'   => $this->serializeOrder($order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details', 'handedOffBy'])),
         ]);
     }
 
@@ -120,17 +120,16 @@ class TableServerFulfillmentController extends Controller
     {
         $today = Order::whereNotNull('ready_at')
             ->where(function ($q) {
-                $q->whereDate('served_at', today())->orWhereDate('packaged_at', today());
+                $q->whereDate('handed_off_at', today());
             })
-            ->get(['ready_at', 'served_at', 'packaged_at']);
+            ->get(['ready_at', 'handed_off_at']);
 
         if ($today->isEmpty()) {
             return null;
         }
 
         $minutes = $today->map(function (Order $order) {
-            $handoffAt = $order->served_at ?? $order->packaged_at;
-            return $order->ready_at->diffInSeconds($handoffAt) / 60;
+            return $order->ready_at->diffInSeconds($order->handed_off_at) / 60;
         });
 
         return round($minutes->avg(), 1);
@@ -156,9 +155,8 @@ class TableServerFulfillmentController extends Controller
             'can_be_fulfilled'  => $order->canBeFulfilled(),
             'created_at'        => $order->created_at?->toIso8601String(),
             'ready_at'          => $order->ready_at?->toIso8601String(),
-            'served_at'         => $order->served_at?->toIso8601String(),
-            'packaged_at'       => $order->packaged_at?->toIso8601String(),
-            'served_by_name'    => $order->servedBy ? ($order->servedBy->name ?: $order->servedBy->email) : null,
+            'handed_off_at'     => $order->handed_off_at?->toIso8601String(),
+            'handed_off_by_name' => $order->handedOffBy ? ($order->handedOffBy->name ?: $order->handedOffBy->email) : null,
             'item_count'        => $order->item_count,
             'special_instructions' => $order->special_instructions,
             'items'             => $order->details->map(fn ($d) => [

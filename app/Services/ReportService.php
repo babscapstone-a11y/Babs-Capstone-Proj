@@ -416,7 +416,7 @@ class ReportService
         ];
 
         $rows = $orders->map(function (Order $o) {
-            $completion = $o->invoice?->payment?->payment_date ?? $o->served_at ?? $o->packaged_at;
+            $completion = $o->invoice?->payment?->payment_date ?? $o->handed_off_at;
 
             return [
                 'order_number'    => $o->order_number,
@@ -455,8 +455,8 @@ class ReportService
         // timestamps for that leg of the journey — never fabricated.
         $processing = $orders->filter(fn (Order $o) => $o->ready_at)
             ->map(fn (Order $o) => $o->created_at->diffInMinutes($o->ready_at));
-        $handoff = $orders->filter(fn (Order $o) => $o->ready_at && ($o->served_at || $o->packaged_at))
-            ->map(fn (Order $o) => $o->ready_at->diffInMinutes($o->served_at ?? $o->packaged_at));
+        $handoff = $orders->filter(fn (Order $o) => $o->ready_at && $o->handed_off_at)
+            ->map(fn (Order $o) => $o->ready_at->diffInMinutes($o->handed_off_at));
         $completionDurations = $orders->filter(fn (Order $o) => $o->invoice?->payment)
             ->map(fn (Order $o) => $o->created_at->diffInMinutes($o->invoice->payment->payment_date));
 

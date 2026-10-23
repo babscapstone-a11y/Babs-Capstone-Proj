@@ -62,7 +62,7 @@ class StoreTableServerOrderRequest extends FormRequest
 
             // "Completed" needs special handling here: a cashier can collect
             // payment (which sets it) as soon as an order is Ready, before
-            // it's actually been served — served_at/packaged_at (only ever
+            // it's actually been served — handed_off_at (only ever
             // set once a food server acts) are what distinguish "payment
             // taken but still sitting there, unserved" from "already served
             // and since paid" for that case.
@@ -81,8 +81,7 @@ class StoreTableServerOrderRequest extends FormRequest
                             $statusQ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
                                 ->orWhere(function ($completedQ) {
                                     $completedQ->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
-                                        ->whereNull('served_at')
-                                        ->whereNull('packaged_at');
+                                        ->whereNull('handed_off_at');
                                 });
                         });
                 })

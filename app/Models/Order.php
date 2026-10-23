@@ -16,14 +16,13 @@ class Order extends Model
         'order_number', 'total_amount', 'customer_id', 'order_status_id',
         'order_type', 'payment_status', 'payment_method', 'special_instructions',
         'extra_prep_minutes',
-        'ready_at', 'served_by', 'served_at', 'packaged_at',
+        'ready_at', 'handed_off_by', 'handed_off_at',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
-        'ready_at'     => 'datetime',
-        'served_at'    => 'datetime',
-        'packaged_at'  => 'datetime',
+        'ready_at'      => 'datetime',
+        'handed_off_at' => 'datetime',
     ];
 
     /** Percentage of the order total the "pay half now" GCash checkout option charges. */
@@ -99,9 +98,10 @@ class Order extends Model
         return $this->hasOne(PaymentProof::class);
     }
 
-    public function servedBy(): BelongsTo
+    /** The food server who handed the order over: served it at the table or packaged it for pick-up */
+    public function handedOffBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'served_by');
+        return $this->belongsTo(User::class, 'handed_off_by');
     }
 
     public function specialDiscountRequests(): HasMany
@@ -209,13 +209,12 @@ class Order extends Model
         return $q->where(function ($query) {
             $query->where(function ($sub) {
                 $sub->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Ready'))
-                    ->whereNull('served_at')
-                    ->whereNull('packaged_at');
+                    ->whereNull('handed_off_at');
             })
             ->orWhere(function ($sub) {
                 $sub->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Served', 'Packaged']))
                     ->where(function ($dateQ) {
-                        $dateQ->whereDate('served_at', today())->orWhereDate('packaged_at', today());
+                        $dateQ->whereDate('handed_off_at', today());
                     });
             });
         })
@@ -645,7 +644,7 @@ class Order extends Model
      */
     public function isFullyClosed(): bool
     {
-        return $this->isCancelled() || ($this->payment_status === 'paid' && ($this->served_at !== null || $this->packaged_at !== null));
+        return $this->isCancelled() || ($this->payment_status === 'paid' && $this->handed_off_at !== null);
     }
 
     public function isOnline(): bool
@@ -722,8 +721,8 @@ class Order extends Model
 
     /**
      * The food server can act on this order once the kitchen has marked it
-     * "Ready" — that's the intended hand-off signal. served_at/packaged_at
-     * (only ever set by serve()/package() below) confirm it hasn't already
+     * "Ready" — that's the intended hand-off signal. handed_off_at
+     * (only ever set by serve()/package()) confirm it hasn't already
      * been handed off. Deliberately independent of payment_status: a
      * customer may pay before or after being served, and
      * CashierController::finalizeOrderPayment() never touches
@@ -731,7 +730,7 @@ class Order extends Model
      */
     public function canBeFulfilled(): bool
     {
-        return $this->status_name === 'Ready' && $this->served_at === null && $this->packaged_at === null;
+        return $this->status_name === 'Ready' && $this->handed_off_at === null;
     }
 
     public function getFulfillmentActionLabelAttribute(): string

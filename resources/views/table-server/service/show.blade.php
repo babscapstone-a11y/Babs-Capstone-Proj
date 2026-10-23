@@ -79,7 +79,7 @@
             'name'  => $fulfillmentStatus,
             'label' => $isDineIn ? 'Served' : 'Packaged',
             'icon'  => $isDineIn ? 'fa-utensils' : 'fa-box',
-            'time'  => $isDineIn ? $order->served_at : $order->packaged_at,
+            'time'  => $order->handed_off_at,
         ],
     ];
     $statusOrder = ['Pending', 'Processing', 'Ready', $fulfillmentStatus];
@@ -169,8 +169,8 @@
                     <i class="fas fa-circle-check"></i>
                     <p>
                         This order was already {{ strtolower($order->kitchen_status_label) }}
-                        @if($order->servedBy)by {{ $order->servedBy->name ?: $order->servedBy->email }}@endif
-                        @if($order->served_at) at {{ $order->served_at->format('h:i A') }}@elseif($order->packaged_at) at {{ $order->packaged_at->format('h:i A') }}@endif.
+                        @if($order->handedOffBy)by {{ $order->handedOffBy->name ?: $order->handedOffBy->email }}@endif
+                        @if($order->handed_off_at) at {{ $order->handed_off_at->format('h:i A') }}@endif.
                     </p>
                 </div>
             @endif

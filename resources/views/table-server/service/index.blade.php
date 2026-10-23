@@ -186,7 +186,7 @@
 
         grid.innerHTML = filtered.map(order => {
             const cssClass = STATUS_CSS_CLASS[order.status] || 'status-ready';
-            const waitingSource = order.status === 'Ready' ? order.ready_at : (order.served_at || order.packaged_at);
+            const waitingSource = order.status === 'Ready' ? order.ready_at : order.handed_off_at;
             const itemsPreview = order.items.slice(0, 3).map(i => `${i.name} ×${i.quantity}`).join(', ');
             const moreCount = order.items.length - 3;
 
