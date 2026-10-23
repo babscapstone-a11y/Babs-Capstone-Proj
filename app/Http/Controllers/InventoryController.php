@@ -234,12 +234,9 @@ class InventoryController extends Controller
         $request->validate([
             'unit'            => ['required', 'string', 'max:50'],
             'category'        => ['nullable', 'string', 'max:100'],
-            'supplier'        => ['nullable', 'string', 'max:255'],
             'cost_price'      => ['nullable', 'numeric', 'min:0'],
             'min_stock_level' => ['required', 'numeric', 'min:0'],
             'reorder_level'   => ['required', 'numeric', 'min:0'],
-            'portion_size'    => ['nullable', 'numeric', 'min:0.001'],
-            'portion_unit'    => ['nullable', 'string', 'max:50'],
             'pack_unit'       => ['nullable', Rule::in(InventoryItem::PACK_UNITS)],
             'pieces_per_pack' => ['nullable', 'required_with:pack_unit', 'integer', 'min:2', 'max:999'],
         ], [
@@ -247,9 +244,8 @@ class InventoryController extends Controller
         ]);
 
         $item->update($request->only([
-            'unit', 'category', 'supplier', 'cost_price',
+            'unit', 'category', 'cost_price',
             'min_stock_level', 'reorder_level',
-            'portion_size', 'portion_unit',
         ]));
 
         // Beverages: the pack it arrives in (Case/Box) and its size; "Piece only" clears both

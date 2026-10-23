@@ -12,16 +12,7 @@
         <select name="lines[{{ $index }}][inventory_item_id]" class="cv-item" data-searchable data-search-placeholder="Search raw meat items…" required onchange="cvUpdate()">
             <option value="">Select raw meat item…</option>
             @foreach($rawItems as $item)
-            @php
-                // Default portion in the unit typed on the form: grams for kilogram meats
-                $defaultPortion = '';
-                if ($item->portion_size !== null) {
-                    $defaultPortion = $item->unit === 'Kilogram' && ($item->portion_unit ?? 'Kilogram') !== 'Gram'
-                        ? (float) $item->portion_size * 1000
-                        : (float) $item->portion_size;
-                }
-            @endphp
-            <option value="{{ $item->id }}" data-qty="{{ (float) $item->quantity }}" data-unit="{{ $item->unit }}" data-portion="{{ $defaultPortion }}"
+            <option value="{{ $item->id }}" data-qty="{{ (float) $item->quantity }}" data-unit="{{ $item->unit }}"
                 {{ (string) ($line['inventory_item_id'] ?? '') === (string) $item->id ? 'selected' : '' }}>
                 {{ $item->item_name }} ({{ number_format($item->quantity, 2) }} @unit($item->unit) available)
             </option>

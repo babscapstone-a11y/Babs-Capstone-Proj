@@ -37,7 +37,7 @@
         <a href="{{ $item->item_type === 'rtc' ? route('inventory.rtc') : route('inventory.beverages') }}" class="btn btn-outline" style="padding:.45rem .85rem;font-size:.8rem"><i class="fas fa-arrow-left"></i></a>
         <div>
             <div class="page-title"><i class="fas fa-sliders"></i> Edit Inventory Item</div>
-            <div class="page-sub">Update thresholds, portion rules, and supplier details</div>
+            <div class="page-sub">Update the unit, category, and stock thresholds</div>
         </div>
     </div>
 
@@ -73,10 +73,6 @@
                 <div class="field">
                     <label>Unit <span style="color:var(--red-600)">*</span></label>
                     <input type="text" name="unit" required value="{{ old('unit', $item->unit) }}" placeholder="e.g. kg, pcs, liters">
-                </div>
-                <div class="field">
-                    <label>Supplier</label>
-                    <input type="text" name="supplier" value="{{ old('supplier', $item->supplier) }}" placeholder="Supplier name…">
                 </div>
             </div>
 
@@ -123,22 +119,6 @@
                 size.required = !!this.value;
             });
             </script>
-            @endif
-
-            @if($item->item_type === 'rtc')
-            <div class="section-label" style="margin-top:1.5rem">RTC Conversion Rules</div>
-            <div class="field-grid">
-                <div class="field">
-                    <label>Portion Size <span style="color:var(--red-600)">*</span></label>
-                    <input type="number" name="portion_size" step="0.001" min="0.001" required value="{{ old('portion_size', $item->portion_size) }}">
-                    <div class="help">Raw @unit($item->unit) used per RTC serving</div>
-                </div>
-                <div class="field">
-                    <label>Portion Unit</label>
-                    <input type="text" name="portion_unit" value="{{ old('portion_unit', $item->portion_unit ?? $item->unit) }}" placeholder="e.g. kg">
-                    <div class="help">Unit for portion measurement</div>
-                </div>
-            </div>
             @endif
 
             <div class="btn-row">

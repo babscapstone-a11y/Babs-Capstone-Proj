@@ -20,9 +20,6 @@
                     <td style="color:var(--muted);font-size:.78rem">{{ $i + 1 }}</td>
                     <td>
                         <div style="font-weight:700;color:var(--dark)">{{ $item->item_name }}</div>
-                        @if($item->supplier)
-                        <div style="font-size:.72rem;color:var(--muted)">{{ $item->supplier }}</div>
-                        @endif
                     </td>
                     <td>
                         <div style="font-weight:700">{{ number_format($item->quantity, 2) }} @unit($item->unit)</div>

@@ -144,16 +144,7 @@
     window.cvUpdate = function () {
         const all = rows();
         all.forEach(row => {
-            let l = readLine(row);
-
-            // Picking a meat fills in its usual portion if none is entered yet
-            if (l.chosen && row.dataset.filledFor !== l.opt.value) {
-                row.dataset.filledFor = l.opt.value;
-                if (row.querySelector('.cv-portion').value === '' && l.opt.dataset.portion) {
-                    row.querySelector('.cv-portion').value = l.opt.dataset.portion;
-                    l = readLine(row);
-                }
-            }
+            const l = readLine(row);
 
             row.querySelector('.cv-raw-unit').textContent = unitText(l.unit);
             row.querySelector('.cv-portion-unit').textContent = isKg(l.unit) ? 'g' : unitText(l.unit);
@@ -204,7 +195,6 @@
         rows().slice(1).forEach(r => r.remove());
         const first = rows()[0];
         first.querySelectorAll('select, input').forEach(el => { el.value = ''; });
-        delete first.dataset.filledFor;
     }
 
     window.cvOpen = function () {

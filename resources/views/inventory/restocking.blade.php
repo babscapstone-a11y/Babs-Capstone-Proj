@@ -103,7 +103,6 @@
                         <th>Unit</th>
                         <th>Reorder Level</th>
                         <th>Suggested Order</th>
-                        <th>Supplier</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,7 +116,6 @@
                         <td>@unit($item->unit)</td>
                         <td>{{ number_format($item->reorder_level,0) }}</td>
                         <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} @unit($item->unit)</span></td>
-                        <td>{{ $item->supplier ?? '—' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -141,7 +139,6 @@
                         <th>Unit</th>
                         <th>Reorder Level</th>
                         <th>Suggested Order</th>
-                        <th>Supplier</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -157,7 +154,6 @@
                         <td>@unit($item->unit)</td>
                         <td>{{ number_format($item->reorder_level,0) }}</td>
                         <td><span class="reorder-qty">{{ number_format($item->suggested_restock, 0) }} @unit($item->unit)</span></td>
-                        <td>{{ $item->supplier ?? '—' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
