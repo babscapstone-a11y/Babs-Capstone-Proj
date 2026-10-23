@@ -18,8 +18,6 @@ class ProcessPaymentRequest extends FormRequest
             'payment_method'        => ['required', 'in:cash,cashless'],
             'discount_id'           => ['nullable', 'exists:discounts,id'],
             'eligibility_confirmed' => ['sometimes', 'boolean'],
-            // Typed by the cashier when the selected discount is a Special Discount
-            'special_discount_amount' => ['nullable', 'numeric', 'min:0.01', 'max:999999.99'],
             'service_charge'        => ['nullable', 'numeric', 'min:0'],
             // Same cap as the billing screen: 6 digits and 2 decimals
             'amount_received'       => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0', 'max:999999.99'],

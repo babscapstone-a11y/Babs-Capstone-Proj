@@ -25,7 +25,7 @@ class Discount extends Model
     const TYPES = [
         'percentage' => 'Percentage Discount',
         'fixed'      => 'Fixed Amount Discount',
-        'special'    => 'Special Discount (Cashier-Entered Amount)',
+        'special'    => 'Special Discount (Requires Approval)',
     ];
 
     const ELIGIBILITY = [
@@ -58,7 +58,7 @@ class Discount extends Model
     public function getFormattedValueAttribute(): string
     {
         if ($this->discount_type === 'special') {
-            return 'Cashier-Entered Amount';
+            return 'Cashier-Requested Amount';
         }
         if ($this->discount_type === 'percentage') {
             return number_format($this->discount_value, 0) . '%';
@@ -151,7 +151,8 @@ class Discount extends Model
 
     /**
      * Special discounts don't carry a preset value — the cashier types an
-     * amount per transaction on the billing screen and it is applied directly.
+     * amount per transaction, and it only takes effect once an admin
+     * approves the specific SpecialDiscountRequest for that order.
      */
     public function isSpecial(): bool
     {
@@ -161,8 +162,8 @@ class Discount extends Model
     /**
      * Compute the peso discount amount for a given subtotal, respecting the
      * discount type and the optional maximum-discount cap. Not meaningful
-     * for 'special' discounts — their amount is typed by the cashier
-     * instead (see CashierController::resolveDiscount()).
+     * for 'special' discounts — their amount comes from an approved
+     * SpecialDiscountRequest instead (see CashierController::resolveDiscount()).
      */
     public function computeDiscountAmount(float $subtotal): float
     {

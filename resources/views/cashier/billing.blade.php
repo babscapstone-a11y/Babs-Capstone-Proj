@@ -114,6 +114,14 @@
     .eligibility-box input { margin-top: .2rem; }
 
     .special-discount-box { margin-top: -.4rem; margin-bottom: 1.1rem; }
+    .special-status-box {
+        border-radius: 10px; padding: .75rem .9rem; margin-top: .6rem; font-size: .84rem;
+        display: flex; align-items: flex-start; gap: .55rem; line-height: 1.5;
+    }
+    .special-status-box.pending   { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); color: #92400E; }
+    .special-status-box.approved  { background: rgba(22,163,74,0.08);  border: 1px solid rgba(22,163,74,0.25); color: #15803D; }
+    .special-status-box.rejected  { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.25); color: #B91C1C; }
+    .special-status-box .link-btn { background: none; border: none; text-decoration: underline; cursor: pointer; font-size: .82rem; padding: 0; font-family: inherit; color: inherit; }
 
     .action-buttons { display: flex; flex-direction: column; gap: .6rem; margin-top: 1.25rem; }
     .action-buttons-row { display: flex; gap: .6rem; }
@@ -200,6 +208,8 @@
     let searchDebounce = null;
     let currentGcashIntentId = null;
     let gcashPollTimer = null;
+    let specialDiscountState = null;
+    let specialDiscountPollTimer = null;
     let orderBoardPollTimer = null;
 
     /* ── Search ── */
@@ -251,6 +261,8 @@
     async function selectOrder(orderId) {
         stopGcashPolling();
         currentGcashIntentId = null;
+        stopSpecialDiscountPolling();
+        specialDiscountState = null;
         try {
             const res = await fetch(`${ORDERS_URL}/${orderId}`, { headers: { Accept: 'application/json' } });
             if (!res.ok) {
@@ -357,7 +369,7 @@
         await ensureDiscountsLoaded();
         const discountOptions = discountsCache.map(d => {
             const meetsMin = d.minimum_purchase === null || order.subtotal >= d.minimum_purchase;
-            const label = d.is_special ? `${d.name} (Enter Amount)` : `${d.name} (${d.formatted_value})`;
+            const label = d.is_special ? `${d.name} (Cashier-Requested Amount)` : `${d.name} (${d.formatted_value})`;
             return `<option value="${d.id}" ${!meetsMin ? 'disabled' : ''}>
                 ${label}${!meetsMin ? ' — min. ' + formatPeso(d.minimum_purchase) : ''}
             </option>`;
@@ -383,8 +395,16 @@
             </div>
 
             <div id="specialDiscountBox" class="special-discount-box" style="display:none">
-                <label class="form-label"><i class="fas fa-peso-sign"></i> Amount to Deduct</label>
-                <input type="number" class="form-input no-spin" id="specialDiscountAmount" min="0.01" step="0.01" placeholder="0.00" inputmode="decimal">
+                <div id="specialDiscountForm">
+                    <label class="form-label"><i class="fas fa-peso-sign"></i> Amount to Deduct</label>
+                    <input type="number" class="form-input" id="specialDiscountAmount" min="0.01" step="0.01" placeholder="0.00">
+                    <label class="form-label" style="margin-top:.6rem"><i class="fas fa-comment"></i> Reason <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+                    <input type="text" class="form-input" id="specialDiscountReason" maxlength="500" placeholder="e.g. Manager's goodwill discount">
+                    <button type="button" class="btn btn-outline btn-block" style="margin-top:.6rem" onclick="submitSpecialDiscountRequest()">
+                        <i class="fas fa-paper-plane"></i> Request Approval
+                    </button>
+                </div>
+                <div id="specialDiscountStatusBox" style="display:none"></div>
             </div>
 
             <div class="form-group">
@@ -432,7 +452,6 @@
         `;
 
         document.getElementById('discountSelect').addEventListener('change', onDiscountSelectChange);
-        document.getElementById('specialDiscountAmount').addEventListener('input', recomputeTotals);
         // Amount Received: at most 6 digits before the decimal point and 2 after (max ₱999,999.99).
         // A number box ignores maxlength, so extra digits are trimmed as they're typed.
         const amountInput = document.getElementById('amountReceivedInput');
@@ -462,28 +481,137 @@
         return discountsCache.find(d => String(d.id) === String(id)) || null;
     }
 
-    /* ── Special Discount (cashier types the amount; applied directly) ── */
-    function onDiscountSelectChange() {
+    /* ── Special Discount (cashier-requested amount, admin-approved) ── */
+    async function onDiscountSelectChange() {
+        stopSpecialDiscountPolling();
+        specialDiscountState = null;
         const discount = currentDiscount();
-        document.getElementById('specialDiscountBox').style.display = (discount && discount.is_special) ? 'block' : 'none';
-        document.getElementById('specialDiscountAmount').value = '';
+        const box = document.getElementById('specialDiscountBox');
+
+        if (discount && discount.is_special) {
+            box.style.display = 'block';
+            document.getElementById('specialDiscountAmount').value = '';
+            document.getElementById('specialDiscountReason').value = '';
+            await refreshSpecialDiscountStatus();
+        } else {
+            box.style.display = 'none';
+        }
         recomputeTotals();
     }
 
-    function specialDiscountAmount() {
-        return parseFloat(document.getElementById('specialDiscountAmount').value) || 0;
+    async function refreshSpecialDiscountStatus() {
+        if (!currentOrder) return;
+        try {
+            const res = await fetch(`${ORDERS_URL}/${currentOrder.id}/special-discount-request`, { headers: { Accept: 'application/json' } });
+            const data = await res.json();
+            applySpecialDiscountState(data.request);
+        } catch (e) {
+            // Transient network hiccup — leave state as-is; the next poll (if any) retries.
+        }
     }
 
-    // Why a special discount can't be applied yet, or null when the typed amount is fine.
-    function specialDiscountError(discount) {
-        if (!discount || !discount.is_special) return null;
-        const amount = specialDiscountAmount();
-        if (amount <= 0) return 'Please enter the amount to deduct for this special discount.';
-        if (amount > currentOrder.subtotal) return 'The special discount amount cannot exceed the order subtotal.';
-        if (discount.maximum_discount !== null && amount > discount.maximum_discount) {
-            return `The amount exceeds the maximum allowed for this discount (${formatPeso(discount.maximum_discount)}).`;
+    function applySpecialDiscountState(request) {
+        specialDiscountState = request;
+        renderSpecialDiscountStatus();
+        if (request && request.status === 'pending') {
+            startSpecialDiscountPolling();
+        } else {
+            stopSpecialDiscountPolling();
         }
-        return null;
+        recomputeTotals();
+    }
+
+    function renderSpecialDiscountStatus() {
+        const formBox = document.getElementById('specialDiscountForm');
+        const statusBox = document.getElementById('specialDiscountStatusBox');
+        const req = specialDiscountState;
+
+        if (!req || req.status === 'rejected') {
+            formBox.style.display = 'block';
+            if (req && req.status === 'rejected') {
+                statusBox.style.display = 'flex';
+                statusBox.className = 'special-status-box rejected';
+                statusBox.innerHTML = `<i class="fas fa-circle-xmark"></i><div>The admin rejected this request${req.rejection_reason ? ': “' + req.rejection_reason + '”' : '.'} You may request a new amount.</div>`;
+            } else {
+                statusBox.style.display = 'none';
+            }
+            return;
+        }
+
+        formBox.style.display = 'none';
+        statusBox.style.display = 'flex';
+        if (req.status === 'pending') {
+            statusBox.className = 'special-status-box pending';
+            statusBox.innerHTML = `<span class="spin dark"></span><div>Waiting for admin approval of ${formatPeso(req.requested_amount)}…
+                <button type="button" class="link-btn" onclick="cancelSpecialDiscountRequest()">Cancel request</button></div>`;
+        } else if (req.status === 'approved') {
+            statusBox.className = 'special-status-box approved';
+            statusBox.innerHTML = `<i class="fas fa-circle-check"></i><div>Approved — ${formatPeso(req.requested_amount)} will be deducted from this bill.</div>`;
+        }
+    }
+
+    async function submitSpecialDiscountRequest() {
+        const discount = currentDiscount();
+        if (!discount || !currentOrder) return;
+
+        const amount = parseFloat(document.getElementById('specialDiscountAmount').value) || 0;
+        if (amount <= 0) {
+            showToast('Please enter an amount to request.', 'error');
+            return;
+        }
+
+        const payload = {
+            discount_id: discount.id,
+            amount: amount,
+            reason: document.getElementById('specialDiscountReason').value || null,
+        };
+
+        try {
+            const res = await fetch(`${ORDERS_URL}/${currentOrder.id}/special-discount-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showToast(data.message || 'Failed to submit special discount request.', 'error');
+                return;
+            }
+
+            showToast(data.message, 'success');
+            applySpecialDiscountState(data.request);
+        } catch (e) {
+            showToast('Failed to submit special discount request.', 'error');
+        }
+    }
+
+    async function cancelSpecialDiscountRequest() {
+        if (!specialDiscountState || !currentOrder) return;
+        const requestId = specialDiscountState.id;
+
+        try {
+            await fetch(`${ORDERS_URL}/${currentOrder.id}/special-discount-request/${requestId}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+            });
+        } catch (e) {
+            // Nothing to do — it will simply stay pending until the admin acts on it.
+        }
+
+        applySpecialDiscountState(null);
+    }
+
+    function startSpecialDiscountPolling() {
+        stopSpecialDiscountPolling();
+        specialDiscountPollTimer = setInterval(refreshSpecialDiscountStatus, 5000);
+    }
+
+    function stopSpecialDiscountPolling() {
+        if (specialDiscountPollTimer) {
+            clearInterval(specialDiscountPollTimer);
+            specialDiscountPollTimer = null;
+        }
     }
 
     function recomputeTotals() {
@@ -493,8 +621,13 @@
         const discount = currentDiscount();
 
         let discountAmount = 0;
+        let specialAwaitingApproval = false;
         if (discount && discount.is_special) {
-            discountAmount = Math.min(specialDiscountAmount(), subtotal);
+            if (specialDiscountState && specialDiscountState.status === 'approved') {
+                discountAmount = Math.min(specialDiscountState.requested_amount, subtotal);
+            } else {
+                specialAwaitingApproval = true;
+            }
         } else if (discount) {
             discountAmount = discount.type === 'percentage'
                 ? subtotal * (discount.value / 100)
@@ -520,8 +653,10 @@
 
         const primaryLabel = document.getElementById('primaryActionLabel');
         const primaryIcon = document.querySelector('#primaryActionBtn i');
+        const primaryBtn = document.getElementById('primaryActionBtn');
         if (primaryLabel) primaryLabel.textContent = isCash ? 'Confirm Payment' : 'Generate GCash QR Code';
         if (primaryIcon) primaryIcon.className = isCash ? 'fas fa-check' : 'fas fa-qrcode';
+        if (primaryBtn) primaryBtn.disabled = specialAwaitingApproval;
 
         const amountReceivedInput = document.getElementById('amountReceivedInput');
         const amountReceived = parseFloat(amountReceivedInput.value) || 0;
@@ -549,6 +684,8 @@
     function cancelBilling() {
         stopGcashPolling();
         currentGcashIntentId = null;
+        stopSpecialDiscountPolling();
+        specialDiscountState = null;
         currentOrder = null;
         document.getElementById('orderDetailBox').style.display = 'none';
         document.getElementById('orderDetailBox').innerHTML = '';
@@ -578,9 +715,8 @@
             return;
         }
 
-        const specialError = specialDiscountError(discount);
-        if (specialError) {
-            showToast(specialError, 'error');
+        if (specialDiscountBlocksPayment(discount)) {
+            showToast('This special discount must be approved by an admin before you can complete payment.', 'error');
             return;
         }
 
@@ -598,7 +734,6 @@
         const payload = {
             payment_method: isCash ? 'cash' : 'cashless',
             discount_id: discount ? discount.id : null,
-            special_discount_amount: discount && discount.is_special ? specialDiscountAmount() : null,
             amount_received: isCash ? (parseFloat(document.getElementById('amountReceivedInput').value) || 0) : null,
             eligibility_confirmed: discount && discount.requires_verification
                 ? document.getElementById('eligibilityConfirmed').checked
@@ -670,6 +805,10 @@
         }
     }
 
+    function specialDiscountBlocksPayment(discount) {
+        return !!(discount && discount.is_special && !(specialDiscountState && specialDiscountState.status === 'approved'));
+    }
+
     async function generateGcashQr() {
         const discount = currentDiscount();
         if (discount && discount.requires_verification && !document.getElementById('eligibilityConfirmed').checked) {
@@ -677,9 +816,8 @@
             return;
         }
 
-        const specialError = specialDiscountError(discount);
-        if (specialError) {
-            showToast(specialError, 'error');
+        if (specialDiscountBlocksPayment(discount)) {
+            showToast('This special discount must be approved by an admin before you can complete payment.', 'error');
             return;
         }
 
@@ -689,7 +827,6 @@
 
         const payload = {
             discount_id: discount ? discount.id : null,
-            special_discount_amount: discount && discount.is_special ? specialDiscountAmount() : null,
             eligibility_confirmed: discount && discount.requires_verification
                 ? document.getElementById('eligibilityConfirmed').checked
                 : false,
@@ -727,7 +864,6 @@
     async function showGcashQr(url, nextActionType) {
         document.getElementById('mainActionButtons').style.display = 'none';
         document.getElementById('discountSelect').disabled = true;
-        document.getElementById('specialDiscountAmount').disabled = true;
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = true);
 
         const box = document.getElementById('gcashQrBox');
@@ -844,7 +980,6 @@
         document.getElementById('gcashQrBox').style.display = 'none';
         document.getElementById('mainActionButtons').style.display = 'flex';
         document.getElementById('discountSelect').disabled = false;
-        document.getElementById('specialDiscountAmount').disabled = false;
         document.querySelectorAll('input[name="paymentMethod"]').forEach(el => el.disabled = false);
         resetPrimaryButton();
         recomputeTotals();

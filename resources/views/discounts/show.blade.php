@@ -121,6 +121,16 @@
                         <div class="info-lbl">Discount Value</div>
                         <div class="info-val"><span class="value-large {{ $valueClass }}">{{ $discount->formatted_value }}</span></div>
                     </div>
+                    @if($discount->isSpecial())
+                    <div class="info-row">
+                        <div class="info-lbl">Requests</div>
+                        <div class="info-val">
+                            <a href="{{ route('special-discount-requests.index') }}" style="color:var(--primary);font-weight:600">
+                                <i class="fas fa-hand-holding-dollar"></i> View Special Discount Requests
+                            </a>
+                        </div>
+                    </div>
+                    @endif
                     <div class="info-row">
                         <div class="info-lbl">Eligibility</div>
                         <div class="info-val"><span class="elig-badge {{ $eligClass }}">{{ $discount->eligibility_label }}</span></div>

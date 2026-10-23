@@ -367,8 +367,11 @@
             <div class="nav-label" style="margin-top:.35rem">Others</div>
 
             <a href="{{ route('discounts.index') }}"
-               class="nav-item {{ request()->routeIs('discounts.*') ? 'active' : '' }}">
+               class="nav-item {{ request()->routeIs('discounts.*', 'special-discount-requests.*') ? 'active' : '' }}">
                 <i class="fas fa-tag"></i> Discounts
+                {{-- Special discount requests waiting for an admin's approval --}}
+                @php $pendingSpecial = \App\Models\SpecialDiscountRequest::pending()->count() @endphp
+                <span class="nav-badge" id="specialDiscountNavBadge" @if($pendingSpecial === 0) style="display:none" @endif>{{ $pendingSpecial }}</span>
             </a>
 
 
@@ -568,6 +571,61 @@
     document.getElementById('confirmModal').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
     });
+
+    // Sitewide notification for new pending special discount requests —
+    // polled from every admin page (not just the Discounts module) so an
+    // admin sees it no matter where they're working, the same way the food
+    // server's Ready Orders banner surfaces new kitchen events.
+    const SPECIAL_DISCOUNT_PENDING_URL = "{{ route('special-discount-requests.pending-summary') }}";
+    let sdrSeenIds = null;
+
+    async function pollSpecialDiscountRequests() {
+        try {
+            const res = await fetch(SPECIAL_DISCOUNT_PENDING_URL, { headers: { Accept: 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const badge = document.getElementById('specialDiscountNavBadge');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? '' : 'none';
+            }
+
+            const currentIds = new Set(data.pending.map(r => r.id));
+            if (sdrSeenIds === null) {
+                sdrSeenIds = currentIds; // seed silently on first poll — no toast storm for already-pending requests
+                return;
+            }
+
+            data.pending.forEach(function (r) {
+                if (!sdrSeenIds.has(r.id)) showSpecialDiscountToast(r);
+            });
+            sdrSeenIds = currentIds;
+        } catch (e) {
+            // Transient network hiccup — next tick will retry.
+        }
+    }
+
+    function showSpecialDiscountToast(r) {
+        const wrap = document.getElementById('toastWrap');
+        if (!wrap) return;
+        const el = document.createElement('a');
+        el.href = r.show_url;
+        el.className = 'toast toast-info';
+        el.style.textDecoration = 'none';
+        el.style.color = 'inherit';
+        el.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> <span>New special discount request ' + r.request_number +
+            ' for Order #' + r.order_number + ' — ₱' + Number(r.requested_amount).toFixed(2) + '. Click to review.</span>';
+        wrap.appendChild(el);
+        setTimeout(function () {
+            el.style.transition = 'opacity .4s';
+            el.style.opacity = '0';
+            setTimeout(function () { el.remove(); }, 400);
+        }, 8000);
+    }
+
+    pollSpecialDiscountRequests();
+    setInterval(pollSpecialDiscountRequests, 20000);
     </script>
 
     @yield('scripts')

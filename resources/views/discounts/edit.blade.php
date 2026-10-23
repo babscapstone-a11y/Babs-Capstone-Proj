@@ -121,7 +121,7 @@
                                     <input type="radio" name="discount_type" id="type_special" value="special" {{ old('discount_type',$discount->discount_type)==='special' ? 'checked' : '' }} onchange="updateTypeUI()">
                                     <label class="type-radio-label" for="type_special">
                                         <div class="type-radio-icon tr-spec"><i class="fas fa-hand-holding-dollar"></i></div>
-                                        <div class="type-radio-text"><div class="t-label">Special Discount</div><div class="t-sub">Cashier enters amount</div></div>
+                                        <div class="type-radio-text"><div class="t-label">Special Discount</div><div class="t-sub">Cashier requests amount</div></div>
                                     </label>
                                 </div>
                             </div>
@@ -138,7 +138,7 @@
                         <div class="field" id="specialNoteWrap" style="display:none">
                             <div class="special-note">
                                 <i class="fas fa-circle-info"></i>
-                                No preset value — at checkout, the cashier picks this discount and types the peso amount to deduct for the current order. It is applied to the bill right away, with no approval needed.
+                                No preset value — at checkout, the cashier picks this discount and types a peso amount for the current order. That amount stays "pending" until you approve it in <strong>Special Discount Requests</strong>; only then can it be deducted from the bill.
                             </div>
                         </div>
                         <div class="field">
@@ -230,7 +230,7 @@
 const eligLabels = @json(\App\Models\Discount::ELIGIBILITY);
 function updateTypeUI(){const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;document.getElementById('valueFieldWrap').style.display=isSpecial?'none':'';document.getElementById('specialNoteWrap').style.display=isSpecial?'':'none';document.getElementById('valueLabel').innerHTML=isPct?'Discount Percentage <span style="color:var(--red-600)">*</span>':'Fixed Discount Amount <span style="color:var(--red-600)">*</span>';document.getElementById('valPrefix').style.display=isPct?'none':'';document.getElementById('valSuffix').style.display=isPct?'':'none';const input=document.getElementById('discountValue');input.max=isPct?'100':'';input.step=isPct?'1':'0.01';input.min=isSpecial?'0':(isPct?'1':'0.01');input.required=!isSpecial;if(isSpecial)input.value='0';updatePreview();}
 function updateConditions(){const elig=document.getElementById('eligibilityType').value;const showMin=['minimum_purchase','date_range','promotional'].includes(elig);const showDate=['date_range','promotional'].includes(elig);document.getElementById('condMinPurchase').classList.toggle('visible',showMin);document.getElementById('condDateRange').classList.toggle('visible',showDate);}
-function updatePreview(){const name=document.querySelector('[name=discount_name]').value||'—';const val=parseFloat(document.getElementById('discountValue').value)||0;const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;const elig=document.getElementById('eligibilityType').value;const fmtVal=isSpecial?'Custom Amount':(isPct?val.toFixed(0)+'%':'₱'+val.toFixed(2));document.getElementById('prevName').textContent=name;document.getElementById('prevValue').textContent=fmtVal;document.getElementById('prevType').textContent=isSpecial?'Special Discount (Cashier-Entered Amount)':(isPct?'Percentage Discount':'Fixed Amount Discount');document.getElementById('prevElig').textContent=elig?'Eligibility: '+(eligLabels[elig]||elig):'No eligibility selected';}
+function updatePreview(){const name=document.querySelector('[name=discount_name]').value||'—';const val=parseFloat(document.getElementById('discountValue').value)||0;const isPct=document.getElementById('type_pct').checked;const isSpecial=document.getElementById('type_special').checked;const elig=document.getElementById('eligibilityType').value;const fmtVal=isSpecial?'Custom Amount':(isPct?val.toFixed(0)+'%':'₱'+val.toFixed(2));document.getElementById('prevName').textContent=name;document.getElementById('prevValue').textContent=fmtVal;document.getElementById('prevType').textContent=isSpecial?'Special Discount (Requires Approval)':(isPct?'Percentage Discount':'Fixed Amount Discount');document.getElementById('prevElig').textContent=elig?'Eligibility: '+(eligLabels[elig]||elig):'No eligibility selected';}
 function updateStatusUI(){const isActive=document.getElementById('st_active').checked;document.getElementById('stBtnActive').className='status-btn'+(isActive?' active-s':'');document.getElementById('stBtnInactive').className='status-btn'+(!isActive?' inactive-s':'');document.getElementById('statusNote').textContent=isActive?'Active discounts are available in the POS and Online Ordering modules.':'Inactive discounts are stored but not available for selection.';}
 document.querySelector('[name=discount_name]').addEventListener('input',updatePreview);
 window.addEventListener('DOMContentLoaded',function(){updateTypeUI();updateConditions();updateStatusUI();updatePreview();});

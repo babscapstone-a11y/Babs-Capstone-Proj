@@ -101,6 +101,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'served_by');
     }
 
+    public function specialDiscountRequests(): HasMany
+    {
+        return $this->hasMany(SpecialDiscountRequest::class);
+    }
+
     /* ── Scopes ── */
 
     /**

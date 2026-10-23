@@ -33,6 +33,8 @@
 <h4>6. Discounts and Promotional Privileges</h4>
 <p>Babs Resto proudly honors government-mandated discounts, including those for Senior Citizens (20%) and Persons with Disabilities (PWD), as well as authorized promotional gift cards. However, due to the strict legal requirement for physical verification of identification, these discounts cannot be applied directly or automatically through the online ordering interface.</p>
 <p>Customers wishing to avail themselves of Senior Citizen or PWD discounts must present their valid, government-issued identification cards to the cashier upon claiming their take-out orders or when settling their dine-in bills. Upon successful verification, the cashier will apply the appropriate discount to the final billing amount through the Point-of-Sale system.</p>
+<p>For loyalty discounts, the cashier must trigger a discount approval request to the Administrator. The transaction will not proceed until the Administrator reviews and approves the loyalty discount. This ensures that all loyalty-based privileges are properly authorized before being applied to the final billing amount.</p>
+
 <h4>7. Customer Responsibilities</h4>
 <p>By using this system, you agree to the following responsibilities:</p>
 <ul>
