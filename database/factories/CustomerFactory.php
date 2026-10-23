@@ -33,7 +33,7 @@ class CustomerFactory extends Factory
                 $user = new User([
                     'email'    => fake()->unique()->safeEmail(),
                     'password' => static::$password ??= Hash::make('password'),
-                    'role_id'  => Role::firstOrCreate(['role_name' => Role::CUSTOMER], ['display_name' => 'Customer'])->id,
+                    'role_id'  => Role::firstOrCreate(['role_name' => Role::CUSTOMER])->id,
                     'status'   => 'active',
                 ]);
                 $user->forceFill(['email_verified_at' => now(), 'remember_token' => Str::random(10)])->save();

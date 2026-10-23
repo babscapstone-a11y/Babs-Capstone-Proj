@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Role extends Model
 {
-    protected $fillable = ['role_name', 'display_name'];
+    protected $fillable = ['role_name'];
 
     /** Role of customer accounts; every other role is a staff role */
     const CUSTOMER = 'customer';
@@ -17,8 +17,9 @@ class Role extends Model
         return $this->hasMany(User::class);
     }
 
+    /** Readable role name for the screen: "kitchen_staff" → "Kitchen Staff" */
     public function getLabelAttribute(): string
     {
-        return $this->display_name ?? ucfirst(str_replace('_', ' ', $this->role_name));
+        return ucwords(str_replace('_', ' ', (string) $this->role_name));
     }
 }

@@ -33,8 +33,8 @@ class UserController extends Controller
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhereHas('staff', fn ($s) => $s->where('first_name', 'like', "%{$search}%")
                                                       ->orWhere('last_name', 'like', "%{$search}%"))
-                  ->orWhereHas('role', fn ($r) => $r->where('display_name', 'like', "%{$search}%")
-                                                     ->orWhere('role_name', 'like', "%{$search}%"));
+                  // Matches the role as shown ("Kitchen Staff") or as stored ("kitchen_staff")
+                  ->orWhereHas('role', fn ($r) => $r->where('role_name', 'like', '%' . str_replace(' ', '_', $search) . '%'));
             });
         }
 

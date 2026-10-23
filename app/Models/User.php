@@ -145,11 +145,6 @@ class User extends Authenticatable
         return $this->status === 'active';
     }
 
-    public function getRoleDisplayAttribute(): string
-    {
-        return $this->role?->display_name ?? ucfirst(str_replace('_', ' ', $this->role?->role_name ?? 'Unknown'));
-    }
-
     public function getNameAttribute(): string
     {
         return $this->staff?->full_name ?? '';
