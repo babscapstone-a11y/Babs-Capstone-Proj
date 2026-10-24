@@ -56,9 +56,25 @@
         .r-footer-sub { text-align: center; font-size: .72rem; color: var(--muted); margin-top: .2rem; }
 
         /* Shown inside the billing page's receipt pop-up (?embed=1): the paper only, its buttons are on the pop-up */
-        body.embedded { background: #fff; padding: .25rem 0; }
+        body.embedded { background: #fff; padding: 0; overflow: hidden; }
         body.embedded .receipt-actions { display: none; }
         body.embedded .receipt-paper { box-shadow: none; }
+
+        /* …and compact on screen so it fits the pop-up without scrolling (the printout keeps the full size) */
+        @media screen {
+            body.embedded .receipt-paper { padding: .9rem 1.25rem; }
+            body.embedded .r-logo { width: 34px; height: 34px; font-size: 11px; margin-bottom: .35rem; border-radius: 8px; }
+            body.embedded .r-name { font-size: 1rem; }
+            body.embedded .r-sub { font-size: .7rem; margin-top: .05rem; }
+            body.embedded .r-divider { margin: .55rem 0; }
+            body.embedded .r-row { font-size: .75rem; padding: .08rem 0; }
+            body.embedded .r-items .item-line { font-size: .76rem; padding: .18rem 0; }
+            body.embedded .r-items .item-qty-price { font-size: .7rem; }
+            body.embedded .r-summary .r-row.grand { font-size: .9rem; margin-top: .25rem; padding-top: .35rem; }
+            body.embedded .r-summary .r-row.vat { font-size: .7rem; }
+            body.embedded .r-footer { margin-top: .6rem; font-size: .76rem; }
+            body.embedded .r-footer-sub { font-size: .66rem; }
+        }
 
         @media print {
             body { background: #fff; padding: 0; }

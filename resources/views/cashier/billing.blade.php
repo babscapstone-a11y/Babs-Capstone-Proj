@@ -163,8 +163,9 @@
         background: rgba(17,24,39,0.06); color: var(--dark); font-size: 1rem;
     }
     .receipt-modal-close:hover { background: rgba(17,24,39,0.12); }
-    .receipt-modal-body { position: relative; flex: 1; min-height: 420px; overflow: hidden; }
-    .receipt-modal-body iframe { width: 100%; height: 100%; min-height: 420px; border: 0; display: block; }
+    .receipt-modal-body { position: relative; overflow: hidden; }
+    /* Height is set to the receipt's own height once it loads (fitReceiptFrame) */
+    .receipt-modal-body iframe { width: 100%; height: 420px; border: 0; display: block; }
     .receipt-modal-loading {
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .6rem;
         background: var(--white); color: var(--muted); font-size: .88rem;
@@ -226,7 +227,7 @@
             <button type="button" class="receipt-modal-close" onclick="closeReceiptModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="receipt-modal-body">
-            <iframe id="receiptFrame" title="Receipt"></iframe>
+            <iframe id="receiptFrame" title="Receipt" scrolling="no"></iframe>
             <div class="receipt-modal-loading" id="receiptLoading"><span class="spin dark"></span> Loading receipt...</div>
         </div>
         <div class="receipt-modal-actions">
@@ -1060,9 +1061,13 @@
         url.searchParams.set('embed', '1');
 
         document.getElementById('receiptLoading').style.display = 'flex';
+        frame.style.height = '';   // back to the starting height while the next receipt loads
+        frame.contentDocument?.getElementById('receiptFit')?.remove();
         document.getElementById('receiptPrintBtn').disabled = true;
         document.getElementById('receiptPdfBtn').disabled = true;
         frame.onload = () => {
+            if (frame.src === 'about:blank') return;
+            fitReceiptFrame();
             document.getElementById('receiptLoading').style.display = 'none';
             document.getElementById('receiptPrintBtn').disabled = false;
             document.getElementById('receiptPdfBtn').disabled = false;
@@ -1070,6 +1075,55 @@
         frame.src = url.toString();
         document.getElementById('receiptModal').classList.add('open');
     }
+
+    /**
+     * Makes the whole receipt visible without scrolling: the frame takes the receipt's own height,
+     * and a receipt taller than the space left on screen (many items, small screen) is shrunk to
+     * fit. The shrink is screen-only, so the printout keeps its normal size.
+     */
+    const RECEIPT_MIN_SCALE = 0.6;   // smaller than this gets hard to read; a longer receipt scrolls instead
+
+    function fitReceiptFrame() {
+        const frame = document.getElementById('receiptFrame');
+        const doc = frame.contentDocument;
+        if (!doc || !doc.body) return;
+
+        const body = document.querySelector('#receiptModal .receipt-modal-body');
+        const box = document.querySelector('#receiptModal .receipt-modal-box');
+        body.style.overflowY = 'hidden';
+        doc.getElementById('receiptFit')?.remove();
+
+        // The receipt's height at a given size (measured, since text doesn't shrink exactly in proportion)
+        const heightAt = scale => {
+            doc.getElementById('receiptFit')?.remove();
+            if (scale < 1) {
+                const style = doc.createElement('style');
+                style.id = 'receiptFit';
+                style.textContent = `@media screen { html { zoom: ${scale}; } }`;
+                doc.head.appendChild(style);
+            }
+            frame.style.height = '0px';
+            return doc.documentElement.scrollHeight;
+        };
+
+        let height = heightAt(1);
+        const chrome = box.offsetHeight - frame.offsetHeight;   // header + buttons around the frame
+        const room = window.innerHeight - 32 - chrome;           // 1rem margin above and below
+
+        let scale = 1;
+        for (let i = 0; i < 4 && height > room && scale > RECEIPT_MIN_SCALE; i++) {
+            scale = Math.max(RECEIPT_MIN_SCALE, scale * room / height);
+            height = heightAt(scale);
+        }
+
+        frame.style.height = height + 'px';
+        if (height > room) body.style.overflowY = 'auto';   // very long order: scroll rather than unreadable
+        body.style.maxHeight = room + 'px';
+    }
+
+    window.addEventListener('resize', () => {
+        if (document.getElementById('receiptModal').classList.contains('open')) fitReceiptFrame();
+    });
 
     function closeReceiptModal() {
         document.getElementById('receiptModal').classList.remove('open');
