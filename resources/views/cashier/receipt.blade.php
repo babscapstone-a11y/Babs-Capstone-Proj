@@ -111,6 +111,13 @@
 
             <div class="r-summary">
                 <div class="r-row"><span class="label">Subtotal</span><span class="value">₱{{ number_format($payment->invoice->subtotal, 2) }}</span></div>
+                @if($payment->invoice->isVatExempt())
+                    {{-- Senior Citizen / PWD: VAT is removed before the discount --}}
+                    <div class="r-row">
+                        <span class="label">Less VAT ({{ \App\Models\Invoice::VAT_RATE * 100 }}%)</span>
+                        <span class="value neg">- ₱{{ number_format($payment->invoice->vat_exemption, 2) }}</span>
+                    </div>
+                @endif
                 @if($payment->invoice->discount_amount > 0)
                     <div class="r-row">
                         <span class="label">Discount{{ $payment->invoice->discount ? ' (' . $payment->invoice->discount->discount_name . ')' : '' }}</span>
@@ -121,8 +128,12 @@
                     <div class="r-row"><span class="label">Service Charge</span><span class="value">₱{{ number_format($payment->invoice->service_charge, 2) }}</span></div>
                 @endif
                 <div class="r-row grand"><span class="label">Grand Total</span><span class="value">₱{{ number_format($payment->invoice->final_total, 2) }}</span></div>
-                {{-- Prices already include 12% VAT; this shows the split --}}
-                <div class="r-row vat"><span class="label">VATable Sales</span><span class="value">₱{{ number_format($payment->invoice->vatable_sales, 2) }}</span></div>
+                {{-- Prices already include 12% VAT; this shows the split (none on a Senior/PWD sale) --}}
+                @if($payment->invoice->isVatExempt())
+                    <div class="r-row vat"><span class="label">VAT-Exempt Sales</span><span class="value">₱{{ number_format($payment->invoice->vat_exempt_sales, 2) }}</span></div>
+                @else
+                    <div class="r-row vat"><span class="label">VATable Sales</span><span class="value">₱{{ number_format($payment->invoice->vatable_sales, 2) }}</span></div>
+                @endif
                 <div class="r-row vat"><span class="label">VAT ({{ \App\Models\Invoice::VAT_RATE * 100 }}%)</span><span class="value">₱{{ number_format($payment->invoice->vat_amount, 2) }}</span></div>
                 @php $paidOnline = $payment->order?->amountPaidOnline() ?? 0; @endphp
                 @if($paidOnline > 0)

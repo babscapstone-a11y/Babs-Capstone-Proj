@@ -378,6 +378,7 @@
         panel.innerHTML = `
             <div id="summarySubtotal" class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
             <div id="summaryPaidOnlineRow" class="billing-summary-row" style="display:none"><span>Paid Online (GCash)</span><span class="neg">- <span id="summaryPaidOnlineAmt">₱0.00</span></span></div>
+            <div id="summaryVatRow" class="billing-summary-row" style="display:none"><span>Less VAT (12%) · VAT-exempt</span><span class="neg">- <span id="summaryVatAmt">₱0.00</span></span></div>
             <div id="summaryDiscountRow" class="billing-summary-row" style="display:none"><span>Less Discount</span><span class="neg">- <span id="summaryDiscountAmt">₱0.00</span></span></div>
             <div class="billing-summary-row total"><span id="summaryGrandTotalLabel">Grand Total</span><span id="summaryGrandTotal">${formatPeso(order.subtotal)}</span></div>
 
@@ -614,6 +615,27 @@
         }
     }
 
+    /** numerator ÷ denominator rounded to a whole number, halves up — same as Invoice::divideHalfUp */
+    function divideHalfUp(numerator, denominator) {
+        return Math.floor((2 * numerator + denominator) / (2 * denominator));
+    }
+
+    /**
+     * Senior Citizen / PWD (VAT-exempt): the 12% VAT comes off first, then the discount applies
+     * to what's left. Worked out in whole centavos exactly like Discount::reductionsFor, so the
+     * screen always shows what the server will charge.
+     */
+    function vatExemptReductions(subtotal, discount) {
+        const subtotalC = Math.round(subtotal * 100);
+        const baseC = divideHalfUp(subtotalC * 100, 112);
+        let discountC = discount.type === 'percentage'
+            ? divideHalfUp(baseC * Math.round(discount.value * 100), 10000)
+            : Math.round(discount.value * 100);
+        if (discount.maximum_discount !== null) discountC = Math.min(discountC, Math.round(discount.maximum_discount * 100));
+        discountC = Math.min(discountC, baseC);
+        return { vatExemption: (subtotalC - baseC) / 100, discountAmount: discountC / 100 };
+    }
+
     function recomputeTotals() {
         if (!currentOrder) return;
         const subtotal = currentOrder.subtotal;
@@ -621,6 +643,7 @@
         const discount = currentDiscount();
 
         let discountAmount = 0;
+        let vatExemption = 0;
         let specialAwaitingApproval = false;
         if (discount && discount.is_special) {
             if (specialDiscountState && specialDiscountState.status === 'approved') {
@@ -628,6 +651,8 @@
             } else {
                 specialAwaitingApproval = true;
             }
+        } else if (discount && discount.vat_exempt) {
+            ({ vatExemption, discountAmount } = vatExemptReductions(subtotal, discount));
         } else if (discount) {
             discountAmount = discount.type === 'percentage'
                 ? subtotal * (discount.value / 100)
@@ -636,11 +661,13 @@
             discountAmount = Math.min(discountAmount, subtotal);
         }
 
-        const fullTotal = Math.max(subtotal - discountAmount, 0);
+        const fullTotal = Math.max(Math.round((subtotal - vatExemption - discountAmount) * 100) / 100, 0);
         const amountDue = Math.max(fullTotal - alreadyPaidOnline, 0);
 
         document.getElementById('summaryPaidOnlineRow').style.display = alreadyPaidOnline > 0 ? 'flex' : 'none';
         document.getElementById('summaryPaidOnlineAmt').textContent = formatPeso(alreadyPaidOnline);
+        document.getElementById('summaryVatRow').style.display = vatExemption > 0 ? 'flex' : 'none';
+        document.getElementById('summaryVatAmt').textContent = formatPeso(vatExemption);
         document.getElementById('summaryDiscountRow').style.display = discountAmount > 0 ? 'flex' : 'none';
         document.getElementById('summaryDiscountAmt').textContent = formatPeso(discountAmount);
         document.getElementById('summaryGrandTotalLabel').textContent = alreadyPaidOnline > 0 ? 'Balance Due' : 'Grand Total';

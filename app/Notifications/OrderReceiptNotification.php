@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Bus\Queueable;
@@ -35,7 +36,10 @@ class OrderReceiptNotification extends Notification
     {
         $order  = $this->order->loadMissing(['details', 'paymentProof']);
         $peso   = fn ($v) => '₱' . number_format((float) $v, 2);
-        $total  = (float) $order->total_amount;
+        // The final receipt follows the bill the cashier settled (discounts, Senior/PWD VAT exemption);
+        // before that, the order's total
+        $invoice = $this->kind === 'final' ? $this->payment?->invoice : null;
+        $total   = $invoice ? (float) $invoice->final_total : (float) $order->total_amount;
         $online = $order->amountPaidOnline() ?: (float) $order->paymentProof?->amount;
 
         $mail = (new MailMessage)
@@ -53,7 +57,24 @@ class OrderReceiptNotification extends Notification
             . '<td style="padding:6px 0;text-align:right">' . $peso($d->subtotal) . '</td></tr>')->implode('');
 
         // Totals
-        $summary = [['Total', $peso($total)]];
+        $summary = [];
+        if ($invoice && ($invoice->isVatExempt() || (float) $invoice->discount_amount > 0)) {
+            $summary[] = ['Subtotal', $peso($invoice->subtotal)];
+            if ($invoice->isVatExempt()) {
+                $summary[] = ['Less VAT (' . (Invoice::VAT_RATE * 100) . '%)', '- ' . $peso($invoice->vat_exemption)];
+            }
+            if ((float) $invoice->discount_amount > 0) {
+                $summary[] = ['Discount' . ($invoice->discount ? ' (' . e($invoice->discount->discount_name) . ')' : ''), '- ' . $peso($invoice->discount_amount)];
+            }
+        }
+        $summary[] = ['Total', $peso($total)];
+
+        // Prices already include 12% VAT; this shows the split (none on a Senior/PWD sale)
+        $vat = $invoice ?? new Invoice(['subtotal' => $total, 'final_total' => $total]);
+        $summary[] = $vat->isVatExempt()
+            ? ['&nbsp;&nbsp;VAT-Exempt Sales', $peso($vat->vat_exempt_sales)]
+            : ['&nbsp;&nbsp;VATable Sales', $peso($vat->vatable_sales)];
+        $summary[] = ['&nbsp;&nbsp;VAT (' . (Invoice::VAT_RATE * 100) . '%)', $peso($vat->vat_amount)];
         if ($online > 0) {
             $summary[] = ['Paid via GCash' . ($order->paymentProof?->reference_number ? ' (Ref. ' . e($order->paymentProof->reference_number) . ')' : ''), $peso($online)];
         }

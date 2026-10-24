@@ -160,6 +160,47 @@ class Discount extends Model
     }
 
     /**
+     * Senior Citizen and PWD sales are VAT-exempt (RA 9994 / RA 10754): the 12% VAT is
+     * removed from the VAT-inclusive price first, and the discount applies to what's left.
+     */
+    public function isVatExempt(): bool
+    {
+        return $this->requiresEligibilityVerification();
+    }
+
+    /**
+     * How this discount reduces a VAT-inclusive subtotal: the VAT removed (VAT-exempt
+     * discounts only) and the discount itself. E.g. ₱100 senior → VAT ₱10.71 off, then
+     * 20% of ₱89.29 = ₱17.86 off, ₱71.43 to pay.
+     *
+     * @return array{vatExemption: float, discountAmount: float}
+     */
+    public function reductionsFor(float $subtotal): array
+    {
+        if (! $this->isVatExempt()) {
+            return ['vatExemption' => 0.0, 'discountAmount' => $this->computeDiscountAmount($subtotal)];
+        }
+
+        // Worked out in whole centavos, so halves always round up the same way on every PHP
+        // version and in the billing screen's JavaScript (e.g. ₱3.78 ÷ 1.12 = ₱3.375 → ₱3.38)
+        $subtotalC = (int) round($subtotal * 100);
+        $baseC     = Invoice::divideHalfUp($subtotalC * 100, (int) round(100 * (1 + Invoice::VAT_RATE)));
+
+        $discountC = $this->discount_type === 'percentage'
+            ? Invoice::divideHalfUp($baseC * (int) round((float) $this->discount_value * 100), 10000)
+            : (int) round((float) $this->discount_value * 100);
+        if ($this->maximum_discount !== null) {
+            $discountC = min($discountC, (int) round((float) $this->maximum_discount * 100));
+        }
+        $discountC = min($discountC, $baseC);
+
+        return [
+            'vatExemption'   => ($subtotalC - $baseC) / 100,
+            'discountAmount' => $discountC / 100,
+        ];
+    }
+
+    /**
      * Compute the peso discount amount for a given subtotal, respecting the
      * discount type and the optional maximum-discount cap. Not meaningful
      * for 'special' discounts — their amount comes from an approved

@@ -96,6 +96,7 @@ class CashierController extends Controller
                 'formatted_value'       => $d->formatted_value,
                 'eligibility_label'     => $d->eligibility_label,
                 'requires_verification' => $d->requiresEligibilityVerification(),
+                'vat_exempt'            => $d->isVatExempt(),
                 'minimum_purchase'      => $d->minimum_purchase !== null ? (float) $d->minimum_purchase : null,
                 'maximum_discount'      => $d->maximum_discount !== null ? (float) $d->maximum_discount : null,
             ])->values();
@@ -201,7 +202,7 @@ class CashierController extends Controller
         $order->load('details');
         $subtotal = (float) $order->details->sum('subtotal');
 
-        ['discount' => $discount, 'discountAmount' => $discountAmount, 'error' => $error]
+        ['discount' => $discount, 'discountAmount' => $discountAmount, 'vatExemption' => $vatExemption, 'error' => $error]
             = $this->resolveDiscount($request->discount_id, $subtotal, $order);
 
         if ($error) {
@@ -209,7 +210,7 @@ class CashierController extends Controller
         }
 
         $serviceCharge = round((float) ($request->service_charge ?? 0), 2);
-        $grandTotal    = round(max($subtotal - $discountAmount + $serviceCharge, 0), 2);
+        $grandTotal    = round(max($subtotal - $vatExemption - $discountAmount + $serviceCharge, 0), 2);
 
         // A customer who already paid part of this order online (e.g. the
         // guest checkout's "half payment" GCash QR flow) shouldn't be
@@ -293,7 +294,7 @@ class CashierController extends Controller
         $order->load('details');
         $subtotal = (float) $order->details->sum('subtotal');
 
-        ['discount' => $discount, 'discountAmount' => $discountAmount, 'error' => $error]
+        ['discount' => $discount, 'discountAmount' => $discountAmount, 'vatExemption' => $vatExemption, 'error' => $error]
             = $this->resolveDiscount($request->discount_id, $subtotal, $order);
 
         if ($error) {
@@ -301,7 +302,7 @@ class CashierController extends Controller
         }
 
         $serviceCharge = round((float) ($request->service_charge ?? 0), 2);
-        $grandTotal    = round(max($subtotal - $discountAmount + $serviceCharge, 0), 2);
+        $grandTotal    = round(max($subtotal - $vatExemption - $discountAmount + $serviceCharge, 0), 2);
 
         // Deduct anything already settled online (e.g. a "half payment" GCash
         // QR down payment at checkout) — the cashier only collects the rest.
@@ -504,8 +505,10 @@ class CashierController extends Controller
         // remaining balance, after any online down payment) — the invoice's
         // full_total is recomputed here since it may differ when an online
         // payment was deducted at creation time. See createGcashIntent().
+        // A Senior Citizen / PWD sale also had its VAT removed (Discount::reductionsFor)
+        $vatExemption = $intent->discount?->reductionsFor((float) $intent->subtotal)['vatExemption'] ?? 0.0;
         $fullTotal = round(max(
-            (float) $intent->subtotal - (float) $intent->discount_amount + (float) $intent->service_charge,
+            (float) $intent->subtotal - $vatExemption - (float) $intent->discount_amount + (float) $intent->service_charge,
             0
         ), 2);
 
@@ -557,24 +560,25 @@ class CashierController extends Controller
     private function resolveDiscount(?int $discountId, float $subtotal, Order $order): array
     {
         if (! $discountId) {
-            return ['discount' => null, 'discountAmount' => 0.0, 'error' => null];
+            return ['discount' => null, 'discountAmount' => 0.0, 'vatExemption' => 0.0, 'error' => null];
         }
 
         $discount = Discount::findOrFail($discountId);
 
         if (! $discount->isCurrentlyValid()) {
-            return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'The selected discount is no longer active or has expired.'];
+            return ['discount' => null, 'discountAmount' => 0.0, 'vatExemption' => 0.0, 'error' => 'The selected discount is no longer active or has expired.'];
         }
 
         if (! $discount->meetsMinimumPurchase($subtotal)) {
-            return ['discount' => null, 'discountAmount' => 0.0, 'error' => 'This order does not meet the minimum purchase required for the selected discount.'];
+            return ['discount' => null, 'discountAmount' => 0.0, 'vatExemption' => 0.0, 'error' => 'This order does not meet the minimum purchase required for the selected discount.'];
         }
 
         if ($discount->isSpecial()) {
-            return $this->resolveSpecialDiscount($discount, $order, $subtotal);
+            return $this->resolveSpecialDiscount($discount, $order, $subtotal) + ['vatExemption' => 0.0];
         }
 
-        return ['discount' => $discount, 'discountAmount' => $discount->computeDiscountAmount($subtotal), 'error' => null];
+        // Senior Citizen / PWD: VAT removed first, then the discount (Discount::reductionsFor)
+        return ['discount' => $discount, 'error' => null] + $discount->reductionsFor($subtotal);
     }
 
     /**
