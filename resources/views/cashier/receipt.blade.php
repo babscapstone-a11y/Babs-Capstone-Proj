@@ -50,6 +50,7 @@
 
         .r-summary .r-row.grand { font-size: 1rem; font-weight: 800; border-top: 1.5px solid var(--border); margin-top: .4rem; padding-top: .55rem; }
         .r-summary .r-row .neg { color: var(--primary); }
+        .r-summary .r-row.vat { font-size: .76rem; padding-left: .75rem; }
 
         .r-footer { text-align: center; margin-top: 1.1rem; font-size: .84rem; font-weight: 600; color: var(--primary); }
         .r-footer-sub { text-align: center; font-size: .72rem; color: var(--muted); margin-top: .2rem; }
@@ -73,8 +74,8 @@
             <div class="r-center">
                 <div class="r-logo">BR</div>
                 <div class="r-name">BAB'S RESTO</div>
-                <div class="r-sub">123 Sampaguita St., Brgy. San Isidro, Quezon City</div>
-                <div class="r-sub">Tel: (02) 8123-4567</div>
+                <div class="r-sub">Aguirre Subd, Purok Roamsciville, Agan Rd., Brgy. Sta. Cruz, Koronadal, Philippines, 9506</div>
+                <div class="r-sub">Tel: 0910 741 2539</div>
             </div>
 
             <hr class="r-divider">
@@ -120,6 +121,9 @@
                     <div class="r-row"><span class="label">Service Charge</span><span class="value">₱{{ number_format($payment->invoice->service_charge, 2) }}</span></div>
                 @endif
                 <div class="r-row grand"><span class="label">Grand Total</span><span class="value">₱{{ number_format($payment->invoice->final_total, 2) }}</span></div>
+                {{-- Prices already include 12% VAT; this shows the split --}}
+                <div class="r-row vat"><span class="label">VATable Sales</span><span class="value">₱{{ number_format($payment->invoice->vatable_sales, 2) }}</span></div>
+                <div class="r-row vat"><span class="label">VAT ({{ \App\Models\Invoice::VAT_RATE * 100 }}%)</span><span class="value">₱{{ number_format($payment->invoice->vat_amount, 2) }}</span></div>
                 @php $paidOnline = $payment->order?->amountPaidOnline() ?? 0; @endphp
                 @if($paidOnline > 0)
                     <div class="r-row"><span class="label">Paid Online (GCash)</span><span class="value">₱{{ number_format($paidOnline, 2) }}</span></div>

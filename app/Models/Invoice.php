@@ -20,6 +20,21 @@ class Invoice extends Model
         'final_total'     => 'decimal:2',
     ];
 
+    /** Philippine VAT. Menu prices already include it, so it's worked out of the total, not added. */
+    const VAT_RATE = 0.12;
+
+    /** The part of the total before VAT: total ÷ 1.12 */
+    public function getVatableSalesAttribute(): float
+    {
+        return round((float) $this->final_total / (1 + self::VAT_RATE), 2);
+    }
+
+    /** The VAT inside the total, so VATable Sales + VAT always equals the total */
+    public function getVatAmountAttribute(): float
+    {
+        return round((float) $this->final_total - $this->vatable_sales, 2);
+    }
+
     /* ── Relationships ── */
 
     public function order(): BelongsTo
