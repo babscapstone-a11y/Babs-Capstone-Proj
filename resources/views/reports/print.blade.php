@@ -104,12 +104,22 @@
             $rangeLabel = $dateRangeLabels[$filters['date_range']] ?? 'Today';
             $categoryLabels = ['all' => 'All Categories', 'food' => 'Food Category', 'beverage' => 'Beverage Category', 'rtc' => 'RTC Raw Meat'];
             $categoryLabel = $categoryLabels[$filters['category']] ?? 'All Categories';
+
+            // Inventory: the sections picked in the print pop-up, else the ones the Category filter shows
+            $printSections = $sections ?? array_keys(array_filter([
+                'raw'      => $filters['category'] !== 'beverage',
+                'beverage' => $filters['category'] !== 'rtc',
+                'rtc'      => $filters['category'] !== 'beverage',
+            ]));
+            $sectionLabels = ['raw' => 'Raw Meat', 'beverage' => 'Beverages', 'rtc' => 'RTC Items'];
         @endphp
 
         <div class="details-row">
             <div class="detail-item"><div class="dl">Date Range</div><div class="dv">{{ $rangeLabel }} ({{ $data['meta']['from']->format('M d, Y') }} – {{ $data['meta']['to']->format('M d, Y') }})</div></div>
             @if($type === 'orders')
                 <div class="detail-item"><div class="dl">Order Type</div><div class="dv">{{ $filters['order_type'] === 'all' ? 'All Types' : ucfirst(str_replace('_', '-', $filters['order_type'])) }}</div></div>
+            @elseif($type === 'inventory')
+                <div class="detail-item"><div class="dl">Sections</div><div class="dv">{{ collect($printSections)->map(fn ($s) => $sectionLabels[$s])->implode(', ') }}</div></div>
             @else
                 <div class="detail-item"><div class="dl">Category</div><div class="dv">{{ $categoryLabel }}</div></div>
             @endif
@@ -155,7 +165,7 @@
                 <div class="sum-card"><div class="sl">RTC Items</div><div class="sv">{{ $data['summary']['rtc_items'] }}</div></div>
             </div>
 
-            @if($filters['category'] !== 'beverage')
+            @if(in_array('raw', $printSections, true))
                 <div class="section-title">Detailed Report — RTC Raw Meat</div>
                 <table class="rpt-tbl">
                     <thead><tr><th>Item</th><th>Current Stock</th><th>Unit</th><th>Threshold</th><th>Status</th></tr></thead>
@@ -169,7 +179,7 @@
                 </table>
             @endif
 
-            @if($filters['category'] !== 'rtc')
+            @if(in_array('beverage', $printSections, true))
                 <div class="section-title">Detailed Report — Beverages</div>
                 <table class="rpt-tbl">
                     <thead><tr><th>Beverage</th><th>Category</th><th>Quantity</th><th>Threshold</th><th>Status</th></tr></thead>
@@ -183,7 +193,7 @@
                 </table>
             @endif
 
-            @if($filters['category'] !== 'beverage')
+            @if(in_array('rtc', $printSections, true))
                 <div class="section-title">Detailed Report — RTC Items</div>
                 <table class="rpt-tbl">
                     <thead><tr><th>Item</th><th>RTC Servings</th><th>Portion Size</th><th>Status</th></tr></thead>

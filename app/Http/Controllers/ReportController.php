@@ -44,9 +44,11 @@ class ReportController extends Controller
         $data = $this->buildReportData($type, $request->filters());
 
         return view('reports.print', [
-            'type'    => $type,
-            'filters' => $request->filters(),
-            'data'    => $data,
+            'type'     => $type,
+            'filters'  => $request->filters(),
+            'data'     => $data,
+            // Inventory sections chosen in the print pop-up; none chosen = follow the Category filter
+            'sections' => $request->validated('sections') ?: null,
         ]);
     }
 

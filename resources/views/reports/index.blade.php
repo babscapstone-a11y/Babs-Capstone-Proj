@@ -22,6 +22,18 @@
 
 @section('styles')
 <style>
+    /* Inventory "Print Report" pop-up: which sections to print */
+    .print-section-options { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.25rem; }
+    .print-section-options label {
+        display: flex; align-items: center; gap: .6rem; cursor: pointer;
+        padding: .65rem .85rem; border: 1.5px solid var(--border); border-radius: 10px;
+        font-size: .88rem; font-weight: 600; color: var(--dark);
+    }
+    .print-section-options label:has(input:checked) { border-color: var(--primary); background: rgba(220,38,38,0.05); }
+    .print-section-options input { width: 1rem; height: 1rem; accent-color: var(--primary); }
+    .print-section-options i { color: var(--muted); width: 1rem; text-align: center; }
+    .print-section-error { color: var(--primary); font-size: .8rem; text-align: center; margin: -.5rem 0 1rem; }
+
     /* Custom Range dates: calendar in the admin red, field sized like the other filters */
     :root { --cd-accent: var(--primary); --cd-accent-rgb: 220,38,38; }
     .cd-field.report-date-btn { width: 100%; height: auto; padding: .68rem .9rem; border-radius: 12px; font-size: .9rem; }
@@ -278,7 +290,7 @@
             <input type="text" name="search" id="searchInput" class="form-input" placeholder="Search item name..." value="{{ $filters['search'] }}">
         </div>
         <div style="display:flex;gap:.6rem">
-            <button type="submit" formaction="{{ route('reports.print') }}" formtarget="_blank" class="btn btn-outline"><i class="fas fa-print"></i> Print Report</button>
+            <button type="button" onclick="openPrintSections()" class="btn btn-outline"><i class="fas fa-print"></i> Print Report</button>
             <button type="submit" formaction="{{ route('reports.export') }}" class="btn btn-secondary"><i class="fas fa-file-csv"></i> Export CSV</button>
         </div>
     </div>
@@ -471,6 +483,27 @@
 @endif
 
 </form>
+
+@if($type === 'inventory')
+    {{-- Inventory "Print Report": choose which sections go on the printout --}}
+    <div class="modal-overlay" id="printSectionsModal" role="dialog" aria-modal="true" aria-labelledby="printSectionsTitle">
+        <div class="modal-box">
+            <div class="modal-icon warn"><i class="fas fa-print"></i></div>
+            <h3 class="modal-title" id="printSectionsTitle">Print Inventory Report</h3>
+            <p class="modal-desc" style="margin-bottom:1rem">Choose what to include in the printout.</p>
+            <div class="print-section-options">
+                <label><input type="checkbox" class="print-section" value="raw" @checked($filters['category'] !== 'beverage')> <i class="fas fa-drumstick-bite"></i> Raw Meat</label>
+                <label><input type="checkbox" class="print-section" value="beverage" @checked($filters['category'] !== 'rtc')> <i class="fas fa-bottle-water"></i> Beverages</label>
+                <label><input type="checkbox" class="print-section" value="rtc" @checked($filters['category'] !== 'beverage')> <i class="fas fa-utensils"></i> RTC Items</label>
+            </div>
+            <div class="print-section-error" id="printSectionsError" style="display:none">Choose at least one section to print.</div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closePrintSections()">Cancel</button>
+                <button type="button" class="btn-modal-confirm" onclick="printInventorySections()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+    </div>
+@endif
 @endsection
 
 @section('scripts')
@@ -483,6 +516,41 @@
 function autoSubmit() {
     document.getElementById('reportFilterForm').submit();
 }
+
+// Inventory "Print Report": pick the sections, then open the printout in a new tab
+function openPrintSections() {
+    document.getElementById('printSectionsError').style.display = 'none';
+    document.getElementById('printSectionsModal').classList.add('open');
+}
+function closePrintSections() {
+    document.getElementById('printSectionsModal').classList.remove('open');
+}
+function printInventorySections() {
+    const chosen = [...document.querySelectorAll('.print-section:checked')].map(c => c.value);
+    if (chosen.length === 0) {
+        document.getElementById('printSectionsError').style.display = 'block';
+        return;
+    }
+
+    // Send the current filters plus the chosen sections, without changing the page's own form
+    const form = document.getElementById('reportFilterForm');
+    const added = chosen.map(value => {
+        const input = Object.assign(document.createElement('input'), { type: 'hidden', name: 'sections[]', value });
+        form.appendChild(input);
+        return input;
+    });
+    const [action, target] = [form.action, form.target];
+    form.action = @json(route('reports.print'));
+    form.target = '_blank';
+    form.submit();
+    form.action = action;
+    form.target = target;
+    added.forEach(input => input.remove());
+    closePrintSections();
+}
+document.getElementById('printSectionsModal')?.addEventListener('click', e => {
+    if (e.target.id === 'printSectionsModal') closePrintSections();
+});
 
 function handleDateRangeChange() {
     var isCustom = document.getElementById('dateRangeSelect').value === 'custom';

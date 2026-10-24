@@ -26,6 +26,9 @@ class ReportFilterRequest extends FormRequest
             'chart_interval'    => ['nullable', 'in:daily,weekly,monthly'],
             'search'            => ['nullable', 'string', 'max:100'],
             'format'            => ['nullable', 'in:csv'],
+            // Inventory print: which sections to include (Raw Meat / Beverages / RTC Items)
+            'sections'          => ['nullable', 'array'],
+            'sections.*'        => ['in:raw,beverage,rtc'],
         ];
     }
 
