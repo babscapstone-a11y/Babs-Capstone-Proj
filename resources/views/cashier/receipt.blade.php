@@ -55,6 +55,11 @@
         .r-footer { text-align: center; margin-top: 1.1rem; font-size: .84rem; font-weight: 600; color: var(--primary); }
         .r-footer-sub { text-align: center; font-size: .72rem; color: var(--muted); margin-top: .2rem; }
 
+        /* Shown inside the billing page's receipt pop-up (?embed=1): the paper only, its buttons are on the pop-up */
+        body.embedded { background: #fff; padding: .25rem 0; }
+        body.embedded .receipt-actions { display: none; }
+        body.embedded .receipt-paper { box-shadow: none; }
+
         @media print {
             body { background: #fff; padding: 0; }
             .receipt-actions { display: none; }
@@ -62,7 +67,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{{ request()->boolean('embed') ? 'embedded' : '' }}">
 
     <div class="receipt-wrap">
         <div class="receipt-actions">

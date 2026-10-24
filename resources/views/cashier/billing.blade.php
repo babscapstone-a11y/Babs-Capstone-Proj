@@ -145,6 +145,32 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 1100px) { .billing-layout { grid-template-columns: 1fr; } }
+
+    /* ── Receipt pop-up: the receipt opens over the billing page instead of a new tab ── */
+    .receipt-modal-box {
+        background: var(--white); border-radius: 20px; width: 100%; max-width: 480px;
+        max-height: calc(100vh - 2rem); display: flex; flex-direction: column;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.2); animation: modalIn .3s cubic-bezier(.22,.68,0,1.2) both;
+    }
+    .receipt-modal-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+    }
+    .receipt-modal-head h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+    .receipt-modal-head h3 i { color: var(--primary); }
+    .receipt-modal-close {
+        width: 34px; height: 34px; border-radius: 10px; border: none; cursor: pointer;
+        background: rgba(17,24,39,0.06); color: var(--dark); font-size: 1rem;
+    }
+    .receipt-modal-close:hover { background: rgba(17,24,39,0.12); }
+    .receipt-modal-body { position: relative; flex: 1; min-height: 420px; overflow: hidden; }
+    .receipt-modal-body iframe { width: 100%; height: 100%; min-height: 420px; border: 0; display: block; }
+    .receipt-modal-loading {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .6rem;
+        background: var(--white); color: var(--muted); font-size: .88rem;
+    }
+    .receipt-modal-actions { display: flex; gap: .6rem; padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+    .receipt-modal-actions .btn { flex: 1; justify-content: center; }
 </style>
 @endsection
 
@@ -188,6 +214,24 @@
         <div class="card-header"><h3 class="card-title"><i class="fas fa-calculator"></i> Billing Summary</h3></div>
         <div class="card-body" id="billingPanel">
             <div class="empty-left"><i class="fas fa-hand-pointer"></i>No order selected yet.</div>
+        </div>
+    </div>
+</div>
+
+{{-- Receipt pop-up: the receipt page is shown here (in pop-up mode), so the cashier never leaves billing --}}
+<div class="modal-overlay" id="receiptModal" role="dialog" aria-modal="true" aria-labelledby="receiptModalTitle">
+    <div class="receipt-modal-box">
+        <div class="receipt-modal-head">
+            <h3 id="receiptModalTitle"><i class="fas fa-receipt"></i> Receipt</h3>
+            <button type="button" class="receipt-modal-close" onclick="closeReceiptModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="receipt-modal-body">
+            <iframe id="receiptFrame" title="Receipt"></iframe>
+            <div class="receipt-modal-loading" id="receiptLoading"><span class="spin dark"></span> Loading receipt...</div>
+        </div>
+        <div class="receipt-modal-actions">
+            <button type="button" class="btn btn-primary" id="receiptPrintBtn" onclick="printReceiptFrame()" disabled><i class="fas fa-print"></i> Print Receipt</button>
+            <button type="button" class="btn btn-outline" id="receiptPdfBtn" onclick="printReceiptFrame()" disabled title="Choose “Save as PDF” as the printer"><i class="fas fa-file-pdf"></i> Save as PDF</button>
         </div>
     </div>
 </div>
@@ -789,14 +833,12 @@
         }
     }
 
-    // Fully paid online: records the sale (₱0 collected) and opens the receipt in one click.
-    // The tab is opened right away so the browser doesn't block it as a pop-up.
+    // Fully paid online: records the sale (₱0 collected) and opens the receipt pop-up in one click.
     async function printPrepaidReceipt() {
         if (!currentOrder) return;
         const btn = document.getElementById('printPrepaidBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spin"></span> <span>Preparing Receipt...</span>';
-        const receiptTab = window.open('', '_blank');
 
         try {
             const res = await fetch(`${ORDERS_URL}/${currentOrder.id}/settle-prepaid`, {
@@ -806,18 +848,16 @@
             const data = await res.json();
 
             if (!res.ok) {
-                if (receiptTab) receiptTab.close();
                 showToast(data.message || 'Failed to prepare the receipt.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-print"></i> Print Receipt';
                 return;
             }
 
-            if (receiptTab) receiptTab.location = data.receipt_url;
             showToast(data.message, 'success');
             renderPaymentSuccess(data.receipt_url);
+            openReceiptModal(data.receipt_url);
         } catch (e) {
-            if (receiptTab) receiptTab.close();
             showToast('Failed to prepare the receipt.', 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-print"></i> Print Receipt';
@@ -1012,6 +1052,45 @@
         recomputeTotals();
     }
 
+    /* ── Receipt pop-up ── the receipt page loads inside the billing page (pop-up mode) and is
+       printed from there, so printing never opens another tab. */
+    function openReceiptModal(receiptUrl) {
+        const frame = document.getElementById('receiptFrame');
+        const url = new URL(receiptUrl, window.location.origin);
+        url.searchParams.set('embed', '1');
+
+        document.getElementById('receiptLoading').style.display = 'flex';
+        document.getElementById('receiptPrintBtn').disabled = true;
+        document.getElementById('receiptPdfBtn').disabled = true;
+        frame.onload = () => {
+            document.getElementById('receiptLoading').style.display = 'none';
+            document.getElementById('receiptPrintBtn').disabled = false;
+            document.getElementById('receiptPdfBtn').disabled = false;
+        };
+        frame.src = url.toString();
+        document.getElementById('receiptModal').classList.add('open');
+    }
+
+    function closeReceiptModal() {
+        document.getElementById('receiptModal').classList.remove('open');
+        document.getElementById('receiptFrame').src = 'about:blank';
+    }
+
+    // Prints only the receipt (the pop-up's page), not the billing screen behind it.
+    // "Save as PDF" is the same dialog with "Save as PDF" picked as the printer.
+    function printReceiptFrame() {
+        const frame = document.getElementById('receiptFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    }
+
+    document.getElementById('receiptModal').addEventListener('click', e => {
+        if (e.target.id === 'receiptModal') closeReceiptModal();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('receiptModal').classList.contains('open')) closeReceiptModal();
+    });
+
     function renderPaymentSuccess(receiptUrl) {
         document.getElementById('billingPanel').innerHTML = `
             <div class="receipt-success">
@@ -1019,7 +1098,7 @@
                 <h3>Payment Completed</h3>
                 <p>Order #${currentOrder.order_number} has been marked as paid.</p>
                 <div class="action-buttons">
-                    <a href="${receiptUrl}" target="_blank" class="btn btn-primary btn-block"><i class="fas fa-print"></i> Print Receipt</a>
+                    <button type="button" class="btn btn-primary btn-block" onclick="openReceiptModal('${receiptUrl}')"><i class="fas fa-print"></i> Print Receipt</button>
                     <button type="button" class="btn btn-outline btn-block" onclick="cancelBilling()"><i class="fas fa-plus"></i> New Transaction</button>
                 </div>
             </div>
