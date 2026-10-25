@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\ConversionLog;
+use App\Models\Conversion;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
@@ -310,27 +310,19 @@ class ReportService
                 'timestamp'     => $po->created_at,
             ]);
 
-        $conversions = ConversionLog::with(['inventoryItem', 'converter.staff'])
+        $conversions = Conversion::with(['lines.inventoryItem', 'converter.staff'])
             ->whereBetween('created_at', [$from, $to])
-            ->when($category !== 'all', fn ($q) => $q->whereHas('inventoryItem', fn ($iq) => $iq->where('item_type', $category)))
+            ->when($category !== 'all', fn ($q) => $q->whereHas('lines.inventoryItem', fn ($iq) => $iq->where('item_type', $category)))
             ->get()
-            // A dish made from several raw meats is one conversion: count its servings once
-            ->groupBy('batch_key')
-            ->map(function ($batch) {
-                $batch = $batch->sortBy('id');
-                $c     = $batch->first();
-
-                return [
-                    'date'          => $c->created_at?->format('Y-m-d'),
-                    'item'          => $batch->map(fn (ConversionLog $l) => $l->inventoryItem?->item_name ?? '—')->implode(', '),
-                    'qty_purchased' => null,
-                    'qty_added'     => (float) ($c->new_rtc_servings - $c->previous_rtc_servings),
-                    'type'          => 'RTC Conversion',
-                    'admin'         => $c->converter?->name ?: '—',
-                    'timestamp'     => $c->created_at,
-                ];
-            })
-            ->values();
+            ->map(fn (Conversion $c) => [
+                'date'          => $c->created_at?->format('Y-m-d'),
+                'item'          => $c->meat_names,
+                'qty_purchased' => null,
+                'qty_added'     => (float) ($c->new_servings - $c->previous_servings),
+                'type'          => 'RTC Conversion',
+                'admin'         => $c->converter?->name ?: '—',
+                'timestamp'     => $c->created_at,
+            ]);
 
         $adjustments = InventoryAdjustment::with(['inventoryItem', 'adjuster.staff'])
             ->whereBetween('created_at', [$from, $to])

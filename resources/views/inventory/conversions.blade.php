@@ -101,21 +101,20 @@
                 </thead>
                 <tbody>
                     {{-- One row per conversion; a dish made from several raw meats lists each meat on its own line --}}
-                    @forelse($logs->groupBy('batch_key') as $batch)
-                    @php $batch = $batch->sortBy('id'); $log = $batch->first(); @endphp
+                    @forelse($conversions as $c)
                     <tr>
-                        <td>@foreach($batch as $l)<div style="font-weight:700">{{ $l->inventoryItem?->item_name ?? '—' }}</div>@endforeach</td>
-                        <td><div style="font-weight:700;color:var(--blue-700)">{{ $log->menuItem?->menu_name ?? '—' }}</div></td>
-                        <td style="color:var(--red-600);font-weight:700">@foreach($batch as $l)<div>{{ number_format($l->raw_quantity_used, 2) }} @unit($l->unit)</div>@endforeach</td>
-                        <td style="color:var(--muted)">@foreach($batch as $l)<div>{{ $l->portion_label }}/srv</div>@endforeach</td>
-                        <td><span style="font-weight:800;color:var(--blue-700);font-size:.95rem">{{ number_format($log->rtc_units_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
-                        <td style="color:var(--muted)">@foreach($batch as $l)<div>{{ number_format($l->previous_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
-                        <td style="font-weight:600">@foreach($batch as $l)<div>{{ number_format($l->remaining_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
-                        <td style="color:var(--muted)">{{ number_format($log->previous_rtc_servings,0) }}</td>
-                        <td style="font-weight:700;color:var(--green-600)">{{ number_format($log->new_rtc_servings,0) }}</td>
-                        <td style="white-space:nowrap">{{ $log->created_at->format('M d, Y') }}</td>
-                        <td style="white-space:nowrap">{{ $log->created_at->format('h:i A') }}</td>
-                        <td>{{ $log->converter?->name ?? 'Admin' }}</td>
+                        <td>@foreach($c->lines as $l)<div style="font-weight:700">{{ $l->inventoryItem?->item_name ?? '—' }}</div>@endforeach</td>
+                        <td><div style="font-weight:700;color:var(--blue-700)">{{ $c->menuItem?->menu_name ?? '—' }}</div></td>
+                        <td style="color:var(--red-600);font-weight:700">@foreach($c->lines as $l)<div>{{ number_format($l->raw_quantity_used, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="color:var(--muted)">@foreach($c->lines as $l)<div>{{ $l->portion_label }}/srv</div>@endforeach</td>
+                        <td><span style="font-weight:800;color:var(--blue-700);font-size:.95rem">{{ number_format($c->servings_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
+                        <td style="color:var(--muted)">@foreach($c->lines as $l)<div>{{ number_format($l->previous_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="font-weight:600">@foreach($c->lines as $l)<div>{{ number_format($l->remaining_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="color:var(--muted)">{{ number_format($c->previous_servings,0) }}</td>
+                        <td style="font-weight:700;color:var(--green-600)">{{ number_format($c->new_servings,0) }}</td>
+                        <td style="white-space:nowrap">{{ $c->created_at->format('M d, Y') }}</td>
+                        <td style="white-space:nowrap">{{ $c->created_at->format('h:i A') }}</td>
+                        <td>{{ $c->converter?->name ?? 'Admin' }}</td>
                     </tr>
                     @empty
                     <tr><td colspan="12" class="empty-row"><i class="fas fa-arrows-rotate" style="font-size:1.4rem;margin-bottom:.5rem;display:block;opacity:.4"></i>No conversions recorded yet.</td></tr>
@@ -123,8 +122,8 @@
                 </tbody>
             </table>
         </div>
-        @if($logs->hasPages())
-        <div style="padding:1rem 1.5rem;border-top:1px solid var(--border)">{{ $logs->links() }}</div>
+        @if($conversions->hasPages())
+        <div style="padding:1rem 1.5rem;border-top:1px solid var(--border)">{{ $conversions->links() }}</div>
         @endif
     </div>
 </div>

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ConversionLog;
+use App\Models\Conversion;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\MenuItemRtc;
@@ -10,18 +10,17 @@ use App\Support\Units;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ConversionController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = ConversionLog::with(['inventoryItem', 'menuItem', 'converter']);
+        $query = Conversion::with(['lines.inventoryItem', 'menuItem', 'converter']);
 
         if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"))
+                $q->whereHas('lines.inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"))
                   ->orWhereHas('menuItem', fn ($q) => $q->where('menu_name', 'like', "%{$search}%"));
             });
         }
@@ -32,11 +31,11 @@ class ConversionController extends Controller
             $query->where('created_at', '<=', $to . ' 23:59:59');
         }
 
-        $logs      = $query->latest()->paginate(10)->withQueryString();
-        $rtcItems  = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
-        $menuItems = MenuItem::food()->orderBy('menu_name')->get();
+        $conversions = $query->latest()->latest('id')->paginate(10)->withQueryString();
+        $rtcItems    = InventoryItem::rtc()->where('quantity', '>', 0)->orderBy('item_name')->get();
+        $menuItems   = MenuItem::food()->orderBy('menu_name')->get();
 
-        return view('inventory.conversions', compact('logs', 'rtcItems', 'menuItems'));
+        return view('inventory.conversions', compact('conversions', 'rtcItems', 'menuItems'));
     }
 
     /**
@@ -99,26 +98,27 @@ class ConversionController extends Controller
             $unitsProduced    = min(array_column($lines, 'servings'));
             $previousServings = (float) $rtc->servings;
             $newServings      = $previousServings + $unitsProduced;
-            $batchCode        = (string) Str::uuid();
+
+            $conversion = Conversion::create([
+                'menu_item_id'      => $menuItem->id,
+                'servings_produced' => $unitsProduced,
+                'previous_servings' => $previousServings,
+                'new_servings'      => $newServings,
+                'converted_by'      => auth()->id(),
+            ]);
 
             foreach ($lines as $line) {
                 $item              = $line['item'];
                 $previousRawStock  = (float) $item->quantity;
                 $remainingRawStock = $previousRawStock - $line['rawUsed'];
 
-                ConversionLog::create([
-                    'batch_code'            => $batchCode,
-                    'inventory_item_id'     => $item->id,
-                    'menu_item_id'          => $menuItem->id,
-                    'raw_quantity_used'     => $line['rawUsed'],
-                    'unit'                  => $item->unit,
-                    'portion_size'          => $line['portion'],
-                    'rtc_units_produced'    => $unitsProduced,
-                    'previous_raw_stock'    => $previousRawStock,
-                    'remaining_raw_stock'   => $remainingRawStock,
-                    'previous_rtc_servings' => $previousServings,
-                    'new_rtc_servings'      => $newServings,
-                    'converted_by'          => auth()->id(),
+                $conversion->lines()->create([
+                    'inventory_item_id'   => $item->id,
+                    'raw_quantity_used'   => $line['rawUsed'],
+                    'unit'                => $item->unit,
+                    'portion_size'        => $line['portion'],
+                    'previous_raw_stock'  => $previousRawStock,
+                    'remaining_raw_stock' => $remainingRawStock,
                 ]);
 
                 $item->update(['quantity' => $remainingRawStock]);

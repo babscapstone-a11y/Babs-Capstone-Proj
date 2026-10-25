@@ -118,9 +118,10 @@ class InventoryItem extends Model
         return $this->hasMany(StockIn::class);
     }
 
-    public function conversionLogs(): HasMany
+    /** The conversions this raw meat was used in (one line each) */
+    public function conversionLines(): HasMany
     {
-        return $this->hasMany(ConversionLog::class);
+        return $this->hasMany(ConversionLine::class);
     }
 
     public function adjustments(): HasMany

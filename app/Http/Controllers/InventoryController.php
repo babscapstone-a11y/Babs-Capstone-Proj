@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ConversionLog;
+use App\Models\Conversion;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
@@ -29,16 +29,7 @@ class InventoryController extends Controller
 
         // Latest 5 of each; the View All pages list everything 10 per page
         $recentStockIns    = StockIn::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
-        // Latest 5 conversions; one made from several raw meats is shown once, listing all its meats
-        $recentConversions = ConversionLog::with(['inventoryItem', 'menuItem', 'converter'])->latest()->limit(20)->get()
-            ->groupBy('batch_key')->take(5)
-            ->map(function ($batch) {
-                $batch = $batch->sortBy('id');
-                $log   = $batch->first();
-                $log->setAttribute('meat_names', $batch->map(fn ($l) => $l->inventoryItem?->item_name ?? '—')->implode(', '));
-
-                return $log;
-            })->values();
+        $recentConversions = Conversion::with(['lines.inventoryItem', 'menuItem', 'converter'])->latest()->latest('id')->limit(5)->get();
         $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])->latest()->limit(5)->get();
 
         return view('inventory.index', compact(

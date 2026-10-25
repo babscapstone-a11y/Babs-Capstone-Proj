@@ -183,14 +183,14 @@
                 <a href="{{ route('inventory.conversions.index') }}">View All →</a>
             </div>
             <div class="activity-list">
-                @forelse($recentConversions as $log)
+                @forelse($recentConversions as $c)
                 <div class="activity-item">
                     <div class="activity-icon blue"><i class="fas fa-arrows-rotate"></i></div>
                     <div class="activity-body">
-                        <div class="activity-name">{{ $log->menuItem?->menu_name ?? '—' }}</div>
-                        <div class="activity-meta">from {{ $log->meat_names }} &bull; {{ $log->created_at->format('M d, Y') }} &bull; {{ $log->converter?->name ?? 'Admin' }}</div>
+                        <div class="activity-name">{{ $c->menuItem?->menu_name ?? '—' }}</div>
+                        <div class="activity-meta">from {{ $c->meat_names }} &bull; {{ $c->created_at->format('M d, Y') }} &bull; {{ $c->converter?->name ?? 'Admin' }}</div>
                     </div>
-                    <div class="activity-qty">{{ number_format($log->rtc_units_produced, 0) }} srv.</div>
+                    <div class="activity-qty">{{ number_format($c->servings_produced, 0) }} srv.</div>
                 </div>
                 @empty
                 <div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.83rem;">No conversions yet.</div>
