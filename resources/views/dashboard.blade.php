@@ -486,7 +486,6 @@
                         <tr>
                             <td>
                                 <div style="font-weight:600">{{ $item->item_name }}</div>
-                                <div style="font-size:.72rem;color:var(--muted)">{{ $item->category ?: '—' }}</div>
                             </td>
                             <td>
                                 <span class="badge" style="background:{{ $item->item_type === 'rtc' ? 'var(--blue-50)' : 'var(--violet-50)' }};color:{{ $item->item_type === 'rtc' ? 'var(--blue-700)' : 'var(--violet-700)' }}">

@@ -37,7 +37,7 @@
         <a href="{{ $item->item_type === 'rtc' ? route('inventory.rtc') : route('inventory.beverages') }}" class="btn btn-outline" style="padding:.45rem .85rem;font-size:.8rem"><i class="fas fa-arrow-left"></i></a>
         <div>
             <div class="page-title"><i class="fas fa-sliders"></i> Edit Inventory Item</div>
-            <div class="page-sub">Update the unit, category, and stock thresholds</div>
+            <div class="page-sub">Update the unit and reorder level</div>
         </div>
     </div>
 
@@ -65,28 +65,17 @@
                     <input type="text" value="{{ $item->item_name }}" readonly>
                 </div>
                 <div class="field">
-                    <label>Category</label>
-                    <input type="text" name="category" value="{{ old('category', $item->category) }}" placeholder="e.g. Pork, Chicken…">
-                </div>
-            </div>
-            <div class="field-grid">
-                <div class="field">
                     <label>Unit <span style="color:var(--red-600)">*</span></label>
                     <input type="text" name="unit" required value="{{ old('unit', $item->unit) }}" placeholder="e.g. kg, pcs, liters">
                 </div>
             </div>
 
-            <div class="section-label" style="margin-top:1.5rem">Stock Thresholds</div>
+            <div class="section-label" style="margin-top:1.5rem">Stock Threshold</div>
             <div class="field-grid">
                 <div class="field">
                     <label>Reorder Level <span style="color:var(--red-600)">*</span></label>
                     <input type="number" name="reorder_level" step="0.01" min="0" required value="{{ old('reorder_level', $item->reorder_level) }}">
-                    <div class="help">Alert triggers when qty drops to/below this</div>
-                </div>
-                <div class="field">
-                    <label>Min Stock Level <span style="color:var(--red-600)">*</span></label>
-                    <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level', $item->min_stock_level) }}">
-                    <div class="help">Minimum safe quantity to maintain</div>
+                    <div class="help">Marked Low Stock when the quantity drops below this</div>
                 </div>
             </div>
 

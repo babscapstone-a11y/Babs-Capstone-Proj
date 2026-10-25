@@ -248,7 +248,6 @@ class ReportService
 
         $rtcRows = $rtcItems->map(fn (InventoryItem $i) => [
             'item_name'     => $i->item_name,
-            'category'      => $i->category,
             'current_stock' => (float) $i->quantity,
             'unit'          => $i->unit,
             'threshold'     => (float) $i->reorder_level,
@@ -258,7 +257,6 @@ class ReportService
 
         $beverageRows = $beverageItems->map(fn (InventoryItem $i) => [
             'item_name'  => $i->item_name,
-            'category'   => $i->category,
             'quantity'   => (float) $i->quantity,
             'threshold'  => (float) $i->reorder_level,
             'status'     => $i->stock_status_label,

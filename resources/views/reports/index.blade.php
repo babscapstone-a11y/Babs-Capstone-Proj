@@ -308,7 +308,7 @@
                         <tbody>
                             @forelse($data['rtc_rows'] as $row)
                                 <tr>
-                                    <td>{{ $row['item_name'] }} <span style="color:var(--muted);font-size:.76rem">({{ $row['category'] }})</span></td>
+                                    <td>{{ $row['item_name'] }}</td>
                                     <td>{{ number_format($row['current_stock'], 2) }}</td>
                                     <td>@unit($row['unit'])</td>
                                     <td>{{ number_format($row['threshold'], 2) }}</td>
@@ -330,18 +330,17 @@
             <div class="card-body">
                 <div class="report-table-wrap">
                     <table class="report-table report-searchable">
-                        <thead><tr><th>Beverage Name</th><th>Category</th><th>Current Quantity</th><th>Stock Threshold</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Beverage Name</th><th>Current Quantity</th><th>Stock Threshold</th><th>Status</th></tr></thead>
                         <tbody>
                             @forelse($data['beverage_rows'] as $row)
                                 <tr>
                                     <td>{{ $row['item_name'] }}</td>
-                                    <td>{{ $row['category'] }}</td>
                                     <td>{{ number_format($row['quantity'], 2) }}</td>
                                     <td>{{ number_format($row['threshold'], 2) }}</td>
                                     <td><span class="badge badge-{{ str_replace('_', '', $row['status_key']) }}">{{ $row['status'] }}</span></td>
                                 </tr>
                             @empty
-                                <tr class="empty-row"><td colspan="5">No beverage items found.</td></tr>
+                                <tr class="empty-row"><td colspan="4">No beverage items found.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

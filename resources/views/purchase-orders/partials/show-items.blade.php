@@ -9,7 +9,7 @@
         <table class="po-table">
             <thead>
                 <tr>
-                    <th>#</th><th>Item Name</th><th>Category</th>
+                    <th>#</th><th>Item Name</th>
                     <th>Stock When Ordered</th><th>Status</th><th>Qty Ordered</th>
                     <th class="rcv-col">Qty Bought</th>
                     <th class="rcv-col">Amount Paid</th>
@@ -22,7 +22,6 @@
                 <tr>
                     <td style="color:var(--muted);font-size:.76rem">{{ $i+1 }}</td>
                     <td style="font-weight:700">{{ $item->item_name }}</td>
-                    <td style="color:var(--muted)">{{ $item->category ?? '—' }}</td>
                     <td style="color:var(--muted)">{{ number_format($item->current_stock, $decimals) }} @unit($item->unit)</td>
                     <td><span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span></td>
                     <td style="font-weight:800;color:var(--primary)">{{ number_format($item->quantity_to_purchase, $decimals) }} <span style="font-weight:400;font-size:.78rem;color:var(--muted)">@unit($item->unit)</span></td>
@@ -37,7 +36,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="7" style="text-align:right;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Subtotal Paid</td>
+                    <td colspan="6" style="text-align:right;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Subtotal Paid</td>
                     <td class="rcv-col">₱{{ number_format($items->sum('amount_paid'), 2) }}</td>
                     <td colspan="2" class="rcv-col"></td>
                 </tr>

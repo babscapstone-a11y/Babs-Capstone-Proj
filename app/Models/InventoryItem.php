@@ -5,24 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class InventoryItem extends Model
 {
     protected $fillable = [
-        'item_name', 'item_type', 'category', 'unit', 'pack_unit', 'pieces_per_pack',
-        'quantity', 'min_stock_level', 'reorder_level',
-        'cost_price', 'is_rtc',
+        'item_name', 'item_type', 'unit',
+        'quantity', 'reorder_level',
+        'cost_price',
         'is_active',
     ];
 
     protected $casts = [
-        'pieces_per_pack' => 'integer',
         'quantity'        => 'decimal:4',
-        'min_stock_level' => 'decimal:4',
         'reorder_level'   => 'decimal:4',
         'cost_price'      => 'decimal:2',
-        'is_rtc'          => 'boolean',
         'is_active'       => 'boolean',
     ];
 
@@ -80,6 +78,38 @@ class InventoryItem extends Model
 
     /** Packs a beverage can arrive in. Stock itself is counted per piece (bottle/can). */
     const PACK_UNITS = ['Case', 'Box'];
+
+    /** The pack (Case/Box) this beverage is bought by, if any (inventory_item_packs) */
+    public function pack(): HasOne
+    {
+        return $this->hasOne(InventoryItemPack::class);
+    }
+
+    /** Shortcut to the pack's unit, null when bought by the piece only */
+    public function getPackUnitAttribute(): ?string
+    {
+        return $this->pack?->pack_unit;
+    }
+
+    public function getPiecesPerPackAttribute(): ?int
+    {
+        return $this->pack?->pieces_per_pack;
+    }
+
+    /**
+     * Saves the pack this item is bought by (Case or Box, with its size), or removes it when
+     * $packUnit is empty (bought by the piece only).
+     */
+    public function setPack(?string $packUnit, ?int $piecesPerPack): void
+    {
+        if ($packUnit) {
+            $this->pack()->updateOrCreate([], ['pack_unit' => $packUnit, 'pieces_per_pack' => $piecesPerPack]);
+        } else {
+            $this->pack()->delete();
+        }
+
+        $this->unsetRelation('pack');
+    }
 
     /**
      * How many of this beverage's own unit (bottle, can, Piece) come in one pack_unit (Case or

@@ -9,7 +9,7 @@ class ProcurementOrderItem extends Model
 {
     protected $fillable = [
         'procurement_order_id', 'inventory_item_id',
-        'item_name', 'category', 'item_type',
+        'item_name', 'item_type',
         'current_stock', 'threshold',
         'quantity_recommended', 'quantity_to_purchase',
         'quantity_received', 'amount_paid',

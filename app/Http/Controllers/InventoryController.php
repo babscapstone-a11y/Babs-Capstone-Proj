@@ -11,6 +11,7 @@ use App\Models\StockIn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -25,7 +26,7 @@ class InventoryController extends Controller
         $outOfStock       = InventoryItem::outOfStock()->count();
 
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $beverageItems = InventoryItem::beverage()->orderBy('item_name')->get();
+        $beverageItems = InventoryItem::beverage()->with('pack')->orderBy('item_name')->get();
 
         // Latest 5 of each; the View All pages list everything 10 per page
         $recentStockIns    = StockIn::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
@@ -44,10 +45,7 @@ class InventoryController extends Controller
         $query = InventoryItem::rtc();
 
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('item_name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
+            $query->where('item_name', 'like', "%{$search}%");
         }
         if ($status = $request->input('status')) {
             match($status) {
@@ -58,7 +56,7 @@ class InventoryController extends Controller
             };
         }
 
-        $items = $query->orderBy('category')->orderBy('item_name')->get();
+        $items = $query->orderBy('item_name')->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -117,13 +115,10 @@ class InventoryController extends Controller
 
     public function beverages(Request $request): View|JsonResponse
     {
-        $query = InventoryItem::beverage();
+        $query = InventoryItem::beverage()->with('pack');
 
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('item_name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
+            $query->where('item_name', 'like', "%{$search}%");
         }
         if ($status = $request->input('status')) {
             match($status) {
@@ -134,7 +129,7 @@ class InventoryController extends Controller
             };
         }
 
-        $items      = $query->orderBy('category')->orderBy('item_name')->get();
+        $items      = $query->orderBy('item_name')->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -159,10 +154,10 @@ class InventoryController extends Controller
             : null;
 
         $outOfStockItems = InventoryItem::outOfStock()
-            ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
+            ->orderBy('item_type')->orderBy('item_name')->get();
 
         $lowStockItems = InventoryItem::lowStock()
-            ->orderBy('item_type')->orderBy('category')->orderBy('item_name')->get();
+            ->orderBy('item_type')->orderBy('item_name')->get();
 
         return view('inventory.restocking', compact('outOfStockItems', 'lowStockItems', 'statusFilter'));
     }
@@ -191,7 +186,7 @@ class InventoryController extends Controller
             ],
             'item_type'       => ['required', 'in:rtc,beverage'],
             'unit'            => ['required', Rule::in($allowedUnits)],
-            'min_stock_level' => ['required', 'numeric', 'min:0'],
+            'reorder_level'   => ['required', 'numeric', 'min:0'],
             'pieces_per_pack' => ['nullable', 'required_if:unit,Case,Box', 'integer', 'min:2', 'max:999'],
         ], [
             'pieces_per_pack.required_if' => 'Please enter how many pieces are in one :value.',
@@ -200,18 +195,24 @@ class InventoryController extends Controller
         // A beverage bought by the Case/Box is counted per piece (so single damaged bottles can
         // be deducted); the pack and its size are kept so Stock-In can convert packs into pieces.
         $byPack = $validated['item_type'] === 'beverage' && in_array($validated['unit'], InventoryItem::PACK_UNITS, true);
-        $validated['pack_unit']       = $byPack ? $validated['unit'] : null;
-        $validated['pieces_per_pack'] = $byPack ? $validated['pieces_per_pack'] : null;
-        $validated['unit']            = $byPack ? 'Piece' : $validated['unit'];
 
-        $item = InventoryItem::create([
-            ...$validated,
-            'quantity'       => 0,
-            'reorder_level'  => $validated['min_stock_level'],
-            'cost_price'     => 0,
-            'is_rtc'         => $validated['item_type'] === 'rtc',
-            'is_active'      => true,
-        ]);
+        $item = DB::transaction(function () use ($validated, $byPack) {
+            $item = InventoryItem::create([
+                'item_name'     => $validated['item_name'],
+                'item_type'     => $validated['item_type'],
+                'unit'          => $byPack ? 'Piece' : $validated['unit'],
+                'quantity'      => 0,
+                'reorder_level' => $validated['reorder_level'],
+                'cost_price'    => 0,
+                'is_active'     => true,
+            ]);
+
+            if ($byPack) {
+                $item->setPack($validated['unit'], (int) $validated['pieces_per_pack']);
+            }
+
+            return $item;
+        });
 
         return back()->with('success', "\"{$item->item_name}\" has been added. Set its unit and stock in the Edit page, then record its opening stock via Stock In.");
     }
@@ -225,9 +226,7 @@ class InventoryController extends Controller
     {
         $request->validate([
             'unit'            => ['required', 'string', 'max:50'],
-            'category'        => ['nullable', 'string', 'max:100'],
             'cost_price'      => ['nullable', 'numeric', 'min:0'],
-            'min_stock_level' => ['required', 'numeric', 'min:0'],
             'reorder_level'   => ['required', 'numeric', 'min:0'],
             'pack_unit'       => ['nullable', Rule::in(InventoryItem::PACK_UNITS)],
             'pieces_per_pack' => ['nullable', 'required_with:pack_unit', 'integer', 'min:2', 'max:999'],
@@ -235,18 +234,14 @@ class InventoryController extends Controller
             'pieces_per_pack.required_with' => 'Please enter how many pieces are in one pack.',
         ]);
 
-        $item->update($request->only([
-            'unit', 'category', 'cost_price',
-            'min_stock_level', 'reorder_level',
-        ]));
+        DB::transaction(function () use ($request, $item) {
+            $item->update($request->only(['unit', 'cost_price', 'reorder_level']));
 
-        // Beverages: the pack it arrives in (Case/Box) and its size; "Piece only" clears both
-        if ($item->isBeverage() && $request->has('pack_unit')) {
-            $item->update([
-                'pack_unit'       => $request->pack_unit ?: null,
-                'pieces_per_pack' => $request->pack_unit ? $request->pieces_per_pack : null,
-            ]);
-        }
+            // Beverages: the pack it arrives in (Case/Box) and its size; "Piece only" removes it
+            if ($item->isBeverage() && $request->has('pack_unit')) {
+                $item->setPack($request->pack_unit ?: null, $request->pack_unit ? (int) $request->pieces_per_pack : null);
+            }
+        });
 
         return back()->with('success', "{$item->item_name} updated successfully.");
     }

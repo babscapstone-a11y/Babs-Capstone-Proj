@@ -182,12 +182,12 @@
             @if(in_array('beverage', $printSections, true))
                 <div class="section-title">Detailed Report — Beverages</div>
                 <table class="rpt-tbl">
-                    <thead><tr><th>Beverage</th><th>Category</th><th>Quantity</th><th>Threshold</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Beverage</th><th>Quantity</th><th>Threshold</th><th>Status</th></tr></thead>
                     <tbody>
                         @forelse($data['beverage_rows'] as $row)
-                            <tr><td>{{ $row['item_name'] }}</td><td>{{ $row['category'] }}</td><td>{{ number_format($row['quantity'], 2) }}</td><td>{{ number_format($row['threshold'], 2) }}</td><td>{{ $row['status'] }}</td></tr>
+                            <tr><td>{{ $row['item_name'] }}</td><td>{{ number_format($row['quantity'], 2) }}</td><td>{{ number_format($row['threshold'], 2) }}</td><td>{{ $row['status'] }}</td></tr>
                         @empty
-                            <tr><td colspan="5" style="text-align:center;color:#9CA3AF;padding:1rem">No beverage items found.</td></tr>
+                            <tr><td colspan="4" style="text-align:center;color:#9CA3AF;padding:1rem">No beverage items found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

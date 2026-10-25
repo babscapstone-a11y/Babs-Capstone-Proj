@@ -31,7 +31,6 @@
                     </td>
                     <td>
                         <div style="font-size:.82rem">{{ number_format($item->reorder_level, 2) }} @unit($item->unit)</div>
-                        <div style="font-size:.73rem;color:var(--muted)">Min: {{ number_format($item->min_stock_level, 2) }}</div>
                     </td>
                     <td>
                         @php $s = $item->stock_status; @endphp

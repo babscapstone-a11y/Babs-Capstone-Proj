@@ -258,8 +258,8 @@
                     <input type="text" name="item_name" required value="{{ old('item_name') }}" placeholder="e.g. Pork, Chicken…">
                 </div>
                 <div class="field">
-                    <label>Min Stock Level <span style="color:var(--red-600)">*</span></label>
-                    <input type="number" name="min_stock_level" step="0.01" min="0" required value="{{ old('min_stock_level') }}">
+                    <label>Reorder Level <span style="color:var(--red-600)">*</span></label>
+                    <input type="number" name="reorder_level" step="0.01" min="0" required value="{{ old('reorder_level') }}">
                 </div>
                 <div class="field" style="margin-bottom:0">
                     <label>Unit <span style="color:var(--red-600)">*</span></label>
@@ -423,7 +423,7 @@ document.querySelectorAll('.modal-backdrop').forEach(el => el.addEventListener('
         if (!show) return;
         document.getElementById('addPackSizeUnit').textContent = pack;
         document.getElementById('addPackSizeHint').textContent = 'How many bottles/cans are in one ' + pack
-            + '. Stock is counted per piece, so enter Min Stock Level in pieces too. Stock-In still lets you receive it by the ' + pack + '.';
+            + '. Stock is counted per piece, so enter Reorder Level in pieces too. Stock-In still lets you receive it by the ' + pack + '.';
     }
 
     function toggleUnitSelect(type) {
@@ -496,7 +496,7 @@ function populateSIUnitOptions(baseUnit, pack) {
     });
 }
 
-@if($errors->has('item_name') || $errors->has('unit') || $errors->has('min_stock_level') || $errors->has('pieces_per_pack'))
+@if($errors->has('item_name') || $errors->has('unit') || $errors->has('reorder_level') || $errors->has('pieces_per_pack'))
 openLocalModal('addItemModal');
 @elseif($errors->has('inventory_item_id') || $errors->has('quantity_purchased') || $errors->has('unit') || $errors->has('total_cost') || $errors->has('purchase_date'))
 openLocalModal('stockInModal');

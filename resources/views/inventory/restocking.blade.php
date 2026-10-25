@@ -98,7 +98,6 @@
                         <th>#</th>
                         <th>Item</th>
                         <th>Type</th>
-                        <th>Category</th>
                         <th>Current Qty</th>
                         <th>Unit</th>
                         <th>Reorder Level</th>
@@ -111,7 +110,6 @@
                         <td style="color:var(--muted);font-size:.78rem">{{ $i + 1 }}</td>
                         <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
                         <td><span class="badge {{ $item->item_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($item->item_type) }}</span></td>
-                        <td style="color:var(--muted)">{{ $item->category ?? '—' }}</td>
                         <td><span class="badge badge-out">0 / {{ number_format($item->quantity,0) }}</span></td>
                         <td>@unit($item->unit)</td>
                         <td>{{ number_format($item->reorder_level,0) }}</td>
@@ -134,7 +132,6 @@
                         <th>#</th>
                         <th>Item</th>
                         <th>Type</th>
-                        <th>Category</th>
                         <th>Current Qty</th>
                         <th>Unit</th>
                         <th>Reorder Level</th>
@@ -147,7 +144,6 @@
                         <td style="color:var(--muted);font-size:.78rem">{{ $i + 1 }}</td>
                         <td><div style="font-weight:700">{{ $item->item_name }}</div></td>
                         <td><span class="badge {{ $item->item_type === 'rtc' ? 'badge-rtc' : 'badge-bev' }}">{{ strtoupper($item->item_type) }}</span></td>
-                        <td style="color:var(--muted)">{{ $item->category ?? '—' }}</td>
                         <td>
                             <span class="badge badge-low">{{ number_format($item->quantity,0) }}</span>
                         </td>

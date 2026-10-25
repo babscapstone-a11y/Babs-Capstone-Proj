@@ -66,7 +66,6 @@ class ProcurementOrderController extends Controller
             $po->items()->create([
                 'inventory_item_id'    => $item->id,
                 'item_name'            => $item->item_name,
-                'category'             => $item->category,
                 'item_type'            => $item->item_type,
                 'current_stock'        => $item->quantity,
                 'threshold'            => $item->reorder_level,
@@ -127,7 +126,6 @@ class ProcurementOrderController extends Controller
                 $po->items()->create([
                     'inventory_item_id'    => $item->id,
                     'item_name'            => $item->item_name,
-                    'category'             => $item->category,
                     'item_type'            => $item->item_type,
                     'current_stock'        => $item->quantity,
                     'threshold'            => $item->reorder_level,
@@ -299,7 +297,6 @@ class ProcurementOrderController extends Controller
                 $purchaseOrder->items()->create([
                     'inventory_item_id'    => $item->id,
                     'item_name'            => $item->item_name,
-                    'category'             => $item->category,
                     'item_type'            => $item->item_type,
                     'current_stock'        => $item->quantity,
                     'threshold'            => $item->reorder_level,
