@@ -3,9 +3,11 @@
     Lists come live from the free PSGC API (official Philippine Standard Geographic Codes):
     https://psgc.gitlab.io/api  — no key needed, allows browser requests.
 
-    The <select>s are not submitted. Each choice is copied into hidden inputs
-    (province / municipality / barangay names + their PSGC codes), which start out holding
-    the saved address. So if the API can't be reached, saving the profile keeps the address.
+    The <select>s are not submitted. Each choice's name is copied into hidden inputs
+    (province / municipality / barangay), which start out holding the saved address. So if the
+    API can't be reached, saving the profile keeps the address. The PSGC codes are only used in
+    the browser to load the next list; only the names are saved, and the dropdowns pre-select
+    by name (each list holds just the places inside the one above it, where names are unique).
 --}}
 <script>
 (function () {
@@ -22,13 +24,12 @@
     const el = id => document.getElementById(id);
     const sel    = { province: el('addrProvince'),     municipality: el('addrMunicipality'),     barangay: el('addrBarangay') };
     const name   = { province: el('addrProvinceName'), municipality: el('addrMunicipalityName'), barangay: el('addrBarangayName') };
-    const code   = { province: el('addrProvinceCode'), municipality: el('addrMunicipalityCode'), barangay: el('addrBarangayCode') };
     const notice = el('addrNotice');
     if (!sel.province) return;
 
     // What was saved when the page loaded (used to pre-select, and to restore on "Reset")
     const saved = {};
-    ['province', 'municipality', 'barangay'].forEach(k => saved[k] = { code: code[k].value, name: name[k].value });
+    ['province', 'municipality', 'barangay'].forEach(k => saved[k] = name[k].value);
 
     const cache = {};
     async function getList(path) {
@@ -58,16 +59,13 @@
         select.disabled = true;
     }
 
-    // Pre-select by saved code, or by saved name for addresses typed before the dropdowns existed
-    function preselect(level, target) {
+    // Pre-select the saved name (case-insensitive) in a freshly loaded list
+    function preselect(level, savedName) {
         const select = sel[level];
-        const wanted = (target.name || '').trim().toLowerCase();
-        const opt = Array.from(select.options).find(o => o.value && (
-            (target.code && o.value === target.code) || (!target.code && wanted && o.text.toLowerCase() === wanted)
-        ));
+        const wanted = (savedName || '').trim().toLowerCase();
+        const opt = wanted && Array.from(select.options).find(o => o.value && o.text.toLowerCase() === wanted);
         if (opt) {
             select.value = opt.value;
-            code[level].value = opt.value;
             name[level].value = opt.text;
         }
         return !!opt;
@@ -75,13 +73,12 @@
 
     function store(level) {
         const select = sel[level];
-        code[level].value = select.value;
         name[level].value = select.value ? select.options[select.selectedIndex].text : '';
     }
 
     function clearBelow(level) {
         const order = ['province', 'municipality', 'barangay'];
-        order.slice(order.indexOf(level) + 1).forEach(k => { code[k].value = ''; name[k].value = ''; });
+        order.slice(order.indexOf(level) + 1).forEach(k => { name[k].value = ''; });
     }
 
     function showNotice(html) {
@@ -117,7 +114,7 @@
     async function restore(target) {
         showNotice('');
         // Hidden inputs aren't reverted by a form reset, so write the target address back explicitly
-        ['province', 'municipality', 'barangay'].forEach(k => { code[k].value = target[k].code; name[k].value = target[k].name; });
+        ['province', 'municipality', 'barangay'].forEach(k => { name[k].value = target[k]; });
         try {
             reset(sel.municipality, 'Select a province first');
             reset(sel.barangay, 'Select a city / municipality first');

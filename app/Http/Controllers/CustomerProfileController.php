@@ -59,10 +59,8 @@ class CustomerProfileController extends Controller
             fn ($v) => $v === '' ? null : $v,
             $request->only([
                 'street', 'barangay', 'municipality', 'province', 'postal_code',
-                'province_code', 'municipality_code', 'barangay_code',
             ]) + array_fill_keys([
                 'street', 'barangay', 'municipality', 'province', 'postal_code',
-                'province_code', 'municipality_code', 'barangay_code',
             ], null),
         );
         $hasAddress = count(array_filter($addrFields, fn ($v) => $v !== null)) > 0;

@@ -24,9 +24,6 @@ class UpdateCustomerProfileRequest extends FormRequest
             'municipality'      => ['nullable', 'required_with:province', 'string', 'max:100'],
             'barangay'          => ['nullable', 'required_with:municipality', 'string', 'max:100'],
             'postal_code'       => ['nullable', 'digits:4'],
-            'province_code'     => ['nullable', 'regex:/^\d{9,10}$/'],
-            'municipality_code' => ['nullable', 'regex:/^\d{9,10}$/'],
-            'barangay_code'     => ['nullable', 'regex:/^\d{9,10}$/'],
             'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }

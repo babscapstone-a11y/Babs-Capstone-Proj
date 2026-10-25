@@ -447,9 +447,6 @@
                             <input type="hidden" name="province"     id="addrProvinceName"     value="{{ old('province', $addr?->province) }}">
                             <input type="hidden" name="municipality" id="addrMunicipalityName" value="{{ old('municipality', $addr?->municipality) }}">
                             <input type="hidden" name="barangay"     id="addrBarangayName"     value="{{ old('barangay', $addr?->barangay) }}">
-                            <input type="hidden" name="province_code"     id="addrProvinceCode"     value="{{ old('province_code', $addr?->province_code) }}">
-                            <input type="hidden" name="municipality_code" id="addrMunicipalityCode" value="{{ old('municipality_code', $addr?->municipality_code) }}">
-                            <input type="hidden" name="barangay_code"     id="addrBarangayCode"     value="{{ old('barangay_code', $addr?->barangay_code) }}">
 
                             <div class="form-row">
                                 <div class="field">
