@@ -45,7 +45,6 @@
     .resto-brand { display: flex; align-items: center; gap: .85rem; }
     .brand-logo { width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(135deg,#DC2626,#F97316); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.2rem; flex-shrink: 0; }
     .brand-info .name { font-size: 1.25rem; font-weight: 900; color: #111827; letter-spacing: -.01em; }
-    .brand-info .address { font-size: .75rem; color: #6B7280; margin-top: .15rem; line-height: 1.5; }
     .po-meta { text-align: right; }
     .po-meta .doc-type { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #DC2626; margin-bottom: .35rem; }
     .po-meta .po-num { font-size: 1.4rem; font-weight: 900; color: #111827; letter-spacing: -.01em; }
@@ -137,10 +136,6 @@
                 <div class="brand-logo">BR</div>
                 <div class="brand-info">
                     <div class="name">BAB'S RESTO</div>
-                    <div class="address">
-                        Restaurant & Catering Services<br>
-                        Contact: (032) 123-4567
-                    </div>
                 </div>
             </div>
             <div class="po-meta">
@@ -227,20 +222,10 @@
 
         {{-- Signature section --}}
         <div class="sig-section">
-            <div class="sig-block">
+            <div class="sig-block" style="flex:0 1 280px">
                 <div class="sig-line"></div>
                 <div class="sig-label">Prepared By</div>
                 <div class="sig-sublabel">{{ $po->preparedBy?->name ?? 'Administrator' }} &nbsp;/&nbsp; Administrator</div>
-            </div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Approved By</div>
-                <div class="sig-sublabel">Restaurant Manager / Owner</div>
-            </div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Received By (Supplier)</div>
-                <div class="sig-sublabel">Supplier Representative &nbsp;/&nbsp; Date</div>
             </div>
         </div>
 
