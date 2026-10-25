@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Conversion;
+use App\Models\RtcConversion;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\MenuItemRtc;
@@ -16,11 +16,11 @@ class ConversionController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Conversion::with(['lines.inventoryItem', 'menuItem', 'converter']);
+        $query = RtcConversion::with(['details.inventoryItem', 'menuItem', 'converter']);
 
         if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('lines.inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"))
+                $q->whereHas('details.inventoryItem', fn ($q) => $q->where('item_name', 'like', "%{$search}%"))
                   ->orWhereHas('menuItem', fn ($q) => $q->where('menu_name', 'like', "%{$search}%"));
             });
         }
@@ -99,7 +99,7 @@ class ConversionController extends Controller
             $previousServings = (float) $rtc->servings;
             $newServings      = $previousServings + $unitsProduced;
 
-            $conversion = Conversion::create([
+            $conversion = RtcConversion::create([
                 'menu_item_id'      => $menuItem->id,
                 'servings_produced' => $unitsProduced,
                 'previous_servings' => $previousServings,
@@ -112,7 +112,7 @@ class ConversionController extends Controller
                 $previousRawStock  = (float) $item->quantity;
                 $remainingRawStock = $previousRawStock - $line['rawUsed'];
 
-                $conversion->lines()->create([
+                $conversion->details()->create([
                     'inventory_item_id'   => $item->id,
                     'raw_quantity_used'   => $line['rawUsed'],
                     'unit'                => $item->unit,

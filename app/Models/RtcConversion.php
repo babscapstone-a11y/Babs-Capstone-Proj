@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One conversion of raw meat into RTC servings of a dish: how many servings it produced and the
- * dish's servings before and after. The raw meats used are its lines (ConversionLine), one per meat.
+ * dish's servings before and after. The raw meats used are its details (RtcConversionDetail), one per meat.
  */
-class Conversion extends Model
+class RtcConversion extends Model
 {
     protected $fillable = [
         'menu_item_id', 'servings_produced', 'previous_servings', 'new_servings', 'converted_by', 'remarks',
@@ -22,9 +22,9 @@ class Conversion extends Model
         'new_servings'      => 'decimal:4',
     ];
 
-    public function lines(): HasMany
+    public function details(): HasMany
     {
-        return $this->hasMany(ConversionLine::class)->orderBy('id');
+        return $this->hasMany(RtcConversionDetail::class)->orderBy('id');
     }
 
     /** The dish the servings were made for (none on older per-meat conversions) */
@@ -41,6 +41,6 @@ class Conversion extends Model
     /** "Pork, Pork Belly" — the raw meats used */
     public function getMeatNamesAttribute(): string
     {
-        return $this->lines->map(fn (ConversionLine $l) => $l->inventoryItem?->item_name ?? '—')->implode(', ');
+        return $this->details->map(fn (RtcConversionDetail $d) => $d->inventoryItem?->item_name ?? '—')->implode(', ');
     }
 }

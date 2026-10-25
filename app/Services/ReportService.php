@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Conversion;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
@@ -10,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderStatus;
 use App\Models\Payment;
+use App\Models\RtcConversion;
 use App\Models\StockIn;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
@@ -308,11 +308,11 @@ class ReportService
                 'timestamp'     => $po->created_at,
             ]);
 
-        $conversions = Conversion::with(['lines.inventoryItem', 'converter.staff'])
+        $conversions = RtcConversion::with(['details.inventoryItem', 'converter.staff'])
             ->whereBetween('created_at', [$from, $to])
-            ->when($category !== 'all', fn ($q) => $q->whereHas('lines.inventoryItem', fn ($iq) => $iq->where('item_type', $category)))
+            ->when($category !== 'all', fn ($q) => $q->whereHas('details.inventoryItem', fn ($iq) => $iq->where('item_type', $category)))
             ->get()
-            ->map(fn (Conversion $c) => [
+            ->map(fn (RtcConversion $c) => [
                 'date'          => $c->created_at?->format('Y-m-d'),
                 'item'          => $c->meat_names,
                 'qty_purchased' => null,

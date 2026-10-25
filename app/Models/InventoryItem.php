@@ -79,21 +79,21 @@ class InventoryItem extends Model
     /** Packs a beverage can arrive in. Stock itself is counted per piece (bottle/can). */
     const PACK_UNITS = ['Case', 'Box'];
 
-    /** The pack (Case/Box) this beverage is bought by, if any (inventory_item_packs) */
-    public function pack(): HasOne
+    /** The pack (Case/Box) this beverage is bought by, if any (inventory_pack_conversions) */
+    public function packConversion(): HasOne
     {
-        return $this->hasOne(InventoryItemPack::class);
+        return $this->hasOne(InventoryPackConversion::class);
     }
 
     /** Shortcut to the pack's unit, null when bought by the piece only */
     public function getPackUnitAttribute(): ?string
     {
-        return $this->pack?->pack_unit;
+        return $this->packConversion?->pack_unit;
     }
 
     public function getPiecesPerPackAttribute(): ?int
     {
-        return $this->pack?->pieces_per_pack;
+        return $this->packConversion?->pieces_per_pack;
     }
 
     /**
@@ -103,12 +103,12 @@ class InventoryItem extends Model
     public function setPack(?string $packUnit, ?int $piecesPerPack): void
     {
         if ($packUnit) {
-            $this->pack()->updateOrCreate([], ['pack_unit' => $packUnit, 'pieces_per_pack' => $piecesPerPack]);
+            $this->packConversion()->updateOrCreate([], ['pack_unit' => $packUnit, 'pieces_per_pack' => $piecesPerPack]);
         } else {
-            $this->pack()->delete();
+            $this->packConversion()->delete();
         }
 
-        $this->unsetRelation('pack');
+        $this->unsetRelation('packConversion');
     }
 
     /**
@@ -148,10 +148,10 @@ class InventoryItem extends Model
         return $this->hasMany(StockIn::class);
     }
 
-    /** The conversions this raw meat was used in (one line each) */
-    public function conversionLines(): HasMany
+    /** The RTC conversions this raw meat was used in (one detail row each) */
+    public function rtcConversionDetails(): HasMany
     {
-        return $this->hasMany(ConversionLine::class);
+        return $this->hasMany(RtcConversionDetail::class);
     }
 
     public function adjustments(): HasMany

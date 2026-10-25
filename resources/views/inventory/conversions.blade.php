@@ -103,13 +103,13 @@
                     {{-- One row per conversion; a dish made from several raw meats lists each meat on its own line --}}
                     @forelse($conversions as $c)
                     <tr>
-                        <td>@foreach($c->lines as $l)<div style="font-weight:700">{{ $l->inventoryItem?->item_name ?? '—' }}</div>@endforeach</td>
+                        <td>@foreach($c->details as $l)<div style="font-weight:700">{{ $l->inventoryItem?->item_name ?? '—' }}</div>@endforeach</td>
                         <td><div style="font-weight:700;color:var(--blue-700)">{{ $c->menuItem?->menu_name ?? '—' }}</div></td>
-                        <td style="color:var(--red-600);font-weight:700">@foreach($c->lines as $l)<div>{{ number_format($l->raw_quantity_used, 2) }} @unit($l->unit)</div>@endforeach</td>
-                        <td style="color:var(--muted)">@foreach($c->lines as $l)<div>{{ $l->portion_label }}/srv</div>@endforeach</td>
+                        <td style="color:var(--red-600);font-weight:700">@foreach($c->details as $l)<div>{{ number_format($l->raw_quantity_used, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="color:var(--muted)">@foreach($c->details as $l)<div>{{ $l->portion_label }}/srv</div>@endforeach</td>
                         <td><span style="font-weight:800;color:var(--blue-700);font-size:.95rem">{{ number_format($c->servings_produced,0) }}</span> <span style="font-size:.75rem;color:var(--muted)">srv</span></td>
-                        <td style="color:var(--muted)">@foreach($c->lines as $l)<div>{{ number_format($l->previous_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
-                        <td style="font-weight:600">@foreach($c->lines as $l)<div>{{ number_format($l->remaining_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="color:var(--muted)">@foreach($c->details as $l)<div>{{ number_format($l->previous_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
+                        <td style="font-weight:600">@foreach($c->details as $l)<div>{{ number_format($l->remaining_raw_stock, 2) }} @unit($l->unit)</div>@endforeach</td>
                         <td style="color:var(--muted)">{{ number_format($c->previous_servings,0) }}</td>
                         <td style="font-weight:700;color:var(--green-600)">{{ number_format($c->new_servings,0) }}</td>
                         <td style="white-space:nowrap">{{ $c->created_at->format('M d, Y') }}</td>

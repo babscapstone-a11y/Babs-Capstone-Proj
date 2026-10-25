@@ -68,9 +68,9 @@ class MenuItem extends Model
         return $this->hasOneThrough(InventoryItem::class, MenuItemBeverage::class, 'menu_item_id', 'id', 'id', 'inventory_item_id');
     }
 
-    public function conversions(): HasMany
+    public function rtcConversions(): HasMany
     {
-        return $this->hasMany(Conversion::class);
+        return $this->hasMany(RtcConversion::class);
     }
 
     /* ── RTC servings scopes/status ─────────────────────────── */

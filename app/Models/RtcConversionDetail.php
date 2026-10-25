@@ -10,12 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * One raw meat used in a conversion: how much was used, the portion per serving, and the meat's
  * stock before and after. Its date is the conversion's, so it has no timestamps of its own.
  */
-class ConversionLine extends Model
+class RtcConversionDetail extends Model
 {
     public $timestamps = false;
 
     protected $fillable = [
-        'conversion_id', 'inventory_item_id', 'raw_quantity_used', 'unit', 'portion_size',
+        'rtc_conversion_id', 'inventory_item_id', 'raw_quantity_used', 'unit', 'portion_size',
         'previous_raw_stock', 'remaining_raw_stock',
     ];
 
@@ -26,9 +26,9 @@ class ConversionLine extends Model
         'remaining_raw_stock' => 'decimal:4',
     ];
 
-    public function conversion(): BelongsTo
+    public function rtcConversion(): BelongsTo
     {
-        return $this->belongsTo(Conversion::class);
+        return $this->belongsTo(RtcConversion::class);
     }
 
     public function inventoryItem(): BelongsTo

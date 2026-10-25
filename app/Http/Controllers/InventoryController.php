@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Conversion;
 use App\Models\InventoryAdjustment;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\MenuItemRtc;
+use App\Models\RtcConversion;
 use App\Models\StockIn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -26,11 +26,11 @@ class InventoryController extends Controller
         $outOfStock       = InventoryItem::outOfStock()->count();
 
         $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
-        $beverageItems = InventoryItem::beverage()->with('pack')->orderBy('item_name')->get();
+        $beverageItems = InventoryItem::beverage()->with('packConversion')->orderBy('item_name')->get();
 
         // Latest 5 of each; the View All pages list everything 10 per page
         $recentStockIns    = StockIn::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
-        $recentConversions = Conversion::with(['lines.inventoryItem', 'menuItem', 'converter'])->latest()->latest('id')->limit(5)->get();
+        $recentConversions = RtcConversion::with(['details.inventoryItem', 'menuItem', 'converter'])->latest()->latest('id')->limit(5)->get();
         $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])->latest()->limit(5)->get();
 
         return view('inventory.index', compact(
@@ -115,7 +115,7 @@ class InventoryController extends Controller
 
     public function beverages(Request $request): View|JsonResponse
     {
-        $query = InventoryItem::beverage()->with('pack');
+        $query = InventoryItem::beverage()->with('packConversion');
 
         if ($search = $request->input('search')) {
             $query->where('item_name', 'like', "%{$search}%");
