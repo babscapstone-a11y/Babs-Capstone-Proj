@@ -140,6 +140,66 @@
     .ticket-extend-btn-wide:disabled { opacity: .5; cursor: not-allowed; }
     .ticket-chip.extended { background: rgba(245,158,11,0.14); color: #92400E; }
 
+    /* ── View switch (Board / Table) ─────────────────────────── */
+    /* Sits in the dark top bar, left of the clock */
+    .view-switch {
+        display: inline-flex; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 12px; padding: 3px; flex-shrink: 0;
+    }
+    .view-switch button {
+        border: 0; background: transparent; font-family: inherit; font-size: .82rem; font-weight: 700;
+        color: rgba(255,255,255,0.7); padding: .45rem .9rem; border-radius: 9px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .view-switch button.on { background: var(--primary); color: #fff; }
+    .view-switch button:not(.on):hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* ── Table view ──────────────────────────────────────────── */
+    .kitchen-table-card {
+        background: var(--white); border-radius: 16px; border: 1px solid var(--border);
+        box-shadow: 0 2px 10px rgba(17,24,39,0.05); overflow: hidden;
+    }
+    .kitchen-table-wrap { overflow-x: auto; }
+    .kitchen-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .kitchen-table th {
+        text-align: left; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+        color: var(--muted); background: rgba(17,24,39,0.03); padding: .8rem 1rem; border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .kitchen-table td { padding: .8rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .kitchen-table tbody tr:last-child td { border-bottom: none; }
+    .kitchen-table tbody tr { cursor: pointer; }
+    .kitchen-table tbody tr:hover td { background: rgba(17,24,39,0.025); }
+    .kitchen-table tr.row-done td { opacity: .7; }
+    .kt-order { font-weight: 800; color: var(--dark); white-space: nowrap; }
+    .kt-sub { font-size: .74rem; color: var(--muted); margin-top: .1rem; }
+    .kt-items { font-size: .8rem; color: var(--dark); max-width: 260px; }
+    .kt-status {
+        display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+        font-size: .74rem; font-weight: 700; padding: .25rem .65rem; border-radius: 50px;
+    }
+    .kt-status .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .kt-status.status-pending   { background: rgba(107,114,128,0.12); color: var(--status-pending); }
+    .kt-status.status-preparing { background: rgba(245,158,11,0.14); color: #B45309; }
+    .kt-status.status-ready     { background: rgba(22,163,74,0.14);  color: var(--status-ready); }
+    .kt-status.status-completed { background: rgba(37,99,235,0.12); color: var(--status-completed); }
+    .kt-acts { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; }
+    .kt-icon-btn {
+        width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--white);
+        color: var(--dark); cursor: pointer; font-size: .8rem; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .kt-icon-btn:hover { background: rgba(17,24,39,0.05); }
+    .kt-icon-btn.revert { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.2); color: var(--primary); }
+    .kt-icon-btn.extend { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #92400E; }
+    .kt-action-btn {
+        border: 0; border-radius: 9px; padding: .5rem .85rem; font-family: inherit; font-size: .78rem; font-weight: 700;
+        color: var(--white); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .kt-action-btn:hover { filter: brightness(1.08); }
+    .kt-action-btn.status-pending   { background: var(--status-pending); }
+    .kt-action-btn.status-preparing { background: var(--status-preparing); }
+    .kitchen-table .kanban-empty { padding: 2.5rem 1rem; }
+
     /* ── Detail modal ────────────────────────────────────────── */
     .detail-modal-box {
         background: var(--white); border-radius: 20px;
@@ -186,6 +246,14 @@
 </style>
 @endsection
 
+{{-- Board / Table switch, in the top bar left of the clock --}}
+@section('topbar-actions')
+<div class="view-switch" role="group" aria-label="Choose how orders are shown">
+    <button type="button" id="viewBoardBtn" class="on" onclick="setKitchenView('board')" aria-pressed="true"><i class="fas fa-table-columns"></i> Board</button>
+    <button type="button" id="viewTableBtn" onclick="setKitchenView('table')" aria-pressed="false"><i class="fas fa-list"></i> Table</button>
+</div>
+@endsection
+
 @section('content')
 
 <div class="summary-row">
@@ -207,7 +275,28 @@
     </div>
 </div>
 
-<div class="kanban-board">
+{{-- Table view: one row per order with its actions, like the staff list --}}
+<div class="kitchen-table-card" id="kitchenTableView" style="display:none">
+    <div class="kitchen-table-wrap">
+        <table class="kitchen-table" aria-label="Kitchen orders">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Items</th>
+                    <th>Time</th>
+                    <th>Waiting</th>
+                    <th>Status</th>
+                    <th style="text-align:right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="kitchenTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="kanban-board" id="kitchenBoardView">
     <div class="kanban-col">
         <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-pending)"></span>Pending · Online</span><span class="kanban-count" id="colCountPendingOnline">0</span></div>
         <div class="kanban-col-sublabel"><i class="fas fa-calendar-clock"></i> Sorted by pickup date &amp; time</div>
@@ -403,7 +492,66 @@
         document.getElementById('countPreparing').textContent = grouped.Processing.length;
         document.getElementById('countReady').textContent = grouped.Ready.length;
         document.getElementById('countCompleted').textContent = grouped.Completed.length;
+
+        renderTable(grouped);
     }
+
+    /* ── Table view ──────────────────────────────────────────── */
+    // Same orders and order as the board: online pending (by pick-up), walk-in pending, preparing, ready, served
+    function renderTable(grouped) {
+        const rows = [].concat(grouped.PendingOnline, grouped.PendingWalkin, grouped.Processing, grouped.Ready, grouped.Completed);
+        const body = document.getElementById('kitchenTableBody');
+
+        if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="8"><div class="kanban-empty">No orders</div></td></tr>';
+            return;
+        }
+
+        body.innerHTML = rows.map(order => {
+            const cssClass = STATUS_CSS_CLASS[order.status] || 'status-pending';
+            const done = cssClass === 'status-completed';
+            const items = order.items.slice(0, 3).map(i => `${i.name} ×${i.quantity}`).join(', ')
+                + (order.items.length > 3 ? ` +${order.items.length - 3} more` : '');
+            const time = order.order_type === 'online' && order.pickup_at
+                ? `<div>${formatTime(order.created_at)}</div><div class="kt-sub"><i class="fas fa-calendar-day"></i> Pickup ${formatPickup(order.pickup_at)}</div>`
+                : formatTime(order.created_at);
+            const actionIcon = order.status === 'Pending' ? 'fa-fire-burner' : 'fa-bell-concierge';
+
+            return `
+                <tr class="${done ? 'row-done' : ''}" onclick="openDetailModal(${order.id})">
+                    <td><div class="kt-order">#${order.order_number}</div></td>
+                    <td>${order.customer_name}${order.party_size ? `<div class="kt-sub"><i class="fas fa-users"></i> ${order.party_size} pax</div>` : ''}</td>
+                    <td>${order.order_type_label}${order.table_number ? `<div class="kt-sub"><i class="fas fa-chair"></i> Table ${order.table_number}</div>` : ''}</td>
+                    <td><div class="kt-items">${items}</div></td>
+                    <td style="white-space:nowrap">${time}</td>
+                    <td>${done ? '<span class="kt-sub">—</span>' : `<span class="ticket-elapsed ${isUrgent(order.created_at) ? 'urgent' : ''}" data-created="${order.created_at}">${elapsedText(order.created_at)}</span>`}
+                        ${order.extra_prep_minutes > 0 ? `<div class="kt-sub" style="color:#92400E"><i class="fas fa-hourglass-half"></i> +${order.extra_prep_minutes}m added</div>` : ''}</td>
+                    <td><span class="kt-status ${cssClass}"><span class="dot"></span>${order.status_label}</span></td>
+                    <td>
+                        <div class="kt-acts" onclick="event.stopPropagation()">
+                            <button type="button" class="kt-icon-btn" title="View order" aria-label="View order" onclick="openDetailModal(${order.id})"><i class="fas fa-eye"></i></button>
+                            ${order.can_extend_prep ? `<button type="button" class="kt-icon-btn extend" title="Extend prep time by 10 min" aria-label="Extend prep time" onclick="confirmExtendPrep(${order.id})"><i class="fas fa-clock-rotate-left"></i></button>` : ''}
+                            ${order.can_revert ? `<button type="button" class="kt-icon-btn revert" title="Revert to ${order.previous_status_label}" aria-label="Revert to ${order.previous_status_label}" onclick="confirmRevert(${order.id})"><i class="fas fa-rotate-left"></i></button>` : ''}
+                            ${order.next_action ? `<button type="button" class="kt-action-btn ${cssClass}" onclick="confirmStatusChange(${order.id})"><i class="fas ${actionIcon}"></i> ${order.next_action}</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Board or Table — remembered on this device
+    function setKitchenView(view) {
+        const table = view === 'table';
+        document.getElementById('kitchenBoardView').style.display = table ? 'none' : '';
+        document.getElementById('kitchenTableView').style.display = table ? '' : 'none';
+        document.getElementById('viewBoardBtn').classList.toggle('on', !table);
+        document.getElementById('viewTableBtn').classList.toggle('on', table);
+        document.getElementById('viewBoardBtn').setAttribute('aria-pressed', String(!table));
+        document.getElementById('viewTableBtn').setAttribute('aria-pressed', String(table));
+        try { localStorage.setItem('kitchenView', view); } catch (e) {}
+    }
+    try { if (localStorage.getItem('kitchenView') === 'table') setKitchenView('table'); } catch (e) {}
 
     async function pollOrders() {
         try {

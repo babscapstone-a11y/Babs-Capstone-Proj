@@ -153,6 +153,8 @@
         </div>
 
         <div class="kds-topbar-right">
+            {{-- Page controls shown left of the date/time (e.g. the Board / Table switch) --}}
+            @yield('topbar-actions')
             <div class="kds-datetime">
                 <div class="kds-date">{{ now()->format('l, F d, Y') }}</div>
                 <div class="kds-clock" id="liveClock">--:--:-- --</div>
