@@ -233,6 +233,9 @@
         border-radius: 10px; padding: .75rem .9rem; margin-top: 1rem; font-size: .88rem; color: #92400E;
     }
 
+    /* The page is shown at 80% on these screens (layouts/kitchen), so the columns are made
+       1.25× the screen height to still reach the bottom of the screen */
+    @media (min-width: 1101px) { .kanban-col { height: calc(125vh - 235px); } }
     @media (max-width: 1300px) { .kanban-board { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 1100px) {
         .summary-row { grid-template-columns: repeat(2, 1fr); }

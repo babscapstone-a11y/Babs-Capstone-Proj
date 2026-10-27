@@ -132,6 +132,12 @@
         .btn-modal-confirm { background: var(--primary); color: var(--white); }
         .btn-modal-confirm:hover { background: var(--primary-dk); }
 
+        /* Desktop/kitchen screens: show everything at 80% (like browser zoom 80%) so the whole
+           board fits without zooming out by hand. Phones and small tablets stay at full size. */
+        @media (min-width: 1101px) {
+            body { zoom: .8; }
+        }
+
         @media (max-width: 768px) {
             .kds-topbar { padding: .75rem 1rem; flex-wrap: wrap; gap: .6rem; }
             .kds-content { padding: 1rem; }
