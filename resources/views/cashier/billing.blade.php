@@ -420,6 +420,8 @@
             </option>`;
         }).join('');
 
+        // Discounts are for walk-in orders only. For an online order the dropdown stays in the
+        // page, hidden on "No Discount", because the rest of the screen still reads it.
         panel.innerHTML = `
             <div id="summarySubtotal" class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
             <div id="summaryPaidOnlineRow" class="billing-summary-row" style="display:none"><span>Paid Online (GCash)</span><span class="neg">- <span id="summaryPaidOnlineAmt">₱0.00</span></span></div>
@@ -427,7 +429,10 @@
             <div id="summaryDiscountRow" class="billing-summary-row" style="display:none"><span>Less Discount</span><span class="neg">- <span id="summaryDiscountAmt">₱0.00</span></span></div>
             <div class="billing-summary-row total"><span id="summaryGrandTotalLabel">Grand Total</span><span id="summaryGrandTotal">${formatPeso(order.subtotal)}</span></div>
 
-            <div class="form-group" style="margin-top:1.25rem">
+            ${order.order_type === 'online' ? `
+            <div class="amount-limit-note" style="margin-top:1.25rem"><i class="fas fa-circle-info"></i> Discounts apply to walk-in orders only, so this online order is billed without one.</div>
+            ` : ''}
+            <div class="form-group" style="margin-top:1.25rem;${order.order_type === 'online' ? 'display:none' : ''}">
                 <label class="form-label"><i class="fas fa-tag"></i> Discount</label>
                 <select class="form-select" id="discountSelect">
                     <option value="">No Discount</option>

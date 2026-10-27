@@ -19,8 +19,8 @@ class DiscountToggle
             'iconClass'   => $deactivating ? 'fas fa-ban' : 'fas fa-circle-check',
             'title'       => $deactivating ? 'Deactivate Discount?' : 'Activate Discount?',
             'desc'        => $deactivating
-                ? "\"{$discount->discount_name}\" will no longer be available in the POS or at online checkout. You can activate it again at any time."
-                : "\"{$discount->discount_name}\" will become available in the POS and at online checkout.",
+                ? "\"{$discount->discount_name}\" will no longer be available for walk-in orders in the POS. You can activate it again at any time."
+                : "\"{$discount->discount_name}\" will become available for walk-in orders in the POS.",
             'action'      => route('discounts.toggle-status', $discount),
             'method'      => 'PUT',
             'confirmText' => $deactivating ? 'Deactivate' : 'Activate',

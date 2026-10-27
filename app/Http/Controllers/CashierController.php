@@ -21,6 +21,8 @@ use Illuminate\View\View;
 
 class CashierController extends Controller
 {
+    const WALK_IN_ONLY_MESSAGE = 'Discounts apply to walk-in orders only. Online orders are billed without a discount.';
+
     public function __construct(private PaymongoClient $paymongo)
     {
     }
@@ -129,6 +131,10 @@ class CashierController extends Controller
     public function requestSpecialDiscount(StoreSpecialDiscountRequestRequest $request, Order $order): JsonResponse
     {
         $this->authorize('pay', $order);
+
+        if ($order->isOnline()) {
+            return response()->json(['message' => self::WALK_IN_ONLY_MESSAGE], 422);
+        }
 
         $discount = Discount::find($request->discount_id);
 
@@ -561,6 +567,11 @@ class CashierController extends Controller
     {
         if (! $discountId) {
             return ['discount' => null, 'discountAmount' => 0.0, 'vatExemption' => 0.0, 'error' => null];
+        }
+
+        // Discounts are for walk-in orders only: an online order's balance is billed as is
+        if ($order->isOnline()) {
+            return ['discount' => null, 'discountAmount' => 0.0, 'vatExemption' => 0.0, 'error' => self::WALK_IN_ONLY_MESSAGE];
         }
 
         $discount = Discount::findOrFail($discountId);

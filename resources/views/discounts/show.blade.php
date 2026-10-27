@@ -194,7 +194,7 @@
                     </span>
                     <div style="margin-top:1rem;font-size:.8rem;color:var(--muted);line-height:1.6">
                         @if($discount->is_active && !$discount->is_expired)
-                        This discount is <strong>active</strong> and available for use in POS and Online Ordering.
+                        This discount is <strong>active</strong> and available for walk-in orders in the POS.
                         @elseif($discount->is_expired)
                         This discount has expired and cannot be applied to new orders.
                         @else

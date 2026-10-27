@@ -65,7 +65,7 @@
     <div class="disc-header">
         <div>
             <div class="disc-title"><i class="fas fa-tag"></i> Discount Management</div>
-            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Create and manage discount rules for POS and Online Ordering</div>
+            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Create and manage discount rules for walk-in orders in the POS</div>
         </div>
         <div style="display:flex;gap:.6rem">
             <a href="{{ route('special-discount-requests.index') }}" class="btn btn-outline">

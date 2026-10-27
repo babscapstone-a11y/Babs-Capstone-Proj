@@ -71,7 +71,7 @@
     <div class="disc-header">
         <div>
             <div class="disc-title"><i class="fas fa-plus-circle"></i> Create New Discount</div>
-            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Define a new discount rule for the POS and Online Ordering modules</div>
+            <div style="font-size:.83rem;color:var(--muted);margin-top:.25rem">Define a new discount rule for walk-in orders in the POS</div>
         </div>
         <a href="{{ route('discounts.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     </div>
@@ -225,7 +225,7 @@
                             <label for="st_inactive" class="status-btn" id="stBtnInactive"><i class="fas fa-circle-pause"></i> Inactive</label>
                         </div>
                         <div style="margin-top:.85rem;font-size:.78rem;color:var(--muted);line-height:1.6" id="statusNote">
-                            Active discounts are available in the POS and Online Ordering modules.
+                            Active discounts are available for walk-in orders in the POS.
                         </div>
                         @error('status')<div class="err" style="margin-top:.5rem"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>@enderror
                     </div>
@@ -313,7 +313,7 @@ function updateStatusUI() {
     document.getElementById('stBtnActive').className   = 'status-btn' + (isActive ? ' active-s' : '');
     document.getElementById('stBtnInactive').className = 'status-btn' + (!isActive ? ' inactive-s' : '');
     document.getElementById('statusNote').textContent  = isActive
-        ? 'Active discounts are available in the POS and Online Ordering modules.'
+        ? 'Active discounts are available for walk-in orders in the POS.'
         : 'Inactive discounts are stored but not available for selection.';
 }
 
