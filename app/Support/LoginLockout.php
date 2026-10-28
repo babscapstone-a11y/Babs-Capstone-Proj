@@ -8,7 +8,9 @@ use Illuminate\Support\Str;
 
 /**
  * Account lockout: after MAX_ATTEMPTS wrong passwords in a row, the account can't log in or
- * reset its password for LOCK_MINUTES (counted from the last failed attempt).
+ * reset its password for a while. The first lock lasts FIRST_LOCK_MINUTES; if the account gets
+ * locked again within LOCK_HISTORY_HOURS, every further lock lasts REPEAT_LOCK_MINUTES.
+ * A successful login (or an admin unlock) starts it over at the shorter lock.
  *
  * The lock belongs to the account, not to what was typed: a staff member's username and email
  * share one counter, so switching between them doesn't give extra tries. Logins that match no
@@ -20,7 +22,14 @@ class LoginLockout
 {
     const MAX_ATTEMPTS = 3;
 
-    const LOCK_MINUTES = 60;
+    /** First lock: 15 minutes */
+    const FIRST_LOCK_MINUTES = 15;
+
+    /** Locked again after that: 1 hour */
+    const REPEAT_LOCK_MINUTES = 60;
+
+    /** How long an earlier lock is remembered when deciding the next lock's length */
+    const LOCK_HISTORY_HOURS = 24;
 
     public static function isLocked(string $login): bool
     {
@@ -41,23 +50,46 @@ class LoginLockout
         $attempts = (int) Cache::get($key . ':attempts', 0) + 1;
 
         if ($attempts >= self::MAX_ATTEMPTS) {
-            Cache::put($key . ':until', now()->addMinutes(self::LOCK_MINUTES)->timestamp, now()->addMinutes(self::LOCK_MINUTES));
+            $minutes = self::nextLockMinutes($login);
+
+            Cache::put($key . ':until', now()->addMinutes($minutes)->timestamp, now()->addMinutes($minutes));
+            // Remember this lock, so locking again soon after gets the longer lock
+            Cache::put($key . ':locks', (int) Cache::get($key . ':locks', 0) + 1, now()->addHours(self::LOCK_HISTORY_HOURS));
             Cache::forget($key . ':attempts');
 
             return 0;
         }
 
-        // The count resets if there's no further wrong attempt within the lock window
-        Cache::put($key . ':attempts', $attempts, now()->addMinutes(self::LOCK_MINUTES));
+        // The count resets if there's no further wrong attempt within an hour
+        Cache::put($key . ':attempts', $attempts, now()->addMinutes(self::REPEAT_LOCK_MINUTES));
 
         return self::MAX_ATTEMPTS - $attempts;
     }
 
-    /** Successful login (or an admin unlock): forget the failed attempts and any lock. */
+    /** Length of the lock the account would get next: 15 minutes the first time, then 1 hour */
+    public static function nextLockMinutes(string $login): int
+    {
+        return (int) Cache::get(self::key($login) . ':locks', 0) > 0
+            ? self::REPEAT_LOCK_MINUTES
+            : self::FIRST_LOCK_MINUTES;
+    }
+
+    /** e.g. "15 minutes" or "1 hour" — for "… before this account is locked for 15 minutes." */
+    public static function nextLockText(string $login): string
+    {
+        $minutes = self::nextLockMinutes($login);
+
+        return $minutes % 60 === 0
+            ? ($minutes / 60) . ' ' . Str::plural('hour', $minutes / 60)
+            : $minutes . ' ' . Str::plural('minute', $minutes);
+    }
+
+    /** Successful login (or an admin unlock): forget the failed attempts, any lock and past locks. */
     public static function clear(string $login): void
     {
         Cache::forget(self::key($login) . ':attempts');
         Cache::forget(self::key($login) . ':until');
+        Cache::forget(self::key($login) . ':locks');
     }
 
     /** e.g. "Try again in 58 minutes." (a duration, not a clock time) */

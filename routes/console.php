@@ -18,7 +18,7 @@ Artisan::command('login:unlock {login : The email or username of the locked acco
     $wasLocked = \App\Support\LoginLockout::isLocked($login);
     \App\Support\LoginLockout::clear($login);
     $this->info($wasLocked ? "Unlocked {$login}." : "{$login} wasn't locked; its failed-attempt count was reset.");
-})->purpose('Lift a login lockout (3 failed attempts) before the hour is up');
+})->purpose('Lift a login lockout (3 failed attempts) early and reset it to the shorter 15-minute lock');
 
 Schedule::command('orders:cancel-unclaimed')->everyFiveMinutes();
 

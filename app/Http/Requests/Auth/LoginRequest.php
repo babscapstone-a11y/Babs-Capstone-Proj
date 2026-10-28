@@ -65,14 +65,14 @@ class LoginRequest extends FormRequest
         } else {
             RateLimiter::hit($this->throttleKey());
 
-            // Count the wrong password; the third one locks the account for an hour
+            // Count the wrong password; the third one locks the account (15 minutes, then 1 hour if it happens again)
             $left = LoginLockout::recordFailure($login);
 
             throw ValidationException::withMessages([
                 'login' => $left === 0
                     ? LoginLockout::lockedMessage($login)
                     : 'Invalid Username or Password. ' . $left . ' ' . Str::plural('attempt', $left)
-                        . ' left before this account is locked for ' . (LoginLockout::LOCK_MINUTES / 60) . ' hour.',
+                        . ' left before this account is locked for ' . LoginLockout::nextLockText($login) . '.',
             ]);
         }
 
