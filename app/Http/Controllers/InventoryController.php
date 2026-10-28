@@ -23,13 +23,17 @@ class InventoryController extends Controller
         $rtcItems     = InventoryItem::rtc()->orderBy('item_name')->get();
         $beverageItems = InventoryItem::beverage()->with('packConversion')->orderBy('item_name')->get();
 
+        // Side-by-side Low Stock / Out of Stock panels
+        $lowStockItems   = InventoryItem::lowStock()->with('packConversion')->orderBy('item_type')->orderBy('item_name')->get();
+        $outOfStockItems = InventoryItem::outOfStock()->orderBy('item_type')->orderBy('item_name')->get();
+
         // Latest 5 of each; the View All pages list everything 10 per page
         $recentStockIns    = StockIn::with(['inventoryItem', 'recorder'])->latest()->limit(5)->get();
         $recentConversions = RtcConversion::with(['details.inventoryItem', 'menuItem', 'converter'])->latest()->latest('id')->limit(5)->get();
         $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])->latest()->limit(5)->get();
 
         return view('inventory.index', compact(
-            'rtcItems', 'beverageItems',
+            'rtcItems', 'beverageItems', 'lowStockItems', 'outOfStockItems',
             'recentStockIns', 'recentConversions', 'recentAdjustments'
         ));
     }

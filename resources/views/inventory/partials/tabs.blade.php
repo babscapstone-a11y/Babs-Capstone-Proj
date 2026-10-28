@@ -1,7 +1,8 @@
 {{--
     Stock Inventory tabs (same look as the Reports tabs). Shown on the overview and on each
     page a tab opens, with the current one underlined. $active: overview | raw | rtc |
-    beverages | low_stock | out_of_stock (none when the full Repurchase List is open).
+    beverages (none on the Repurchase List pages). Low Stock / Out of Stock are panels on
+    the overview instead of tabs.
 --}}
 @php
     $active = $active ?? null;
@@ -10,8 +11,6 @@
         'raw'          => ['Raw Meat',       'fa-drumstick-bite',     route('inventory.rtc'), \App\Models\InventoryItem::rtc()->count()],
         'rtc'          => ['RTC Items',      'fa-utensils',           route('inventory.rtc-inventory'), \App\Models\MenuItem::rtcTracked()->count()],
         'beverages'    => ['Beverage Items', 'fa-bottle-water',       route('inventory.beverages'), \App\Models\InventoryItem::beverage()->count()],
-        'low_stock'    => ['Low Stock',      'fa-triangle-exclamation', route('inventory.restocking', ['status' => 'low_stock']), \App\Models\InventoryItem::lowStock()->count()],
-        'out_of_stock' => ['Out of Stock',   'fa-circle-xmark',       route('inventory.restocking', ['status' => 'out_of_stock']), \App\Models\InventoryItem::outOfStock()->count()],
     ];
 @endphp
 <style>
@@ -29,15 +28,13 @@
         background: rgba(var(--ink-rgb),0.07); color: var(--muted);
     }
     .inv-tab.active .inv-tab-count { background: var(--primary); color: #fff; }
-    .inv-tab-count.warn   { background: var(--amber-50); color: var(--amber-600); }
-    .inv-tab-count.danger { background: var(--red-50); color: var(--red-600); }
 </style>
 <nav class="inv-tabs no-print" aria-label="Stock inventory">
     @foreach($tabs as $key => [$label, $icon, $url, $count])
         <a href="{{ $url }}" class="inv-tab {{ $active === $key ? 'active' : '' }}" @if($active === $key) aria-current="page" @endif>
             <i class="fas {{ $icon }}"></i> {{ $label }}
             @if($count !== null)
-                <span class="inv-tab-count {{ $active !== $key && $count > 0 ? ($key === 'low_stock' ? 'warn' : ($key === 'out_of_stock' ? 'danger' : '')) : '' }}">{{ $count }}</span>
+                <span class="inv-tab-count">{{ $count }}</span>
             @endif
         </a>
     @endforeach

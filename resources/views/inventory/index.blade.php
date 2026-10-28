@@ -35,6 +35,22 @@
 .activity-icon.red   { background:var(--red-50); color:var(--red-600); }
 .activity-qty.minus  { color:var(--red-600); }
 
+/* Low Stock (left) / Out of Stock (right) panels */
+.stock-alert-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
+.stock-alert-grid .section-card { margin-bottom:0; display:flex; flex-direction:column; }
+.stock-alert-grid .activity-list { max-height:340px; overflow-y:auto; }
+.alert-count { font-size:.72rem; font-weight:700; padding:.1rem .5rem; border-radius:50px; }
+.alert-count.amber { background:var(--amber-50); color:var(--amber-600); }
+.alert-count.red   { background:var(--red-50); color:var(--red-600); }
+.alert-qty { text-align:right; flex-shrink:0; }
+.alert-qty .now { font-size:.83rem; font-weight:700; }
+.alert-qty .now.amber { color:var(--amber-600); }
+.alert-qty .now.red   { color:var(--red-600); }
+.alert-qty .order { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+.alert-empty { padding:2rem 1.5rem; text-align:center; color:var(--muted); font-size:.83rem; }
+.alert-empty i { display:block; font-size:1.4rem; color:var(--green-600); margin-bottom:.5rem; }
+@media (max-width: 900px) { .stock-alert-grid { grid-template-columns:1fr; } }
+
 .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.1rem; border-radius:10px; font-size:.83rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all .18s; text-decoration:none; }
 .btn-primary { background:var(--primary); color:#fff; }
 .btn-primary:hover { background:var(--primary-dk, #B91C1C); }
@@ -102,6 +118,39 @@
 
     {{-- ── Tabs: Raw Meat, RTC Items, Beverages, Low Stock, Out of Stock ── --}}
     @include('inventory.partials.tabs', ['active' => 'overview'])
+
+    {{-- ── Low Stock (left) and Out of Stock (right) ── --}}
+    <div class="stock-alert-grid">
+        @foreach([
+            ['Low Stock', 'fa-triangle-exclamation', 'amber', 'low_stock', $lowStockItems, 'No items are low on stock.'],
+            ['Out of Stock', 'fa-circle-xmark', 'red', 'out_of_stock', $outOfStockItems, 'No items are out of stock.'],
+        ] as [$title, $icon, $tone, $status, $list, $emptyText])
+        <div class="section-card">
+            <div class="section-hd">
+                <h2><i class="fas {{ $icon }}"></i> {{ $title }} <span class="alert-count {{ $tone }}">{{ $list->count() }}</span></h2>
+                <a href="{{ route('inventory.restocking', ['status' => $status]) }}">View All →</a>
+            </div>
+            <div class="activity-list">
+                @forelse($list as $item)
+                @php $decimals = $item->item_type === 'rtc' ? 2 : 0; @endphp
+                <div class="activity-item">
+                    <div class="activity-icon {{ $tone }}"><i class="fas {{ $item->item_type === 'rtc' ? 'fa-drumstick-bite' : 'fa-bottle-water' }}"></i></div>
+                    <div class="activity-body">
+                        <div class="activity-name">{{ $item->item_name }}</div>
+                        <div class="activity-meta">{{ $item->item_type === 'rtc' ? 'Raw Meat' : 'Beverage' }} &bull; Reorder level {{ number_format($item->reorder_level, $decimals) }} @unit($item->unit)</div>
+                    </div>
+                    <div class="alert-qty">
+                        <div class="now {{ $tone }}">{{ number_format($item->quantity, $decimals) }} @unit($item->unit) left</div>
+                        <div class="order">Order {{ number_format($item->suggested_restock, $decimals) }} @unit($item->unit)</div>
+                    </div>
+                </div>
+                @empty
+                <div class="alert-empty"><i class="fas fa-circle-check"></i> {{ $emptyText }}</div>
+                @endforelse
+            </div>
+        </div>
+        @endforeach
+    </div>
 
     @if(session('success'))
     <div style="background:var(--green-50);border:1.5px solid var(--green-300);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:var(--green-800);font-weight:500;">

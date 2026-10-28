@@ -95,7 +95,7 @@
         </div>
     </div>
 
-    @include('inventory.partials.tabs', ['active' => in_array($statusFilter, ['low_stock', 'out_of_stock'], true) ? $statusFilter : null])
+    @include('inventory.partials.tabs', ['active' => null])
 
     @if($statusFilter)
     {{-- ── Low Stock / Out of Stock tab: same layout as the Beverages page ── --}}
