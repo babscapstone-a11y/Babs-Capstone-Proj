@@ -16,8 +16,8 @@ class UpdateOrderKitchenStatusRequest extends FormRequest
      * not a kitchen-reachable target here.
      */
     public const ALLOWED_TRANSITIONS = [
-        'Pending'    => 'Processing',
-        'Processing' => 'Ready',
+        'Pending'    => 'Preparing',
+        'Preparing'  => 'Ready',
     ];
 
     public function authorize(): bool
@@ -28,7 +28,7 @@ class UpdateOrderKitchenStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', 'in:Processing,Ready'],
+            'status' => ['required', 'string', 'in:Preparing,Ready'],
         ];
     }
 }

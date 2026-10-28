@@ -78,7 +78,7 @@ class StoreTableServerOrderRequest extends FormRequest
                 ->whereHas('order', function ($oq) {
                     $oq->where('payment_status', '!=', 'paid')
                         ->where(function ($statusQ) {
-                            $statusQ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served']))
+                            $statusQ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Preparing', 'Ready', 'Served']))
                                 ->orWhere(function ($completedQ) {
                                     $completedQ->whereHas('orderStatus', fn ($sq) => $sq->where('status_name', 'Completed'))
                                         ->whereNull('handed_off_at');

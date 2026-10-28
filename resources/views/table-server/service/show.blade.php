@@ -73,7 +73,7 @@
     $fulfillmentStatus = $isDineIn ? 'Served' : 'Packaged';
     $steps = [
         ['name' => 'Pending',    'label' => 'Order Placed', 'icon' => 'fa-clock',         'time' => $order->created_at],
-        ['name' => 'Processing', 'label' => 'Preparing',    'icon' => 'fa-fire-burner',   'time' => null],
+        ['name' => 'Preparing', 'label' => 'Preparing',    'icon' => 'fa-fire-burner',   'time' => null],
         ['name' => 'Ready',      'label' => 'Ready',        'icon' => 'fa-bell',          'time' => $order->ready_at],
         [
             'name'  => $fulfillmentStatus,
@@ -82,7 +82,7 @@
             'time'  => $order->handed_off_at,
         ],
     ];
-    $statusOrder = ['Pending', 'Processing', 'Ready', $fulfillmentStatus];
+    $statusOrder = ['Pending', 'Preparing', 'Ready', $fulfillmentStatus];
     // fulfillment_status, not the raw status_name — once a cashier collects
     // payment the raw status flips to "Completed", which wouldn't be found
     // in $statusOrder at all; fulfillment_status keeps reading "Ready" (or

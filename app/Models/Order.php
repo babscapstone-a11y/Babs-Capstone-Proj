@@ -193,7 +193,7 @@ class Order extends Model
     public function scopeVisibleForBilling(Builder $q): Builder
     {
         return $q->where('payment_status', 'pending')
-            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Processing', 'Ready', 'Served', 'Packaged', 'Completed']))
+            ->whereHas('orderStatus', fn ($sq) => $sq->whereIn('status_name', ['Pending', 'Preparing', 'Ready', 'Served', 'Packaged', 'Completed']))
             ->releasedToKitchen();
     }
 
@@ -442,7 +442,7 @@ class Order extends Model
 
         return match ($this->status_name) {
             'Pending'    => 'Order Received',
-            'Processing' => 'Preparing',
+            'Preparing'  => 'Preparing',
             'Ready'      => $this->service_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup',
             'Served'     => 'Served',
             'Packaged'   => 'Packaged — Ready for Pickup',
@@ -486,7 +486,7 @@ class Order extends Model
     {
         return match ($this->status_name) {
             'Pending'    => 'Order Received',
-            'Processing' => 'Preparing',
+            'Preparing'  => 'Preparing',
             'Ready'      => 'Ready',
             'Served'     => 'Served',
             'Packaged'   => 'Packaged',
@@ -505,7 +505,7 @@ class Order extends Model
     {
         return match ($this->status_name) {
             'Pending'    => 'Start Preparing',
-            'Processing' => 'Mark as Ready',
+            'Preparing'  => 'Mark as Ready',
             default      => null,
         };
     }
@@ -564,7 +564,7 @@ class Order extends Model
      */
     public function canExtendPrepTime(): bool
     {
-        return in_array($this->status_name, ['Pending', 'Processing'], true);
+        return in_array($this->status_name, ['Pending', 'Preparing'], true);
     }
 
     public function getItemCountAttribute(): int

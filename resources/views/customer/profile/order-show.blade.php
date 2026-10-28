@@ -330,11 +330,11 @@
         $handoffStatus = $order->service_type === 'dine_in' ? 'Served' : 'Packaged';
         $handoffLabel  = $order->service_type === 'dine_in' ? 'Served' : 'Packaged';
         $handoffIcon   = $order->service_type === 'dine_in' ? 'fa-utensils' : 'fa-box';
-        $allStatuses   = ['Pending', 'Processing', 'Ready', $handoffStatus, 'Completed'];
-        $statusLabels  = ['Pending' => 'Order Received', 'Processing' => 'Preparing', 'Ready' => ($order->service_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), $handoffStatus => $handoffLabel, 'Completed' => 'Completed'];
+        $allStatuses   = ['Pending', 'Preparing', 'Ready', $handoffStatus, 'Completed'];
+        $statusLabels  = ['Pending' => 'Order Received', 'Preparing' => 'Preparing', 'Ready' => ($order->service_type === 'dine_in' ? 'Ready for Serving' : 'Ready for Pickup'), $handoffStatus => $handoffLabel, 'Completed' => 'Completed'];
         $cancelledRaw  = $order->isCancelled();
         $currentStatus = $order->status_name;
-        $statusIcons   = ['Pending' => 'fa-clock', 'Processing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
+        $statusIcons   = ['Pending' => 'fa-clock', 'Preparing' => 'fa-fire-burner', 'Ready' => 'fa-bell', $handoffStatus => $handoffIcon, 'Completed' => 'fa-circle-check'];
 
         // Payment can land before or after the food is actually served —
         // CashierController::finalizeOrderPayment() never touches
@@ -348,7 +348,7 @@
             $order->payment_status === 'paid' && $handedOff           => 4,
             $handedOff                                                => 3,
             in_array($currentStatus, ['Ready', 'Completed'], true)    => 2,
-            $currentStatus === 'Processing'                           => 1,
+            $currentStatus === 'Preparing'                            => 1,
             $currentStatus === 'Pending'                              => 0,
             default                                                   => false,
         };

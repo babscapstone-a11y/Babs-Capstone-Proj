@@ -33,7 +33,7 @@ class KitchenController extends Controller
         $orders =Order::with(['orderStatus', 'customer', 'walkInOrder', 'onlineOrder', 'details.menuItem'])
             ->where(function ($query) {
                 $query->whereHas('orderStatus', function ($q) {
-                    $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']);
+                    $q->whereIn('status_name', ['Pending', 'Preparing', 'Ready']);
                 })->orWhere(function ($q) {
                     // The kitchen's own job ends at "Ready" — these are orders
                     // the food server has since served/packaged (or, in the
@@ -62,7 +62,7 @@ class KitchenController extends Controller
 
     /**
      * PATCH /kitchen/orders/{order}/status — the only mutation endpoint. Kitchen staff
-     * may only move an order through the sequential Pending→Processing→Ready
+     * may only move an order through the sequential Pending→Preparing→Ready
      * chain; they cannot edit customer info or ordered items. "Ready" is as
      * far as the kitchen goes — from there the food server takes over
      * (Module 20's serve()/package()) to move it to Served/Packaged.
@@ -86,7 +86,7 @@ class KitchenController extends Controller
         // Starting to prepare an order is the moment RTC stock actually gets
         // consumed — mirrors the manual raw→RTC conversion pattern, just
         // triggered automatically by this status move instead of a staff form.
-        if ($currentStatus === 'Pending' && $requestedStatus === 'Processing') {
+        if ($currentStatus === 'Pending' && $requestedStatus === 'Preparing') {
             $error = $this->deductRtcStockForOrder($order, $newStatus);
 
             if ($error) {
@@ -115,8 +115,8 @@ class KitchenController extends Controller
      * change — the mirror image of UpdateOrderKitchenStatusRequest::ALLOWED_TRANSITIONS.
      */
     private const REVERT_TRANSITIONS = [
-        'Processing' => 'Pending',
-        'Ready'      => 'Processing',
+        'Preparing'  => 'Pending',
+        'Ready'      => 'Preparing',
     ];
 
     /**
@@ -145,7 +145,7 @@ class KitchenController extends Controller
 
         $previous = OrderStatus::where('status_name', $previousStatus)->firstOrFail();
 
-        if ($currentStatus === 'Processing') {
+        if ($currentStatus === 'Preparing') {
             // Undoing "Start Preparing" means the RTC stock deducted for it
             // never should have left inventory — give it back.
             $this->restoreRtcStockForOrder($order);
@@ -350,7 +350,7 @@ class KitchenController extends Controller
         $canRevert = isset(self::REVERT_TRANSITIONS[$order->status_name])
             && ! $order->handed_off_at && $order->payment_status !== 'paid';
 
-        $previousStatusLabels = ['Processing' => 'Order Received', 'Ready' => 'Preparing'];
+        $previousStatusLabels = ['Preparing' => 'Order Received', 'Ready' => 'Preparing'];
 
         return [
             'id'                    => $order->id,

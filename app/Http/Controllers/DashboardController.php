@@ -43,7 +43,7 @@ class DashboardController extends Controller
         // ── Order stats (online orders still awaiting approval aren't "active" yet) ──
         $liveOrders = fn () => Order::releasedToKitchen();
         $activeOrders = $liveOrders()
-            ->whereHas('orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Processing', 'Ready']))
+            ->whereHas('orderStatus', fn ($q) => $q->whereIn('status_name', ['Pending', 'Preparing', 'Ready']))
             ->count();
         $completedOrdersToday = $liveOrders()
             ->whereHas('orderStatus', fn ($q) => $q->whereIn('status_name', ['Served', 'Packaged', 'Completed']))

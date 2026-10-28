@@ -81,7 +81,7 @@ class CheckoutController extends Controller
         // Re-check RTC stock right before placing the order — stock can have
         // changed since items were added to the cart. No reservation happens
         // here (this system only ever deducts stock once kitchen staff move
-        // the order to Processing); this is just a courtesy re-check.
+        // the order to Preparing); this is just a courtesy re-check.
         $shortages = [];
         foreach ($cart->items as $item) {
             $menuItem = MenuItem::find($item->menu_item_id);

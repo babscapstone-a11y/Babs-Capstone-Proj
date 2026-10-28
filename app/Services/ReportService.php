@@ -427,7 +427,7 @@ class ReportService
             ],
         ];
 
-        $statusOrder  = ['Pending', 'Processing', 'Ready', 'Served', 'Packaged', 'Completed', 'Cancelled'];
+        $statusOrder  = ['Pending', 'Preparing', 'Ready', 'Served', 'Packaged', 'Completed', 'Cancelled'];
         $statusColors = OrderStatus::pluck('color', 'status_name');
         $orderStatusChart = [
             'labels' => $statusOrder,

@@ -310,8 +310,8 @@
         <div class="kanban-cards" id="col-PendingWalkin"></div>
     </div>
     <div class="kanban-col">
-        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-preparing)"></span>Preparing</span><span class="kanban-count" id="colCountProcessing">0</span></div>
-        <div class="kanban-cards" id="col-Processing"></div>
+        <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-preparing)"></span>Preparing</span><span class="kanban-count" id="colCountPreparing">0</span></div>
+        <div class="kanban-cards" id="col-Preparing"></div>
     </div>
     <div class="kanban-col">
         <div class="kanban-col-header"><span><span class="dot" style="background:var(--status-ready)"></span>Ready to Serve</span><span class="kanban-count" id="colCountReady">0</span></div>
@@ -334,7 +334,7 @@
 <script>
     const STATUS_COLORS = {
         Pending:    getComputedStyle(document.documentElement).getPropertyValue('--status-pending').trim(),
-        Processing: getComputedStyle(document.documentElement).getPropertyValue('--status-preparing').trim(),
+        Preparing:  getComputedStyle(document.documentElement).getPropertyValue('--status-preparing').trim(),
         Ready:      getComputedStyle(document.documentElement).getPropertyValue('--status-ready').trim(),
         Completed:  getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
         Served:     getComputedStyle(document.documentElement).getPropertyValue('--status-completed').trim(),
@@ -343,8 +343,8 @@
     // Served/Packaged are what an order actually becomes once the food
     // server hands it off (the kitchen's own chain stops at Ready) — both
     // render like Completed on this board's "Served" column.
-    const STATUS_CSS_CLASS = { Pending: 'status-pending', Processing: 'status-preparing', Ready: 'status-ready', Completed: 'status-completed', Served: 'status-completed', Packaged: 'status-completed' };
-    const COLUMN_IDS = { PendingOnline: 'col-PendingOnline', PendingWalkin: 'col-PendingWalkin', Processing: 'col-Processing', Ready: 'col-Ready', Completed: 'col-Completed' };
+    const STATUS_CSS_CLASS = { Pending: 'status-pending', Preparing: 'status-preparing', Ready: 'status-ready', Completed: 'status-completed', Served: 'status-completed', Packaged: 'status-completed' };
+    const COLUMN_IDS = { PendingOnline: 'col-PendingOnline', PendingWalkin: 'col-PendingWalkin', Preparing: 'col-Preparing', Ready: 'col-Ready', Completed: 'col-Completed' };
 
     let ordersCache = {};
 
@@ -445,12 +445,12 @@
     }
 
     function renderBoard(orders) {
-        const grouped = { PendingOnline: [], PendingWalkin: [], Processing: [], Ready: [], Completed: [] };
+        const grouped = { PendingOnline: [], PendingWalkin: [], Preparing: [], Ready: [], Completed: [] };
         orders.forEach(o => {
             if (o.status === 'Pending') {
                 (o.order_type === 'online' ? grouped.PendingOnline : grouped.PendingWalkin).push(o);
-            } else if (o.status === 'Processing') {
-                grouped.Processing.push(o);
+            } else if (o.status === 'Preparing') {
+                grouped.Preparing.push(o);
             } else if (o.status === 'Ready') {
                 grouped.Ready.push(o);
             } else if (o.status === 'Served' || o.status === 'Packaged' || o.status === 'Completed') {
@@ -492,7 +492,7 @@
         });
 
         document.getElementById('countPending').textContent = grouped.PendingOnline.length + grouped.PendingWalkin.length;
-        document.getElementById('countPreparing').textContent = grouped.Processing.length;
+        document.getElementById('countPreparing').textContent = grouped.Preparing.length;
         document.getElementById('countReady').textContent = grouped.Ready.length;
         document.getElementById('countCompleted').textContent = grouped.Completed.length;
 
@@ -502,7 +502,7 @@
     /* ── Table view ──────────────────────────────────────────── */
     // Same orders and order as the board: online pending (by pick-up), walk-in pending, preparing, ready, served
     function renderTable(grouped) {
-        const rows = [].concat(grouped.PendingOnline, grouped.PendingWalkin, grouped.Processing, grouped.Ready, grouped.Completed);
+        const rows = [].concat(grouped.PendingOnline, grouped.PendingWalkin, grouped.Preparing, grouped.Ready, grouped.Completed);
         const body = document.getElementById('kitchenTableBody');
 
         if (!rows.length) {
@@ -649,7 +649,7 @@
 
     async function submitStatusChange(orderId) {
         const order = ordersCache[orderId];
-        const targetStatus = { Pending: 'Processing', Processing: 'Ready' }[order.status];
+        const targetStatus = { Pending: 'Preparing', Preparing: 'Ready' }[order.status];
 
         try {
             const res = await fetch(`/kitchen/orders/${orderId}/status`, {
