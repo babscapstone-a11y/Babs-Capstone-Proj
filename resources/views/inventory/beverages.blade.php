@@ -82,6 +82,8 @@
         </div>
     </div>
 
+    @include('inventory.partials.tabs', ['active' => 'beverages'])
+
     <div class="stat-grid">
         <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-list"></i></div><div class="stat-value">{{ $totalBev }}</div><div class="stat-label">Total Beverages</div></div>
         <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-value">{{ $lowStock }}</div><div class="stat-label">Low Stock</div></div>

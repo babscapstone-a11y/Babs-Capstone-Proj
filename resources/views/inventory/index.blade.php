@@ -11,23 +11,6 @@
 .page-sub { font-size:.83rem; color:var(--muted); margin-top:.25rem; }
 .header-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
 
-/* stat cards */
-.stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1.25rem; margin-bottom:2rem; }
-.stat-card { background:var(--surface); border-radius:16px; padding:1.25rem 1.4rem; border:1px solid var(--border); box-shadow:var(--shadow-sm); position:relative; overflow:hidden; display:block; color:inherit; text-decoration:none; transition:transform .15s, box-shadow .15s; }
-.stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(var(--ink-rgb),0.08); color:inherit; }
-.stat-card::before { content:''; position:absolute; top:0; right:0; width:80px; height:80px; border-radius:0 16px 0 80px; opacity:.07; }
-.stat-card.blue::before  { background:#3B82F6; }
-.stat-card.green::before { background:#16A34A; }
-.stat-card.amber::before { background:#F59E0B; }
-.stat-card.red::before   { background:#DC2626; }
-.stat-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:.9rem; }
-.stat-icon.blue  { background:var(--blue-50); color:var(--blue-600); }
-.stat-icon.green { background:var(--green-50); color:var(--green-600); }
-.stat-icon.amber { background:var(--amber-50); color:var(--amber-600); }
-.stat-icon.red   { background:var(--red-50); color:var(--red-600); }
-.stat-value { font-size:1.9rem; font-weight:800; color:var(--dark); line-height:1; }
-.stat-label { font-size:.78rem; font-weight:600; color:var(--muted); margin-top:.3rem; text-transform:uppercase; letter-spacing:.04em; }
-
 /* section */
 .section-card { background:var(--surface); border-radius:16px; border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden; margin-bottom:2rem; }
 .section-hd { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); }
@@ -117,34 +100,8 @@
         </div>
     </div>
 
-    {{-- ── Summary Cards ── --}}
-    <div class="stat-grid">
-        <a href="{{ route('inventory.rtc') }}" class="stat-card blue">
-            <div class="stat-icon blue"><i class="fas fa-drumstick-bite"></i></div>
-            <div class="stat-value">{{ $totalRtc }}</div>
-            <div class="stat-label">Total Raw Meat</div>
-        </a>
-        <a href="{{ route('inventory.rtc-inventory') }}" class="stat-card blue">
-            <div class="stat-icon blue"><i class="fas fa-utensils"></i></div>
-            <div class="stat-value">{{ $totalRtcProducts }}</div>
-            <div class="stat-label">Total RTC Items</div>
-        </a>
-        <a href="{{ route('inventory.beverages') }}" class="stat-card green">
-            <div class="stat-icon green"><i class="fas fa-bottle-water"></i></div>
-            <div class="stat-value">{{ $totalBeverage }}</div>
-            <div class="stat-label">Beverage Items</div>
-        </a>
-        <a href="{{ route('inventory.restocking', ['status' => 'low_stock']) }}" class="stat-card amber">
-            <div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div>
-            <div class="stat-value">{{ $lowStock }}</div>
-            <div class="stat-label">Low Stock</div>
-        </a>
-        <a href="{{ route('inventory.restocking', ['status' => 'out_of_stock']) }}" class="stat-card red">
-            <div class="stat-icon red"><i class="fas fa-circle-xmark"></i></div>
-            <div class="stat-value">{{ $outOfStock }}</div>
-            <div class="stat-label">Out of Stock</div>
-        </a>
-    </div>
+    {{-- ── Tabs: Raw Meat, RTC Items, Beverages, Low Stock, Out of Stock ── --}}
+    @include('inventory.partials.tabs', ['active' => 'overview'])
 
     @if(session('success'))
     <div style="background:var(--green-50);border:1.5px solid var(--green-300);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:var(--green-800);font-weight:500;">

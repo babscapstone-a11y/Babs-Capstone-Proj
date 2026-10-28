@@ -10,7 +10,7 @@
     .page-header{margin-bottom:1rem!important}
     .print-header{display:block!important}
 }
-.inv-page{padding:2rem;max-width:1100px;margin:0 auto}
+.inv-page{padding:2rem;max-width:1400px;margin:0 auto}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
 .page-title{font-size:1.5rem;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:.65rem}
 .page-title i{color:var(--primary)}
@@ -34,13 +34,31 @@
 .inv-table tr:last-child td{border-bottom:none}
 .inv-table tr.out td{background:var(--red-25)}
 .empty-row td{text-align:center;color:var(--muted);padding:2rem;font-size:.84rem}
-.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:var(--surface);border-radius:14px;padding:1rem 1.2rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07)}
-.stat-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;margin-bottom:.6rem}
-.stat-value{font-size:1.5rem;font-weight:800;color:var(--dark);line-height:1}
-.stat-label{font-size:.72rem;font-weight:600;color:var(--muted);margin-top:.2rem;text-transform:uppercase;letter-spacing:.04em}
-.stat-icon.amber{background:var(--amber-50);color:var(--amber-600)}.stat-icon.red{background:var(--red-50);color:var(--red-600)}.stat-icon.blue{background:var(--blue-50);color:var(--blue-600)}
+/* Cards, filter bar and table match the Beverages page */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1.1rem;margin-bottom:2rem}
+.stat-card{background:var(--surface);border-radius:14px;padding:1.1rem 1.25rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:.75rem}
+.stat-value{font-size:1.6rem;font-weight:800;color:var(--dark);line-height:1}
+.stat-label{font-size:.75rem;font-weight:600;color:var(--muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.04em}
+.stat-icon.amber{background:var(--amber-50);color:var(--amber-600)}.stat-icon.red{background:var(--red-50);color:var(--red-600)}.stat-icon.blue{background:var(--blue-50);color:var(--blue-600)}.stat-icon.violet{background:var(--violet-50);color:var(--violet-700)}
 .reorder-qty{font-weight:700;color:var(--primary)}
+.filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.search-wrap{position:relative;flex:1;min-width:220px}
+.search-input{width:100%;padding:.55rem 2.3rem .55rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-size:.84rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface)}
+.search-input:focus{border-color:var(--primary)}
+.search-clear{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--muted);cursor:pointer;padding:.25rem;display:none}
+.search-wrap.has-value .search-clear{display:block}
+.search-wrap.has-value .search-clear:hover{color:var(--primary)}
+.filter-select{padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;font-family:inherit;color:var(--dark);outline:none;background:var(--surface);cursor:pointer}
+.btn-sm{padding:.38rem .75rem;font-size:.78rem}
+.results-count{font-size:.8rem;color:var(--muted);padding:.85rem 1.2rem 0}
+#results.is-loading{opacity:.5;transition:opacity .15s}
+.inv-table th{padding:.65rem 1rem}
+.inv-table tr:hover td{background:var(--surface-2)}
+.badge{white-space:nowrap}
+.progress-bar{height:6px;border-radius:3px;background:var(--surface-3);overflow:hidden;width:80px;margin-top:.3rem}
+.progress-fill{height:100%;border-radius:3px}
+.progress-amber{background:#F59E0B}.progress-red{background:#DC2626}
 </style>
 @endsection
 
@@ -76,6 +94,42 @@
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
         </div>
     </div>
+
+    @include('inventory.partials.tabs', ['active' => in_array($statusFilter, ['low_stock', 'out_of_stock'], true) ? $statusFilter : null])
+
+    @if($statusFilter)
+    {{-- ── Low Stock / Out of Stock tab: same layout as the Beverages page ── --}}
+    <div class="summary-grid">
+        @if($statusFilter === 'low_stock')
+        <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-value">{{ $totalCount }}</div><div class="stat-label">Total Low Stock</div></div>
+        @else
+        <div class="stat-card"><div class="stat-icon red"><i class="fas fa-circle-xmark"></i></div><div class="stat-value">{{ $totalCount }}</div><div class="stat-label">Total Out of Stock</div></div>
+        @endif
+        <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-drumstick-bite"></i></div><div class="stat-value">{{ $rawMeatCount }}</div><div class="stat-label">Raw Meat</div></div>
+        <div class="stat-card"><div class="stat-icon violet"><i class="fas fa-bottle-water"></i></div><div class="stat-value">{{ $beverageCount }}</div><div class="stat-label">Beverages</div></div>
+    </div>
+
+    <form method="GET" action="{{ route('inventory.restocking') }}" class="filter-bar" id="liveFilterForm">
+        <input type="hidden" name="status" value="{{ $statusFilter }}">
+        <div class="search-wrap">
+            <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search item name…" class="search-input" autocomplete="off">
+            <button type="button" class="search-clear" aria-label="Clear search"><i class="fas fa-times"></i></button>
+        </div>
+        <select name="type" class="filter-select">
+            <option value="">All Types</option>
+            <option value="rtc" {{ request('type') === 'rtc' ? 'selected' : '' }}>Raw Meat</option>
+            <option value="beverage" {{ request('type') === 'beverage' ? 'selected' : '' }}>Beverage</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filter</button>
+        @if(request()->hasAny(['search','type']))
+        <a href="{{ route('inventory.restocking', ['status' => $statusFilter]) }}" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
+        @endif
+    </form>
+
+    <div class="card" id="results">
+        @include('inventory._restocking-results', ['items' => $items])
+    </div>
+    @else
 
     <div class="print-header">
         <h2>Babs Resto — Restocking List</h2>
@@ -181,5 +235,22 @@
         <a href="{{ route('inventory.index') }}" class="btn btn-outline" style="margin-top:1.25rem"><i class="fas fa-arrow-left"></i> Back to Inventory</a>
     </div>
     @endif
+    @endif
 </div>
+@endsection
+
+@section('scripts')
+@if($statusFilter)
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    LiveTable.init({
+        formSelector: '#liveFilterForm',
+        resultsSelector: '#results',
+        url: '{{ route('inventory.restocking') }}',
+        searchFieldName: 'search',
+        debounceMs: 300,
+    });
+});
+</script>
+@endif
 @endsection

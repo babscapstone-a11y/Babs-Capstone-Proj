@@ -90,6 +90,8 @@
         </div>
     </div>
 
+    @include('inventory.partials.tabs', ['active' => 'rtc'])
+
     {{-- Stats --}}
     <div class="stat-grid">
         <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-list"></i></div><div class="stat-value">{{ $totalRtc }}</div><div class="stat-label">Total RTC Items</div></div>

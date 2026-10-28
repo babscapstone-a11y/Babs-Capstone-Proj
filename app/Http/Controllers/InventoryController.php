@@ -19,13 +19,8 @@ class InventoryController extends Controller
 {
     public function index(): View
     {
-        $totalRtc         = InventoryItem::rtc()->count();
-        $totalRtcProducts = MenuItem::rtcTracked()->count();
-        $totalBeverage    = InventoryItem::beverage()->count();
-        $lowStock         = InventoryItem::lowStock()->count();
-        $outOfStock       = InventoryItem::outOfStock()->count();
-
-        $rtcItems      = InventoryItem::rtc()->orderBy('item_name')->get();
+        // The item counts are shown on the tabs (inventory/partials/tabs)
+        $rtcItems     = InventoryItem::rtc()->orderBy('item_name')->get();
         $beverageItems = InventoryItem::beverage()->with('packConversion')->orderBy('item_name')->get();
 
         // Latest 5 of each; the View All pages list everything 10 per page
@@ -34,7 +29,6 @@ class InventoryController extends Controller
         $recentAdjustments = InventoryAdjustment::with(['inventoryItem', 'menuItem', 'adjuster'])->latest()->limit(5)->get();
 
         return view('inventory.index', compact(
-            'totalRtc', 'totalRtcProducts', 'totalBeverage', 'lowStock', 'outOfStock',
             'rtcItems', 'beverageItems',
             'recentStockIns', 'recentConversions', 'recentAdjustments'
         ));
@@ -147,11 +141,39 @@ class InventoryController extends Controller
         return view('inventory.beverages', compact('items', 'totalBev', 'lowStock', 'outOfStock', 'adjustOptions'));
     }
 
-    public function restocking(Request $request): View
+    public function restocking(Request $request): View|JsonResponse
     {
         $statusFilter = in_array($request->input('status'), ['low_stock', 'out_of_stock'])
             ? $request->input('status')
             : null;
+
+        // The Low Stock / Out of Stock tabs: one searchable table, laid out like the Beverages page
+        if ($statusFilter) {
+            $base  = fn () => $statusFilter === 'low_stock' ? InventoryItem::lowStock() : InventoryItem::outOfStock();
+            $query = $base()->with('packConversion');
+
+            if ($search = $request->input('search')) {
+                $query->where('item_name', 'like', "%{$search}%");
+            }
+            if (in_array($type = $request->input('type'), ['rtc', 'beverage'], true)) {
+                $query->where('item_type', $type);
+            }
+
+            $items = $query->orderBy('item_type')->orderBy('item_name')->get();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'html'  => view('inventory._restocking-results', compact('items', 'statusFilter'))->render(),
+                    'count' => $items->count(),
+                ]);
+            }
+
+            $totalCount    = $base()->count();
+            $rawMeatCount  = $base()->where('item_type', 'rtc')->count();
+            $beverageCount = $base()->where('item_type', 'beverage')->count();
+
+            return view('inventory.restocking', compact('items', 'statusFilter', 'totalCount', 'rawMeatCount', 'beverageCount'));
+        }
 
         $outOfStockItems = InventoryItem::outOfStock()
             ->orderBy('item_type')->orderBy('item_name')->get();
