@@ -73,6 +73,7 @@
     .billing-summary-row { display: flex; justify-content: space-between; font-size: .9rem; padding: .5rem 0; }
     .billing-summary-row.total { font-size: 1.15rem; font-weight: 800; border-top: 1.5px solid var(--border); margin-top: .5rem; padding-top: .85rem; }
     .billing-summary-row .neg { color: var(--primary); }
+    .billing-summary-row.sub { font-size: .8rem; color: var(--muted); padding: .15rem 0 .15rem 1rem; }
 
     .form-group { margin-bottom: 1.1rem; }
     .form-label { display: block; font-size: .82rem; font-weight: 700; color: var(--dark); margin-bottom: .4rem; }
@@ -422,8 +423,14 @@
 
         // Discounts are for walk-in orders only. For an online order the dropdown stays in the
         // page, hidden on "No Discount", because the rest of the screen still reads it.
+        // Menu prices already include 12% VAT — split the subtotal the same way the receipt does
+        // (VATable Sales = subtotal ÷ 1.12, in centavos rounded half up; VAT is the rest)
+        const subtotalC = Math.round(order.subtotal * 100);
+        const vatableC = Math.floor((2 * subtotalC * 100 + 112) / 224);
         panel.innerHTML = `
             <div id="summarySubtotal" class="billing-summary-row"><span>Subtotal</span><span>${formatPeso(order.subtotal)}</span></div>
+            <div class="billing-summary-row sub"><span>VATable Sales</span><span>${formatPeso(vatableC / 100)}</span></div>
+            <div class="billing-summary-row sub"><span>VAT (12%)</span><span>${formatPeso((subtotalC - vatableC) / 100)}</span></div>
             <div id="summaryPaidOnlineRow" class="billing-summary-row" style="display:none"><span>Paid Online (GCash)</span><span class="neg">- <span id="summaryPaidOnlineAmt">₱0.00</span></span></div>
             <div id="summaryVatRow" class="billing-summary-row" style="display:none"><span>Less VAT (12%) · VAT-exempt</span><span class="neg">- <span id="summaryVatAmt">₱0.00</span></span></div>
             <div id="summaryDiscountRow" class="billing-summary-row" style="display:none"><span>Less Discount</span><span class="neg">- <span id="summaryDiscountAmt">₱0.00</span></span></div>
