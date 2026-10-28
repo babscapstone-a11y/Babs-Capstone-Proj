@@ -9,7 +9,7 @@ class OrderDetail extends Model
 {
     protected $fillable = [
         'order_id', 'menu_item_id', 'item_name', 'quantity', 'notes', 'price', 'subtotal',
-        'rtc_deducted_at',
+        'rtc_deducted_at', 'prepared_at',
     ];
 
     protected $casts = [
@@ -17,6 +17,7 @@ class OrderDetail extends Model
         'subtotal'         => 'decimal:2',
         'quantity'         => 'integer',
         'rtc_deducted_at'  => 'datetime',
+        'prepared_at'      => 'datetime',
     ];
 
     public function order(): BelongsTo

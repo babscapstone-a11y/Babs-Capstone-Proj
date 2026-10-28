@@ -6,6 +6,7 @@ use App\Http\Requests\UpdateOrderKitchenStatusRequest;
 use App\Models\InventoryItem;
 use App\Models\MenuItem;
 use App\Models\Order;
+use App\Models\OrderDetail;
 use App\Models\OrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +99,9 @@ class KitchenController extends Controller
             // food-server board can measure "waiting since ready" without
             // including kitchen prep time.
             $order->update(['order_status_id' => $newStatus->id, 'ready_at' => now()]);
+
+            // Marking the whole order ready also marks any item not yet ticked off as done
+            $order->details()->whereNull('prepared_at')->update(['prepared_at' => now()]);
         } else {
             $order->update(['order_status_id' => $newStatus->id]);
         }
@@ -150,6 +154,9 @@ class KitchenController extends Controller
             // never should have left inventory — give it back.
             $this->restoreRtcStockForOrder($order);
             $order->update(['order_status_id' => $previous->id]);
+
+            // Back to not started, so no item is done yet
+            $order->details()->update(['prepared_at' => null]);
         } elseif ($currentStatus === 'Ready') {
             // Mirrors the ready_at stamp set when moving into Ready.
             $order->update(['order_status_id' => $previous->id, 'ready_at' => null]);
@@ -161,6 +168,38 @@ class KitchenController extends Controller
 
         return response()->json([
             'message' => "Order #{$order->order_number} reverted to {$order->kitchen_status_label}.",
+            'order'   => $this->serializeOrder($order),
+        ]);
+    }
+
+    /**
+     * PATCH /kitchen/orders/{order}/items/{detail}/done — ticks one ordered item
+     * off as done (or back to cooking if it was ticked by mistake). Only while
+     * the order is being prepared; the order itself still moves to Ready with
+     * its own button.
+     */
+    public function toggleItemDone(Order $order, OrderDetail $detail): JsonResponse
+    {
+        $order->load('orderStatus');
+
+        if ((int) $detail->order_id !== (int) $order->id) {
+            abort(404);
+        }
+
+        if ($order->status_name !== 'Preparing') {
+            return response()->json([
+                'message' => "Items can only be marked done while Order #{$order->order_number} is being prepared.",
+            ], 422);
+        }
+
+        $detail->update(['prepared_at' => $detail->prepared_at ? null : now()]);
+
+        $order->refresh()->load(['orderStatus', 'customer', 'walkInOrder', 'details.menuItem']);
+
+        return response()->json([
+            'message' => $detail->prepared_at
+                ? "{$detail->item_name} is done."
+                : "{$detail->item_name} is back to cooking.",
             'order'   => $this->serializeOrder($order),
         ]);
     }
@@ -373,9 +412,11 @@ class KitchenController extends Controller
             'can_revert'            => $canRevert,
             'previous_status_label' => $previousStatusLabels[$order->status_name] ?? null,
             'items'                 => $order->details->map(fn ($d) => [
+                'id'       => $d->id,
                 'name'     => $d->item_name,
                 'quantity' => $d->quantity,
                 'notes'    => $d->notes,
+                'done'     => $d->prepared_at !== null,
             ])->values(),
         ];
     }

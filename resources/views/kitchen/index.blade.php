@@ -67,11 +67,6 @@
     .ticket-card.status-ready     { border-left-color: var(--status-ready); }
     .ticket-card.status-completed { border-left-color: var(--status-completed); opacity: .82; }
 
-    .ticket-card.collapsed { padding: .5rem .7rem; }
-    .ticket-collapsed-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-    .ticket-order-number.small { font-size: .85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ticket-chip.small { font-size: .65rem; padding: .1rem .4rem; white-space: nowrap; flex-shrink: 0; }
-
     .pickup-day-heading {
         display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
         font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
@@ -102,6 +97,35 @@
     .ticket-item-qty { font-weight: 700; color: var(--primary); flex-shrink: 0; }
     .ticket-item-note { font-size: .72rem; color: var(--accent); font-style: italic; margin-top: -.1rem; margin-bottom: .2rem; }
     .ticket-more-items { font-size: .72rem; color: var(--muted); font-style: italic; }
+
+    /* ── Per-item done buttons (Preparing orders) ────────────── */
+    .ticket-progress { margin-top: .55rem; }
+    .ticket-progress-top { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: var(--muted); margin-bottom: .25rem; }
+    .ticket-progress-top strong { color: var(--dark); }
+    .ticket-progress-bar { height: 6px; border-radius: 50px; background: rgba(17,24,39,0.08); overflow: hidden; }
+    .ticket-progress-bar span { display: block; height: 100%; background: var(--status-ready); border-radius: 50px; transition: width .25s ease; }
+    .ticket-prep-items { display: flex; flex-direction: column; gap: .35rem; margin-top: .55rem; }
+    .prep-item {
+        display: flex; align-items: center; gap: .45rem;
+        background: rgba(17,24,39,0.035); border-radius: 9px; padding: .4rem .45rem .4rem .55rem;
+    }
+    .prep-item-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-preparing); flex-shrink: 0; }
+    .prep-item-main { flex: 1; min-width: 0; }
+    .prep-item-name { font-size: .8rem; font-weight: 600; color: var(--dark); }
+    .prep-item-name b { color: var(--primary); }
+    .prep-item-note { font-size: .7rem; color: var(--accent); font-style: italic; }
+    .prep-item-tag { font-size: .66rem; font-weight: 700; padding: .1rem .45rem; border-radius: 50px; flex-shrink: 0; background: rgba(245,158,11,0.14); color: #B45309; }
+    .prep-item-btn {
+        width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+        border: 1.5px solid var(--border); background: var(--white); color: var(--muted); font-size: .72rem;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+    .prep-item-btn:hover { border-color: var(--status-ready); color: var(--status-ready); }
+    .prep-item.done .prep-item-dot { background: var(--status-ready); }
+    .prep-item.done .prep-item-name { color: var(--muted); text-decoration: line-through; }
+    .prep-item.done .prep-item-tag { background: rgba(22,163,74,0.14); color: var(--status-ready); }
+    .prep-item.done .prep-item-btn { background: var(--status-ready); border-color: var(--status-ready); color: var(--white); }
+    .prep-item-btn:disabled { opacity: .6; cursor: wait; }
 
     .ticket-action-btn {
         width: 100%; margin-top: .6rem; padding: .5rem; border-radius: 8px;
@@ -347,6 +371,7 @@
     const COLUMN_IDS = { PendingOnline: 'col-PendingOnline', PendingWalkin: 'col-PendingWalkin', Preparing: 'col-Preparing', Ready: 'col-Ready', Completed: 'col-Completed' };
 
     let ordersCache = {};
+    let ordersList = [];   // last poll, in the server's order
 
     function formatTime(iso) {
         return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -378,30 +403,22 @@
         return (Date.now() - new Date(iso).getTime()) > 20 * 60 * 1000; // 20+ min old
     }
 
-    function renderCard(order, collapsed = false) {
+    function renderCard(order) {
         const cssClass = STATUS_CSS_CLASS[order.status] || 'status-pending';
 
-        if (collapsed) {
-            return `
-                <div class="ticket-card collapsed ${cssClass}" onclick="openDetailModal(${order.id})">
-                    <div class="ticket-collapsed-row">
-                        <span class="ticket-order-number small">#${order.order_number}</span>
-                        ${order.order_type === 'online' && order.pickup_at
-                            ? `<span class="ticket-chip small"><i class="fas fa-clock"></i> ${formatTime(order.pickup_at)}</span>`
-                            : `<span class="ticket-chip small">${order.order_type_label}</span>`}
+        // While preparing, every item is listed with its own Done button and a progress bar
+        const itemsHtml = order.status === 'Preparing'
+            ? renderPrepItems(order)
+            : `<div class="ticket-items">
+                ${order.items.slice(0, 4).map(item => `
+                    <div class="ticket-item-row">
+                        <span class="ticket-item-name">${item.name}</span>
+                        <span class="ticket-item-qty">×${item.quantity}</span>
                     </div>
-                </div>
-            `;
-        }
-
-        const itemsHtml = order.items.slice(0, 4).map(item => `
-            <div class="ticket-item-row">
-                <span class="ticket-item-name">${item.name}</span>
-                <span class="ticket-item-qty">×${item.quantity}</span>
-            </div>
-            ${item.notes ? `<div class="ticket-item-note"><i class="fas fa-note-sticky"></i> ${item.notes}</div>` : ''}
-        `).join('');
-        const moreCount = order.items.length - 4;
+                    ${item.notes ? `<div class="ticket-item-note"><i class="fas fa-note-sticky"></i> ${item.notes}</div>` : ''}
+                `).join('')}
+                ${order.items.length > 4 ? `<div class="ticket-more-items">+${order.items.length - 4} more item${order.items.length - 4 > 1 ? 's' : ''}</div>` : ''}
+            </div>`;
 
         let actionBtn = '';
         if (order.next_action) {
@@ -435,13 +452,67 @@
                     ${order.party_size ? `<span class="ticket-chip"><i class="fas fa-users"></i> ${order.party_size} pax</span>` : ''}
                     ${order.extra_prep_minutes > 0 ? `<span class="ticket-chip extended"><i class="fas fa-hourglass-half"></i> +${order.extra_prep_minutes}m added</span>` : ''}
                 </div>
-                <div class="ticket-items">
-                    ${itemsHtml}
-                    ${moreCount > 0 ? `<div class="ticket-more-items">+${moreCount} more item${moreCount > 1 ? 's' : ''}</div>` : ''}
-                </div>
+                ${itemsHtml}
                 ${actionBtn}
             </div>
         `;
+    }
+
+    // Progress bar + one row per item with a Done button (used on the card and in the detail modal)
+    function renderPrepItems(order) {
+        const doneCount = order.items.filter(i => i.done).length;
+        const pct = order.items.length ? Math.round(doneCount / order.items.length * 100) : 0;
+
+        return `
+            <div class="ticket-progress">
+                <div class="ticket-progress-top"><span>Items done</span><strong>${doneCount}/${order.items.length}</strong></div>
+                <div class="ticket-progress-bar"><span style="width:${pct}%"></span></div>
+            </div>
+            <div class="ticket-prep-items">
+                ${order.items.map(item => `
+                    <div class="prep-item ${item.done ? 'done' : ''}">
+                        <span class="prep-item-dot"></span>
+                        <div class="prep-item-main">
+                            <div class="prep-item-name"><b>${item.quantity}×</b> ${item.name}</div>
+                            ${item.notes ? `<div class="prep-item-note"><i class="fas fa-note-sticky"></i> ${item.notes}</div>` : ''}
+                        </div>
+                        <span class="prep-item-tag">${item.done ? 'Done' : 'Cooking'}</span>
+                        <button type="button" class="prep-item-btn" title="${item.done ? 'Undo — back to cooking' : 'Mark this item done'}"
+                                aria-label="${item.done ? 'Undo' : 'Mark done'}: ${item.name}"
+                                onclick="event.stopPropagation(); toggleItemDone(this, ${order.id}, ${item.id})"><i class="fas fa-check"></i></button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function toggleItemDone(btn, orderId, itemId) {
+        btn.disabled = true;
+        try {
+            const res = await fetch(`/kitchen/orders/${orderId}/items/${itemId}/done`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showToast(data.message || 'Failed to update the item.', 'error');
+                btn.disabled = false;
+                return;
+            }
+
+            ordersCache[orderId] = data.order;
+            ordersList = ordersList.map(o => o.id === orderId ? data.order : o);
+            renderBoard(ordersList);
+            // Keep the detail modal in step if it's open on this order
+            if (document.getElementById('orderDetailModal').classList.contains('open')
+                && document.getElementById('detailModalContent').dataset.orderId == orderId) {
+                openDetailModal(orderId);
+            }
+        } catch (e) {
+            showToast('Failed to update the item.', 'error');
+            btn.disabled = false;
+        }
     }
 
     function renderBoard(orders) {
@@ -478,14 +549,14 @@
             // Pending · Online is grouped under pick-up day headings (Today, Tomorrow, Sat, Oct 17 …)
             let lastDay = null;
             col.innerHTML = list.length
-                ? list.map((order, idx) => {
+                ? list.map(order => {
                     let heading = '';
                     if (key === 'PendingOnline') {
                         const day = order.pickup_at ? pickupDayLabel(order.pickup_at) : 'No pick-up time';
                         if (day !== lastDay) heading = `<div class="pickup-day-heading"><i class="fas fa-calendar-day"></i> ${day}</div>`;
                         lastDay = day;
                     }
-                    return heading + renderCard(order, idx > 0);
+                    return heading + renderCard(order);
                 }).join('')
                 : '<div class="kanban-empty">No orders</div>';
             document.getElementById('colCount' + key).textContent = list.length;
@@ -514,7 +585,10 @@
             const cssClass = STATUS_CSS_CLASS[order.status] || 'status-pending';
             const done = cssClass === 'status-completed';
             const items = order.items.slice(0, 3).map(i => `${i.name} ×${i.quantity}`).join(', ')
-                + (order.items.length > 3 ? ` +${order.items.length - 3} more` : '');
+                + (order.items.length > 3 ? ` +${order.items.length - 3} more` : '')
+                + (order.status === 'Preparing'
+                    ? `<div class="kt-sub"><i class="fas fa-check"></i> ${order.items.filter(i => i.done).length}/${order.items.length} items done</div>`
+                    : '');
             const time = order.order_type === 'online' && order.pickup_at
                 ? `<div>${formatTime(order.created_at)}</div><div class="kt-sub"><i class="fas fa-calendar-day"></i> Pickup ${formatPickup(order.pickup_at)}</div>`
                 : formatTime(order.created_at);
@@ -561,6 +635,7 @@
             const res = await fetch("{{ route('kitchen.orders') }}", { headers: { Accept: 'application/json' } });
             const data = await res.json();
             ordersCache = Object.fromEntries(data.orders.map(o => [o.id, o]));
+            ordersList = data.orders;
             renderBoard(data.orders);
         } catch (e) {
             console.error('Failed to poll kitchen orders', e);
@@ -579,7 +654,7 @@
         const order = ordersCache[orderId];
         if (!order) return;
 
-        const itemsHtml = order.items.map(item => `
+        const itemsHtml = order.status === 'Preparing' ? renderPrepItems(order) : order.items.map(item => `
             <div class="detail-item-row">
                 <div>
                     <div>${item.name}${item.notes ? `<div class="detail-item-note"><i class="fas fa-note-sticky"></i> ${item.notes}</div>` : ''}</div>
@@ -600,6 +675,7 @@
             ? `<button type="button" class="ticket-extend-btn-wide" onclick="confirmExtendPrep(${order.id})"><i class="fas fa-clock-rotate-left"></i> Extend Prep Time (+10 min)</button>`
             : '';
 
+        document.getElementById('detailModalContent').dataset.orderId = order.id;
         document.getElementById('detailModalContent').innerHTML = `
             <div class="detail-header">
                 <div>
