@@ -168,7 +168,7 @@
 
                         {{-- Scheduled pickup: Advance Order = date + time, Pick-Up = time only (today) --}}
                         <div class="field" id="onlinePickupField">
-                            <label id="pickupLabel">Scheduled Pick-up Date &amp; Time</label>
+                            <label id="pickupLabel">Scheduled Date &amp; Time</label>
                             <div class="pickup-row">
                                 <input type="hidden" id="pickup_date"
                                        data-min="{{ now()->format('Y-m-d') }}" data-max="{{ now()->addDays(\App\Models\Order::ADVANCE_MAX_DAYS)->format('Y-m-d') }}">
@@ -201,7 +201,7 @@
 
                 {{-- Payment via GCash QR --}}
                 <div class="card" id="paymentCard">
-                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay with GCash (Scan QR)</h2></div>
+                    <div class="card-header"><h2><i class="fas fa-qrcode"></i> Pay (Scan QR)</h2></div>
                     <div class="card-body">
                         <div class="option-grid">
                             @php $halfAllowed = $cart->total >= \App\Models\Order::HALF_PAYMENT_MIN_TOTAL; @endphp
@@ -264,7 +264,7 @@
                     <div class="summary-row total"><span>Grand Total</span><span class="amt">₱{{ number_format($cart->total, 2) }}</span></div>
 
                     <button type="submit" class="btn btn-primary" id="confirmOrderBtn" style="margin-top:1.1rem">
-                        <i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>
+                        <i class="fas fa-check-circle"></i> <span>Show QR Code</span>
                     </button>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline" style="margin-top:.6rem">
                         <i class="fas fa-arrow-left"></i> Back to Cart
@@ -424,7 +424,7 @@ function applySchedule() {
     const timeOnly = schedule === 'pickup';
     pickupRow.classList.toggle('time-only', timeOnly);
     document.getElementById('partySizeField').style.display = timeOnly ? 'none' : '';
-    document.getElementById('pickupLabel').textContent = timeOnly ? 'Pick-up Time (Today)' : 'Scheduled Pick-up Date & Time';
+    document.getElementById('pickupLabel').textContent = timeOnly ? 'Pick-up Time (Today)' : 'Scheduled Date & Time';
 
     if (timeOnly) {
         DatePick.set('pickup_date', TODAY);
@@ -503,7 +503,7 @@ async function submitCheckout() {
         if (! res.ok) {
             showToast(data.message || 'Something went wrong. Please try again.', 'error');
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>';
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show QR Code</span>';
             return;
         }
 
@@ -511,7 +511,7 @@ async function submitCheckout() {
     } catch (err) {
         showToast('Something went wrong. Please try again.', 'error');
         confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show GCash QR Code</span>';
+        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Show QR Code</span>';
     }
 }
 </script>

@@ -99,7 +99,7 @@
     @php $qrIssue = $paymentProof->status === 'failed' ? 'failed' : ($paymentProof->isQrExpired() ? 'expired' : null); @endphp
 
     <div class="card" id="qrCard">
-        <div class="card-header"><h2><i class="fas fa-mobile-screen-button"></i> GCash QR Code</h2></div>
+        <div class="card-header"><h2><i class="fas fa-mobile-screen-button"></i> QR Code</h2></div>
         <div class="card-body">
             <div class="qr-box">
                 <img src="{{ $paymentProof->paymongo_checkout_url }}" alt="Scan with GCash to pay" id="qrImage" style="{{ $qrIssue ? 'opacity:.35' : '' }}">
