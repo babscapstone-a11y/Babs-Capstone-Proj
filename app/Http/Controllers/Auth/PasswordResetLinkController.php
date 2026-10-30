@@ -18,8 +18,24 @@ class PasswordResetLinkController extends Controller
     /**
      * Display the forgot-password (request a reset code) view.
      */
-    public function create(): View
+    public function create(Request $request): View|RedirectResponse
     {
+        // "Send again" asks for a fresh code, so forget the one this browser is waiting on
+        if ($request->boolean('new')) {
+            $request->session()->forget('password_reset_otp_email');
+        }
+
+        // A code was already sent and is still valid (e.g. the page was refreshed while the
+        // email was sending): go straight to where it's entered instead of asking again
+        $pendingEmail = $request->session()->get('password_reset_otp_email');
+
+        if ($pendingEmail && ! $request->session()->has('errors')
+            && PasswordResetOtp::where('email', $pendingEmail)->where('expires_at', '>', now())->exists()) {
+            $request->session()->reflash();
+
+            return redirect()->route('password.otp.verify');
+        }
+
         return view('auth.forgot-password');
     }
 

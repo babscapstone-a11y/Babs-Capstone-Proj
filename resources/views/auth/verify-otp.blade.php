@@ -374,7 +374,7 @@
             </form>
 
             <!-- Back to forgot password -->
-            <a href="{{ route('password.request') }}" class="btn-back" aria-label="Request a new code">
+            <a href="{{ route('password.request', ['new' => 1]) }}" class="btn-back" aria-label="Request a new code">
                 <i class="fas fa-arrow-rotate-left" aria-hidden="true"></i>
                 Didn't get a code? Send again
             </a>
