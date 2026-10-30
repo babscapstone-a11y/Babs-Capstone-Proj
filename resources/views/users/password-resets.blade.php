@@ -155,15 +155,18 @@
                         <td>
                             @if($req->isPending())
                             <div class="row-acts">
-                                {{-- Approve --}}
-                                <form method="POST"
-                                      action="{{ route('password-reset-requests.approve', $req) }}"
-                                      onsubmit="return confirm('Approve this request and reset {{ addslashes($req->user?->name ?? 'this staff member') }}\'s password to their default (last name + birthday)? They will set a new one when they log in.')">
-                                    @csrf @method('PUT')
-                                    <button type="submit" class="act-btn act-success" title="Approve & Reset to Default Password" aria-label="Approve and reset to default password">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                </form>
+                                {{-- Approve (the app's confirmation box, not the browser's) --}}
+                                <button type="button" class="act-btn act-success" title="Approve & Reset to Default Password" aria-label="Approve and reset to default password"
+                                    onclick="openModal({{ Js::from([
+                                        'title'       => 'Approve Password Reset?',
+                                        'desc'        => 'Reset ' . ($req->user?->name ?? 'this staff member') . "'s password to their default (last name + birthday)? They will set a new one when they log in.",
+                                        'action'      => route('password-reset-requests.approve', $req),
+                                        'method'      => 'PUT',
+                                        'iconClass'   => 'fas fa-key',
+                                        'confirmText' => 'Approve & Reset',
+                                    ]) }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
 
                                 {{-- Reject --}}
                                 <button type="button" class="act-btn act-danger" title="Reject" aria-label="Reject"
