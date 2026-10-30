@@ -29,7 +29,12 @@
             --status-packaged:  #F59E0B;
         }
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { overflow-x: hidden; }
+        /* clip (not hidden) so the page still scrolls as one and sticky parts (top bar,
+           order panel) stay pinned; hidden is the fallback for older browsers */
+        html, body { overflow-x: hidden; overflow-x: clip; }
+        /* No elastic "pull past the top/bottom" bounce, and no white showing behind the page if a browser still does it */
+        html, body { overscroll-behavior: none; }
+        html { background: var(--bg); }
         body { font-family: 'Poppins', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--dark); width: 100%; }
         a { text-decoration: none; }
 

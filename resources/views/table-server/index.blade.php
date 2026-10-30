@@ -12,7 +12,11 @@
     @media (max-width: 1000px) { .ts-layout { grid-template-columns: 1fr; } }
 
     /* ── Search + category chips ────────────────────────── */
-    .ts-search-row { margin-bottom: 1.1rem; }
+    /* Pinned under the top bar; only the menu below scrolls */
+    .ts-search-row {
+        position: sticky; top: var(--ts-header-h, 70px); z-index: 20;
+        background: var(--bg); margin: -1.5rem 0 1.1rem; padding: 1.5rem 0 .6rem;
+    }
     .ts-search {
         display: flex; align-items: center; gap: .6rem;
         background: var(--white); border: 1.5px solid var(--border);
@@ -102,9 +106,12 @@
     /* ── Order Summary panel ─────────────────────────────── */
     .order-panel {
         background: var(--white); border-radius: 16px; border: 1px solid var(--border);
-        box-shadow: 0 4px 18px rgba(0,0,0,0.06); position: sticky; top: 90px;
-        display: flex; flex-direction: column; max-height: calc(100vh - 110px);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+        position: sticky; top: calc(var(--ts-header-h, 70px) + 1.5rem);
+        display: flex; flex-direction: column; max-height: calc(100vh - var(--ts-header-h, 70px) - 3rem);
     }
+    /* One column on small screens: the panel sits under the menu, so it isn't pinned there */
+    @media (max-width: 1000px) { .order-panel { position: static; max-height: none; } }
     .order-panel-header { padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--border); }
     .order-panel-title { font-size: 1rem; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: .5rem; }
     .table-number-row { margin-top: .8rem; }
