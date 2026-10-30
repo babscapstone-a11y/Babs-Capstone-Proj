@@ -83,7 +83,7 @@
     </div>
 
     <form method="POST" action="{{ route('discounts.update', $discount) }}" id="discountForm"
-          onsubmit="return confirm('Save changes to discount \'' + document.querySelector('[name=discount_name]').value + '\'?')">
+          onsubmit="event.preventDefault(); confirmDiscountSave(this)">
         @csrf @method('PUT')
         <div class="form-grid">
 
@@ -234,5 +234,17 @@ function updatePreview(){const name=document.querySelector('[name=discount_name]
 function updateStatusUI(){const isActive=document.getElementById('st_active').checked;document.getElementById('stBtnActive').className='status-btn'+(isActive?' active-s':'');document.getElementById('stBtnInactive').className='status-btn'+(!isActive?' inactive-s':'');document.getElementById('statusNote').textContent=isActive?'Active discounts are available for walk-in orders in the POS.':'Inactive discounts are stored but not available for selection.';}
 document.querySelector('[name=discount_name]').addEventListener('input',updatePreview);
 window.addEventListener('DOMContentLoaded',function(){updateTypeUI();updateConditions();updateStatusUI();updatePreview();});
+
+// Save Changes asks with the app's confirmation box (not the browser's pop-up); form.submit() then skips this handler
+function confirmDiscountSave(form) {
+    const name = form.querySelector('[name=discount_name]').value.trim() || 'this discount';
+    openModal({
+        title: 'Save Changes?',
+        desc: `Save the changes to the discount "${name}"?`,
+        iconClass: 'fas fa-floppy-disk',
+        confirmText: 'Save Changes',
+        onConfirm: () => form.submit(),
+    });
+}
 </script>
 @endsection

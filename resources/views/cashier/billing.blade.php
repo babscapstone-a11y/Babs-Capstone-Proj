@@ -358,14 +358,15 @@
     }
 
     /* ── Billing panel (right side) ── */
+    // Fetched fresh for every bill opened: this screen stays open all day, so a discount the
+    // admin deactivates (or adds) must show up without reloading. Keeps the last list if offline.
     async function ensureDiscountsLoaded() {
-        if (discountsCache.length) return discountsCache;
         try {
             const res = await fetch(DISCOUNTS_URL, { headers: { Accept: 'application/json' } });
             const data = await res.json();
             discountsCache = data.discounts;
         } catch (e) {
-            discountsCache = [];
+            // keep whatever was loaded last
         }
         return discountsCache;
     }
