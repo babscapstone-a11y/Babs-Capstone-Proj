@@ -83,7 +83,8 @@ class PasswordResetLinkController extends Controller
 
             if (! $staffUser->isAdmin() && $staffUser->passwordResetRequests()->pending()->exists()) {
                 return redirect()->route('password.request')
-                    ->with('status', self::awaitingApprovalMessage());
+                    ->with('status', self::awaitingApprovalMessage())
+                    ->with('reset_request_submitted', true);
             }
 
             try {

@@ -108,7 +108,8 @@ class OtpPasswordResetController extends Controller
             }
 
             return redirect()->route('password.request')
-                ->with('status', PasswordResetLinkController::awaitingApprovalMessage());
+                ->with('status', PasswordResetLinkController::awaitingApprovalMessage())
+                ->with('reset_request_submitted', true);
         }
 
         // Admins and customers set a new password themselves

@@ -319,7 +319,9 @@
             </div>
 
             <h2 id="reset-heading">Reset Your Password</h2>
-            <p class="reset-sub">Enter the email address associated with your account.</p>
+            {{-- A staff reset request was just submitted: nothing more to enter here, only Back to Login --}}
+            @php $requestSubmitted = (bool) session('reset_request_submitted'); @endphp
+            <p class="reset-sub">{{ $requestSubmitted ? 'Your request is waiting for an admin.' : 'Enter the email address associated with your account.' }}</p>
 
             <div class="divider"></div>
 
@@ -332,6 +334,7 @@
             @endif
 
             <!-- ── Form ── -->
+            @unless($requestSubmitted)
             <form method="POST" action="{{ route('password.email') }}" id="resetForm" novalidate>
                 @csrf
 
@@ -368,6 +371,7 @@
                 </button>
 
             </form>
+            @endunless
 
             <!-- Back to login -->
             <a href="{{ route('login') }}" class="btn-back" aria-label="Back to Login">
@@ -375,9 +379,11 @@
                 Back to Login
             </a>
 
+            @unless($requestSubmitted)
             <p class="signin-link">
                 Remember your password?&nbsp;<a href="{{ route('login') }}">Sign In</a>
             </p>
+            @endunless
 
         </div>
     </div>
