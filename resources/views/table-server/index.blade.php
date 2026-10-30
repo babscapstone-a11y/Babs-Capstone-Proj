@@ -30,6 +30,8 @@
         flex: 1; border: none; outline: none; background: transparent;
         font-family: inherit; font-size: .9rem; padding: .7rem 0;
     }
+    /* No blue focus box from the Tailwind forms plugin — the rounded bar turns red instead */
+    .ts-search input:focus { border: none; outline: none; box-shadow: none; }
     .ts-search button {
         padding: .55rem 1.2rem; border-radius: 50px; border: none;
         background: var(--primary); color: #fff; font-weight: 600; font-size: .84rem;
