@@ -158,6 +158,13 @@ class OtpPasswordResetController extends Controller
                 ->withErrors(['email' => PasswordResetLinkController::lockedResetMessage($email)]);
         }
 
+        // Resetting to the password they already have changes nothing — tell them
+        if (Hash::check($request->password, $user->password)) {
+            return back()->withErrors([
+                'password' => 'This is the same as your current password. Please choose a different one.',
+            ]);
+        }
+
         $user->forceFill([
             'password' => Hash::make($request->password),
             'remember_token' => Str::random(60),
