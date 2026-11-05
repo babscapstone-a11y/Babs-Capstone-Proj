@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use App\Models\EmailVerificationOtp;
 use App\Notifications\EmailVerificationOtpNotification;
 use App\Support\LoginLockout;
+use App\Support\SingleSession;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -58,9 +59,11 @@ class LoginRequest extends FormRequest
         // customers only ever have an email, so a bare username never matches them.
         $staffCredentials = [$isEmail ? 'email' : 'username' => $login, 'password' => $this->password];
 
-        if (Auth::guard('staff')->attempt($staffCredentials, $this->boolean('remember'))) {
+        // validate() only checks the password; the actual sign-in happens at the end, once
+        // every check below has passed (so a refused login never touches the other device).
+        if (Auth::guard('staff')->validate($staffCredentials)) {
             $guard = 'staff';
-        } elseif ($isEmail && Auth::guard('customer')->attempt(['email' => $login, 'password' => $this->password], $this->boolean('remember'))) {
+        } elseif ($isEmail && Auth::guard('customer')->validate(['email' => $login, 'password' => $this->password])) {
             $guard = 'customer';
         } else {
             RateLimiter::hit($this->throttleKey());
@@ -76,24 +79,25 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // The account whose password just matched
+        $user = Auth::guard($guard)->getLastAttempted();
+
         // REQ012: Reject inactive accounts immediately on login
-        if (! Auth::guard($guard)->user()->isActive()) {
+        if (! $user->isActive()) {
             // Customers are told why (the reason the admin entered). This only runs after the
             // password was accepted, so the reason isn't shown to anyone else.
             $message = $guard === 'customer'
-                ? Auth::guard($guard)->user()->deactivationNotice()
+                ? $user->deactivationNotice()
                 : 'Your account has been deactivated. Please contact the administrator.';
 
-            Auth::guard($guard)->logout();
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages(['login' => $message]);
         }
 
         // Customers must verify their email before they can log in.
-        if ($guard === 'customer' && ! Auth::guard($guard)->user()->isEmailVerified()) {
-            $customer = Auth::guard($guard)->user();
-            Auth::guard($guard)->logout();
+        if ($guard === 'customer' && ! $user->isEmailVerified()) {
+            $customer = $user;
             RateLimiter::hit($this->throttleKey());
 
             $otp = (string) random_int(100000, 999999);
@@ -116,6 +120,13 @@ class LoginRequest extends FormRequest
                 'login' => 'Please verify your email before logging in. We\'ve sent a new verification code to your email address.',
             ]);
         }
+
+        // One login per account: refuse while it's still signed in on another device
+        if (SingleSession::isInUseElsewhere($user, $this->session()->getId())) {
+            throw ValidationException::withMessages(['login' => SingleSession::IN_USE_MESSAGE]);
+        }
+
+        Auth::guard($guard)->login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
         LoginLockout::clear($login);

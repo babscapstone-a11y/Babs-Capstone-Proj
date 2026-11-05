@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\SingleSession;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,12 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // This browser's session is now the account's only one (see App\Support\SingleSession)
+        SingleSession::claim(
+            Auth::guard('customer')->user() ?? Auth::guard('staff')->user(),
+            $request->session()->getId()
+        );
 
         // Role-based hard redirect — clear stored intended URL so login never
         // bounces a customer to /dashboard (admin-only) or vice versa.
@@ -51,6 +58,11 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        // Free the account so it can be logged into from another device right away
+        if ($user = Auth::guard('customer')->user() ?? Auth::guard('staff')->user()) {
+            SingleSession::release($user, $request->session()->getId());
+        }
+
         if (Auth::guard('customer')->check()) {
             Auth::guard('customer')->logout();
         } else {

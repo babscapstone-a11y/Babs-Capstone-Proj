@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\SingleSession;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +47,9 @@ class FirstPasswordController extends Controller
             'must_change_password' => false,
         ])->save();
 
-        $request->session()->regenerate();
+        // New session id: delete the old one and move the account's single login over to it
+        $request->session()->regenerate(true);
+        SingleSession::claim($user, $request->session()->getId());
 
         return redirect($user->homeRoute())
             ->with('success', 'Your new password has been saved.');

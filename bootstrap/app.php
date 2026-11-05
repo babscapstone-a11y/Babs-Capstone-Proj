@@ -47,6 +47,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Enforce active-account check on every authenticated web request
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureAccountIsActive::class);
 
+        // One login per account: a session that isn't the account's current one is signed out
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnforceSingleSession::class);
+
         // Staff still on a default password must set their own before using the system
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
 
