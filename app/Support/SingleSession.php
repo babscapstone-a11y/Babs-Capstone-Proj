@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 class SingleSession
 {
     public const IN_USE_MESSAGE = 'This account is already logged in on another device. '
-        . 'Log out there first, or wait for that session to expire.';
+        . 'Log out there first.';
 
     /** The `users` row behind a signed-in staff member or customer. */
     public static function accountId(Authenticatable $user): int
