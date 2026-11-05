@@ -81,11 +81,16 @@
             </table>
         </div>
 
-        @if($orders->hasPages())
         <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:center">
-            {{ $orders->links() }}
+            @if($orders->hasPages())
+                {{ $orders->onEachSide(1)->links() }}
+            @else
+                {{-- Everything fits on one page: no page buttons, just the count --}}
+                <p style="font-size:.78rem;color:var(--muted);margin:0">
+                    Showing {{ $orders->firstItem() }}–{{ $orders->lastItem() }} of {{ $orders->total() }} {{ Str::plural('order', $orders->total()) }}
+                </p>
+            @endif
         </div>
-        @endif
     @endif
 </div>
 

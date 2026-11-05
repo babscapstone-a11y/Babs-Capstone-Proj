@@ -106,7 +106,7 @@ class TableServerOrderController extends Controller
         $orders = Order::whereHas('walkInOrder', fn ($w) => $w->where('placed_by', auth()->id()))
             ->with(['orderStatus', 'details', 'walkInOrder'])
             ->latest()
-            ->paginate(15);
+            ->paginate(10);
 
         return view('table-server.orders.index', compact('orders'));
     }
