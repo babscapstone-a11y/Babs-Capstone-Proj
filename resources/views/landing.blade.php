@@ -26,6 +26,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
+        /* Lock the page in place: no elastic "pull past the top/bottom" bounce that
+           shows a blank strip above or below the page */
+        html, body { overscroll-behavior: none; }
+
         :root{
             --primary-red: #E30613;
             --black: #000000;

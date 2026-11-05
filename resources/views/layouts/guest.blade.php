@@ -15,6 +15,12 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        {{-- Lock the page in place: no elastic "pull past the top/bottom" bounce that
+             shows a white strip above or below the page --}}
+        <style>
+            html, body { overscroll-behavior: none; }
+        </style>
     </head>
     <body class="font-sans text-gray-900 antialiased">
         @php $full = $attributes->has('full'); @endphp
