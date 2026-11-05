@@ -183,7 +183,9 @@
                 <p class="mb-0"><strong>Vision:</strong> To be the community's favorite choice for comfort food and convenient online ordering.</p>
             </div>
             <div class="col-12 col-md-6">
-                <img src="https://via.placeholder.com/800x500?text=Restaurant+Interior" alt="Restaurant" class="img-fluid rounded shadow-sm">
+                {{-- Daytime photo in light mode, evening photo in dark mode (same switch as the logo) --}}
+                <img src="{{ asset('images/BabsRestoMorning.jpg') }}" alt="BAB'S RESTO storefront in the daytime" class="img-fluid w-100 rounded shadow-sm theme-logo-light" loading="lazy">
+                <img src="{{ asset('images/BabsRestoEvening.jpg') }}" alt="BAB'S RESTO storefront lit up at night" class="img-fluid w-100 rounded shadow-sm theme-logo-dark" loading="lazy">
             </div>
         </div>
     </div>
