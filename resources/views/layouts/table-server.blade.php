@@ -213,11 +213,37 @@
         }
         .ts-notif-foot:hover { background: #FEF2F2; }
 
+        /* ── Responsive top bar ───────────────────────────────
+           Labels never wrap onto two lines; as the screen narrows the bar drops the
+           least-needed parts first: clock → staff name → button labels (icons stay). */
+        .kds-brand, .kds-staff, .nav-link-ts, .btn-logout-kds, .ts-bell { flex-shrink: 0; }
+        .kds-brand-text, .kds-brand-sub, .kds-staff-name, .kds-staff-role,
+        .nav-link-ts, .btn-logout-kds { white-space: nowrap; }
+
+        @media (max-width: 1280px) {
+            .kds-topbar-right { gap: 1rem; }
+            .kds-datetime { display: none; }
+        }
+        @media (max-width: 1100px) {
+            .kds-topbar { padding: .75rem 1.25rem; }
+            .kds-topbar-right { gap: .65rem; }
+            .kds-staff > div:last-child { display: none; }     /* keep the avatar, hide name + role */
+            .kds-brand-sub { display: none; }
+        }
+        @media (max-width: 820px) {
+            .btn-logout-kds .btn-label { display: none; }
+            .btn-logout-kds { padding: .55rem .75rem; }
+        }
         @media (max-width: 768px) {
             .ts-notif-panel { right: 1rem !important; left: 1rem; width: auto; }
-            .kds-topbar { padding: .75rem 1rem; flex-wrap: wrap; gap: .6rem; }
+            .kds-topbar { padding: .75rem 1rem; gap: .6rem; }
             .kds-content { padding: 1rem; }
-            .kds-datetime { display: none; }
+        }
+        @media (max-width: 680px) {
+            .nav-link-ts .btn-label { display: none; }
+            .nav-link-ts { padding: .55rem .75rem; }
+            .kds-brand > div:last-child { display: none; }     /* logo badge only */
+            .kds-topbar-right { gap: .5rem; }
         }
     </style>
 
@@ -244,8 +270,8 @@
             @endphp
             @foreach($tsNavItems as $navItem)
                 @if(! $navItem['active'])
-                <a href="{{ route($navItem['route']) }}" class="nav-link-ts">
-                    <i class="fas {{ $navItem['icon'] }}"></i> {{ $navItem['label'] }}
+                <a href="{{ route($navItem['route']) }}" class="nav-link-ts" title="{{ $navItem['label'] }}" aria-label="{{ $navItem['label'] }}">
+                    <i class="fas {{ $navItem['icon'] }}"></i> <span class="btn-label">{{ $navItem['label'] }}</span>
                 </a>
                 @endif
             @endforeach
@@ -285,13 +311,13 @@
             <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                 @csrf
             </form>
-            <button type="button" class="btn-logout-kds" onclick="openConfirmModal({
+            <button type="button" class="btn-logout-kds" title="Sign Out" aria-label="Sign Out" onclick="openConfirmModal({
                     title: 'Log Out?',
                     desc: 'Are you sure you want to log out of your account?',
                     confirmText: 'Log Out',
                     onConfirm: () => document.getElementById('logoutForm').submit(),
                 })">
-                <i class="fas fa-right-from-bracket"></i> Sign Out
+                <i class="fas fa-right-from-bracket"></i> <span class="btn-label">Sign Out</span>
             </button>
         </div>
     </header>
