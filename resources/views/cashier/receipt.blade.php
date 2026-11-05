@@ -77,10 +77,37 @@
         }
 
         @media print {
+            @page { margin: 0; }
             body { background: #fff; padding: 0; }
             .receipt-actions { display: none; }
             .receipt-paper { box-shadow: none; border-radius: 0; padding: 0; }
         }
+
+        /* ── Thermal printer layout (58mm roll, 48mm / 384-dot printable width, black only) ──
+           Switched on just before printing (see the script below) so the on-screen preview keeps its look.
+           Pure black, no grey/colour (thermal heads dither them into faint dots), no small text below 7pt. */
+        html.thermal-print { zoom: 1 !important; }   /* undo the pop-up's fit-to-screen shrink */
+        html.thermal-print body { background: #fff; padding: 0; margin: 0; overflow: visible; color: #000;
+            font-family: Arial, Helvetica, sans-serif; }
+        html.thermal-print .receipt-actions,
+        html.thermal-print .r-logo { display: none; }
+        html.thermal-print .receipt-wrap { max-width: none; width: 48mm; margin: 0 auto; }
+        html.thermal-print .receipt-paper { box-shadow: none; border-radius: 0; padding: 2mm 0 8mm; }  /* 8mm feed before the tear/cut */
+        html.thermal-print .r-name { font-size: 12pt; font-weight: 700; color: #000; }
+        html.thermal-print .r-sub { font-size: 7pt; color: #000; margin-top: .5mm; line-height: 1.25; }
+        html.thermal-print .r-divider { border-top: 1px dashed #000; margin: 2mm 0; }
+        html.thermal-print .r-row { font-size: 8pt; padding: .3mm 0; flex-wrap: wrap; gap: 0 1.5mm; line-height: 1.25; }
+        html.thermal-print .r-row .label { color: #000; }
+        html.thermal-print .r-row .value { font-weight: 700; margin-left: auto; }   /* a long value drops to its own line, right-aligned */
+        html.thermal-print .r-items .item-line { font-size: 8pt; padding: .6mm 0; gap: 1.5mm; line-height: 1.25; }
+        html.thermal-print .r-items .item-line > div:last-child { white-space: nowrap; font-weight: 700; }
+        html.thermal-print .r-items .item-name { font-weight: 700; }
+        html.thermal-print .r-items .item-qty-price { color: #000; font-size: 7.5pt; }
+        html.thermal-print .r-summary .r-row.grand { font-size: 11pt; font-weight: 700; border-top: 1px solid #000; margin-top: 1mm; padding-top: 1mm; }
+        html.thermal-print .r-summary .r-row .neg { color: #000; }
+        html.thermal-print .r-summary .r-row.vat { font-size: 7.5pt; padding-left: 2mm; }
+        html.thermal-print .r-footer { color: #000; font-size: 8pt; font-weight: 700; margin-top: 3mm; }
+        html.thermal-print .r-footer-sub { color: #000; font-size: 7pt; }
     </style>
 </head>
 <body class="{{ request()->boolean('embed') ? 'embedded' : '' }}">
@@ -102,7 +129,7 @@
             <hr class="r-divider">
 
             <div class="r-row"><span class="label">Receipt No.</span><span class="value">{{ $payment->receipt_number }}</span></div>
-            <div class="r-row"><span class="label">Transaction No.</span><span class="value">{{ $payment->transaction_number }}</span></div>
+            <div class="r-row"><span class="label">Trans. No.</span><span class="value">{{ $payment->transaction_number }}</span></div>
             <div class="r-row"><span class="label">Order No.</span><span class="value">#{{ $payment->order?->order_number }}</span></div>
             <div class="r-row"><span class="label">Date &amp; Time</span><span class="value">{{ $payment->payment_date?->format('M d, Y h:i A') }}</span></div>
             <div class="r-row"><span class="label">Cashier</span><span class="value">{{ $payment->cashier?->staff?->full_name ?? $payment->cashier?->email ?? '—' }}</span></div>
@@ -174,6 +201,57 @@
             <div class="r-footer-sub">This receipt was generated electronically.</div>
         </div>
     </div>
+
+    <script>
+        /* Prints on the 58mm thermal roll: right before the print dialog opens, switch to the thermal
+           layout, measure how long the receipt is, and set the page to exactly 58mm × that length —
+           so the printer feeds only as much paper as the receipt needs (and "Save as PDF" gives a
+           receipt-sized PDF). Everything goes back to the normal look once the dialog closes. */
+        (function () {
+            const PAPER_WIDTH_MM = 58;
+            const PX_TO_MM = 25.4 / 96;
+
+            window.addEventListener('beforeprint', () => {
+                document.documentElement.classList.add('thermal-print');
+                const paper = document.querySelector('.receipt-paper');
+                const lengthMm = Math.ceil(paper.getBoundingClientRect().height * PX_TO_MM) + 2;
+
+                let style = document.getElementById('thermalPage');
+                if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'thermalPage';
+                    document.head.appendChild(style);
+                }
+                style.textContent = `@page { size: ${PAPER_WIDTH_MM}mm ${lengthMm}mm; margin: 0; }`;
+            });
+
+            window.addEventListener('afterprint', () => {
+                document.documentElement.classList.remove('thermal-print');
+            });
+        })();
+
+        /* For printing straight to the thermal printer over USB (public/js/thermal-printer.js):
+           draws the receipt, in the thermal layout, as a picture exactly as wide as the printer's
+           print head (384 dots), then puts the page back to its normal look. */
+        window.renderThermalReceipt = async function (dotsWide) {
+            const root = document.documentElement;
+            root.classList.add('thermal-print');
+            try {
+                await document.fonts.ready;
+                const paper = document.querySelector('.receipt-paper');
+                return await html2canvas(paper, {
+                    scale: dotsWide / paper.getBoundingClientRect().width,   // 48mm of receipt → 384 dots
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    windowWidth: root.scrollWidth,
+                    windowHeight: root.scrollHeight,
+                });
+            } finally {
+                root.classList.remove('thermal-print');
+            }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 
 </body>
 </html>

@@ -233,7 +233,7 @@
         </div>
         <div class="receipt-modal-actions">
             <button type="button" class="btn btn-primary" id="receiptPrintBtn" onclick="printReceiptFrame()" disabled><i class="fas fa-print"></i> Print Receipt</button>
-            <button type="button" class="btn btn-outline" id="receiptPdfBtn" onclick="printReceiptFrame()" disabled title="Choose “Save as PDF” as the printer"><i class="fas fa-file-pdf"></i> Save as PDF</button>
+            <button type="button" class="btn btn-outline" id="receiptPdfBtn" onclick="saveReceiptPdf()" disabled title="Choose “Save as PDF” as the printer"><i class="fas fa-file-pdf"></i> Save as PDF</button>
         </div>
     </div>
 </div>
@@ -241,6 +241,7 @@
 @endsection
 
 @section('scripts')
+<script src="{{ asset('js/thermal-printer.js') }}?v={{ filemtime(public_path('js/thermal-printer.js')) }}"></script>
 <script>
     const MENU_PLACEHOLDER = "{{ asset('images/menu-placeholder.png') }}";
     const ORDERS_URL     = "{{ route('cashier.orders.index') }}";
@@ -1143,9 +1144,31 @@
         document.getElementById('receiptFrame').src = 'about:blank';
     }
 
-    // Prints only the receipt (the pop-up's page), not the billing screen behind it.
-    // "Save as PDF" is the same dialog with "Save as PDF" picked as the printer.
-    function printReceiptFrame() {
+    // Prints the receipt straight to the thermal printer over USB (public/js/thermal-printer.js):
+    // no print dialog. The first time, the browser asks the cashier to pick the printer once.
+    async function printReceiptFrame() {
+        const btn = document.getElementById('receiptPrintBtn');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin"></span> Printing...';
+        try {
+            await ThermalPrinter.printReceipt(document.getElementById('receiptFrame').contentWindow);
+            showToast('Receipt sent to the printer.', 'success');
+        } catch (err) {
+            // Closing the "pick a printer" box without choosing one isn't an error worth shouting about
+            const message = err.name === 'NotFoundError'
+                ? 'No printer selected. Make sure the thermal printer is plugged in and turned on.'
+                : 'Could not print: ' + err.message;
+            showToast(message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    }
+
+    // "Save as PDF" uses the browser's print dialog with "Save as PDF" picked as the printer;
+    // only the receipt (the pop-up's page) is printed, in the 58mm thermal layout.
+    function saveReceiptPdf() {
         const frame = document.getElementById('receiptFrame');
         frame.contentWindow.focus();
         frame.contentWindow.print();
