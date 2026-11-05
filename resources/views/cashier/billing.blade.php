@@ -1155,10 +1155,11 @@
             await ThermalPrinter.printReceipt(document.getElementById('receiptFrame').contentWindow);
             showToast('Receipt sent to the printer.', 'success');
         } catch (err) {
-            // Closing the "pick a printer" box without choosing one isn't an error worth shouting about
             const message = err.name === 'NotFoundError'
-                ? 'No printer selected. Make sure the thermal printer is plugged in and turned on.'
-                : 'Could not print: ' + err.message;
+                ? 'No printer was chosen. Click Print Receipt again and pick the thermal printer in the box that appears.'
+                : err.name === 'PrinterBusyError'
+                    ? err.message
+                    : 'Could not print: ' + err.message;
             showToast(message, 'error');
         } finally {
             btn.disabled = false;

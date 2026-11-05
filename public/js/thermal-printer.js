@@ -44,11 +44,19 @@ window.ThermalPrinter = (function () {
             i.alternates.some(a => a.interfaceClass === USB_PRINTER_CLASS)));
     }
 
+    /* Connects for one print. Windows lets only one tab/program use the printer at a time, so
+       the connection is closed again right after printing (disconnect) — otherwise a tab that
+       printed once would keep every other tab, and the live site, locked out. */
     async function connect() {
-        if (device && device.opened && endpointOut) return;
-
         device = await findPrinter();
-        if (!device.opened) await device.open();
+        try {
+            if (!device.opened) await device.open();
+        } catch (err) {
+            const busy = new Error('The printer is busy: another browser tab or program is using it. '
+                + 'Close the other tabs of the app (or restart the browser) and try again.');
+            busy.name = 'PrinterBusyError';
+            throw busy;
+        }
         if (device.configuration === null) await device.selectConfiguration(1);
 
         // The interface that has a "bulk OUT" endpoint is the one that accepts print data
@@ -67,6 +75,17 @@ window.ThermalPrinter = (function () {
         if (!endpointOut) throw new Error('This USB device does not look like a printer.');
 
         await device.claimInterface(interfaceNumber);
+    }
+
+    async function disconnect() {
+        if (!device) return;
+        try {
+            if (device.opened) {
+                if (interfaceNumber !== null) await device.releaseInterface(interfaceNumber).catch(() => {});
+                await device.close();
+            }
+        } catch (e) { /* already unplugged/closed — nothing to free */ }
+        device = null; endpointOut = null; interfaceNumber = null;
     }
 
     /* Turns the picture into ESC/POS bytes: 1 bit per dot, 1 = burn (black).
@@ -134,14 +153,17 @@ window.ThermalPrinter = (function () {
     async function printReceipt(receiptWindow) {
         if (!isSupported()) throw new Error('This browser cannot print to USB. Please use Google Chrome or Microsoft Edge.');
 
-        await connect();   // first, while the click still counts (needed the first time to pick the printer)
-
-        const canvas = prepareImage(await receiptWindow.renderThermalReceipt(DOTS_WIDE));
-        for (const part of encodeImage(canvas)) {
-            const result = await device.transferOut(endpointOut, part);
-            if (result.status !== 'ok') throw new Error('The printer did not accept the data (' + result.status + ').');
-            // Image strip: give the printer time to print it before sending the next one
-            if (part[0] === 0x1D && part[1] === 0x76) await sleep(part[6] * MS_PER_ROW * 1.15);
+        try {
+            await connect();   // first, while the click still counts (needed the first time to pick the printer)
+            const canvas = prepareImage(await receiptWindow.renderThermalReceipt(DOTS_WIDE));
+            for (const part of encodeImage(canvas)) {
+                const result = await device.transferOut(endpointOut, part);
+                if (result.status !== 'ok') throw new Error('The printer did not accept the data (' + result.status + ').');
+                // Image strip: give the printer time to print it before sending the next one
+                if (part[0] === 0x1D && part[1] === 0x76) await sleep(part[6] * MS_PER_ROW * 1.15);
+            }
+        } finally {
+            await disconnect();   // free the printer for other tabs
         }
     }
 
