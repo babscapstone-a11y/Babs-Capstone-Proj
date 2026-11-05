@@ -352,6 +352,17 @@
     .input-field:focus,
     .input-field:focus-visible { outline: none; box-shadow: none; }
     .input-field::placeholder { color: rgba(17,24,39,0.28); font-weight: 400; }
+    /* Browser autofill: cover its light-blue background with white (see login page) */
+    .input-field:-webkit-autofill,
+    .input-field:-webkit-autofill:hover,
+    .input-field:-webkit-autofill:focus,
+    .input-field:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+        box-shadow: 0 0 0 1000px #ffffff inset !important;
+        -webkit-text-fill-color: var(--dark);
+        caret-color: var(--dark);
+        transition: background-color 9999s ease-out 0s;
+    }
 
     .toggle-pwd {
         background: transparent; border: none; outline: none;
