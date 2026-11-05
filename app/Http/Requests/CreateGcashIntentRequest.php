@@ -16,7 +16,6 @@ class CreateGcashIntentRequest extends FormRequest
     {
         return [
             'discount_id'           => ['nullable', 'exists:discounts,id'],
-            'eligibility_confirmed' => ['sometimes', 'boolean'],
             'service_charge'        => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -32,14 +31,6 @@ class CreateGcashIntentRequest extends FormRequest
 
             if (! $discount || ! $discount->isCurrentlyValid()) {
                 $validator->errors()->add('discount_id', 'The selected discount is no longer active or has expired.');
-                return;
-            }
-
-            if ($discount->requiresEligibilityVerification() && ! $this->boolean('eligibility_confirmed')) {
-                $validator->errors()->add(
-                    'eligibility_confirmed',
-                    'Please verify the customer\'s ID before applying this discount.'
-                );
             }
         });
     }

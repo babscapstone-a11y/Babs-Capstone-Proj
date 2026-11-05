@@ -17,7 +17,6 @@ class ProcessPaymentRequest extends FormRequest
         return [
             'payment_method'        => ['required', 'in:cash,cashless'],
             'discount_id'           => ['nullable', 'exists:discounts,id'],
-            'eligibility_confirmed' => ['sometimes', 'boolean'],
             'service_charge'        => ['nullable', 'numeric', 'min:0'],
             // Same cap as the billing screen: 6 digits and 2 decimals
             'amount_received'       => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
@@ -36,14 +35,6 @@ class ProcessPaymentRequest extends FormRequest
 
             if (! $discount || ! $discount->isCurrentlyValid()) {
                 $validator->errors()->add('discount_id', 'The selected discount is no longer active or has expired.');
-                return;
-            }
-
-            if ($discount->requiresEligibilityVerification() && ! $this->boolean('eligibility_confirmed')) {
-                $validator->errors()->add(
-                    'eligibility_confirmed',
-                    'Please verify the customer\'s ID before applying this discount.'
-                );
             }
         });
     }

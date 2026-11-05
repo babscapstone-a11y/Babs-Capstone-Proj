@@ -107,13 +107,6 @@
     .change-value { font-size: 1.3rem; font-weight: 800; color: #16A34A; }
     .change-value.insufficient { color: var(--primary); }
 
-    .eligibility-box {
-        background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px;
-        padding: .75rem .9rem; margin-top: -.4rem; margin-bottom: 1.1rem; font-size: .84rem; color: #92400E;
-        display: flex; align-items: flex-start; gap: .55rem;
-    }
-    .eligibility-box input { margin-top: .2rem; }
-
     .special-discount-box { margin-top: -.4rem; margin-bottom: 1.1rem; }
     .special-status-box {
         border-radius: 10px; padding: .75rem .9rem; margin-top: .6rem; font-size: .84rem;
@@ -415,13 +408,13 @@
         }
 
         await ensureDiscountsLoaded();
-        const discountOptions = discountsCache.map(d => {
-            const meetsMin = d.minimum_purchase === null || order.subtotal >= d.minimum_purchase;
-            const label = d.is_special ? `${d.name} (Cashier-Requested Amount)` : `${d.name} (${d.formatted_value})`;
-            return `<option value="${d.id}" ${!meetsMin ? 'disabled' : ''}>
-                ${label}${!meetsMin ? ' — min. ' + formatPeso(d.minimum_purchase) : ''}
-            </option>`;
-        }).join('');
+        // A discount with a minimum purchase only appears once the order's subtotal reaches it
+        const discountOptions = discountsCache
+            .filter(d => d.minimum_purchase === null || order.subtotal >= d.minimum_purchase)
+            .map(d => {
+                const label = d.is_special ? `${d.name} (Cashier-Requested Amount)` : `${d.name} (${d.formatted_value})`;
+                return `<option value="${d.id}">${label}</option>`;
+            }).join('');
 
         // Discounts are for walk-in orders only. For an online order the dropdown stays in the
         // page, hidden on "No Discount", because the rest of the screen still reads it.
@@ -447,11 +440,6 @@
                     <option value="">No Discount</option>
                     ${discountOptions}
                 </select>
-            </div>
-
-            <div id="eligibilityBox" class="eligibility-box" style="display:none">
-                <input type="checkbox" id="eligibilityConfirmed">
-                <label for="eligibilityConfirmed">I have verified the customer's Senior Citizen / PWD ID for this discount.</label>
             </div>
 
             <div id="specialDiscountBox" class="special-discount-box" style="display:none">
@@ -732,8 +720,6 @@
         document.getElementById('summaryGrandTotalLabel').textContent = alreadyPaidOnline > 0 ? 'Balance Due' : 'Grand Total';
         document.getElementById('summaryGrandTotal').textContent = formatPeso(amountDue);
 
-        document.getElementById('eligibilityBox').style.display = (discount && discount.requires_verification) ? 'flex' : 'none';
-
         const isCash = document.getElementById('payCash').checked;
         document.getElementById('amountReceivedGroup').style.display = isCash ? 'block' : 'none';
 
@@ -796,11 +782,6 @@
             }
         }
 
-        if (discount && discount.requires_verification && !document.getElementById('eligibilityConfirmed').checked) {
-            showToast("Please verify the customer's ID before applying this discount.", 'error');
-            return;
-        }
-
         if (specialDiscountBlocksPayment(discount)) {
             showToast('This special discount must be approved by an admin before you can complete payment.', 'error');
             return;
@@ -821,9 +802,6 @@
             payment_method: isCash ? 'cash' : 'cashless',
             discount_id: discount ? discount.id : null,
             amount_received: isCash ? (parseFloat(document.getElementById('amountReceivedInput').value) || 0) : null,
-            eligibility_confirmed: discount && discount.requires_verification
-                ? document.getElementById('eligibilityConfirmed').checked
-                : false,
         };
 
         try {
@@ -893,11 +871,6 @@
 
     async function generateGcashQr() {
         const discount = currentDiscount();
-        if (discount && discount.requires_verification && !document.getElementById('eligibilityConfirmed').checked) {
-            showToast("Please verify the customer's ID before applying this discount.", 'error');
-            return;
-        }
-
         if (specialDiscountBlocksPayment(discount)) {
             showToast('This special discount must be approved by an admin before you can complete payment.', 'error');
             return;
@@ -909,9 +882,6 @@
 
         const payload = {
             discount_id: discount ? discount.id : null,
-            eligibility_confirmed: discount && discount.requires_verification
-                ? document.getElementById('eligibilityConfirmed').checked
-                : false,
         };
 
         try {

@@ -141,8 +141,8 @@ class Discount extends Model
     }
 
     /**
-     * True for eligibility types that require the cashier to physically verify
-     * an ID before the discount may be applied (REQ099).
+     * True for the Senior Citizen and PWD eligibility types. The customer's ID is
+     * checked at the storefront, so the billing screen no longer asks the cashier to confirm it.
      */
     public function requiresEligibilityVerification(): bool
     {
