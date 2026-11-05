@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Lock every page in place: no elastic "pull past the top/bottom" bounce that
+   shows a blank strip above or below the page */
+html, body { overscroll-behavior: none; }

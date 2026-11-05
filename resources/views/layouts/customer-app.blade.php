@@ -35,6 +35,8 @@
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         html { scroll-behavior: smooth; }
+        /* Lock the page in place: no elastic "pull past the top/bottom" bounce */
+        html, body { overscroll-behavior: none; }
         body {
             font-family: 'Poppins', system-ui, sans-serif;
             background: var(--bg);
