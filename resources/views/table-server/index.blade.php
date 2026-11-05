@@ -44,6 +44,7 @@
         border: 1.5px solid var(--border); background: var(--white);
         font-size: .81rem; font-weight: 600; color: var(--dark);
         transition: all .2s; white-space: nowrap;
+        font-family: inherit; cursor: pointer;
     }
     .ts-chip.active, .ts-chip:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
 
@@ -235,21 +236,18 @@
     {{-- ═══ LEFT: Menu Browsing ═══ --}}
     <div>
         <div class="ts-search-row">
-            <form method="GET" action="{{ route('table-server.index') }}" class="ts-search">
+            {{-- Filters the cards already on the page as you type, so the order being built is never lost to a reload --}}
+            <form class="ts-search" role="search" onsubmit="event.preventDefault(); applyMenuFilter();">
                 <i class="fas fa-search"></i>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search menu by name or category…">
+                <input type="search" id="menuSearchInput" value="{{ request('q') }}" placeholder="Search menu by name or category…" autocomplete="off" aria-label="Search menu">
                 <button type="submit">Search</button>
             </form>
 
             <div class="ts-chips-row">
-                <a href="{{ route('table-server.index', array_filter(['q' => request('q')])) }}"
-                   class="ts-chip {{ !request('category') ? 'active' : '' }}">All Items</a>
+                <button type="button" class="ts-chip active" data-category="">All Items</button>
                 @foreach($categories as $cat)
                     @if($cat->menu_items_count > 0)
-                    <a href="{{ route('table-server.index', array_filter(['q' => request('q'), 'category' => $cat->id])) }}"
-                       class="ts-chip {{ request('category') == $cat->id ? 'active' : '' }}">
-                        {{ $cat->category_name }}
-                    </a>
+                    <button type="button" class="ts-chip" data-category="{{ $cat->id }}">{{ $cat->category_name }}</button>
                     @endif
                 @endforeach
             </div>
@@ -259,49 +257,19 @@
         <div class="empty-state">
             <i class="fas fa-search"></i>
             <div style="font-weight:700;color:var(--dark);margin-bottom:.3rem">No items found</div>
-            <p style="font-size:.85rem">
-                @if(request('q'))
-                    No menu items match "{{ request('q') }}".
-                @else
-                    No menu items are currently set up.
-                @endif
-            </p>
+            <p style="font-size:.85rem">No menu items are currently set up.</p>
         </div>
-
-        @elseif(request('category'))
-        @php $cat = $categories->firstWhere('id', request('category')); @endphp
-        <div class="section-block">
-            <div class="section-heading">
-                <i class="section-icon fas fa-utensils"></i>
-                <h2>{{ $cat?->category_name ?? 'Items' }}</h2>
-                <span class="section-heading-count">{{ $menuItems->count() }}</span>
-            </div>
-            <div class="menu-grid">
-                @foreach($menuItems as $item)
-                    @include('table-server._menu_card', ['item' => $item])
-                @endforeach
-            </div>
-        </div>
-
-        @elseif(request('q'))
-        <div class="section-block">
-            <div class="section-heading">
-                <i class="section-icon fas fa-search"></i>
-                <h2>Search Results</h2>
-                <span class="section-heading-count">{{ $menuItems->count() }}</span>
-            </div>
-            <div class="menu-grid">
-                @foreach($menuItems as $item)
-                    @include('table-server._menu_card', ['item' => $item])
-                @endforeach
-            </div>
-        </div>
-
         @else
+        <div class="empty-state" id="menuNoMatches" style="display:none">
+            <i class="fas fa-search"></i>
+            <div style="font-weight:700;color:var(--dark);margin-bottom:.3rem">No items found</div>
+            <p style="font-size:.85rem" id="menuNoMatchesText">No menu items match your search.</p>
+        </div>
+
         @foreach($categories as $cat)
             @php $items = $itemsByCategory->get($cat->id, collect()); @endphp
             @if($items->isNotEmpty())
-            <div class="section-block">
+            <div class="section-block" data-category-id="{{ $cat->id }}">
                 <div class="section-heading">
                     <i class="section-icon fas fa-utensils"></i>
                     <h2>{{ $cat->category_name }}</h2>
@@ -318,7 +286,7 @@
 
         @php $uncategorized = $itemsByCategory->get(null, collect()); @endphp
         @if($uncategorized->isNotEmpty())
-        <div class="section-block">
+        <div class="section-block" data-category-id="none">
             <div class="section-heading">
                 <i class="section-icon fas fa-ellipsis-h"></i>
                 <h2>Others</h2>
@@ -433,6 +401,49 @@
     }
 
     function formatMoney(n) { return '₱' + parseFloat(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    /* ══ REAL-TIME MENU FILTER ══
+       Shows only the cards whose name, description or category contains what's typed,
+       within the selected category chip. Sections with no matches are hidden and each
+       section's count shows how many of its items match. Nothing reloads. */
+    const menuSearchInput = document.getElementById('menuSearchInput');
+    let activeCategory = '';
+
+    function applyMenuFilter() {
+        const term = menuSearchInput.value.trim().toLowerCase();
+        let shown = 0;
+
+        document.querySelectorAll('.section-block[data-category-id]').forEach(section => {
+            const inCategory = !activeCategory || section.dataset.categoryId === activeCategory;
+            let matches = 0;
+            section.querySelectorAll('.menu-card').forEach(card => {
+                const match = inCategory && (!term || card.dataset.search.includes(term));
+                card.style.display = match ? '' : 'none';
+                if (match) matches++;
+            });
+            section.style.display = matches ? '' : 'none';
+            section.querySelector('.section-heading-count').textContent = matches;
+            shown += matches;
+        });
+
+        const noMatches = document.getElementById('menuNoMatches');
+        if (noMatches) {
+            noMatches.style.display = shown ? 'none' : '';
+            document.getElementById('menuNoMatchesText').textContent = term
+                ? `No menu items match "${menuSearchInput.value.trim()}".`
+                : 'No menu items in this category.';
+        }
+    }
+
+    menuSearchInput.addEventListener('input', applyMenuFilter);
+    document.querySelectorAll('.ts-chip[data-category]').forEach(chip => {
+        chip.addEventListener('click', () => {
+            activeCategory = chip.dataset.category;
+            document.querySelectorAll('.ts-chip[data-category]').forEach(c => c.classList.toggle('active', c === chip));
+            applyMenuFilter();
+        });
+    });
+    applyMenuFilter();
 
     /* ══ ITEM DETAIL MODAL ══ */
     const modal = document.getElementById('itemModal');

@@ -25,21 +25,12 @@ class TableServerOrderController extends Controller
 
         // Unlike CatalogController, unavailable items are NOT filtered out here —
         // the food server needs to see them (disabled) rather than have them vanish.
-        $query = MenuItem::with(['category', 'rtcStock', 'beverageStock', 'beverageItem'])->where('is_active', true);
-
-        if ($search = $request->input('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('menu_name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('category', fn ($q2) => $q2->where('category_name', 'like', "%{$search}%"));
-            });
-        }
-
-        if ($categoryId = $request->input('category')) {
-            $query->where('category_id', $categoryId);
-        }
-
-        $menuItems = $query->orderBy('menu_name')->get();
+        // Every active item is sent; the search box and category chips filter them in the
+        // browser as the server types, so the order being built is never lost to a reload.
+        $menuItems = MenuItem::with(['category', 'rtcStock', 'beverageStock', 'beverageItem'])
+            ->where('is_active', true)
+            ->orderBy('menu_name')
+            ->get();
         $itemsByCategory = $menuItems->groupBy('category_id');
 
         return view('table-server.index', compact('categories', 'menuItems', 'itemsByCategory'));

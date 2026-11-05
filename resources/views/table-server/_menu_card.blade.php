@@ -5,6 +5,7 @@
     $selectable = $item->is_available && ! $soldOut;
 @endphp
 <article class="menu-card {{ $selectable ? '' : 'menu-card-disabled' }}"
+    data-search="{{ Str::lower($item->menu_name . ' ' . ($item->description ?? '') . ' ' . ($item->category?->category_name ?? 'Uncategorized')) }}"
     @if($selectable)
     onclick="openItemModal(
         {{ $item->id }},
