@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.back-cache-guard')
     <script>
         // Apply the saved light/dark choice before anything paints (shared with the landing page)
         (function () {

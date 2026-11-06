@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.back-cache-guard')
     <title>@yield('title', 'Kitchen Display') – BAB'S RESTO</title>
     <link rel="icon" type="image/png" href="{{ asset('images/BabsLandingPageLogo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.jpg') }}">

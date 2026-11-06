@@ -53,6 +53,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Staff still on a default password must set their own before using the system
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
 
+        // Don't let the browser keep copies of signed-in pages, so Back after logout goes to login
+        $middleware->appendToGroup('web', \App\Http\Middleware\PreventBackHistory::class);
+
         // PayMongo calls this server-to-server and can't carry a CSRF token.
         $middleware->validateCsrfTokens(except: [
             'webhooks/paymongo',
