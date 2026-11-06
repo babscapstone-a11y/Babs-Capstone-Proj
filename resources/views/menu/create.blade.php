@@ -205,8 +205,8 @@
         <div class="form-grid-2" style="margin-bottom:1.5rem">
             <div class="form-group">
                 <label for="price">Selling Price (₱) <span class="req">*</span></label>
-                <input type="number" id="price" name="price" class="form-control @error('price') is-invalid @enderror"
-                    value="{{ old('price') }}" min="0.01" step="0.01" placeholder="0.00" required>
+                <input type="number" id="price" name="price" class="form-control no-spin @error('price') is-invalid @enderror"
+                    value="{{ old('price') }}" min="0.01" step="0.01" placeholder="0.00" inputmode="decimal" required>
                 @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="form-group">
