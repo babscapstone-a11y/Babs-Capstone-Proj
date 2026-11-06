@@ -4,6 +4,7 @@
     $soldOut        = $stockStatus === 'out_of_stock';
 @endphp
 <article class="menu-card"
+    data-search="{{ Str::lower($item->menu_name . ' ' . ($item->description ?? '') . ' ' . ($item->category?->category_name ?? 'Uncategorized')) }}"
     onclick="openItemModal(
         {{ $item->id }},
         {{ Js::from($item->menu_name) }},

@@ -21,13 +21,8 @@ class CatalogController extends Controller
             ->where('is_active', true)
             ->where('is_available', true);
 
-        if ($search = $request->input('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('menu_name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('category', fn ($q2) => $q2->where('category_name', 'like', "%{$search}%"));
-            });
-        }
+        // No server-side search: the search box filters the cards in the browser as the
+        // customer types (see customer/catalog.blade.php), so every item is sent here.
 
         if ($categoryId = $request->input('category')) {
             $query->where('category_id', $categoryId);

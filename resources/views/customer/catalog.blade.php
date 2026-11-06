@@ -439,9 +439,10 @@
         </a>
 
         {{-- Search --}}
-        <form method="GET" action="{{ route('catalog.index') }}" class="nav-search">
+        {{-- Filters the menu as you type; the button just applies the same filter --}}
+        <form class="nav-search" role="search" onsubmit="event.preventDefault(); window.applyCatalogSearch && applyCatalogSearch();">
             <i class="fas fa-search"></i>
-            <input type="text" name="q" value="{{ request('q') }}" placeholder="Search food, drinks, categories…">
+            <input type="search" id="catalogSearchInput" value="{{ request('q') }}" placeholder="Search food, drinks, categories…" autocomplete="off" aria-label="Search the menu">
             <button type="submit" class="nav-search-btn">Search</button>
         </form>
 
@@ -513,7 +514,7 @@
 {{-- ── Category tabs ── --}}
 <div class="cat-tabs-bar">
     <nav class="cat-chips-row" id="catChips" aria-label="Menu categories">
-        <a href="{{ route('catalog.index', array_filter(['q' => request('q')])) }}"
+        <a href="{{ route('catalog.index') }}"
            data-cat="all" class="cat-chip {{ !request('category') ? 'active' : '' }}"
            @if(!request('category')) aria-current="page" @endif>
             <i class="fas fa-th-large" style="font-size:.75rem;opacity:.75"></i> All Items
@@ -521,7 +522,7 @@
         </a>
         @foreach($categories as $cat)
             @if($cat->menu_items_count > 0)
-            <a href="{{ route('catalog.index', array_filter(['q' => request('q'), 'category' => $cat->id])) }}"
+            <a href="{{ route('catalog.index', ['category' => $cat->id]) }}"
                data-cat="{{ $cat->id }}" class="cat-chip {{ request('category') == $cat->id ? 'active' : '' }}"
                @if(request('category') == $cat->id) aria-current="page" @endif>
                 {{ $cat->category_name }}
@@ -538,31 +539,34 @@
     {{-- ── Menu Feed ── --}}
     <main class="menu-feed">
 
-        @if(request('q'))
-        <div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+        {{-- Live search summary (filled in by script while something is typed) --}}
+        <div id="searchSummary" style="display:none;margin-bottom:1.25rem;align-items:center;gap:.6rem;flex-wrap:wrap;">
             <span style="font-size:.88rem;color:var(--muted);">
                 <i class="fas fa-search"></i>
-                Showing results for "<strong style="color:var(--dark);">{{ request('q') }}</strong>"
-                &mdash; {{ $menuItems->count() }} {{ Str::plural('item', $menuItems->count()) }} found
+                Showing results for "<strong id="searchSummaryTerm" style="color:var(--dark);"></strong>"
+                &mdash; <span id="searchSummaryCount"></span>
             </span>
-            <a href="{{ route('catalog.index') }}" style="font-size:.8rem;color:var(--primary);font-weight:600;">
+            <button type="button" id="searchClearBtn" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:.8rem;color:var(--primary);font-weight:600;">
                 <i class="fas fa-times-circle"></i> Clear
-            </a>
+            </button>
         </div>
-        @endif
+
+        <div class="empty-state" id="searchNoMatches" style="display:none">
+            <div class="empty-icon"><i class="fas fa-search"></i></div>
+            <div class="empty-title">No items found</div>
+            <p style="font-size:.85rem;max-width:320px;margin:.5rem auto 0;">
+                No menu items match "<span id="searchNoMatchesTerm"></span>". Try a different keyword.
+            </p>
+        </div>
 
         @if($menuItems->isEmpty())
         <div class="empty-state">
             <div class="empty-icon"><i class="fas fa-search"></i></div>
             <div class="empty-title">No items found</div>
             <p style="font-size:.85rem;max-width:320px;margin:.5rem auto 1.25rem;">
-                @if(request('q'))
-                    No menu items match "{{ request('q') }}". Try a different keyword.
-                @else
-                    No menu items are currently available. Please check back soon.
-                @endif
+                No menu items are currently available. Please check back soon.
             </p>
-            @if(request('q') || request('category'))
+            @if(request('category'))
             <a href="{{ route('catalog.index') }}" style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;border-radius:50px;background:var(--primary);color:#fff;font-size:.85rem;font-weight:600;">
                 <i class="fas fa-arrow-left"></i> Browse All
             </a>
@@ -576,21 +580,6 @@
             <div class="section-heading">
                 <i class="section-icon fas fa-utensils"></i>
                 <h2>{{ $cat?->category_name ?? 'Items' }}</h2>
-                <span class="section-heading-count">{{ $menuItems->count() }}</span>
-            </div>
-            <div class="menu-grid">
-                @foreach($menuItems as $item)
-                    @include('customer._menu_card', ['item' => $item])
-                @endforeach
-            </div>
-        </div>
-
-        @elseif(request('q'))
-        {{-- Search results: flat grid --}}
-        <div class="section-block">
-            <div class="section-heading">
-                <i class="section-icon fas fa-search"></i>
-                <h2>Search Results</h2>
                 <span class="section-heading-count">{{ $menuItems->count() }}</span>
             </div>
             <div class="menu-grid">
@@ -690,6 +679,69 @@
 
 @section('scripts')
 <script>
+/* Real-time search: as the customer types, only cards whose name, description or category
+   contain the text stay visible. Empty sections and their category tabs are hidden, and the
+   counts on headings and tabs show how many items match. Nothing reloads. */
+(function () {
+    const input = document.getElementById('catalogSearchInput');
+    const sections = Array.from(document.querySelectorAll('.menu-feed .section-block'));
+    const chips = Array.from(document.querySelectorAll('#catChips .cat-chip'));
+    const summary = document.getElementById('searchSummary');
+    const noMatches = document.getElementById('searchNoMatches');
+
+    // Remember each heading's/tab's full count so it can be put back when the search is cleared
+    sections.forEach(s => { const c = s.querySelector('.section-heading-count'); if (c) c.dataset.total = c.textContent; });
+    chips.forEach(c => { const n = c.querySelector('.cat-chip-count'); if (n) n.dataset.total = n.textContent; });
+
+    window.applyCatalogSearch = function () {
+        const raw = input.value.trim();
+        const term = raw.toLowerCase();
+        let total = 0;
+
+        sections.forEach(section => {
+            let matches = 0;
+            section.querySelectorAll('.menu-card').forEach(card => {
+                const hit = !term || card.dataset.search.includes(term);
+                card.style.display = hit ? '' : 'none';
+                if (hit) matches++;
+            });
+            section.style.display = matches ? '' : 'none';
+            const count = section.querySelector('.section-heading-count');
+            if (count) count.textContent = term ? matches : count.dataset.total;
+            total += matches;
+
+            // Matching category tab: same count, hidden when nothing in it matches
+            const chip = section.id ? chips.find(c => 'cat-' + c.dataset.cat === section.id) : null;
+            if (chip) {
+                chip.style.display = matches ? '' : 'none';
+                const n = chip.querySelector('.cat-chip-count');
+                if (n) n.textContent = term ? matches : n.dataset.total;
+            }
+        });
+
+        const allCount = chips.find(c => c.dataset.cat === 'all')?.querySelector('.cat-chip-count');
+        if (allCount) allCount.textContent = term ? total : allCount.dataset.total;
+
+        if (sections.length) {
+            summary.style.display = term && total ? 'flex' : 'none';
+            noMatches.style.display = term && !total ? '' : 'none';
+            document.getElementById('searchSummaryTerm').textContent = raw;
+            document.getElementById('searchSummaryCount').textContent = total + (total === 1 ? ' item found' : ' items found');
+            document.getElementById('searchNoMatchesTerm').textContent = raw;
+        }
+
+        window.dispatchEvent(new Event('scroll'));   // let the tab highlight catch up
+    };
+
+    input.addEventListener('input', applyCatalogSearch);
+    document.getElementById('searchClearBtn').addEventListener('click', () => {
+        input.value = '';
+        applyCatalogSearch();
+        input.focus();
+    });
+    applyCatalogSearch();
+})();
+
 /* Category tabs: stick under the nav bar; on "All Items" they jump to sections and follow the scroll */
 (function () {
     const root    = document.documentElement;
@@ -743,12 +795,14 @@
         ticking = false;
         const line = (nav ? nav.offsetHeight : 0) + (tabsBar ? tabsBar.offsetHeight : 0) + 24;
         let current = 'all';
-        for (const s of sections) {
+        // Only sections still showing (a search can hide some)
+        const visible = sections.filter(s => s.style.display !== 'none');
+        for (const s of visible) {
             if (s.getBoundingClientRect().top <= line) current = s.id.replace('cat-', '');
         }
         // At the very bottom, the last section may never reach the line — select it anyway
-        if (window.innerHeight + window.scrollY >= root.scrollHeight - 2) {
-            current = sections[sections.length - 1].id.replace('cat-', '');
+        if (visible.length && window.innerHeight + window.scrollY >= root.scrollHeight - 2) {
+            current = visible[visible.length - 1].id.replace('cat-', '');
         }
         const shown = row.querySelector('.cat-chip.active');
         if (!shown || shown.dataset.cat !== current) highlight(current);
