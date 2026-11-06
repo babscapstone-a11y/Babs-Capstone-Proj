@@ -6,7 +6,7 @@ use App\Http\Requests\CreateGcashIntentRequest;
 use App\Http\Requests\ProcessPaymentRequest;
 use App\Http\Requests\StoreSpecialDiscountRequestRequest;
 use App\Models\Discount;
-use App\Models\GcashPaymentIntent;
+use App\Models\PaymentIntent;
 use App\Models\Invoice;
 use App\Models\ModeOfPayment;
 use App\Models\Order;
@@ -319,7 +319,7 @@ class CashierController extends Controller
             return response()->json(['message' => 'This order has already been paid in full.'], 422);
         }
 
-        $intent = GcashPaymentIntent::create([
+        $intent = PaymentIntent::create([
             'order_id'        => $order->id,
             'cashier_id'      => auth()->id(),
             'discount_id'     => $discount?->id,
@@ -384,12 +384,12 @@ class CashierController extends Controller
     }
 
     /**
-     * GET /cashier/gcash-intents/{gcashPaymentIntent}/status — polled by the
+     * GET /cashier/gcash-intents/{intent}/status — polled by the
      * billing screen while the QR is displayed. The first time PayMongo
      * reports the payment as succeeded, this finalizes the sale (creates
      * the Invoice/Payment) exactly like a cash sale would.
      */
-    public function gcashIntentStatus(GcashPaymentIntent $intent): JsonResponse
+    public function gcashIntentStatus(PaymentIntent $intent): JsonResponse
     {
         $this->authorize('pay', $intent->order);
 
@@ -442,11 +442,11 @@ class CashierController extends Controller
     }
 
     /**
-     * POST /cashier/gcash-intents/{gcashPaymentIntent}/cancel — lets the
+     * POST /cashier/gcash-intents/{intent}/cancel — lets the
      * cashier abandon a still-pending QR (customer changed their mind, or
      * couldn't complete it) and fall back to another payment method.
      */
-    public function cancelGcashIntent(GcashPaymentIntent $intent): JsonResponse
+    public function cancelGcashIntent(PaymentIntent $intent): JsonResponse
     {
         $this->authorize('pay', $intent->order);
 
@@ -458,7 +458,7 @@ class CashierController extends Controller
     }
 
     /**
-     * GET /cashier/gcash/return/{gcashPaymentIntent} — PayMongo redirects the
+     * GET /cashier/gcash/return/{intent} — PayMongo redirects the
      * *customer's own phone* here after they authorize (or cancel) in GCash.
      * This device has no cashier session, so it just shows a friendly
      * "you may return this device" message; it also opportunistically
@@ -466,7 +466,7 @@ class CashierController extends Controller
      * tick on the cashier's screen) since we're already looking at the
      * payment's status right here.
      */
-    public function gcashReturn(GcashPaymentIntent $intent): View
+    public function gcashReturn(PaymentIntent $intent): View
     {
         if ($intent->status === 'pending' && $intent->isExpired()) {
             $intent->update(['status' => 'failed']);
@@ -492,14 +492,14 @@ class CashierController extends Controller
     }
 
     /**
-     * Finalizes a GcashPaymentIntent once PayMongo confirms the payment
+     * Finalizes a PaymentIntent once PayMongo confirms the payment
      * succeeded: creates the Invoice/Payment (reusing the same path a cash
      * sale takes) and links it back onto the intent. Safe to call more than
      * once for the same intent — only the first call does anything.
      */
-    private function finalizeGcashIntent(GcashPaymentIntent $intent, array $paymongoIntent): array
+    private function finalizeGcashIntent(PaymentIntent $intent, array $paymongoIntent): array
     {
-        $intent = GcashPaymentIntent::whereKey($intent->id)->lockForUpdate()->firstOrFail();
+        $intent = PaymentIntent::whereKey($intent->id)->lockForUpdate()->firstOrFail();
 
         if ($intent->status === 'paid') {
             return ['status' => 'paid', 'receipt_url' => route('cashier.receipts.show', $intent->payment_id)];

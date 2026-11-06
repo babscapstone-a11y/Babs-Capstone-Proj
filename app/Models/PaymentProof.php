@@ -93,7 +93,7 @@ class PaymentProof extends Model
     /**
      * PayMongo doesn't reliably surface QR Ph's 30-minute code expiry on the
      * Payment Intent's own status, so it's tracked here off created_at
-     * instead, same as GcashPaymentIntent::isExpired() on the cashier side.
+     * instead, same as PaymentIntent::isExpired() on the cashier side.
      */
     public function isQrExpired(): bool
     {

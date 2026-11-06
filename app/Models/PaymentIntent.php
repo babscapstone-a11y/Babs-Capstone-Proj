@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class GcashPaymentIntent extends Model
+class PaymentIntent extends Model
 {
     protected $fillable = [
         'order_id', 'cashier_id', 'discount_id', 'payment_id',
