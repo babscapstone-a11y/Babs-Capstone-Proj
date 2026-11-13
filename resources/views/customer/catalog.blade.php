@@ -89,7 +89,9 @@
     background: linear-gradient(135deg, var(--primary), var(--accent));
     display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: .78rem; font-weight: 700;
+    overflow: hidden; flex-shrink: 0;
 }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .profile-name { font-size: .82rem; font-weight: 600; color: var(--dark); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-dropdown {
     display: none; position: absolute; right: 0; top: calc(100% + 8px);
@@ -457,7 +459,14 @@
             <div class="profile-menu">
                 @php $navCustomer = auth('customer')->user(); @endphp
                 <button class="profile-btn" id="profileBtn" aria-expanded="false">
-                    <div class="profile-avatar">{{ $navCustomer->initials }}</div>
+                    {{-- Profile picture when there is one, otherwise the initials (same as the other customer pages) --}}
+                    <div class="profile-avatar">
+                        @if($navCustomer->profile_picture_url)
+                            <img src="{{ $navCustomer->profile_picture_url }}" alt="">
+                        @else
+                            {{ $navCustomer->initials }}
+                        @endif
+                    </div>
                     <span class="profile-name">{{ $navCustomer->first_name }}</span>
                     <i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--muted);"></i>
                 </button>
