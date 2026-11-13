@@ -225,8 +225,8 @@
     </select>
 
     <select name="sort">
-        <option value="created_at" @selected(request('sort', 'created_at') === 'created_at')>Sort: Registration Date</option>
-        <option value="full_name"  @selected(request('sort') === 'full_name')>Sort: Name</option>
+        <option value="created_at" @selected(request('sort', 'created_at') === 'created_at')>Registration Date</option>
+        <option value="full_name"  @selected(request('sort') === 'full_name')>Name</option>
     </select>
 
     <select name="dir">
