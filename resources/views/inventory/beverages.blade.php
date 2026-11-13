@@ -77,7 +77,6 @@
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a href="{{ route('inventory.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
-            <a href="{{ route('inventory.restocking') }}" class="btn btn-outline"><i class="fas fa-cart-shopping"></i> Repurchase List</a>
             <button class="btn btn-purple" onclick="openAdjust()"><i class="fas fa-pen-to-square"></i> Adjust</button>
         </div>
     </div>
@@ -113,11 +112,6 @@
 
     <div class="card" id="results">
         @include('inventory._beverages-results', ['items' => $items])
-    </div>
-
-    <div style="margin-top:1rem;display:flex;gap:1rem;font-size:.82rem">
-        <a href="{{ route('inventory.adjustments.index') }}" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Adjustment History</a>
-        <a href="{{ route('inventory.stock-in.index') }}?type=beverage" style="color:var(--primary);font-weight:600"><i class="fas fa-history"></i> Stock-In History</a>
     </div>
 </div>
 
