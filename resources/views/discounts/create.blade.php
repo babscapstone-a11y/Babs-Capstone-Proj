@@ -320,6 +320,23 @@ function updateStatusUI() {
 // Name input live preview
 document.querySelector('[name=discount_name]').addEventListener('input', updatePreview);
 
+// Ask before creating. The browser's own required-field checks run first, so this only
+// appears once the form is filled in correctly; confirming sends the form as normal.
+document.getElementById('discountForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const form   = this;
+    const name   = document.querySelector('[name=discount_name]').value.trim();
+    const value  = document.getElementById('prevValue').textContent;
+    const status = document.getElementById('st_active').checked ? 'Active' : 'Inactive';
+    openModal({
+        title: 'Create Discount?',
+        desc: `Are you sure you want to add "${name}" (${value}) as a new ${status.toLowerCase()} discount?`,
+        confirmText: 'Create Discount',
+        iconClass: 'fas fa-tag',
+        onConfirm: () => form.submit(),   // form.submit() skips this listener, so no loop
+    });
+});
+
 // Init on load
 window.addEventListener('DOMContentLoaded', function () {
     updateTypeUI();
